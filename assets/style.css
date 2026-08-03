@@ -1,0 +1,213 @@
+/* ============================================
+   Yance · 个人主页 — 明亮优雅风
+   双主题：深海鱼眼 × 舞台聚光灯
+   ============================================ */
+:root{
+  --bg:#FAF6EF;
+  --surface:#FFFDF8;
+  --ink:#2A2438;
+  --ink-soft:#6E6880;
+  --ink-mute:#9B95A9;
+  --gold:#B98A3E;
+  --gold-bright:#E8B855;
+  --gold-deep:#8A6A2F;
+  --teal:#2FB9A4;
+  --teal-deep:#1D7F72;
+  --violet:#7C5CFF;
+  --hairline:rgba(42,36,56,.14);
+  --hairline-strong:rgba(42,36,56,.22);
+  --shadow:0 12px 34px -20px rgba(42,36,56,.22);
+  --shadow-hover:0 26px 56px -28px rgba(42,36,56,.34);
+  --serif:'Cormorant Garamond','Noto Serif SC','Songti SC','SimSun',serif;
+  --serif-cn:'Noto Serif SC','Songti SC','SimSun',serif;
+  --sans:'Noto Sans SC',-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+  --mono:'JetBrains Mono',Consolas,'Courier New',monospace;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--sans);
+  background:var(--bg);
+  color:var(--ink);
+  min-height:100vh;
+  line-height:1.7;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+::selection{background:rgba(185,138,62,.24)}
+
+/* 环境光 */
+.bg-glow{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(840px 500px at 50% -8%,rgba(185,138,62,.16),transparent 62%),
+    radial-gradient(640px 420px at 4% 80%,rgba(47,185,164,.07),transparent 60%),
+    radial-gradient(640px 420px at 96% 74%,rgba(124,92,255,.06),transparent 60%);
+}
+main,.footer{position:relative;z-index:1}
+
+/* 跳到内容 */
+.skip-link{
+  position:absolute;left:14px;top:-52px;z-index:60;
+  background:var(--ink);color:var(--bg);
+  padding:10px 16px;border-radius:10px;
+  font-size:.85rem;text-decoration:none;
+  transition:top .2s ease;
+}
+.skip-link:focus{top:12px}
+
+/* ============ Hero ============ */
+.hero{
+  position:relative;overflow:hidden;
+  max-width:960px;margin:0 auto;
+  padding:clamp(92px,16vh,170px) 24px 0;
+  text-align:center;
+}
+.hero::after{
+  content:'';position:absolute;top:-15%;bottom:-15%;left:0;width:46%;
+  background:linear-gradient(100deg,transparent 0 40%,rgba(255,255,255,.9) 50%,transparent 60%);
+  transform:translateX(-170%) skewX(-8deg);
+  animation:beam 1.5s ease-out .35s both;
+  pointer-events:none;
+}
+@keyframes beam{from{transform:translateX(-170%) skewX(-8deg)}to{transform:translateX(430%) skewX(-8deg)}}
+
+.eyebrow{
+  font-family:var(--mono);
+  font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--gold-deep);
+}
+.name{
+  font-family:var(--serif);font-style:italic;font-weight:600;
+  font-size:clamp(4.6rem,15vw,9rem);line-height:1;
+  letter-spacing:-.02em;margin:16px 0 18px;
+}
+.name .dot{color:var(--gold);font-style:normal}
+.tagline{
+  font-family:var(--serif-cn);
+  font-size:clamp(1rem,2.6vw,1.22rem);
+  color:var(--ink-soft);max-width:32em;margin:0 auto;
+}
+.hero-rule{
+  position:relative;margin:46px auto 0;width:min(560px,84%);height:1px;
+  background:linear-gradient(90deg,transparent,var(--hairline-strong),transparent);
+}
+.rule-dot{
+  position:absolute;left:50%;top:-3px;width:7px;height:7px;border-radius:50%;
+  background:var(--gold);transform:translateX(-50%);
+}
+
+.hero .eyebrow,.hero .name,.hero .tagline,.hero .hero-rule{opacity:0;animation:rise .85s ease forwards}
+.hero .eyebrow{animation-delay:.05s}
+.hero .name{animation-delay:.12s}
+.hero .tagline{animation-delay:.2s}
+.hero .hero-rule{animation-delay:.3s}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+/* ============ 项目区 ============ */
+.projects{
+  max-width:960px;margin:0 auto;
+  padding:clamp(70px,10vh,110px) 24px 0;
+  text-align:center;
+}
+.works-title{
+  font-family:var(--serif-cn);font-weight:600;
+  font-size:clamp(1.5rem,4vw,2rem);
+  margin:10px 0 42px;color:var(--ink);
+}
+.card-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:24px;max-width:840px;margin:0 auto;
+}
+
+.card{
+  position:relative;overflow:hidden;
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+  padding:38px 28px 30px;
+  background:var(--surface);
+  border:1px solid var(--hairline);border-radius:22px;
+  text-decoration:none;color:var(--ink);
+  box-shadow:var(--shadow);
+  transition:transform .35s ease,border-color .35s ease,box-shadow .35s ease,opacity .6s ease;
+}
+.card::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(160deg,rgba(255,255,255,.8),transparent 46%);
+  opacity:0;transition:opacity .35s ease;
+}
+.card:hover::before{opacity:1}
+.card:hover{transform:translateY(-6px);box-shadow:var(--shadow-hover)}
+
+.aperture{width:132px;height:132px;display:block;margin-bottom:24px;border-radius:50%;transition:filter .35s ease}
+.aperture svg{width:100%;height:100%;display:block}
+
+.spin-ring{transform-box:fill-box;transform-origin:center}
+.card:hover .spin-ring{animation:spin 10s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.spot-beam{transform-box:fill-box;transform-origin:top center;transition:transform .45s ease}
+.card:hover .spot-beam{transform:scaleY(1.06)}
+
+.card-domain{
+  font-family:var(--mono);font-size:.68rem;letter-spacing:.13em;
+  margin-bottom:12px;
+}
+.card-title{font-family:var(--serif);font-weight:600;font-size:1.75rem;line-height:1.2;margin-bottom:8px}
+.card-desc{font-size:.92rem;color:var(--ink-soft);max-width:24em;margin-bottom:22px}
+.card-link{
+  font-family:var(--mono);font-size:.76rem;letter-spacing:.12em;
+  display:inline-flex;align-items:center;gap:8px;text-transform:uppercase;
+}
+.card-link .arrow{transition:transform .3s ease}
+.card:hover .card-link .arrow,.card:focus-visible .card-link .arrow{transform:translateX(5px)}
+
+/* FreshEye 青绿 */
+.card-fresheye .card-domain,.card-fresheye .card-link{color:var(--teal-deep)}
+.card-fresheye:hover{border-color:rgba(47,185,164,.55)}
+.card-fresheye:hover .aperture{filter:drop-shadow(0 12px 24px rgba(47,185,164,.4))}
+
+/* Encore 霓虹紫 + 金色舞台灯 */
+.card-encore .card-domain,.card-encore .card-link{color:var(--violet)}
+.card-encore:hover{border-color:rgba(124,92,255,.5)}
+.card-encore:hover .aperture{filter:drop-shadow(0 12px 24px rgba(232,184,85,.5))}
+
+/* 卡片滚动出现 */
+.card.reveal{opacity:0;transform:translateY(20px)}
+.card.reveal.in{opacity:1;transform:translateY(0)}
+.card.reveal.in:hover{transform:translateY(-6px)}
+
+/* ============ 页脚 ============ */
+.footer{
+  max-width:960px;margin:56px auto 0;
+  padding:32px 24px 48px;
+  border-top:1px solid var(--hairline);
+  display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+  font-size:.85rem;color:var(--ink-soft);
+}
+.footer a{color:var(--gold-deep);text-decoration:none}
+.footer a:hover{text-decoration:underline}
+
+/* 焦点 */
+:focus-visible{outline:3px solid var(--gold);outline-offset:3px;border-radius:8px}
+a:focus-visible{outline-offset:4px}
+
+/* ============ 响应式 ============ */
+@media (max-width:640px){
+  .aperture{width:112px;height:112px}
+  .card{padding:32px 22px 26px}
+  .footer{flex-direction:column;text-align:center;justify-content:center}
+  .hero{padding-top:clamp(76px,18vh,120px)}
+}
+
+/* 减少动效 */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
+    scroll-behavior:auto !important;
+  }
+  .hero .eyebrow,.hero .name,.hero .tagline,.hero .hero-rule{opacity:1;transform:none}
+  .card.reveal{opacity:1;transform:none}
+}

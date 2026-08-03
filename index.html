@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Yance · 个人主页</title>
+  <meta name="description" content="Yance 的个人主页：FreshEye 水产品新鲜度智能评估，余响 Encore 演唱会足迹记录。">
+  <meta name="theme-color" content="#FAF6EF">
+  <meta name="color-scheme" content="light">
+  <meta property="og:title" content="Yance · 个人主页">
+  <meta property="og:description" content="FreshEye × 余响 Encore——两个亲手搭建的小世界。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.yance777.com/">
+  <link rel="canonical" href="https://www.yance777.com/">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,500;1,600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@500;600&display=swap">
+  <link rel="stylesheet" href="assets/style.css">
+  <script src="assets/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#projects">跳到项目列表</a>
+  <div class="bg-glow" aria-hidden="true"></div>
+
+  <main>
+    <header class="hero">
+      <p class="eyebrow">yance777.com · 个人主页</p>
+      <h1 class="name">Yance<span class="dot">.</span></h1>
+      <!-- 占位简介：以后想改成什么，直接改这一行 -->
+      <p class="tagline">喜欢把想法做成网站 · 正在建造两个有趣的小世界</p>
+      <div class="hero-rule" aria-hidden="true"><span class="rule-dot"></span></div>
+    </header>
+
+    <section id="projects" class="projects" aria-labelledby="works-title">
+      <p class="eyebrow">SELECTED WORKS</p>
+      <h2 id="works-title" class="works-title">两个小世界</h2>
+
+      <div class="card-grid">
+        <a class="card card-fresheye" href="https://fresheye.yance777.com" target="_blank" rel="noopener">
+          <span class="aperture aperture-lens" aria-hidden="true">
+            <svg viewBox="0 0 120 120" role="presentation">
+              <defs>
+                <radialGradient id="lensIris" cx="42%" cy="38%" r="72%">
+                  <stop offset="0%" stop-color="#9FF0E0"/>
+                  <stop offset="48%" stop-color="#2FB9A4"/>
+                  <stop offset="100%" stop-color="#0E5E58"/>
+                </radialGradient>
+                <linearGradient id="lensGlass" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#FFFFFF" stop-opacity=".85"/>
+                  <stop offset="55%" stop-color="#FFFFFF" stop-opacity="0"/>
+                  <stop offset="100%" stop-color="#FFFFFF" stop-opacity=".15"/>
+                </linearGradient>
+              </defs>
+              <circle cx="60" cy="60" r="56" fill="#FFFDF8" stroke="#2FB9A4" stroke-width="3"/>
+              <circle class="spin-ring" cx="60" cy="60" r="46" fill="none" stroke="#2FB9A4" stroke-opacity=".5" stroke-width="2" stroke-dasharray="5 8"/>
+              <circle cx="60" cy="60" r="36" fill="url(#lensIris)"/>
+              <circle cx="60" cy="60" r="36" fill="url(#lensGlass)"/>
+              <circle cx="60" cy="60" r="13" fill="#0B2A2A"/>
+              <circle cx="51" cy="56" r="4.5" fill="#0B2A2A" opacity=".45"/>
+              <ellipse cx="45" cy="43" rx="9" ry="5.5" fill="#FFFFFF" opacity=".9" transform="rotate(-24 45 43)"/>
+            </svg>
+          </span>
+          <span class="card-domain">fresheye.yance777.com</span>
+          <span class="card-title">FreshEye</span>
+          <span class="card-desc">上传鱼眼照片，AI 秒级评估水产品新鲜度。</span>
+          <span class="card-link">进入项目 <span class="arrow" aria-hidden="true">→</span></span>
+        </a>
+
+        <a class="card card-encore" href="https://encore.yance777.com" target="_blank" rel="noopener">
+          <span class="aperture aperture-spot" aria-hidden="true">
+            <svg viewBox="0 0 120 120" role="presentation">
+              <defs>
+                <linearGradient id="spotCone" x1="60" y1="28" x2="60" y2="108" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#E8B855" stop-opacity=".95"/>
+                  <stop offset="100%" stop-color="#E8B855" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <circle cx="60" cy="60" r="56" fill="#FFFDF8" stroke="#B98A3E" stroke-width="3"/>
+              <path class="spot-beam" d="M51 30 L69 30 L108 108 L12 108 Z" fill="url(#spotCone)"/>
+              <ellipse cx="60" cy="105" rx="35" ry="5" fill="#B98A3E" opacity=".35"/>
+              <circle class="spot-lamp" cx="60" cy="25" r="8" fill="#E8B855"/>
+              <circle cx="60" cy="25" r="13" fill="none" stroke="#E8B855" stroke-opacity=".45"/>
+              <circle cx="79" cy="60" r="2" fill="#7C5CFF" opacity=".85"/>
+              <circle cx="42" cy="76" r="2.6" fill="#B98A3E" opacity=".75"/>
+              <circle cx="85" cy="92" r="1.8" fill="#7C5CFF" opacity=".6"/>
+            </svg>
+          </span>
+          <span class="card-domain">encore.yance777.com</span>
+          <span class="card-title">余响 Encore</span>
+          <span class="card-desc">记录演唱会足迹，点亮你的每一站。</span>
+          <span class="card-link">进入项目 <span class="arrow" aria-hidden="true">→</span></span>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© <span id="year">2026</span> Yance · 以 yance777.com 记录</p>
+    <p><a href="https://github.com/yance77777" target="_blank" rel="noopener">GitHub</a></p>
+  </footer>
+</body>
+</html>
