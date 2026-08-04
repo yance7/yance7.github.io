@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>研究 · Yance</title>
-  <meta name="description" content="Yance 的研究：从鱼类新鲜度评估到多模态摄食分级，五段研究脉络与 FreshEye、余响 Encore 两个网页工具。">
+  <meta name="description" content="Yance 的研究：从鱼类新鲜度评估到多模态摄食分级，五段研究脉络与两篇国际会议论文。">
   <meta name="theme-color" content="#F4EEE2">
   <meta name="color-scheme" content="light">
   <meta property="og:title" content="研究 · Yance">
-  <meta property="og:description" content="深度学习与智慧农业——五段研究与两个已上线工具。">
+  <meta property="og:description" content="深度学习与智慧农业——五段研究与两篇已发表论文。">
   <meta property="og:type" content="website">
   <link rel="canonical" href="https://www.yance777.com/research.html">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
@@ -21,7 +21,12 @@
 </head>
 <body>
   <a class="skip-link" href="#main">跳到主要内容</a>
-  <div class="bg-layer" aria-hidden="true"></div>
+  <div class="scroll-progress" aria-hidden="true"></div>
+  <div class="bg-layer" aria-hidden="true">
+    <div class="bg-orb o1"></div>
+    <div class="bg-orb o2"></div>
+    <div class="bg-orb o3"></div>
+  </div>
   <div class="bg-grain" aria-hidden="true"></div>
 
   <header class="nav">
@@ -30,7 +35,9 @@
       <nav class="nav-links" aria-label="主导航">
         <a class="nav-link" href="index.html">首页</a>
         <a class="nav-link" href="research.html" aria-current="page">研究</a>
+        <a class="nav-link" href="works.html">作品</a>
         <a class="nav-link" href="honors.html">荣誉</a>
+        <a class="nav-link" href="academics.html">学业</a>
         <a class="nav-link" href="concerts.html">演唱会</a>
       </nav>
     </div>
@@ -41,7 +48,7 @@
       <div class="wrap">
         <p class="eyebrow">RESEARCH · 研究</p>
         <h1 class="page-title">把论文<span class="ital">写成产品</span></h1>
-        <p class="page-lead">围绕智慧农业与深度学习的五段研究——从单张鱼眼图像的新鲜度分级，到音频与视觉融合的摄食强度评估；其中两篇已发表于国际会议。每一段研究，都尽量走到「能在浏览器里点开」的那一步。</p>
+        <p class="page-lead">围绕智慧农业与深度学习的五段研究——从单张鱼眼图像的新鲜度分级，到音频与视觉融合的摄食强度评估。两篇已发表于国际会议，两个模型已开源至 GitHub。每一段研究，都尽量走到「能在浏览器里点开」的那一步。</p>
         <div class="rule" aria-hidden="true"><span class="rule-dot"></span></div>
       </div>
     </section>
@@ -67,6 +74,12 @@
               <li>将 FishFreshNet 研究线转化为零安装的网页工具：用户上传鱼眼照片即可即时获得新鲜度等级、置信度与 Grad-CAM 热力图；后端以 Docker 化 FastAPI 部署于 HuggingFace Spaces，前端为响应式 GitHub Pages。</li>
               <li>设计深海蓝青色无障碍界面，支持拖拽上传、四标签报告、一键 PDF 导出与全本地可检索历史，展示轻量化可解释 AI 如何在日常场景中交付切实的食品安全价值。</li>
             </ul>
+            <div class="research-links">
+              <a class="research-gh" href="https://fresheye.yance777.com" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a14 14 0 010 20M12 2a14 14 0 000 20"/></svg>
+                在线访问 fresheye.yance777.com
+              </a>
+            </div>
           </article>
 
           <article class="research-item reveal">
@@ -81,6 +94,12 @@
               <li>在 V1 基础上嵌入轻量化环形区域注意力 LightCRA，将特征按同心环划分以契合鱼眼解剖结构，仅新增 0.083M 参数，并与高效通道注意力 ECA 配合实现近乎零成本的再校准。</li>
               <li>跨主干、注意力模块与环数开展五次随机种子实验与配对 t 检验消融；FishFreshNet V2 达 99.29% 准确率（4.095M 参数，5.31 ms/张），V2-Lite 达 95.72% 且仅 0.929M 参数、0.061 GFLOPs。</li>
             </ul>
+            <div class="research-links">
+              <a class="research-gh" href="https://github.com/yance7/FishFreshNetV2" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+                GitHub Repository · FishFreshNetV2
+              </a>
+            </div>
           </article>
 
           <article class="research-item reveal">
@@ -94,6 +113,12 @@
               <li>构建可解释 CNN，从单张鱼眼图像在毫秒级完成新鲜度分级；构建多阶段鱼眼数据集 MFED，包含 4,800 张图像，覆盖三个新鲜度等级、20 个样本、五个角度与四种光照环境。</li>
               <li>将 CBAM 集成进 EfficientNet-B0 主干并配合 Grad-CAM 热力图，仅用 4.22M 参数与 0.41 GFLOPs 即在 MFED 上达到 98.88% 准确率，超越 VGG16 与 ResNet18，且足够轻量以适配移动端部署。</li>
             </ul>
+            <div class="research-links">
+              <a class="research-gh" href="https://github.com/yance7/FishFreshNetV1" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+                GitHub Repository · FishFreshNetV1
+              </a>
+            </div>
           </article>
 
           <article class="research-item reveal">
@@ -125,77 +150,10 @@
         </div>
       </div>
     </section>
-
-    <section class="section" style="padding-top:0">
-      <div class="wrap">
-        <div class="section-head center">
-          <p class="eyebrow center">SHIPPED WORKS</p>
-          <h2 class="section-title">已上线的<span class="ital">两个小世界</span></h2>
-          <p class="section-sub">研究的另一面是产品。这两个网页工具，都可以直接打开使用。</p>
-        </div>
-
-        <div class="project-grid">
-          <a class="card card-fresheye reveal" href="https://fresheye.yance777.com" target="_blank" rel="noopener">
-            <span class="aperture aperture-lens" aria-hidden="true">
-              <svg viewBox="0 0 120 120" role="presentation">
-                <defs>
-                  <radialGradient id="lensIris" cx="42%" cy="38%" r="72%">
-                    <stop offset="0%" stop-color="#9FF0E0"/>
-                    <stop offset="48%" stop-color="#2FB9A4"/>
-                    <stop offset="100%" stop-color="#0E5E58"/>
-                  </radialGradient>
-                  <linearGradient id="lensGlass" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stop-color="#FFFFFF" stop-opacity=".85"/>
-                    <stop offset="55%" stop-color="#FFFFFF" stop-opacity="0"/>
-                    <stop offset="100%" stop-color="#FFFFFF" stop-opacity=".15"/>
-                  </linearGradient>
-                </defs>
-                <circle cx="60" cy="60" r="56" fill="#FFFDF8" stroke="#2FB9A4" stroke-width="3"/>
-                <circle class="spin-ring" cx="60" cy="60" r="46" fill="none" stroke="#2FB9A4" stroke-opacity=".5" stroke-width="2" stroke-dasharray="5 8"/>
-                <circle cx="60" cy="60" r="36" fill="url(#lensIris)"/>
-                <circle cx="60" cy="60" r="36" fill="url(#lensGlass)"/>
-                <circle cx="60" cy="60" r="13" fill="#0B2A2A"/>
-                <circle cx="51" cy="56" r="4.5" fill="#0B2A2A" opacity=".45"/>
-                <ellipse cx="45" cy="43" rx="9" ry="5.5" fill="#FFFFFF" opacity=".9" transform="rotate(-24 45 43)"/>
-              </svg>
-            </span>
-            <span class="card-domain">fresheye.yance777.com</span>
-            <span class="card-title">FreshEye</span>
-            <span class="card-desc">上传鱼眼照片，AI 秒级评估水产品新鲜度。</span>
-            <span class="card-link">进入项目 <span class="arrow" aria-hidden="true">→</span></span>
-          </a>
-
-          <a class="card card-encore reveal d1" href="https://encore.yance777.com" target="_blank" rel="noopener">
-            <span class="aperture aperture-spot" aria-hidden="true">
-              <svg viewBox="0 0 120 120" role="presentation">
-                <defs>
-                  <linearGradient id="spotCone" x1="60" y1="28" x2="60" y2="108" gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" stop-color="#E8B855" stop-opacity=".95"/>
-                    <stop offset="100%" stop-color="#E8B855" stop-opacity="0"/>
-                  </linearGradient>
-                </defs>
-                <circle cx="60" cy="60" r="56" fill="#FFFDF8" stroke="#B98A3E" stroke-width="3"/>
-                <path class="spot-beam" d="M51 30 L69 30 L108 108 L12 108 Z" fill="url(#spotCone)"/>
-                <ellipse cx="60" cy="105" rx="35" ry="5" fill="#B98A3E" opacity=".35"/>
-                <circle class="spot-lamp" cx="60" cy="25" r="8" fill="#E8B855"/>
-                <circle cx="60" cy="25" r="13" fill="none" stroke="#E8B855" stroke-opacity=".45"/>
-                <circle cx="79" cy="60" r="2" fill="#7C5CFF" opacity=".85"/>
-                <circle cx="42" cy="76" r="2.6" fill="#B98A3E" opacity=".75"/>
-                <circle cx="85" cy="92" r="1.8" fill="#7C5CFF" opacity=".6"/>
-              </svg>
-            </span>
-            <span class="card-domain">encore.yance777.com</span>
-            <span class="card-title">余响 Encore</span>
-            <span class="card-desc">记录演唱会足迹，点亮你的每一站。</span>
-            <span class="card-link">进入项目 <span class="arrow" aria-hidden="true">→</span></span>
-          </a>
-        </div>
-      </div>
-    </section>
   </main>
 
   <footer class="footer">
-    <p>© <span id="year">2026</span> <span class="footer-mark">Yance.</span> · 以 yance777.com 记录</p>
+    <p>© <span id="year">2026</span> <span class="footer-mark">Yance.</span></p>
     <div class="footer-links">
       <a href="https://github.com/yance7" target="_blank" rel="noopener">GitHub</a>
       <a href="mailto:flyance777@outlook.com">Email</a>

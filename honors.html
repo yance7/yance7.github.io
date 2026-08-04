@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>荣誉 · Yance</title>
-  <meta name="description" content="Yance 的荣誉与奖项：生物、化学、计算机、物理与科技创新方向的竞赛足迹。">
+  <meta name="description" content="Yance 的荣誉与奖项：生物、化学、计算机、物理与科技创新方向的竞赛足迹，支持时间线与奖项份量双排序。">
   <meta name="theme-color" content="#F4EEE2">
   <meta name="color-scheme" content="light">
   <meta property="og:title" content="荣誉 · Yance">
@@ -21,7 +21,12 @@
 </head>
 <body>
   <a class="skip-link" href="#main">跳到主要内容</a>
-  <div class="bg-layer" aria-hidden="true"></div>
+  <div class="scroll-progress" aria-hidden="true"></div>
+  <div class="bg-layer" aria-hidden="true">
+    <div class="bg-orb o1"></div>
+    <div class="bg-orb o2"></div>
+    <div class="bg-orb o3"></div>
+  </div>
   <div class="bg-grain" aria-hidden="true"></div>
 
   <header class="nav">
@@ -30,7 +35,9 @@
       <nav class="nav-links" aria-label="主导航">
         <a class="nav-link" href="index.html">首页</a>
         <a class="nav-link" href="research.html">研究</a>
+        <a class="nav-link" href="works.html">作品</a>
         <a class="nav-link" href="honors.html" aria-current="page">荣誉</a>
+        <a class="nav-link" href="academics.html">学业</a>
         <a class="nav-link" href="concerts.html">演唱会</a>
       </nav>
     </div>
@@ -41,91 +48,93 @@
       <div class="wrap">
         <p class="eyebrow">HONORS · 荣誉</p>
         <h1 class="page-title">一路<span class="ital">拾起的星火</span></h1>
-        <p class="page-lead">生物、化学、计算机、物理与科技创新——跨学科的竞赛与评奖足迹，按时间倒序整理于此。每一项背后，都是一段被题目与实验填满的日子。</p>
+        <p class="page-lead">生物、化学、计算机、物理与科技创新——跨学科的竞赛与评奖足迹。每一项背后，都是一段被题目与实验填满的日子。可在下方切换排序方式浏览。</p>
         <div class="rule" aria-hidden="true"><span class="rule-dot"></span></div>
       </div>
     </section>
 
     <section class="section" style="padding-top:clamp(28px,4vh,44px)">
       <div class="wrap">
-        <div class="honor-list reveal">
-          <h2 class="honor-year-head">2026 <span class="count">11 项</span></h2>
+        <div class="sort-bar reveal">
+          <span class="sort-label">排序方式</span>
+          <button class="sort-btn active" data-sort="timeline">时间线</button>
+          <button class="sort-btn" data-sort="weight">奖项份量</button>
+        </div>
 
-          <div class="honor-row">
+        <div class="honor-list reveal">
+          <div class="honor-row" data-date="2026.08" data-weight="60">
             <span class="honor-date">2026.08</span>
             <span class="honor-name">第九届全国青少年人工智能创新挑战赛<span class="sub">9th National Youth AI Innovation Challenge</span></span>
             <span class="honor-level lvl-third">三等奖</span>
           </div>
 
-          <div class="honor-row">
+          <div class="honor-row" data-date="2026.07" data-weight="85">
             <span class="honor-date">2026.07</span>
             <span class="honor-name">TRAE AI 创意大赛<span class="sub">TRAE AI Creativity Competition</span></span>
             <span class="honor-level lvl-top">Top 300 / 约 14,000</span>
           </div>
 
-          <div class="honor-row">
+          <div class="honor-row" data-date="2026.05" data-weight="100">
             <span class="honor-date">2026.05</span>
             <span class="honor-name">英国化学奥赛<span class="sub">UK Chemistry Olympiad (UKChO)</span></span>
             <span class="honor-level lvl-gold">全球金奖</span>
           </div>
 
-          <div class="honor-row">
+          <div class="honor-row" data-date="2026.05" data-weight="90">
             <span class="honor-date">2026.05</span>
             <span class="honor-name">美国生物奥赛<span class="sub">USA Biology Olympiad (USABO)</span></span>
             <span class="honor-level lvl-silver">全球银奖</span>
           </div>
 
-          <div class="honor-row">
+          <div class="honor-row" data-date="2026.05" data-weight="75">
             <span class="honor-date">2026.05</span>
             <span class="honor-name">加拿大化学竞赛<span class="sub">Canadian Chemistry Contest (CCC)</span></span>
             <span class="honor-level lvl-bronze">全国铜奖</span>
           </div>
 
-          <div class="honor-row">
+          <div class="honor-row" data-date="2026.05" data-weight="75">
             <span class="honor-date">2026.05</span>
             <span class="honor-name">英国物理挑战赛<span class="sub">Senior Physics Challenge (SPC)</span></span>
             <span class="honor-level lvl-bronze">全球铜奖</span>
           </div>
 
-          <div class="honor-row">
+          <div class="honor-row" data-date="2026.03" data-weight="100">
             <span class="honor-date">2026.03</span>
             <span class="honor-name">英国生物奥赛<span class="sub">British Biology Olympiad (BBO)</span></span>
             <span class="honor-level lvl-gold">全球金奖</span>
           </div>
 
-          <div class="honor-row">
+          <div class="honor-row" data-date="2026.03" data-weight="55">
             <span class="honor-date">2026.03</span>
             <span class="honor-name">iHOSA 全国轮 BCE<span class="sub">iHOSA National Round · Biological Case Event</span></span>
             <span class="honor-level lvl-excellent">全国优秀奖</span>
           </div>
 
-          <div class="honor-row">
+          <div class="honor-row" data-date="2026.03" data-weight="70">
             <span class="honor-date">2026.03</span>
             <span class="honor-name">北京青少年科技创新大赛<span class="sub">Beijing Adolescents Science &amp; Technology Innovation Contest</span></span>
             <span class="honor-level lvl-second">二等奖</span>
           </div>
 
-          <div class="honor-row">
+          <div class="honor-row" data-date="2026.02" data-weight="95">
             <span class="honor-date">2026.02</span>
             <span class="honor-name">2025–2026 赛季美国计算机奥赛<span class="sub">USA Computing Olympiad (USACO)</span></span>
             <span class="honor-level lvl-gold">金级 Gold Division</span>
           </div>
 
-          <div class="honor-row">
+          <div class="honor-row" data-date="2026.01" data-weight="70">
             <span class="honor-date">2026.01</span>
             <span class="honor-name">北京市朝阳区金鹏科技论坛<span class="sub">Beijing Chaoyang Jinping Technology Forum</span></span>
             <span class="honor-level lvl-second">二等奖</span>
           </div>
 
-          <h2 class="honor-year-head">2025 <span class="count">2 项</span></h2>
-
-          <div class="honor-row">
+          <div class="honor-row" data-date="2025.12" data-weight="80">
             <span class="honor-date">2025.12</span>
             <span class="honor-name">北京市朝阳区青少年科技创新大赛<span class="sub">Beijing Chaoyang Adolescents S&amp;T Innovation Contest</span></span>
             <span class="honor-level lvl-first">一等奖</span>
           </div>
 
-          <div class="honor-row">
+          <div class="honor-row" data-date="2025.04" data-weight="50">
             <span class="honor-date">2025.04</span>
             <span class="honor-name">加拿大化学竞赛<span class="sub">Canadian Chemistry Contest (CCC)</span></span>
             <span class="honor-level lvl-honor">区域优秀奖</span>
@@ -136,7 +145,7 @@
   </main>
 
   <footer class="footer">
-    <p>© <span id="year">2026</span> <span class="footer-mark">Yance.</span> · 以 yance777.com 记录</p>
+    <p>© <span id="year">2026</span> <span class="footer-mark">Yance.</span></p>
     <div class="footer-links">
       <a href="https://github.com/yance7" target="_blank" rel="noopener">GitHub</a>
       <a href="mailto:flyance777@outlook.com">Email</a>

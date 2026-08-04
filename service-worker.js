@@ -6,12 +6,14 @@
    · 静态资源：stale-while-revalidate（秒开 + 后台更新）
    · 跨域 / 非 GET：直接放行
    ============================================ */
-var CACHE = 'yance-v1';
+var CACHE = 'yance-v2';
 var PRECACHE = [
   './',
   './index.html',
   './research.html',
+  './works.html',
   './honors.html',
+  './academics.html',
   './concerts.html',
   './404.html',
   './assets/style.css',

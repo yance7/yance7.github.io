@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Yance · 个人主页</title>
-  <meta name="description" content="Yance 的个人主页：深度学习与智慧农业研究者，把论文做成能用的产品。研究、荣誉与演唱会足迹。">
+  <meta name="description" content="Yance 的个人主页：深度学习与智慧农业研究者，把论文做成能用的产品。研究、作品、荣誉、学业与演唱会足迹。">
   <meta name="theme-color" content="#F4EEE2">
   <meta name="color-scheme" content="light">
   <meta name="author" content="Yance Yan">
@@ -23,7 +23,12 @@
 </head>
 <body>
   <a class="skip-link" href="#main">跳到主要内容</a>
-  <div class="bg-layer" aria-hidden="true"></div>
+  <div class="scroll-progress" aria-hidden="true"></div>
+  <div class="bg-layer" aria-hidden="true">
+    <div class="bg-orb o1"></div>
+    <div class="bg-orb o2"></div>
+    <div class="bg-orb o3"></div>
+  </div>
   <div class="bg-grain" aria-hidden="true"></div>
 
   <header class="nav">
@@ -32,7 +37,9 @@
       <nav class="nav-links" aria-label="主导航">
         <a class="nav-link" href="index.html" aria-current="page">首页</a>
         <a class="nav-link" href="research.html">研究</a>
+        <a class="nav-link" href="works.html">作品</a>
         <a class="nav-link" href="honors.html">荣誉</a>
+        <a class="nav-link" href="academics.html">学业</a>
         <a class="nav-link" href="concerts.html">演唱会</a>
       </nav>
     </div>
@@ -41,13 +48,13 @@
   <main id="main">
     <section class="hero">
       <div class="wrap">
-        <p class="eyebrow center">yance777.com · 个人主页</p>
-        <h1 class="hero-name">Yance<span class="dot">.</span></h1>
+        <p class="eyebrow center">个人主页 · Personal Site</p>
+        <h1 class="hero-name">Yance<span class="dot">.<span class="shimmer"></span></span></h1>
         <p class="hero-tagline">把想法做成网站的研究者与建造者</p>
         <p class="hero-sub">高中生 · 深度学习与智慧农业方向 · 喜欢把研究成果变成能用的产品，从论文里的模型走到浏览器里能点开的工具。</p>
         <div class="hero-cta">
           <a class="btn btn-primary" href="research.html">阅读研究 <span class="arrow" aria-hidden="true">→</span></a>
-          <a class="btn btn-ghost" href="honors.html">查看荣誉 <span class="arrow" aria-hidden="true">→</span></a>
+          <a class="btn btn-ghost" href="works.html">查看作品 <span class="arrow" aria-hidden="true">→</span></a>
         </div>
         <div class="hero-rule" aria-hidden="true"><span class="rule-dot"></span></div>
       </div>
@@ -57,8 +64,8 @@
       <div class="wrap">
         <div class="section-head center">
           <p class="eyebrow center">EXPLORE</p>
-          <h2 class="section-title">三个<span class="ital">小世界</span></h2>
-          <p class="section-sub">研究、荣誉与演唱会——把过去一段时间的探索与热爱，分别收进三间屋子。</p>
+          <h2 class="section-title">五个<span class="ital">小世界</span></h2>
+          <p class="section-sub">研究、作品、荣誉、学业与演唱会——把过去一段时间的探索与热爱，分别收进五间屋子。</p>
         </div>
 
         <div class="gate-grid">
@@ -74,11 +81,26 @@
               <span class="gate-num">01</span>
             </div>
             <h3 class="gate-title">研究<span class="en">Research</span></h3>
-            <p class="gate-desc">从鱼类新鲜度到多模态摄食评估，五段研究脉络与两个已上线的网页工具。</p>
+            <p class="gate-desc">从鱼类新鲜度到多模态摄食评估，五段研究脉络与两篇国际会议论文。</p>
             <span class="gate-link">进入研究 <span class="arrow" aria-hidden="true">→</span></span>
           </a>
 
-          <a class="gate gate-honors reveal d1" href="honors.html">
+          <a class="gate gate-works reveal d1" href="works.html">
+            <div class="gate-top">
+              <span class="gate-icon" aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="9"/>
+                  <path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/>
+                </svg>
+              </span>
+              <span class="gate-num">02</span>
+            </div>
+            <h3 class="gate-title">作品<span class="en">Works</span></h3>
+            <p class="gate-desc">FreshEye 与余响 Encore——两个已上线的网页工具，可以直接打开使用。</p>
+            <span class="gate-link">查看作品 <span class="arrow" aria-hidden="true">→</span></span>
+          </a>
+
+          <a class="gate gate-honors reveal d2" href="honors.html">
             <div class="gate-top">
               <span class="gate-icon" aria-hidden="true">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -86,14 +108,30 @@
                   <path d="M8.5 12.5L7 21l5-3 5 3-1.5-8.5"/>
                 </svg>
               </span>
-              <span class="gate-num">02</span>
+              <span class="gate-num">03</span>
             </div>
             <h3 class="gate-title">荣誉<span class="en">Honors</span></h3>
-            <p class="gate-desc">生物、化学、计算机、物理与科技创新——一段竞赛与评奖的足迹。</p>
+            <p class="gate-desc">生物、化学、计算机、物理与科技创新——一段竞赛与评奖的足迹，支持双排序浏览。</p>
             <span class="gate-link">查看荣誉 <span class="arrow" aria-hidden="true">→</span></span>
           </a>
 
-          <a class="gate gate-concerts reveal d2" href="concerts.html">
+          <a class="gate gate-academics reveal d3" href="academics.html">
+            <div class="gate-top">
+              <span class="gate-icon" aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 9l9-5 9 5-9 5-9-5z"/>
+                  <path d="M7 11v5c0 1 2 3 5 3s5-2 5-3v-5"/>
+                  <path d="M21 9v6"/>
+                </svg>
+              </span>
+              <span class="gate-num">04</span>
+            </div>
+            <h3 class="gate-title">学业<span class="en">Academics</span></h3>
+            <p class="gate-desc">GPA、SAT、AP 与语言标化——把学业上的努力翻译成可读的数字。</p>
+            <span class="gate-link">查看学业 <span class="arrow" aria-hidden="true">→</span></span>
+          </a>
+
+          <a class="gate gate-concerts reveal d4" href="concerts.html">
             <div class="gate-top">
               <span class="gate-icon" aria-hidden="true">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -102,42 +140,19 @@
                   <circle cx="18" cy="16" r="3"/>
                 </svg>
               </span>
-              <span class="gate-num">03</span>
+              <span class="gate-num">05</span>
             </div>
             <h3 class="gate-title">演唱会<span class="en">Concerts</span></h3>
-            <p class="gate-desc">那些被音乐点亮的夜晚——演唱会足迹记录，正在路上。</p>
-            <span class="gate-link">即将开放 <span class="arrow" aria-hidden="true">→</span></span>
+            <p class="gate-desc">那些被音乐点亮的夜晚——演唱会足迹记录，沿时间线一字排开。</p>
+            <span class="gate-link">查看足迹 <span class="arrow" aria-hidden="true">→</span></span>
           </a>
-        </div>
-      </div>
-    </section>
-
-    <section class="section-sm">
-      <div class="wrap">
-        <div class="about-strip reveal">
-          <div class="stat">
-            <span class="stat-num">4.0<span class="accent">/4.0</span></span>
-            <span class="stat-label">GPA · 满分绩点</span>
-          </div>
-          <div class="stat">
-            <span class="stat-num">11<span class="accent">门</span></span>
-            <span class="stat-label">AP 满分（5 分）</span>
-          </div>
-          <div class="stat">
-            <span class="stat-num">1490</span>
-            <span class="stat-label">SAT · 数学 800</span>
-          </div>
-          <div class="stat">
-            <span class="stat-num">5<span class="accent">项</span></span>
-            <span class="stat-label">独立研究 · 2 篇发表</span>
-          </div>
         </div>
       </div>
     </section>
   </main>
 
   <footer class="footer">
-    <p>© <span id="year">2026</span> <span class="footer-mark">Yance.</span> · 以 yance777.com 记录</p>
+    <p>© <span id="year">2026</span> <span class="footer-mark">Yance.</span></p>
     <div class="footer-links">
       <a href="https://github.com/yance7" target="_blank" rel="noopener">GitHub</a>
       <a href="mailto:flyance777@outlook.com">Email</a>
