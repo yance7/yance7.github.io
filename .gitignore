@@ -12,5 +12,8 @@ desktop.ini
 _shots/
 *.log
 
+# TRAE 内部文档
+.trae/
+
 # 简历源文件
 简历.pdf

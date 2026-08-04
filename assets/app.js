@@ -39,7 +39,7 @@
   /* —— 滚动出现 —— */
   var revealEls = document.querySelectorAll('.reveal');
   if (reduced || !('IntersectionObserver' in window)) {
-    revealEls.forEach(function (el) { el.classList.add('in'); });
+    for (var ri = 0; ri < revealEls.length; ri++) revealEls[ri].classList.add('in');
   } else {
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
@@ -49,7 +49,7 @@
         }
       });
     }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
-    revealEls.forEach(function (el) { io.observe(el); });
+    for (var rj = 0; rj < revealEls.length; rj++) io.observe(revealEls[rj]);
   }
 
   /* —— 3D 卡片倾斜 + 光效跟随 —— */
@@ -92,7 +92,7 @@
   var honorCards = document.querySelectorAll('.honor-card');
   if (honorCards.length) {
     if (reduced || !('IntersectionObserver' in window)) {
-      honorCards.forEach(function (el) { el.classList.add('in'); });
+      for (var hc = 0; hc < honorCards.length; hc++) honorCards[hc].classList.add('in');
     } else {
       var honorIO = new IntersectionObserver(function (entries) {
         entries.forEach(function (entry) {
@@ -104,7 +104,7 @@
           }
         });
       }, { threshold: 0.12, rootMargin: '0px 0px -4% 0px' });
-      honorCards.forEach(function (el) { honorIO.observe(el); });
+      for (var hj = 0; hj < honorCards.length; hj++) honorIO.observe(honorCards[hj]);
     }
   }
 
@@ -112,10 +112,11 @@
   var countEls = document.querySelectorAll('[data-count]');
   if (countEls.length) {
     var animateCount = function (el) {
-      var target = parseFloat(el.getAttribute('data-count'));
+      var raw = el.getAttribute('data-count');
+      var target = parseFloat(raw);
       var dur = 1200;
       var start = performance.now();
-      var isFloat = target % 1 !== 0;
+      var isFloat = raw.indexOf('.') !== -1;
       var step = function (now) {
         var t = Math.min((now - start) / dur, 1);
         var eased = 1 - Math.pow(1 - t, 3);
@@ -127,7 +128,7 @@
       requestAnimationFrame(step);
     };
     if (reduced) {
-      countEls.forEach(function (el) { el.textContent = el.getAttribute('data-count'); });
+      for (var ci = 0; ci < countEls.length; ci++) countEls[ci].textContent = countEls[ci].getAttribute('data-count');
     } else {
       var countIO = new IntersectionObserver(function (entries) {
         entries.forEach(function (entry) {
@@ -137,7 +138,7 @@
           }
         });
       }, { threshold: 0.5 });
-      countEls.forEach(function (el) { countIO.observe(el); });
+      for (var cj = 0; cj < countEls.length; cj++) countIO.observe(countEls[cj]);
     }
   }
 
