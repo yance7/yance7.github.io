@@ -381,7 +381,7 @@ main,.nav,.footer{position:relative;z-index:1}
   cursor:pointer;
 }
 .research-item > *{position:relative;z-index:1}
-.research-ripple{z-index:0}
+.research-item > .research-ripple{z-index:0}
 .research-item::after{
   content:'';position:absolute;inset:0;pointer-events:none;
   background:radial-gradient(circle 280px at var(--mx) var(--my),rgba(185,138,62,.10),transparent 70%);
@@ -607,6 +607,7 @@ main,.nav,.footer{position:relative;z-index:1}
 /* 入场动画 */
 .honor-card{opacity:0;transform:translateY(12px)}
 .honor-card.in{opacity:1;transform:none;transition:opacity .5s ease,transform .5s var(--ease-out),box-shadow .3s ease,border-color .3s ease}
+.honor-card:hover .honor-card-name{color:var(--gold-deep);transition:color .3s ease}
 
 /* ============ 演唱会时间线 ============ */
 .concert-count{
@@ -683,8 +684,13 @@ main,.nav,.footer{position:relative;z-index:1}
 .ap-section-head{
   font-family:var(--display);font-style:italic;font-weight:500;font-size:1.35rem;
   color:var(--gold-deep);margin:32px 0 16px;padding-bottom:8px;border-bottom:1px solid var(--line);
+  display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;
 }
 .ap-section-head:first-child{margin-top:0}
+.ap-section-head .count{
+  font-family:var(--mono);font-style:normal;font-size:.72rem;font-weight:400;
+  color:var(--ink-mute);letter-spacing:.06em;
+}
 .ap-row{
   display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;
   padding:16px 4px;border-bottom:1px solid var(--line);
@@ -750,6 +756,12 @@ main,.nav,.footer{position:relative;z-index:1}
 .reveal.d3{transition-delay:.24s}
 .reveal.d4{transition-delay:.32s}
 
+/* 3D 倾斜激活态（由 JS 添加 .tilting 类） */
+.gate.tilting,.card.tilting,.research-item.tilting,.score-card.tilting{
+  transform:translateY(-6px) perspective(800px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) !important;
+  transition:transform .15s ease-out;
+}
+
 /* 焦点 */
 :focus-visible{outline:3px solid var(--gold);outline-offset:3px;border-radius:8px}
 a:focus-visible{outline-offset:4px}
@@ -787,13 +799,6 @@ a:focus-visible{outline-offset:4px}
   .hero{padding-top:clamp(60px,12vh,96px)}
   .ap-row{grid-template-columns:1fr auto;gap:10px}
 }
-@media (max-width:380px){
-  .nav-link{padding:5px 7px;font-size:.7rem}
-  .brand{font-size:1.2rem}
-}
-@media (max-width:340px){
-  .nav-link{padding:5px 6px;font-size:.66rem}
-}
 
 /* ============ 页面入场动画 ============ */
 @keyframes pageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -810,11 +815,10 @@ main{animation:pageIn .6s ease both}
 .btn-primary:hover::after{width:300px;height:300px}
 
 /* ============ 研究条目入场增强 ============ */
-.research-item{position:relative;overflow:hidden}
 .research-item::before{
   content:'';position:absolute;left:0;top:0;width:3px;height:0;
   background:linear-gradient(180deg,var(--gold),var(--gold-bright));
-  transition:height .4s ease;border-radius:0 3px 3px 0;
+  transition:height .4s ease;border-radius:0 3px 3px 0;z-index:2;
 }
 .research-item:hover::before{height:100%}
 
@@ -829,20 +833,26 @@ main{animation:pageIn .6s ease both}
 .tl-item:nth-child(odd) .tl-card::before{background:linear-gradient(225deg,rgba(185,138,62,.04),transparent 50%)}
 
 /* ============ 学业卡片增强 ============ */
-.score-card{position:relative;overflow:hidden}
+.score-card{position:relative;overflow:hidden;--mx:50%;--my:50%}
 .score-card::after{
   content:'';position:absolute;bottom:-30px;right:-30px;width:80px;height:80px;
   border-radius:50%;background:radial-gradient(circle,rgba(185,138,62,.08),transparent 70%);
   transition:transform .5s ease;
 }
 .score-card:hover::after{transform:scale(2.5)}
+.score-card::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(circle 200px at var(--mx) var(--my),rgba(185,138,62,.06),transparent 70%);
+  opacity:0;transition:opacity .4s ease;
+}
+.score-card:hover::before{opacity:1}
 
 /* ============ 导航 6 项紧凑模式 ============ */
-@media (max-width:520px){
-  .nav-link{padding:5px 7px;font-size:.72rem;letter-spacing:-.01em}
+@media (max-width:560px){
+  .nav-link{padding:5px 8px;font-size:.72rem;letter-spacing:-.01em}
   .brand{font-size:1.2rem}
 }
-@media (max-width:380px){
+@media (max-width:400px){
   .nav-link{padding:4px 6px;font-size:.68rem}
   .brand{font-size:1.1rem}
   .nav-inner{gap:6px}

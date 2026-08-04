@@ -60,13 +60,18 @@
         var r = el.getBoundingClientRect();
         var x = (e.clientX - r.left) / r.width - 0.5;
         var y = (e.clientY - r.top) / r.height - 0.5;
-        el.style.transform = 'translateY(-6px) perspective(800px) rotateX(' + (-y * 4) + 'deg) rotateY(' + (x * 4) + 'deg)';
+        /* 使用 CSS 变量驱动倾斜，避免覆盖 hover transform */
+        el.style.setProperty('--rx', (-y * 4) + 'deg');
+        el.style.setProperty('--ry', (x * 4) + 'deg');
+        el.classList.add('tilting');
         /* 光效跟随 */
         el.style.setProperty('--mx', (e.clientX - r.left) + 'px');
         el.style.setProperty('--my', (e.clientY - r.top) + 'px');
       });
       el.addEventListener('mouseleave', function () {
-        el.style.transform = '';
+        el.classList.remove('tilting');
+        el.style.removeProperty('--rx');
+        el.style.removeProperty('--ry');
       });
     });
   }
