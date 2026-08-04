@@ -39,7 +39,7 @@
   /* —— 滚动出现 —— */
   var revealEls = document.querySelectorAll('.reveal');
   if (reduced || !('IntersectionObserver' in window)) {
-    for (var ri = 0; ri < revealEls.length; ri++) revealEls[ri].classList.add('in');
+    revealEls.forEach(function (el) { el.classList.add('in'); });
   } else {
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
@@ -49,7 +49,7 @@
         }
       });
     }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
-    for (var rj = 0; rj < revealEls.length; rj++) io.observe(revealEls[rj]);
+    revealEls.forEach(function (el) { io.observe(el); });
   }
 
   /* —— 3D 卡片倾斜 + 光效跟随 —— */
@@ -92,7 +92,7 @@
   var honorCards = document.querySelectorAll('.honor-card');
   if (honorCards.length) {
     if (reduced || !('IntersectionObserver' in window)) {
-      for (var hc = 0; hc < honorCards.length; hc++) honorCards[hc].classList.add('in');
+      honorCards.forEach(function (el) { el.classList.add('in'); });
     } else {
       var honorIO = new IntersectionObserver(function (entries) {
         entries.forEach(function (entry) {
@@ -104,7 +104,7 @@
           }
         });
       }, { threshold: 0.12, rootMargin: '0px 0px -4% 0px' });
-      for (var hj = 0; hj < honorCards.length; hj++) honorIO.observe(honorCards[hj]);
+      honorCards.forEach(function (el) { honorIO.observe(el); });
     }
   }
 
@@ -112,11 +112,10 @@
   var countEls = document.querySelectorAll('[data-count]');
   if (countEls.length) {
     var animateCount = function (el) {
-      var raw = el.getAttribute('data-count');
-      var target = parseFloat(raw);
+      var target = parseFloat(el.getAttribute('data-count'));
       var dur = 1200;
       var start = performance.now();
-      var isFloat = raw.indexOf('.') !== -1;
+      var isFloat = target % 1 !== 0;
       var step = function (now) {
         var t = Math.min((now - start) / dur, 1);
         var eased = 1 - Math.pow(1 - t, 3);
@@ -128,7 +127,7 @@
       requestAnimationFrame(step);
     };
     if (reduced) {
-      for (var ci = 0; ci < countEls.length; ci++) countEls[ci].textContent = countEls[ci].getAttribute('data-count');
+      countEls.forEach(function (el) { el.textContent = el.getAttribute('data-count'); });
     } else {
       var countIO = new IntersectionObserver(function (entries) {
         entries.forEach(function (entry) {
@@ -138,14 +137,33 @@
           }
         });
       }, { threshold: 0.5 });
-      for (var cj = 0; cj < countEls.length; cj++) countIO.observe(countEls[cj]);
+      countEls.forEach(function (el) { countIO.observe(el); });
     }
   }
 
-  /* —— Service Worker 注册 —— */
+  /* —— Service Worker 注册 + 自动刷新 —— */
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {
-      navigator.serviceWorker.register('service-worker.js').catch(function () {});
+      navigator.serviceWorker.register('service-worker.js').then(function (reg) {
+        /* 检测到新 SW 激活时自动刷新页面 */
+        if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        reg.addEventListener('updatefound', function () {
+          var newWorker = reg.installing;
+          if (newWorker) {
+            newWorker.addEventListener('statechange', function () {
+              if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
+                window.location.reload();
+              }
+            });
+          }
+        });
+      }).catch(function () {});
+      /* 接收 SW 更新消息时刷新 */
+      navigator.serviceWorker.addEventListener('message', function (event) {
+        if (event.data && event.data.type === 'SW_UPDATED') {
+          window.location.reload();
+        }
+      });
     });
   }
 })();

@@ -1,10 +1,10 @@
 /* ============================================
    Yance · 个人主页 — 轻量 Service Worker
-   策略：
+   策略（v5 全面网络优先）：
    · 预缓存核心资源（安装时）
-   · 导航请求：网络优先，失败回退缓存（保证更新可见 + 离线可用）
-   · 静态资源：stale-while-revalidate（秒开 + 后台更新）
+   · 所有同源 GET：网络优先，失败回退缓存
    · 跨域 / 非 GET：直接放行
+   · 激活时清除旧缓存 + 通知客户端刷新
    ============================================ */
 var CACHE = 'yance-v5';
 var PRECACHE = [
@@ -18,9 +18,7 @@ var PRECACHE = [
   './404.html',
   './assets/style.css',
   './assets/app.js',
-  './assets/favicon.svg',
-  './assets/concert-deco.jpg',
-  './site.webmanifest'
+  './assets/favicon.svg'
 ];
 
 self.addEventListener('install', function (event) {
@@ -44,6 +42,13 @@ self.addEventListener('activate', function (event) {
       );
     }).then(function () {
       return self.clients.claim();
+    }).then(function () {
+      /* 通知所有客户端刷新 */
+      return self.clients.matchAll({ includeUncontrolled: true });
+    }).then(function (clients) {
+      clients.forEach(function (client) {
+        client.postMessage({ type: 'SW_UPDATED' });
+      });
     })
   );
 });
@@ -56,33 +61,21 @@ self.addEventListener('fetch', function (event) {
   var url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
-  /* 导航请求：网络优先 */
-  if (req.mode === 'navigate') {
-    event.respondWith(
-      fetch(req).then(function (res) {
+  /* 所有同源 GET 请求：网络优先 */
+  event.respondWith(
+    fetch(req).then(function (res) {
+      if (res && res.status === 200) {
         var copy = res.clone();
         caches.open(CACHE).then(function (cache) { cache.put(req, copy); });
-        return res;
-      }).catch(function () {
-        return caches.match(req).then(function (cached) {
-          return cached || caches.match('./index.html');
-        });
-      })
-    );
-    return;
-  }
-
-  /* 静态资源：stale-while-revalidate */
-  event.respondWith(
-    caches.match(req).then(function (cached) {
-      var network = fetch(req).then(function (res) {
-        if (res && res.status === 200) {
-          var copy = res.clone();
-          caches.open(CACHE).then(function (cache) { cache.put(req, copy); });
-        }
-        return res;
-      }).catch(function () { return cached; });
-      return cached || network;
+      }
+      return res;
+    }).catch(function () {
+      return caches.match(req).then(function (cached) {
+        if (cached) return cached;
+        /* 导航请求回退到 index.html */
+        if (req.mode === 'navigate') return caches.match('./index.html');
+        return new Response('', { status: 504, statusText: 'Offline' });
+      });
     })
   );
 });
