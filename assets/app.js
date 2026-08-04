@@ -1,7 +1,7 @@
 /* ============================================
-   Yance · 个人主页 — 共享脚本 v2
-   滚动进度 · 导航交互 · 3D 倾斜 · 数字计数
-   荣誉双排序 · 滚动出现 · Service Worker
+   Yance · 个人主页 — 共享脚本 v3
+   滚动进度 · 导航交互 · 3D 倾斜 · 光效跟随
+   数字计数 · 荣誉入场 · 滚动出现 · Service Worker
    ============================================ */
 (function () {
   'use strict';
@@ -52,7 +52,7 @@
     revealEls.forEach(function (el) { io.observe(el); });
   }
 
-  /* —— 3D 卡片倾斜 —— */
+  /* —— 3D 卡片倾斜 + 光效跟随 —— */
   if (!reduced && window.matchMedia('(hover: hover)').matches) {
     var tiltEls = document.querySelectorAll('.gate, .card, .research-item, .score-card');
     tiltEls.forEach(function (el) {
@@ -61,11 +61,51 @@
         var x = (e.clientX - r.left) / r.width - 0.5;
         var y = (e.clientY - r.top) / r.height - 0.5;
         el.style.transform = 'translateY(-6px) perspective(800px) rotateX(' + (-y * 4) + 'deg) rotateY(' + (x * 4) + 'deg)';
+        /* 光效跟随 */
+        el.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+        el.style.setProperty('--my', (e.clientY - r.top) + 'px');
       });
       el.addEventListener('mouseleave', function () {
         el.style.transform = '';
       });
     });
+  }
+
+  /* —— 研究卡片点击波纹 —— */
+  var researchItems = document.querySelectorAll('.research-item');
+  researchItems.forEach(function (el) {
+    el.addEventListener('click', function (e) {
+      var r = el.getBoundingClientRect();
+      var ripple = document.createElement('span');
+      ripple.className = 'research-ripple';
+      var size = Math.max(r.width, r.height) * 0.6;
+      ripple.style.width = size + 'px';
+      ripple.style.height = size + 'px';
+      ripple.style.left = (e.clientX - r.left) + 'px';
+      ripple.style.top = (e.clientY - r.top) + 'px';
+      el.appendChild(ripple);
+      setTimeout(function () { ripple.remove(); }, 600);
+    });
+  });
+
+  /* —— 荣誉卡片逐张入场 —— */
+  var honorCards = document.querySelectorAll('.honor-card');
+  if (honorCards.length) {
+    if (reduced || !('IntersectionObserver' in window)) {
+      honorCards.forEach(function (el) { el.classList.add('in'); });
+    } else {
+      var honorIO = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            var el = entry.target;
+            var delay = Array.from(honorCards).indexOf(el) % 8;
+            setTimeout(function () { el.classList.add('in'); }, delay * 70);
+            honorIO.unobserve(el);
+          }
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -4% 0px' });
+      honorCards.forEach(function (el) { honorIO.observe(el); });
+    }
   }
 
   /* —— 数字计数动画 —— */
@@ -99,99 +139,6 @@
       }, { threshold: 0.5 });
       countEls.forEach(function (el) { countIO.observe(el); });
     }
-  }
-
-  /* —— 荣誉双排序 —— */
-  var honorList = document.querySelector('.honor-list');
-  if (honorList) {
-    var rows = Array.from(honorList.querySelectorAll('.honor-row'));
-    var rowData = rows.map(function (row) {
-      return {
-        el: row,
-        date: row.getAttribute('data-date') || '',
-        weight: parseInt(row.getAttribute('data-weight') || '0', 10),
-        level: row.querySelector('.honor-level') ? row.querySelector('.honor-level').textContent.trim() : ''
-      };
-    });
-
-    var sortBtns = document.querySelectorAll('.sort-btn');
-    var yearHeads = honorList.querySelectorAll('.honor-year-head');
-
-    /* 按时间排序（默认，按年份分组） */
-    function renderTimeline() {
-      honorList.innerHTML = '';
-      var byYear = {};
-      rowData.forEach(function (d) {
-        var yr = d.date.split('.')[0];
-        if (!byYear[yr]) byYear[yr] = [];
-        byYear[yr].push(d);
-      });
-      var years = Object.keys(byYear).sort(function (a, b) { return b - a; });
-      years.forEach(function (yr) {
-        var head = document.createElement('h2');
-        head.className = 'honor-year-head';
-        head.innerHTML = yr + ' <span class="count">' + byYear[yr].length + ' 项</span>';
-        honorList.appendChild(head);
-        byYear[yr].sort(function (a, b) { return b.date.localeCompare(a.date); });
-        byYear[yr].forEach(function (d) {
-          d.el.classList.add('flip');
-          honorList.appendChild(d.el);
-        });
-      });
-    }
-
-    /* 按份量排序（按权重分组） */
-    var tierNames = {
-      100: '全球金奖 · 金级',
-      90: '金级 · 银奖',
-      80: '一等奖 · 铜奖',
-      70: '全国铜奖 · 二等奖',
-      60: '优秀奖 · 三等奖',
-      50: '区域优秀奖'
-    };
-    function getTier(w) {
-      if (w >= 95) return 100;
-      if (w >= 85) return 90;
-      if (w >= 75) return 80;
-      if (w >= 65) return 70;
-      if (w >= 55) return 60;
-      return 50;
-    }
-
-    function renderWeight() {
-      honorList.innerHTML = '';
-      var byTier = {};
-      rowData.forEach(function (d) {
-        var t = getTier(d.weight);
-        if (!byTier[t]) byTier[t] = [];
-        byTier[t].push(d);
-      });
-      var tiers = Object.keys(byTier).sort(function (a, b) { return b - a; });
-      tiers.forEach(function (t) {
-        var head = document.createElement('h2');
-        head.className = 'honor-year-head';
-        head.innerHTML = tierNames[t] + ' <span class="count">' + byTier[t].length + ' 项</span>';
-        honorList.appendChild(head);
-        byTier[t].sort(function (a, b) { return b.date.localeCompare(a.date); });
-        byTier[t].forEach(function (d) {
-          d.el.classList.add('flip');
-          honorList.appendChild(d.el);
-        });
-      });
-    }
-
-    sortBtns.forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        sortBtns.forEach(function (b) { b.classList.remove('active'); });
-        btn.classList.add('active');
-        var mode = btn.getAttribute('data-sort');
-        if (mode === 'weight') renderWeight();
-        else renderTimeline();
-      });
-    });
-
-    /* 初始按时间线渲染 */
-    renderTimeline();
   }
 
   /* —— Service Worker 注册 —— */

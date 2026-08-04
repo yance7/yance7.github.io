@@ -4,24 +4,29 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>学业 · Yance</title>
-  <meta name="description" content="Yance 的学业成绩：GPA、SAT、AP 与语言标化——一份量化记录。">
+  <meta name="description" content="Yance 的学业成绩：GPA 4.0、SAT 1490、9 门 AP 满分、TOEFL 108 与 IELTS 7.5——一份量化记录。">
   <meta name="theme-color" content="#F4EEE2">
   <meta name="color-scheme" content="light">
   <meta property="og:title" content="学业 · Yance">
-  <meta property="og:description" content="GPA、SAT、AP 与语言标化成绩。">
+  <meta property="og:description" content="GPA、SAT、AP、TOEFL 与 IELTS 成绩。">
   <meta property="og:type" content="website">
   <link rel="canonical" href="https://www.yance777.com/academics.html">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="manifest" href="site.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500;1,9..144,600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="assets/style.css">
   <script src="assets/app.js" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">跳到主要内容</a>
-  <div class="bg-layer" aria-hidden="true"></div>
+  <div class="scroll-progress" aria-hidden="true"></div>
+  <div class="bg-layer" aria-hidden="true">
+    <div class="bg-orb o1"></div>
+    <div class="bg-orb o2"></div>
+    <div class="bg-orb o3"></div>
+  </div>
   <div class="bg-grain" aria-hidden="true"></div>
 
   <header class="nav">
@@ -29,10 +34,10 @@
       <a class="brand" href="index.html" aria-label="Yance 首页">Yance<span class="dot">.</span></a>
       <nav class="nav-links" aria-label="主导航">
         <a class="nav-link" href="index.html">首页</a>
+        <a class="nav-link" href="academics.html" aria-current="page">学业</a>
+        <a class="nav-link" href="honors.html">荣誉</a>
         <a class="nav-link" href="research.html">研究</a>
         <a class="nav-link" href="works.html">作品</a>
-        <a class="nav-link" href="honors.html">荣誉</a>
-        <a class="nav-link" href="academics.html" aria-current="page">学业</a>
         <a class="nav-link" href="concerts.html">演唱会</a>
       </nav>
     </div>
@@ -59,36 +64,48 @@
           <div class="score-card">
             <div class="score-num"><span data-count="1490">1490</span></div>
             <div class="score-label">SAT</div>
-            <div class="score-sub">数学 800 · 语文 690</div>
+            <div class="score-sub">语文 690 · 数学 800</div>
           </div>
           <div class="score-card">
-            <div class="score-num"><span data-count="11">11</span><span class="unit">门</span></div>
-            <div class="score-label">AP 成绩</div>
-            <div class="score-sub">全部满分 5 分</div>
+            <div class="score-num"><span data-count="108">108</span></div>
+            <div class="score-label">TOEFL</div>
+            <div class="score-sub">阅读 29 · 听力 27 · 口语 23 · 写作 29</div>
           </div>
         </div>
 
-        <div class="ap-list reveal d1">
-          <h2 class="ap-section-head">AP 科目 <span class="count">11 门 · 全部 5 分</span></h2>
+        <div class="score-grid reveal d1" style="grid-template-columns:repeat(2,1fr);margin-bottom:40px">
+          <div class="score-card">
+            <div class="score-num"><span data-count="7.5">7.5</span></div>
+            <div class="score-label">IELTS</div>
+            <div class="score-sub">听力 8 · 阅读 9 · 写作 7.5 · 口语 6</div>
+          </div>
+          <div class="score-card">
+            <div class="score-num"><span data-count="9">9</span><span class="unit">门</span></div>
+            <div class="score-label">AP 满分</div>
+            <div class="score-sub">全部 5 分 · 3 门待出分</div>
+          </div>
+        </div>
 
+        <div class="ap-list reveal d2">
+          <h2 class="ap-section-head">十年级 <span class="count">3 门 · 全部 5 分</span></h2>
           <div class="ap-row">
             <span class="ap-name">微积分 BC<span class="sub">AP Calculus BC</span></span>
             <span class="ap-score">5</span>
           </div>
           <div class="ap-row">
-            <span class="ap-name">统计学<span class="sub">AP Statistics</span></span>
+            <span class="ap-name">物理 1<span class="sub">AP Physics 1</span></span>
             <span class="ap-score">5</span>
           </div>
           <div class="ap-row">
             <span class="ap-name">计算机科学 A<span class="sub">AP Computer Science A</span></span>
             <span class="ap-score">5</span>
           </div>
+        </div>
+
+        <div class="ap-list reveal d2">
+          <h2 class="ap-section-head">十一年级 <span class="count">6 门 · 全部 5 分</span></h2>
           <div class="ap-row">
-            <span class="ap-name">物理学 C：力学<span class="sub">AP Physics C: Mechanics</span></span>
-            <span class="ap-score">5</span>
-          </div>
-          <div class="ap-row">
-            <span class="ap-name">物理学 C：电磁学<span class="sub">AP Physics C: Electricity &amp; Magnetism</span></span>
+            <span class="ap-name">生物学<span class="sub">AP Biology</span></span>
             <span class="ap-score">5</span>
           </div>
           <div class="ap-row">
@@ -96,15 +113,7 @@
             <span class="ap-score">5</span>
           </div>
           <div class="ap-row">
-            <span class="ap-name">生物学<span class="sub">AP Biology</span></span>
-            <span class="ap-score">5</span>
-          </div>
-          <div class="ap-row">
-            <span class="ap-name">微观经济学<span class="sub">AP Microeconomics</span></span>
-            <span class="ap-score">5</span>
-          </div>
-          <div class="ap-row">
-            <span class="ap-name">宏观经济学<span class="sub">AP Macroeconomics</span></span>
+            <span class="ap-name">统计学<span class="sub">AP Statistics</span></span>
             <span class="ap-score">5</span>
           </div>
           <div class="ap-row">
@@ -112,16 +121,44 @@
             <span class="ap-score">5</span>
           </div>
           <div class="ap-row">
-            <span class="ap-name">心理学<span class="sub">AP Psychology</span></span>
+            <span class="ap-name">计算机科学原理<span class="sub">AP Computer Science Principles</span></span>
+            <span class="ap-score">5</span>
+          </div>
+          <div class="ap-row">
+            <span class="ap-name">微观经济学<span class="sub">AP Microeconomics</span></span>
             <span class="ap-score">5</span>
           </div>
         </div>
 
-        <div class="ap-list reveal d2">
-          <h2 class="ap-section-head">语言标化</h2>
+        <div class="ap-list reveal d3">
+          <h2 class="ap-section-head">十二年级 <span class="count">3 门 · 待出分</span></h2>
           <div class="ap-row">
-            <span class="ap-name">TOEFL<span class="sub">托福</span></span>
-            <span class="ap-score pending">待补充</span>
+            <span class="ap-name">物理学 C：力学<span class="sub">AP Physics C: Mechanics</span></span>
+            <span class="ap-score pending">待出分</span>
+          </div>
+          <div class="ap-row">
+            <span class="ap-name">物理学 C：电磁学<span class="sub">AP Physics C: Electricity &amp; Magnetism</span></span>
+            <span class="ap-score pending">待出分</span>
+          </div>
+          <div class="ap-row">
+            <span class="ap-name">宏观经济学<span class="sub">AP Macroeconomics</span></span>
+            <span class="ap-score pending">待出分</span>
+          </div>
+        </div>
+
+        <div class="ap-list reveal d4">
+          <h2 class="ap-section-head">教育经历</h2>
+          <div class="ap-row">
+            <span class="ap-name">北京市第八十中学国际部<span class="sub">International Department of Beijing No. 80 High School</span></span>
+            <span class="ap-score pending">2024.02 — 至今</span>
+          </div>
+          <div class="ap-row">
+            <span class="ap-name">北京市陈经纶中学团结湖分校<span class="sub">Beijing Chen Jinglun Middle School Tuanjiehu Branch</span></span>
+            <span class="ap-score pending">2021.09 — 2024.01</span>
+          </div>
+          <div class="ap-row">
+            <span class="ap-name">朝阳区实验小学<span class="sub">Chaoyang Experimental Primary School</span></span>
+            <span class="ap-score pending">2015.09 — 2021.07</span>
           </div>
         </div>
       </div>

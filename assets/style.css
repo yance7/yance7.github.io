@@ -27,9 +27,9 @@
   --shadow-glow:0 0 40px -8px rgba(185,138,62,.25);
 
   /* —— 字体 —— */
-  --display:'Fraunces','Noto Serif SC','Songti SC','SimSun',serif;
-  --serif-cn:'Noto Serif SC','Songti SC','SimSun',serif;
-  --sans:'Noto Sans SC',-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+  --display:'Cormorant Garamond','Noto Serif SC','Songti SC','SimSun',serif;
+  --serif-cn:'Noto Serif SC','Source Han Serif SC','Songti SC','SimSun',serif;
+  --sans:'Inter','Noto Sans SC',-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
   --mono:'JetBrains Mono',Consolas,'Courier New',monospace;
 
   /* —— 布局 —— */
@@ -51,8 +51,12 @@ body{
   background:var(--bg);
   color:var(--ink);
   min-height:100vh;
-  line-height:1.75;
-  -webkit-font-smoothing:antiased;
+  line-height:1.8;
+  font-weight:400;
+  letter-spacing:0;
+  font-feature-settings:"kern" 1,"liga" 1,"calt" 1,"ss01" 1;
+  text-rendering:optimizeLegibility;
+  -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
   overflow-x:hidden;
 }
@@ -243,6 +247,25 @@ main,.nav,.footer{position:relative;z-index:1}
 
 /* Hero CTA */
 .hero-cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:34px;opacity:0;animation:rise .9s ease .54s forwards}
+
+/* Hero "now" 状态 */
+.hero-now{
+  display:inline-flex;align-items:center;gap:9px;
+  font-family:var(--mono);font-size:.74rem;letter-spacing:.06em;
+  color:var(--ink-soft);margin-top:22px;
+  padding:7px 16px;border-radius:999px;
+  background:rgba(47,185,164,.08);border:1px solid rgba(47,185,164,.18);
+  opacity:0;animation:rise .9s ease .64s forwards;
+}
+.now-dot{
+  width:8px;height:8px;border-radius:50%;background:var(--teal-bright);
+  box-shadow:0 0 0 0 rgba(47,185,164,.5);
+  animation:nowPulse 2s ease-in-out infinite;
+}
+@keyframes nowPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(47,185,164,.5)}
+  50%{box-shadow:0 0 0 6px rgba(47,185,164,0)}
+}
 .btn{
   font-family:var(--sans);font-size:.9rem;font-weight:500;
   text-decoration:none;display:inline-flex;align-items:center;gap:9px;
@@ -347,8 +370,31 @@ main,.nav,.footer{position:relative;z-index:1}
   background:var(--surface);border:1px solid var(--line);
   border-radius:var(--radius);box-shadow:var(--shadow-sm);
   transition:transform .35s var(--ease-out),box-shadow .35s ease,border-color .35s ease;
+  overflow:hidden;
+  --mx:50%;--my:50%;
+  cursor:pointer;
 }
+.research-item > *{position:relative;z-index:1}
+.research-ripple{z-index:0}
+.research-item::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(circle 280px at var(--mx) var(--my),rgba(185,138,62,.10),transparent 70%);
+  opacity:0;transition:opacity .4s ease;
+}
+.research-item:hover::after{opacity:1}
 .research-item:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:var(--line-2)}
+.research-item:active{transform:translateY(-1px) scale(.99);transition-duration:.08s}
+
+/* 研究卡片点击波纹 */
+.research-ripple{
+  position:absolute;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,rgba(185,138,62,.22),transparent 70%);
+  transform:translate(-50%,-50%) scale(0);
+  animation:ripple .6s ease-out forwards;
+}
+@keyframes ripple{
+  to{transform:translate(-50%,-50%) scale(4);opacity:0}
+}
 .research-meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
 .research-date{
   font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;
@@ -439,41 +485,105 @@ main,.nav,.footer{position:relative;z-index:1}
 .card-encore:hover{border-color:rgba(107,79,224,.5)}
 .card-encore:hover .aperture{filter:drop-shadow(0 14px 26px rgba(232,184,85,.5))}
 
-/* ============ 荣誉列表 ============ */
-.sort-bar{
-  display:flex;gap:8px;align-items:center;margin-bottom:32px;flex-wrap:wrap;
-}
-.sort-label{font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-mute);margin-right:6px}
-.sort-btn{
-  font-family:var(--sans);font-size:.84rem;font-weight:500;
-  padding:9px 18px;border-radius:999px;border:1px solid var(--line);
-  background:var(--surface);color:var(--ink-soft);cursor:pointer;
-  transition:all .25s ease;
-}
-.sort-btn:hover{border-color:var(--gold);color:var(--gold-deep)}
-.sort-btn.active{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+/* ============ 荣誉三等级（卡片式） ============ */
+.honor-tier{margin-bottom:56px}
+.honor-tier:last-child{margin-bottom:0}
 
-.honor-list{display:flex;flex-direction:column}
-.honor-year-head{
-  font-family:var(--display);font-style:italic;font-weight:500;
-  font-size:1.5rem;color:var(--gold-deep);
-  margin:36px 0 14px;padding-bottom:10px;
-  border-bottom:1px solid var(--line);
-  display:flex;align-items:baseline;gap:14px;
+/* 等级横幅 */
+.tier-banner{
+  display:flex;align-items:center;gap:20px;
+  padding:24px 28px;border-radius:var(--radius);
+  margin-bottom:24px;position:relative;overflow:hidden;
 }
-.honor-year-head:first-child{margin-top:0}
-.honor-year-head .count{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;color:var(--ink-mute);font-style:normal}
-.honor-row{
-  display:grid;grid-template-columns:120px 1fr auto;gap:22px;align-items:center;
-  padding:20px 4px;border-bottom:1px solid var(--line);
-  transition:background .25s ease,padding .25s ease,transform .3s var(--ease-out);
+.tier-banner::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  opacity:.6;
 }
-.honor-row:hover{background:rgba(185,138,62,.05);padding-left:14px;padding-right:14px;border-radius:10px;transform:translateX(4px)}
-.honor-date{font-family:var(--mono);font-size:.78rem;letter-spacing:.06em;color:var(--ink-mute)}
-.honor-name{font-family:var(--serif-cn);font-weight:500;font-size:1.04rem;color:var(--ink);line-height:1.5}
-.honor-name .sub{display:block;font-family:var(--sans);font-weight:400;font-size:.85rem;color:var(--ink-soft);margin-top:3px}
+.tier-banner-text{flex:1;position:relative}
+.tier-roman{
+  font-family:var(--display);font-style:italic;font-weight:600;
+  font-size:clamp(2.8rem,6vw,3.8rem);line-height:1;
+  letter-spacing:-.04em;position:relative;flex-shrink:0;
+  opacity:.9;
+}
+.tier-medal{position:relative;flex-shrink:0;opacity:.8;transition:transform .4s var(--ease-spring)}
+.honor-tier:hover .tier-medal{transform:rotate(-8deg) scale(1.1)}
+
+.tier-head{
+  font-family:var(--display);font-weight:600;
+  font-size:clamp(1.4rem,3vw,1.85rem);
+  margin-bottom:4px;letter-spacing:-.01em;
+  display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;
+}
+.tier-head .tier-en{
+  font-family:var(--display);font-style:italic;font-weight:400;
+  font-size:.65em;color:var(--ink-mute);
+}
+.tier-sub{
+  font-size:.86rem;color:var(--ink-soft);line-height:1.65;
+}
+
+/* Tier 1 国际金牌 */
+.tier-1 .tier-banner{background:linear-gradient(135deg,rgba(185,138,62,.14),rgba(217,168,90,.06));border:1px solid rgba(185,138,62,.25)}
+.tier-1 .tier-banner::before{background:radial-gradient(circle at 15% 50%,rgba(185,138,62,.12),transparent 60%)}
+.tier-1 .tier-roman{color:var(--gold-deep)}
+.tier-1 .tier-head{color:var(--gold-deep)}
+.tier-1 .tier-medal{color:var(--gold)}
+
+/* Tier 2 卓越银章 */
+.tier-2 .tier-banner{background:linear-gradient(135deg,rgba(29,127,114,.12),rgba(47,185,164,.05));border:1px solid rgba(29,127,114,.22)}
+.tier-2 .tier-banner::before{background:radial-gradient(circle at 15% 50%,rgba(29,127,114,.10),transparent 60%)}
+.tier-2 .tier-roman{color:var(--teal-deep)}
+.tier-2 .tier-head{color:var(--teal-deep)}
+.tier-2 .tier-medal{color:var(--teal)}
+
+/* Tier 3 稳步积累 */
+.tier-3 .tier-banner{background:linear-gradient(135deg,rgba(107,79,224,.08),rgba(140,115,240,.04));border:1px solid rgba(107,79,224,.18)}
+.tier-3 .tier-banner::before{background:radial-gradient(circle at 15% 50%,rgba(107,79,224,.08),transparent 60%)}
+.tier-3 .tier-roman{color:var(--violet)}
+.tier-3 .tier-head{color:var(--ink-soft)}
+.tier-3 .tier-medal{color:var(--violet-soft)}
+
+/* 荣誉卡片网格 */
+.honor-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.honor-card{
+  display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;
+  padding:18px 22px;
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--radius-sm);
+  transition:transform .3s var(--ease-out),box-shadow .3s ease,border-color .3s ease;
+  position:relative;overflow:hidden;
+}
+.honor-card::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  transform:scaleY(0);transform-origin:top;
+  transition:transform .35s var(--ease-out);
+}
+.honor-card:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:var(--line-2)}
+.honor-card:hover::before{transform:scaleY(1)}
+
+.tier-1 .honor-card::before{background:linear-gradient(180deg,var(--gold),var(--gold-bright))}
+.tier-2 .honor-card::before{background:linear-gradient(180deg,var(--teal),var(--teal-bright))}
+.tier-3 .honor-card::before{background:linear-gradient(180deg,var(--violet),var(--violet-soft))}
+
+.honor-card-date{
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;
+  color:var(--ink-mute);white-space:nowrap;
+  writing-mode:vertical-rl;text-orientation:mixed;
+  padding:4px 2px;border-right:1px solid var(--line);
+  min-width:32px;text-align:center;
+}
+.honor-card-body{min-width:0}
+.honor-card-name{
+  font-family:var(--serif-cn);font-weight:600;font-size:1rem;
+  color:var(--ink);line-height:1.45;margin-bottom:2px;
+}
+.honor-card-sub{
+  font-size:.8rem;color:var(--ink-soft);line-height:1.5;
+  font-family:var(--sans);
+}
 .honor-level{
-  font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;
+  font-family:var(--mono);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;
   padding:6px 12px;border-radius:999px;white-space:nowrap;
 }
 .lvl-gold{background:rgba(185,138,62,.16);color:var(--gold-deep)}
@@ -486,9 +596,9 @@ main,.nav,.footer{position:relative;z-index:1}
 .lvl-honor{background:rgba(120,120,140,.12);color:#5a566e}
 .lvl-top{background:rgba(185,138,62,.18);color:var(--gold-deep)}
 
-/* 排序切换动画 */
-.honor-row.flip{animation:flipIn .4s var(--ease-out) both}
-@keyframes flipIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+/* 入场动画 */
+.honor-card{opacity:0;transform:translateY(12px)}
+.honor-card.in{opacity:1;transform:none;transition:opacity .5s ease,transform .5s var(--ease-out),box-shadow .3s ease,border-color .3s ease}
 
 /* ============ 演唱会时间线 ============ */
 .timeline{position:relative;padding:20px 0}
@@ -619,6 +729,7 @@ a:focus-visible{outline-offset:4px}
 @media (max-width:880px){
   .gate-grid{grid-template-columns:repeat(2,1fr)}
   .project-grid{grid-template-columns:1fr}
+  .honor-cards{grid-template-columns:1fr}
   .timeline::before{left:24px}
   .tl-item{grid-template-columns:48px 1fr;gap:0}
   .tl-dot{margin:0}
@@ -633,13 +744,16 @@ a:focus-visible{outline-offset:4px}
   .aperture{width:108px;height:108px}
   .card{padding:32px 22px 26px}
   .footer{flex-direction:column;text-align:center;justify-content:center}
-  .honor-row{grid-template-columns:84px 1fr;gap:14px;padding:18px 4px}
-  .honor-level{grid-column:2;justify-self:flex-start;margin-top:6px}
+  .honor-cards{grid-template-columns:1fr}
+  .honor-card{grid-template-columns:1fr;gap:10px;padding:16px 18px}
+  .honor-card-date{writing-mode:horizontal-tb;border-right:none;border-bottom:1px solid var(--line);padding:2px 0;width:fit-content}
+  .honor-level{justify-self:flex-start;margin-top:4px}
+  .tier-banner{padding:18px 20px;gap:14px}
+  .tier-roman{font-size:2.2rem}
   .research-item{padding:24px 22px}
   .gate-grid{grid-template-columns:1fr}
   .score-grid{grid-template-columns:1fr}
   .hero{padding-top:clamp(60px,12vh,96px)}
-  .sort-bar{flex-wrap:wrap}
   .ap-row{grid-template-columns:1fr auto;gap:10px}
 }
 @media (max-width:380px){
