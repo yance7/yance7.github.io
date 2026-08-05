@@ -17,3 +17,6 @@ _shots/
 
 # Trae spec / 临时工作目录
 .trae/
+
+# Vue build
+node_modules/

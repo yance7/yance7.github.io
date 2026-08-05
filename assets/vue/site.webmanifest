@@ -1,0 +1,18 @@
+{
+  "name": "Yance · 个人主页",
+  "short_name": "Yance",
+  "description": "Yance 的个人主页：研究、荣誉与演唱会足迹。",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F4EEE2",
+  "theme_color": "#F4EEE2",
+  "icons": [
+    {
+      "src": "assets/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

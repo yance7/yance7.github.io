@@ -11,15 +11,18 @@
   <meta property="og:description" content="演唱会足迹记录——那些被音乐点亮的夜晚。">
   <meta property="og:type" content="website">
   <link rel="canonical" href="https://www.yance777.com/concerts.html">
-  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <link rel="manifest" href="site.webmanifest">
+  <link rel="icon" href="/assets/vue/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/assets/vue/site.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;500;600;700&display=swap">
-  <link rel="stylesheet" href="assets/style.css">
-  <script src="assets/app.js" defer></script>
+  <script type="module" crossorigin src="/assets/vue/vue.js"></script>
+  <script type="module" crossorigin src="/assets/vue/main.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/vue/vue.css">
 </head>
-<body>
+<body data-page="concerts">
+  <style>body > *:not(#app){display:none!important}</style>
+  <div id="app"></div>
   <a class="skip-link" href="#main">跳到主要内容</a>
   <div class="scroll-progress" aria-hidden="true"></div>
   <div class="bg-layer" aria-hidden="true">
@@ -64,7 +67,7 @@
           <div class="tl-item reveal">
             <div class="tl-card">
               <div class="tl-poster">
-                <img class="tl-poster-img" src="assets/concerts/concert-202408-deng-ziqi.jpg" width="743" height="1000" loading="lazy" decoding="async" alt="邓紫棋 I AM GLORIA 演唱会海报" data-lightbox="assets/concerts/concert-202408-deng-ziqi.jpg">
+                <img class="tl-poster-img" src="/assets/vue/concert-202408-deng-ziqi.jpg" width="743" height="1000" loading="lazy" decoding="async" alt="邓紫棋 I AM GLORIA 演唱会海报" data-lightbox="assets/concerts/concert-202408-deng-ziqi.jpg">
               </div>
               <span class="tl-date">2024.08.25</span>
               <h3 class="tl-artist">邓紫棋</h3>
@@ -80,7 +83,7 @@
           <div class="tl-item reveal">
             <div class="tl-card">
               <div class="tl-poster">
-                <img class="tl-poster-img" src="assets/concerts/concert-202504-zhang-jie.jpg" width="600" height="800" loading="lazy" decoding="async" alt="张杰 未·Live 开往1982 演唱会海报" data-lightbox="assets/concerts/concert-202504-zhang-jie.jpg">
+                <img class="tl-poster-img" src="/assets/vue/concert-202504-zhang-jie.jpg" width="600" height="800" loading="lazy" decoding="async" alt="张杰 未·Live 开往1982 演唱会海报" data-lightbox="assets/concerts/concert-202504-zhang-jie.jpg">
               </div>
               <span class="tl-date">2025.04.18</span>
               <h3 class="tl-artist">张杰</h3>
@@ -96,7 +99,7 @@
           <div class="tl-item reveal">
             <div class="tl-card">
               <div class="tl-poster">
-                <img class="tl-poster-img" src="assets/concerts/concert-202508-xie-tingfeng.jpg" width="600" height="800" loading="lazy" decoding="async" alt="谢霆锋 Evolution Nic Live 进化演唱会海报" data-lightbox="assets/concerts/concert-202508-xie-tingfeng.jpg">
+                <img class="tl-poster-img" src="/assets/vue/concert-202508-xie-tingfeng.jpg" width="600" height="800" loading="lazy" decoding="async" alt="谢霆锋 Evolution Nic Live 进化演唱会海报" data-lightbox="assets/concerts/concert-202508-xie-tingfeng.jpg">
               </div>
               <span class="tl-date">2025.08.10</span>
               <h3 class="tl-artist">谢霆锋</h3>
@@ -112,7 +115,7 @@
           <div class="tl-item reveal">
             <div class="tl-card">
               <div class="tl-poster">
-                <img class="tl-poster-img" src="assets/concerts/concert-202509-tao-zhe.jpg" width="347" height="459" loading="lazy" decoding="async" alt="陶喆 Soul Power Ⅱ 演唱会海报" data-lightbox="assets/concerts/concert-202509-tao-zhe.jpg">
+                <img class="tl-poster-img" src="/assets/vue/concert-202509-tao-zhe.jpg" width="347" height="459" loading="lazy" decoding="async" alt="陶喆 Soul Power Ⅱ 演唱会海报" data-lightbox="assets/concerts/concert-202509-tao-zhe.jpg">
               </div>
               <span class="tl-date">2025.09.19</span>
               <h3 class="tl-artist">陶喆</h3>
@@ -130,8 +133,8 @@
               <div class="tl-poster">
                 <div class="tl-carousel" data-carousel>
                   <div class="tl-carousel-track">
-                    <div class="tl-carousel-slide"><img class="tl-poster-img" src="assets/concerts/concert-202510-zhang-yixing-01.jpg" width="672" height="1000" loading="lazy" decoding="async" alt="张艺兴 大航海5 演唱会海报 1" data-lightbox="assets/concerts/concert-202510-zhang-yixing-01.jpg"></div>
-                    <div class="tl-carousel-slide"><img class="tl-poster-img" src="assets/concerts/concert-202510-zhang-yixing-02.jpg" width="672" height="1000" loading="lazy" decoding="async" alt="张艺兴 大航海5 演唱会海报 2" data-lightbox="assets/concerts/concert-202510-zhang-yixing-02.jpg"></div>
+                    <div class="tl-carousel-slide"><img class="tl-poster-img" src="/assets/vue/concert-202510-zhang-yixing-01.jpg" width="672" height="1000" loading="lazy" decoding="async" alt="张艺兴 大航海5 演唱会海报 1" data-lightbox="assets/concerts/concert-202510-zhang-yixing-01.jpg"></div>
+                    <div class="tl-carousel-slide"><img class="tl-poster-img" src="/assets/vue/concert-202510-zhang-yixing-02.jpg" width="672" height="1000" loading="lazy" decoding="async" alt="张艺兴 大航海5 演唱会海报 2" data-lightbox="assets/concerts/concert-202510-zhang-yixing-02.jpg"></div>
                   </div>
                   <button class="tl-carousel-btn prev" aria-label="上一张" disabled>‹</button>
                   <button class="tl-carousel-btn next" aria-label="下一张">›</button>
@@ -157,9 +160,9 @@
               <div class="tl-poster land">
                 <div class="tl-carousel" data-carousel>
                   <div class="tl-carousel-track">
-                    <div class="tl-carousel-slide"><img class="tl-poster-img" src="assets/concerts/concert-202511-kpl-01.jpg" width="1400" height="495" loading="lazy" decoding="async" alt="2025 KPL 年度总决赛海报 1" data-lightbox="assets/concerts/concert-202511-kpl-01.jpg"></div>
-                    <div class="tl-carousel-slide"><img class="tl-poster-img" src="assets/concerts/concert-202511-kpl-02.jpg" width="1200" height="675" loading="lazy" decoding="async" alt="2025 KPL 年度总决赛海报 2" data-lightbox="assets/concerts/concert-202511-kpl-02.jpg"></div>
-                    <div class="tl-carousel-slide"><img class="tl-poster-img" src="assets/concerts/concert-202511-kpl-03.jpg" width="1400" height="788" loading="lazy" decoding="async" alt="2025 KPL 年度总决赛海报 3" data-lightbox="assets/concerts/concert-202511-kpl-03.jpg"></div>
+                    <div class="tl-carousel-slide"><img class="tl-poster-img" src="/assets/vue/concert-202511-kpl-01.jpg" width="1400" height="495" loading="lazy" decoding="async" alt="2025 KPL 年度总决赛海报 1" data-lightbox="assets/concerts/concert-202511-kpl-01.jpg"></div>
+                    <div class="tl-carousel-slide"><img class="tl-poster-img" src="/assets/vue/concert-202511-kpl-02.jpg" width="1200" height="675" loading="lazy" decoding="async" alt="2025 KPL 年度总决赛海报 2" data-lightbox="assets/concerts/concert-202511-kpl-02.jpg"></div>
+                    <div class="tl-carousel-slide"><img class="tl-poster-img" src="/assets/vue/concert-202511-kpl-03.jpg" width="1400" height="788" loading="lazy" decoding="async" alt="2025 KPL 年度总决赛海报 3" data-lightbox="assets/concerts/concert-202511-kpl-03.jpg"></div>
                   </div>
                   <button class="tl-carousel-btn prev" aria-label="上一张" disabled>‹</button>
                   <button class="tl-carousel-btn next" aria-label="下一张">›</button>
@@ -184,7 +187,7 @@
           <div class="tl-item reveal">
             <div class="tl-card">
               <div class="tl-poster">
-                <img class="tl-poster-img" src="assets/concerts/concert-202603-huang-zihongfan.jpg" width="600" height="800" loading="lazy" decoding="async" alt="黄子弘凡 OPEN WORLD 开放世界演唱会海报" data-lightbox="assets/concerts/concert-202603-huang-zihongfan.jpg">
+                <img class="tl-poster-img" src="/assets/vue/concert-202603-huang-zihongfan.jpg" width="600" height="800" loading="lazy" decoding="async" alt="黄子弘凡 OPEN WORLD 开放世界演唱会海报" data-lightbox="assets/concerts/concert-202603-huang-zihongfan.jpg">
               </div>
               <span class="tl-date">2026.03.14</span>
               <h3 class="tl-artist">黄子弘凡</h3>
@@ -200,7 +203,7 @@
           <div class="tl-item reveal">
             <div class="tl-card">
               <div class="tl-poster">
-                <img class="tl-poster-img" src="assets/concerts/concert-202604-zhang-jie.jpg" width="600" height="800" loading="lazy" decoding="async" alt="张杰 未·Live 开往1982 演唱会海报" data-lightbox="assets/concert-202604-zhang-jie.jpg">
+                <img class="tl-poster-img" src="/assets/vue/concert-202604-zhang-jie.jpg" width="600" height="800" loading="lazy" decoding="async" alt="张杰 未·Live 开往1982 演唱会海报" data-lightbox="assets/concert-202604-zhang-jie.jpg">
               </div>
               <span class="tl-date">2026.04.19</span>
               <h3 class="tl-artist">张杰</h3>
@@ -216,7 +219,7 @@
           <div class="tl-item reveal">
             <div class="tl-card">
               <div class="tl-poster">
-                <img class="tl-poster-img" src="assets/concerts/concert-202605-mayday.jpg" width="600" height="800" loading="lazy" decoding="async" alt="五月天 5525 回到那一天 演唱会海报" data-lightbox="assets/concert-202605-mayday.jpg">
+                <img class="tl-poster-img" src="/assets/vue/concert-202605-mayday.jpg" width="600" height="800" loading="lazy" decoding="async" alt="五月天 5525 回到那一天 演唱会海报" data-lightbox="assets/concert-202605-mayday.jpg">
               </div>
               <span class="tl-date">2026.05.15</span>
               <h3 class="tl-artist">五月天</h3>
@@ -234,8 +237,8 @@
               <div class="tl-poster">
                 <div class="tl-carousel" data-carousel>
                   <div class="tl-carousel-track">
-                    <div class="tl-carousel-slide"><img class="tl-poster-img" src="assets/concerts/concert-202605-summer-01.jpg" width="563" height="1000" loading="lazy" decoding="async" alt="京东 618 夏日歌会海报 1" data-lightbox="assets/concert-202605-summer-01.jpg"></div>
-                    <div class="tl-carousel-slide"><img class="tl-poster-img" src="assets/concerts/concert-202605-summer-02.jpg" width="487" height="1000" loading="lazy" decoding="async" alt="京东 618 夏日歌会海报 2" data-lightbox="assets/concert-202605-summer-02.jpg"></div>
+                    <div class="tl-carousel-slide"><img class="tl-poster-img" src="/assets/vue/concert-202605-summer-01.jpg" width="563" height="1000" loading="lazy" decoding="async" alt="京东 618 夏日歌会海报 1" data-lightbox="assets/concert-202605-summer-01.jpg"></div>
+                    <div class="tl-carousel-slide"><img class="tl-poster-img" src="/assets/vue/concert-202605-summer-02.jpg" width="487" height="1000" loading="lazy" decoding="async" alt="京东 618 夏日歌会海报 2" data-lightbox="assets/concert-202605-summer-02.jpg"></div>
                   </div>
                   <button class="tl-carousel-btn prev" aria-label="上一张" disabled>‹</button>
                   <button class="tl-carousel-btn next" aria-label="下一张">›</button>
@@ -259,7 +262,7 @@
           <div class="tl-item reveal">
             <div class="tl-card">
               <div class="tl-poster">
-                <img class="tl-poster-img" src="assets/concerts/concert-202606-zhou-jielun.jpg" width="701" height="1000" loading="lazy" decoding="async" alt="周杰伦 龙拳 北京嘉年华 2026 海报" data-lightbox="assets/concerts/concert-202606-zhou-jielun.jpg">
+                <img class="tl-poster-img" src="/assets/vue/concert-202606-zhou-jielun.jpg" width="701" height="1000" loading="lazy" decoding="async" alt="周杰伦 龙拳 北京嘉年华 2026 海报" data-lightbox="assets/concerts/concert-202606-zhou-jielun.jpg">
               </div>
               <span class="tl-date">2026.06.26</span>
               <h3 class="tl-artist">周杰伦</h3>
@@ -275,7 +278,7 @@
           <div class="tl-item reveal">
             <div class="tl-card">
               <div class="tl-poster">
-                <img class="tl-poster-img" src="assets/concerts/concert-202607-xue-zhiqian.jpg" width="676" height="1000" loading="lazy" decoding="async" alt="薛之谦 万兽之王 演唱会海报" data-lightbox="assets/concerts/concert-202607-xue-zhiqian.jpg">
+                <img class="tl-poster-img" src="/assets/vue/concert-202607-xue-zhiqian.jpg" width="676" height="1000" loading="lazy" decoding="async" alt="薛之谦 万兽之王 演唱会海报" data-lightbox="assets/concerts/concert-202607-xue-zhiqian.jpg">
               </div>
               <span class="tl-date">2026.07.26</span>
               <h3 class="tl-artist">薛之谦</h3>
@@ -291,7 +294,7 @@
           <div class="tl-item reveal">
             <div class="tl-card">
               <div class="tl-poster">
-                <img class="tl-poster-img" src="assets/concerts/concert-202608-wang-sulong.jpg" width="750" height="1000" loading="lazy" decoding="async" alt="汪苏泷 明日世界 演唱会海报" data-lightbox="assets/concerts/concert-202608-wang-sulong.jpg">
+                <img class="tl-poster-img" src="/assets/vue/concert-202608-wang-sulong.jpg" width="750" height="1000" loading="lazy" decoding="async" alt="汪苏泷 明日世界 演唱会海报" data-lightbox="assets/concerts/concert-202608-wang-sulong.jpg">
               </div>
               <span class="tl-date">2026.08.19</span>
               <h3 class="tl-artist">汪苏泷</h3>
@@ -307,7 +310,7 @@
           <div class="tl-item reveal">
             <div class="tl-card">
               <div class="tl-poster">
-                <img class="tl-poster-img" src="assets/concerts/concert-202608-wang-sulong.jpg" width="750" height="1000" loading="lazy" decoding="async" alt="汪苏泷 明日世界 演唱会海报" data-lightbox="assets/concerts/concert-202608-wang-sulong.jpg">
+                <img class="tl-poster-img" src="/assets/vue/concert-202608-wang-sulong.jpg" width="750" height="1000" loading="lazy" decoding="async" alt="汪苏泷 明日世界 演唱会海报" data-lightbox="assets/concerts/concert-202608-wang-sulong.jpg">
               </div>
               <span class="tl-date">2026.08.30</span>
               <h3 class="tl-artist">汪苏泷</h3>
