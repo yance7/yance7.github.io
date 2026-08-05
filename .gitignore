@@ -14,3 +14,6 @@ _shots/
 
 # 简历源文件
 简历.pdf
+
+# Trae spec / 临时工作目录
+.trae/

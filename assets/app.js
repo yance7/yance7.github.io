@@ -146,6 +146,156 @@
     }
   }
 
+  /* —— 图片加载淡入 —— */
+  var posterImgs = document.querySelectorAll('.tl-poster-img');
+  posterImgs.forEach(function (img) {
+    var markLoaded = function () { img.classList.add('loaded'); };
+    if (img.complete) {
+      markLoaded();
+    } else {
+      img.addEventListener('load', markLoaded);
+      img.addEventListener('error', markLoaded);
+    }
+  });
+
+  /* —— 灯箱（Lightbox） —— */
+  var lightboxImages = Array.prototype.slice.call(document.querySelectorAll('img[data-lightbox]'));
+  if (lightboxImages.length) {
+    var lightbox = document.getElementById('lightbox');
+    if (!lightbox) {
+      lightbox = document.createElement('div');
+      lightbox.className = 'lightbox';
+      lightbox.id = 'lightbox';
+      lightbox.innerHTML =
+        '<button class="lightbox-close" aria-label="关闭">×</button>' +
+        '<button class="lightbox-nav prev" aria-label="上一张">‹</button>' +
+        '<img class="lightbox-img" src="" alt="">' +
+        '<button class="lightbox-nav next" aria-label="下一张">›</button>';
+      document.body.appendChild(lightbox);
+    }
+    var lbImg = lightbox.querySelector('.lightbox-img');
+    var lbClose = lightbox.querySelector('.lightbox-close');
+    var lbPrev = lightbox.querySelector('.lightbox-nav.prev');
+    var lbNext = lightbox.querySelector('.lightbox-nav.next');
+    var currentIndex = 0;
+
+    var showImage = function (index) {
+      if (index < 0) index = 0;
+      if (index >= lightboxImages.length) index = lightboxImages.length - 1;
+      currentIndex = index;
+      /* 触发淡入：先移除 visible，下一帧再设置 src 并加回 visible */
+      lbImg.classList.remove('visible');
+      var src = lightboxImages[index].getAttribute('data-lightbox') || lightboxImages[index].src;
+      lbImg.src = src;
+      lbImg.alt = lightboxImages[index].alt || '';
+      /* 强制重排后加回类，确保过渡生效 */
+      void lbImg.offsetWidth;
+      lbImg.classList.add('visible');
+    };
+
+    var openLightbox = function (index) {
+      currentIndex = index;
+      showImage(index);
+      lightbox.classList.add('open');
+      document.body.classList.add('lightbox-open');
+    };
+
+    var closeLightbox = function () {
+      lightbox.classList.remove('open');
+      document.body.classList.remove('lightbox-open');
+    };
+
+    lightboxImages.forEach(function (img, i) {
+      img.addEventListener('click', function (e) {
+        e.preventDefault();
+        openLightbox(i);
+      });
+    });
+
+    lbClose.addEventListener('click', closeLightbox);
+    lbPrev.addEventListener('click', function (e) {
+      e.stopPropagation();
+      showImage(currentIndex - 1);
+    });
+    lbNext.addEventListener('click', function (e) {
+      e.stopPropagation();
+      showImage(currentIndex + 1);
+    });
+    /* 点击遮罩关闭（非内部元素） */
+    lightbox.addEventListener('click', function (e) {
+      if (e.target === lightbox) closeLightbox();
+    });
+    /* 键盘控制 */
+    document.addEventListener('keydown', function (e) {
+      if (!lightbox.classList.contains('open')) return;
+      if (e.key === 'Escape') closeLightbox();
+      else if (e.key === 'ArrowLeft') showImage(currentIndex - 1);
+      else if (e.key === 'ArrowRight') showImage(currentIndex + 1);
+    });
+  }
+
+  /* —— 轮播（Carousel） —— */
+  var carousels = document.querySelectorAll('[data-carousel]');
+  carousels.forEach(function (carousel) {
+    var track = carousel.querySelector('.tl-carousel-track');
+    var slides = carousel.querySelectorAll('.tl-carousel-slide');
+    var prevBtn = carousel.querySelector('.tl-carousel-btn.prev');
+    var nextBtn = carousel.querySelector('.tl-carousel-btn.next');
+    var dots = carousel.querySelectorAll('.tl-dot-indicator');
+    if (!track || !slides.length) return;
+
+    var total = slides.length;
+    var current = 0;
+
+    var updateCarousel = function () {
+      var slideWidth = slides[0].getBoundingClientRect().width;
+      track.style.transform = 'translateX(' + (-slideWidth * current) + 'px)';
+      if (prevBtn) prevBtn.disabled = (current === 0);
+      if (nextBtn) nextBtn.disabled = (current === total - 1);
+      dots.forEach(function (dot, i) {
+        if (i === current) dot.classList.add('active');
+        else dot.classList.remove('active');
+      });
+    };
+
+    var goTo = function (index) {
+      if (index < 0) index = 0;
+      if (index > total - 1) index = total - 1;
+      current = index;
+      updateCarousel();
+    };
+
+    if (prevBtn) {
+      prevBtn.addEventListener('click', function () { goTo(current - 1); });
+    }
+    if (nextBtn) {
+      nextBtn.addEventListener('click', function () { goTo(current + 1); });
+    }
+    dots.forEach(function (dot, i) {
+      dot.addEventListener('click', function () { goTo(i); });
+    });
+
+    /* 触摸滑动 */
+    var touchStartX = 0;
+    var touchEndX = 0;
+    track.addEventListener('touchstart', function (e) {
+      touchStartX = e.changedTouches[0].clientX;
+    }, { passive: true });
+    track.addEventListener('touchend', function (e) {
+      touchEndX = e.changedTouches[0].clientX;
+      var diff = touchStartX - touchEndX;
+      if (Math.abs(diff) > 50) {
+        if (diff > 0) goTo(current + 1);
+        else goTo(current - 1);
+      }
+    }, { passive: true });
+
+    /* 窗口尺寸变化时重新对齐当前 slide */
+    window.addEventListener('resize', updateCarousel, { passive: true });
+
+    updateCarousel();
+  });
+
   /* —— Service Worker 注册 + 自动刷新 —— */
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {
