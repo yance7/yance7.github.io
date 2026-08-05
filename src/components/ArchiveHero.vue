@@ -1,0 +1,44 @@
+<script setup>
+import { computed } from 'vue'
+import { heroGeo } from '../data/content'
+
+const props = defineProps({
+  page: { type: String, required: true },
+  no: { type: String, default: '00' },
+  total: { type: Number, default: 6 },
+  error: { type: Boolean, default: false },
+  kicker: { type: String, default: '' },
+  title: { type: String, default: '' },
+  copy: { type: String, default: '' },
+  isHome: { type: Boolean, default: false }
+})
+
+const coordsLabel = computed(() =>
+  props.error ? 'ARCHIVE / ERROR' : `ARCHIVE ${props.no} / ${props.total}`
+)
+const geo = computed(() => (props.error ? '—' : heroGeo[props.page] || '—'))
+</script>
+
+<template>
+  <section class="archive-hero" :class="{ 'hero-home': isHome }">
+    <div class="hero-inner">
+      <div class="hero-main">
+        <p class="hero-kicker" v-reveal>{{ kicker }}</p>
+        <h1 v-if="isHome" class="hero-name" v-reveal="{ delay: 90 }">Yance<span>.</span></h1>
+        <h1 v-else class="hero-title" v-reveal="{ delay: 90 }">{{ title }}</h1>
+        <p class="hero-copy" v-reveal="{ delay: 180 }">{{ copy }}</p>
+        <p v-if="!isHome" class="lyric-note" v-reveal="{ delay: 240 }">LYRIC / PERSONAL ARCHIVE</p>
+        <div class="hero-line" v-reveal="{ delay: 300 }"><span></span></div>
+      </div>
+
+      <aside class="hero-side" aria-hidden="true">
+        <div class="archive-coords">
+          <span class="coords-label">{{ coordsLabel }}</span>
+          <span class="coords-geo">{{ geo }}</span>
+          <span class="coords-bar"><i></i></span>
+        </div>
+        <div v-if="isHome" class="hero-scroll"><span></span>SCROLL</div>
+      </aside>
+    </div>
+  </section>
+</template>

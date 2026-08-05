@@ -1,15 +1,29 @@
 <script setup>
-import { computed, ref } from 'vue'
-import { navItems, stats, projects, research, honors, concerts } from './data/content'
+import { computed, ref, onMounted } from 'vue'
+import { navItems, stats, projects, research, honors, concerts, apScores } from './data/content'
+import SiteHeader from './components/SiteHeader.vue'
+import ArchiveHero from './components/ArchiveHero.vue'
+import SectionHeading from './components/SectionHeading.vue'
+import SiteFooter from './components/SiteFooter.vue'
+import ImageLightbox from './components/ImageLightbox.vue'
+import { useTheme } from './composables/useTheme'
 
 const page = document.body.dataset.page || 'home'
-const menuOpen = ref(false)
-const lightbox = ref(null)
+const { theme, initTheme } = useTheme()
+
 const carouselIndexes = ref({})
-const currentNav = computed(() => navItems.find(item => item.key === page))
+const lightbox = ref(null)
+
+onMounted(initTheme)
+
+const currentNav = computed(() => navItems.find((item) => item.key === page))
+const pageNo = computed(() => (currentNav.value ? navItems.indexOf(currentNav.value) + 1 : 0))
+const archiveNo = computed(() => String(pageNo.value).padStart(2, '0'))
+const isHome = page === 'home'
+const isError = !currentNav.value
 
 const pageMeta = {
-  home: ['YANCE / 个人档案', '还记得你说家是唯一的城堡', '研究、作品与被音乐点亮的夜晚，构成一个仍在生长的个人档案。'],
+  home: ['PERSONAL ARCHIVE / 2026', '还记得你说家是唯一的城堡', '研究、作品与被音乐点亮的夜晚，构成一个仍在生长的个人档案。'],
   academics: ['ACADEMICS / 学业', '我一路向北', '绩点、标化与 AP 成绩，是努力留下的可读痕迹。'],
   honors: ['HONORS / 荣誉', '一步一步往上爬', '奖项是坐标，不是终点；真正重要的是仍然保持向上的惯性。'],
   research: ['RESEARCH / 研究', '我不完美的梦，你陪着我想', '从智慧农业到可解释 AI，把论文里的模型推向浏览器里能点开的产品。'],
@@ -17,67 +31,277 @@ const pageMeta = {
   concerts: ['CONCERTS / 演唱会', '缘分让我们相遇乱世以外', '十四场现场，十七张海报，记录那些被灯光和合唱重新定义的夜晚。']
 }
 
-function openLightbox(images, index = 0) { lightbox.value = { images, index } }
+const kicker = computed(() => (isError ? '404 / NOT FOUND' : pageMeta[page][0]))
+const heroTitle = computed(() => (isError ? '这一页走丢了' : pageMeta[page][1]))
+const heroCopy = computed(() => (isError ? '返回首页，重新选择一个方向。' : pageMeta[page][2]))
+
+const currentResearch = research[0]
+
+function tagClass(tag) {
+  if (tag.includes('WEB TOOL')) return 'aqua'
+  if (tag.includes('PUBLISHED')) return 'gold'
+  if (tag.includes('DEEP')) return 'violet'
+  return 'dim'
+}
+
+function portalIcon(key) {
+  return { academics: '✦', honors: '❖', research: '◉', works: '♬', concerts: '♪' }[key] || '↗'
+}
+
+function imagePath(name) { return `assets/concerts/${name}` }
+function currentImage(item, index) {
+  return imagePath(item.images[carouselIndexes.value[item.date] || index || 0])
+}
+function moveCarousel(item, step) {
+  const current = carouselIndexes.value[item.date] || 0
+  const next = (current + step + item.images.length) % item.images.length
+  carouselIndexes.value = { ...carouselIndexes.value, [item.date]: next }
+}
+function openLightbox(item, index = 0) {
+  lightbox.value = {
+    images: item.images.map(imagePath),
+    index,
+    meta: { artist: item.artist, tour: item.tour }
+  }
+}
 function closeLightbox() { lightbox.value = null }
 function moveLightbox(step) {
   if (!lightbox.value) return
   const total = lightbox.value.images.length
   lightbox.value.index = (lightbox.value.index + step + total) % total
 }
-function imagePath(name) { return `assets/concerts/${name}` }
-function currentImage(item, index) { return imagePath(item.images[carouselIndexes.value[item.date] || index || 0]) }
-function moveCarousel(item, step) {
-  const current = carouselIndexes.value[item.date] || 0
-  const next = (current + step + item.images.length) % item.images.length
-  carouselIndexes.value = { ...carouselIndexes.value, [item.date]: next }
-}
 </script>
 
 <template>
-  <div class="site-shell" @keydown.esc="closeLightbox">
-    <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div><div class="grain"></div>
-    <header class="site-nav">
-      <a class="wordmark" href="index.html">Yance<span>.</span></a>
-      <button class="menu-trigger" type="button" aria-label="打开导航" @click="menuOpen = !menuOpen"><i></i><i></i></button>
-      <nav class="nav-rail" :class="{ open: menuOpen }">
-        <a v-for="item in navItems" :key="item.key" :href="item.href" :class="{ active: page === item.key }" @click="menuOpen = false">
-          <span>{{ item.label }}</span><small>{{ item.en }}</small>
-        </a>
-      </nav>
-      <div class="nav-status"><b></b> ONLINE / 2026</div>
-    </header>
+  <div class="site-shell" :class="`theme-${theme}`">
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+    <div class="grain"></div>
+
+    <SiteHeader :page="page" />
 
     <main>
-      <section class="page-hero" :class="{ 'home-hero': page === 'home' }">
-        <div class="hero-index">00{{ currentNav ? navItems.indexOf(currentNav) + 1 : 1 }} <span>/ 06</span></div>
-        <p class="kicker">{{ pageMeta[page]?.[0] || '404 / NOT FOUND' }}</p>
-        <h1 v-if="page === 'home'" class="hero-name">Yance<span>.</span></h1>
-        <h1 v-else class="hero-title">{{ pageMeta[page]?.[1] || '这一页走丢了' }}</h1>
-        <p class="hero-copy">{{ pageMeta[page]?.[2] || '返回首页，重新选择一个方向。' }}</p>
-        <p class="lyric-note" v-if="page !== 'home'">LYRIC / PERSONAL ARCHIVE</p>
-        <div class="hero-line"><span></span></div>
-      </section>
+      <ArchiveHero
+        :page="page"
+        :no="archiveNo"
+        :total="6"
+        :error="isError"
+        :is-home="isHome"
+        :kicker="kicker"
+        :title="heroTitle"
+        :copy="heroCopy"
+      />
 
-      <section v-if="page === 'home'" class="content home-content">
-        <div class="section-intro"><span>01 / EXPLORE</span><h2>五个<span>小世界</span></h2><p>缘分让我们相遇乱世以外。把探索、荣誉、研究、作品与音乐分别收进五间屋子。</p></div>
+      <!-- 首页 -->
+      <section v-if="isHome" class="content home-content">
+        <SectionHeading
+          no="01"
+          label="EXPLORE"
+          title="五个"
+          accent="小世界"
+          copy="缘分让我们相遇乱世以外。把探索、荣誉、研究、作品与音乐分别收进五间屋子。"
+        />
+
+        <a
+          v-if="currentResearch"
+          class="current-research"
+          :href="currentResearch.link || '#'"
+          :target="currentResearch.link ? '_blank' : undefined"
+          :rel="currentResearch.link ? 'noopener' : undefined"
+          v-reveal
+        >
+          <span class="cr-label">CURRENT<br>RESEARCH</span>
+          <span class="cr-body">
+            <strong>{{ currentResearch.title }}</strong>
+            <small>{{ currentResearch.date }} · {{ currentResearch.tag }}</small>
+          </span>
+          <span class="cr-tag">{{ currentResearch.tag }}</span>
+          <span class="cr-arrow" aria-hidden="true">↗</span>
+        </a>
+
         <div class="portal-grid">
-          <a v-for="item in navItems.slice(1)" :key="item.key" :href="item.href" class="portal" :class="`portal-${item.key}`"><span class="portal-no">0{{ navItems.indexOf(item) + 1 }}</span><strong>{{ item.label }}</strong><em>{{ item.en }}</em><i>↗</i></a>
+          <a
+            v-for="item in navItems.slice(1)"
+            :key="item.key"
+            class="portal"
+            :class="`portal-${item.key}`"
+            :href="item.href"
+            v-reveal
+          >
+            <span class="portal-no">0{{ navItems.indexOf(item) + 1 }}</span>
+            <span class="portal-icon" aria-hidden="true">{{ portalIcon(item.key) }}</span>
+            <strong>{{ item.label }}</strong>
+            <em>{{ item.en }}</em>
+            <span class="portal-arrow" aria-hidden="true">↗</span>
+          </a>
         </div>
-        <div class="stats-row"><div v-for="stat in stats" :key="stat.label" class="stat-block"><b>{{ stat.value }}</b><span>{{ stat.label }}</span><small>{{ stat.note }}</small></div></div>
+
+        <div class="stat-strip">
+          <div v-for="stat in stats" :key="stat.label" class="stat-cell" v-reveal>
+            <b>{{ stat.value }}</b>
+            <span>{{ stat.label }}</span>
+            <small>{{ stat.note }}</small>
+          </div>
+        </div>
       </section>
 
-      <section v-else-if="page === 'academics'" class="content"><div class="section-intro"><span>01 / SCOREBOARD</span><h2>数字不会说谎<span>，但努力会。</span></h2></div><div class="stats-row large"><div v-for="stat in stats" :key="stat.label" class="stat-block"><b>{{ stat.value }}</b><span>{{ stat.label }}</span><small>{{ stat.note }}</small></div></div><div class="data-panel"><div class="panel-label">AP SCORE / 2024—2026</div><div v-for="(name, index) in ['微积分 BC','物理 1','计算机科学 A','生物学','化学','统计学','环境科学','心理学','宏观经济学']" :key="name" class="data-row"><span>0{{ index + 1 }}</span><strong>{{ name }}</strong><b>5</b></div></div></section>
+      <!-- 学业 -->
+      <section v-else-if="page === 'academics'" class="content">
+        <SectionHeading no="01" label="SCOREBOARD" title="数字不会说谎，" accent="但努力会。" />
 
-      <section v-else-if="page === 'honors'" class="content"><div class="section-intro"><span>02 / MILESTONES</span><h2>每一枚奖章，都是<span>向上的证据。</span></h2></div><div class="honor-stack"><article v-for="tier in honors" :key="tier.level" class="honor-tier" :class="tier.color"><div class="tier-symbol">{{ tier.level }}</div><div><span class="eyebrow">{{ tier.en }}</span><h3>{{ tier.title }}</h3></div><div class="tier-items"><p v-for="item in tier.items" :key="item">{{ item }} <i>↗</i></p></div></article></div></section>
+        <div class="stat-strip large">
+          <div v-for="stat in stats" :key="stat.label" class="stat-cell" v-reveal>
+            <b>{{ stat.value }}</b>
+            <span>{{ stat.label }}</span>
+            <small>{{ stat.note }}</small>
+          </div>
+        </div>
 
-      <section v-else-if="page === 'research'" class="content"><div class="section-intro"><span>03 / LAB NOTES</span><h2>把论文<span>写成产品。</span></h2></div><div class="research-list"><article v-for="(item, index) in research" :key="item.title" class="research-row"><span class="row-no">0{{ index + 1 }}</span><div><small>{{ item.date }} · {{ item.tag }}</small><h3>{{ item.title }}</h3><p>{{ item.text }}</p><a v-if="item.link" :href="item.link" target="_blank" rel="noopener">OPEN PROJECT ↗</a></div><span class="row-arrow">↗</span></article></div></section>
+        <div class="ap-panel" v-reveal>
+          <div class="panel-label">AP SCORE / 2024—2026 · 9 门全部 5 分</div>
+          <div v-for="(row, i) in apScores" :key="row.name" class="ap-row" v-reveal>
+            <span class="ap-no">0{{ i + 1 }}</span>
+            <div class="ap-main">
+              <strong>{{ row.name }}</strong>
+              <small>{{ row.en }} · {{ row.year }}</small>
+            </div>
+            <span class="ap-badge">5</span>
+          </div>
+        </div>
+      </section>
 
-      <section v-else-if="page === 'works'" class="content"><div class="section-intro"><span>04 / RELEASED WORLDS</span><h2>让想法<span>可以被打开。</span></h2></div><div class="project-grid"><a v-for="project in projects" :key="project.title" :href="project.href" target="_blank" rel="noopener" class="project-card" :class="project.tone"><div class="project-orbit">{{ project.icon === 'eye' ? '◉' : '♫' }}</div><span>{{ project.domain }}</span><h3>{{ project.title }} <small>{{ project.en }}</small></h3><p>{{ project.description }}</p><b>ENTER PROJECT ↗</b></a></div></section>
+      <!-- 荣誉 -->
+      <section v-else-if="page === 'honors'" class="content">
+        <SectionHeading no="02" label="MILESTONES" title="每一枚奖章，都是" accent="向上的证据。" />
 
-      <section v-else-if="page === 'concerts'" class="content concerts-content"><div class="section-intro"><span>05 / LIVE ARCHIVE</span><h2>现场是<span>另一种记忆。</span></h2><p>点击海报进入全屏档案。每张图都保留原始比例，轮播记录同一场演出的不同视觉。</p></div><div class="concert-list"><article v-for="item in concerts" :key="item.date" class="concert-row"><div class="concert-date">{{ item.date }}<span></span></div><div class="concert-poster" :class="{ land: item.land }"><img :src="currentImage(item, 0)" :alt="`${item.artist} ${item.tour} 海报`" loading="lazy" decoding="async" @click="openLightbox(item.images.map(imagePath), carouselIndexes[item.date] || 0)"><div v-if="item.images.length > 1" class="carousel-controls"><button type="button" aria-label="上一张" @click.stop="moveCarousel(item, -1)">←</button><span>{{ (carouselIndexes[item.date] || 0) + 1 }} / {{ item.images.length }}</span><button type="button" aria-label="下一张" @click.stop="moveCarousel(item, 1)">→</button></div></div><div class="concert-info"><span>{{ item.venue }}</span><h3>{{ item.artist }}</h3><p>{{ item.tour }}</p></div></article></div></section>
+        <div class="honor-ledger">
+          <article v-for="tier in honors" :key="tier.level" class="honor-tier" :class="tier.color" v-reveal>
+            <div class="tier-rail" aria-hidden="true"></div>
+            <div class="tier-head">
+              <span class="tier-numeral">{{ tier.level }}</span>
+              <div class="tier-id">
+                <span class="eyebrow">{{ tier.en }}</span>
+                <h3>{{ tier.title }}</h3>
+              </div>
+            </div>
+            <ul class="tier-list">
+              <li v-for="item in tier.items" :key="item">
+                <span>{{ item }}</span><i aria-hidden="true">↗</i>
+              </li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <!-- 研究 -->
+      <section v-else-if="page === 'research'" class="content">
+        <SectionHeading no="03" label="LAB NOTES" title="把论文" accent="写成产品。" />
+
+        <div class="research-timeline">
+          <article v-for="item in research" :key="item.title" class="tl-item" v-reveal>
+            <div class="tl-side">
+              <span class="tl-date">{{ item.date }}</span>
+              <span class="tl-node" aria-hidden="true"><i></i></span>
+            </div>
+            <div class="tl-body">
+              <span class="tl-tag" :class="tagClass(item.tag)">{{ item.tag }}</span>
+              <h3>{{ item.title }}</h3>
+              <p>{{ item.text }}</p>
+              <div class="tl-foot">
+                <span class="tl-org">{{ item.org }}</span>
+                <a v-if="item.link" :href="item.link" target="_blank" rel="noopener">OPEN PROJECT ↗</a>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- 作品 -->
+      <section v-else-if="page === 'works'" class="content">
+        <SectionHeading no="04" label="RELEASED WORLDS" title="让想法" accent="可以被打开。" />
+
+        <div class="showcase-grid">
+          <a
+            v-for="(project, i) in projects"
+            :key="project.title"
+            class="showcase"
+            :class="project.tone"
+            :href="project.href"
+            target="_blank"
+            rel="noopener"
+            v-reveal
+          >
+            <span class="sc-icon" aria-hidden="true">{{ project.icon === 'eye' ? '◉' : '♫' }}</span>
+            <div class="sc-top">
+              <span class="sc-domain">{{ project.domain }}</span>
+              <span class="sc-arrow" aria-hidden="true">↗</span>
+            </div>
+            <div class="sc-bottom">
+              <span class="sc-overline">PROJECT 0{{ i + 1 }}</span>
+              <h3>{{ project.title }} <small>{{ project.en }}</small></h3>
+              <p>{{ project.description }}</p>
+              <span class="sc-cta">ENTER PROJECT ↗</span>
+            </div>
+          </a>
+        </div>
+      </section>
+
+      <!-- 演唱会 -->
+      <section v-else-if="page === 'concerts'" class="content concerts-content">
+        <SectionHeading
+          no="05"
+          label="LIVE ARCHIVE"
+          title="现场是"
+          accent="另一种记忆。"
+          copy="点击海报进入全屏档案。每张图都保留原始比例，轮播记录同一场演出的不同视觉。"
+        />
+
+        <div class="concert-list">
+          <article v-for="item in concerts" :key="item.date" class="concert-row" v-reveal>
+            <div class="concert-date">{{ item.date }}<span></span></div>
+            <div class="concert-poster" :class="{ land: item.land }">
+              <img
+                :src="currentImage(item, 0)"
+                :alt="`${item.artist} ${item.tour} 海报`"
+                loading="lazy"
+                decoding="async"
+                @click="openLightbox(item, carouselIndexes[item.date] || 0)"
+              >
+              <div v-if="item.images.length > 1" class="carousel-controls">
+                <button type="button" aria-label="上一张" @click.stop="moveCarousel(item, -1)">←</button>
+                <span>{{ (carouselIndexes[item.date] || 0) + 1 }} / {{ item.images.length }}</span>
+                <button type="button" aria-label="下一张" @click.stop="moveCarousel(item, 1)">→</button>
+              </div>
+            </div>
+            <div class="concert-info">
+              <span>{{ item.venue }}</span>
+              <h3>{{ item.artist }}</h3>
+              <p>{{ item.tour }}</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- 404 -->
+      <section v-else class="content error-content">
+        <SectionHeading no="!" label="SIGNAL LOST" title="这一页，" accent="走丢了。" copy="你访问的页面不存在，或者已经被移走。回到主页，重新选一间屋子走进去。" />
+        <div class="error-actions">
+          <a class="btn-primary" href="index.html">回到首页 <span aria-hidden="true">→</span></a>
+          <a class="btn-ghost" href="research.html">去看看研究 <span aria-hidden="true">→</span></a>
+        </div>
+      </section>
     </main>
 
-    <footer class="site-footer"><span>© 2026 YANCE.</span><span>RESEARCHER / BUILDER / MUSIC LISTENER</span><a href="mailto:yance777@outlook.com">CONTACT ↗</a></footer>
-    <div v-if="lightbox" class="lightbox" @click.self="closeLightbox"><button type="button" aria-label="关闭灯箱" @click="closeLightbox">×</button><button v-if="lightbox.images.length > 1" type="button" aria-label="上一张" @click="moveLightbox(-1)">←</button><img :src="lightbox.images[lightbox.index]" alt="演唱会海报大图"><button v-if="lightbox.images.length > 1" type="button" aria-label="下一张" @click="moveLightbox(1)">→</button></div>
+    <SiteFooter />
+
+    <ImageLightbox
+      v-if="lightbox"
+      :images="lightbox.images"
+      :index="lightbox.index"
+      :meta="lightbox.meta"
+      @close="closeLightbox"
+      @prev="moveLightbox(-1)"
+      @next="moveLightbox(1)"
+    />
   </div>
 </template>

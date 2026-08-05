@@ -48,3 +48,24 @@ export const concerts = [
   ['2026.08.19', '汪苏泷', '明日世界演唱会', '鸟巢', ['concert-202608-wang-sulong.jpg']],
   ['2026.08.30', '汪苏泷', '明日世界演唱会', '鸟巢', ['concert-202608-wang-sulong.jpg']]
 ].map(([date, artist, tour, venue, images, land = false]) => ({ date, artist, tour, venue, images, land }))
+
+export const apScores = [
+  { name: '微积分 BC', en: 'Calculus BC', year: '2025' },
+  { name: '物理 1', en: 'Physics 1', year: '2025' },
+  { name: '计算机科学 A', en: 'Computer Science A', year: '2025' },
+  { name: '生物学', en: 'Biology', year: '2026' },
+  { name: '化学', en: 'Chemistry', year: '2026' },
+  { name: '统计学', en: 'Statistics', year: '2026' },
+  { name: '环境科学', en: 'Environmental Science', year: '2026' },
+  { name: '心理学', en: 'Psychology', year: '2026' },
+  { name: '宏观经济学', en: 'Macroeconomics', year: '2026' }
+]
+
+export const heroGeo = {
+  home: '39.9042° N / 116.4074° E',
+  academics: '40.0369° N / 116.3087° E',
+  honors: '40.0458° N / 116.3175° E',
+  research: '39.9848° N / 116.3158° E',
+  works: '39.9356° N / 116.4329° E',
+  concerts: '39.9296° N / 116.3911° E'
+}

@@ -6,7 +6,7 @@
    · 跨域 / 非 GET：直接放行
    · 激活时清除旧缓存 + 通知客户端刷新
    ============================================ */
-var CACHE = 'yance-v8';
+var CACHE = 'yance-v10';
 var PRECACHE = [
   './',
   './index.html',
@@ -17,8 +17,9 @@ var PRECACHE = [
   './concerts.html',
   './404.html',
   './assets/vue/main.js',
-  './assets/vue/index.css',
-  './assets/favicon.svg'
+  './assets/vue/main.css',
+  './assets/vue/favicon.svg',
+  './assets/vue/site.webmanifest'
 ];
 
 self.addEventListener('install', function (event) {
