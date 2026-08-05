@@ -10,6 +10,7 @@ desktop.ini
 
 # 临时 / 截图
 _shots/
+test-screenshots/
 *.log
 
 # 简历源文件

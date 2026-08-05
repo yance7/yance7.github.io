@@ -1,17 +1,24 @@
 <script setup>
+import { ref } from 'vue'
 import { useTheme } from '../composables/useTheme'
 const { theme, toggleTheme } = useTheme()
+const btn = ref(null)
+
+function onToggle() {
+  toggleTheme(btn.value)
+}
 </script>
 
 <template>
   <button
+    ref="btn"
     class="theme-orbit"
     :class="theme"
     type="button"
     :aria-label="theme === 'light' ? '切换到暗色主题' : '切换到亮色主题'"
     :aria-pressed="theme === 'dark'"
     title="切换主题"
-    @click="toggleTheme"
+    @click="onToggle"
   >
     <span class="orbit-track" aria-hidden="true">
       <span class="orbit-knob" :class="{ dark: theme === 'dark' }"></span>

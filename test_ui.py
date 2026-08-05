@@ -118,7 +118,7 @@ with sync_playwright() as p:
         if menu_visible:
             menu_btn.click()
             page.wait_for_timeout(500)
-            nav_open = page.locator(".nav-rail").is_visible()
+            nav_open = page.locator(".mobile-menu-overlay").is_visible()
         else:
             nav_open = "menu not visible"
 
