@@ -255,6 +255,7 @@
       dots.forEach(function (dot, i) {
         if (i === current) dot.classList.add('active');
         else dot.classList.remove('active');
+        dot.setAttribute('aria-current', i === current ? 'true' : 'false');
       });
     };
 

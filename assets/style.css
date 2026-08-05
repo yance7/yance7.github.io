@@ -476,6 +476,7 @@ main,.nav,.footer{position:relative;z-index:1}
 
 .card-domain{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;margin-bottom:12px;color:var(--ink-mute)}
 .card-title{font-family:var(--display);font-weight:500;font-size:1.8rem;line-height:1.2;margin-bottom:10px;letter-spacing:-.01em}
+.card-title-en{font-family:var(--sans);font-size:.52em;font-style:normal;font-weight:500;letter-spacing:.04em;color:var(--ink-mute);vertical-align:middle}
 .card-desc{font-size:.92rem;color:var(--ink-soft);max-width:24em;margin-bottom:22px}
 .card-link{
   font-family:var(--mono);font-size:.74rem;letter-spacing:.14em;
@@ -918,6 +919,8 @@ main{animation:pageIn .6s ease both}
   border-radius:inherit;
   width:100%;
   height:100%;
+  transition:transform .35s ease;
+  touch-action:pan-y;
 }
 .tl-carousel-slide{
   flex:0 0 100%;
@@ -979,6 +982,9 @@ main{animation:pageIn .6s ease both}
   cursor:pointer;
   padding:0;
   border:none;
+  appearance:none;
+  margin:0;
+  touch-action:manipulation;
   transition:background .25s ease,transform .25s ease;
 }
 .tl-dot-indicator.active{
