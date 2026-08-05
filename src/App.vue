@@ -34,6 +34,7 @@ const isError = !currentNav.value
 const kicker = computed(() => (isError ? '404 / NOT FOUND' : pageMeta[page][0]))
 const heroTitle = computed(() => (isError ? '这一页走丢了' : pageMeta[page][1]))
 const heroCopy = computed(() => (isError ? '返回首页，重新选择一个方向。' : pageMeta[page][2]))
+const heroCredit = computed(() => (isError ? null : pageMeta[page][3] || null))
 
 const pageMap = {
   home: HomePage,
@@ -75,6 +76,7 @@ function moveLightbox(step) {
         :kicker="kicker"
         :title="heroTitle"
         :copy="heroCopy"
+        :credit="heroCredit"
       />
 
       <component :is="currentPage" @open-lightbox="handleLightbox" />

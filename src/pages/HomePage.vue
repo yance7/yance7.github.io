@@ -94,7 +94,7 @@ const expandedActivity = ref(null)
         label="LEADERSHIP"
         title="在集体中"
         accent="生长。"
-        copy="四个领导力职位，从副社长到社长，从生物社到科技创新社，从执行到组织。"
+        copy="四个领导力职位，从副主席到主席、副社长到社长，从执行到组织。"
       />
       <div class="leadership-grid">
         <article

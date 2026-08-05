@@ -10,6 +10,7 @@ const props = defineProps({
   kicker: { type: String, default: '' },
   title: { type: String, default: '' },
   copy: { type: String, default: '' },
+  credit: { type: Object, default: null },
   isHome: { type: Boolean, default: false }
 })
 
@@ -39,6 +40,14 @@ const lyricChars = computed(() => props.title.split(''))
         <p v-if="!isHome" class="lyric-note" v-reveal="{ delay: 240 }">
           LYRIC / PERSONAL ARCHIVE
           <span class="lyric-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        </p>
+        <p v-if="credit && !isHome" class="lyric-credit" v-reveal="{ delay: 270 }">
+          <b>{{ credit.artist }}</b>
+          <i aria-hidden="true">/</i>
+          <span>「{{ credit.song }}」</span>
+          <i aria-hidden="true">/</i>
+          <span v-if="credit.album" class="lc-album">《{{ credit.album }}》</span>
+          <span v-else class="lc-album">单曲</span>
         </p>
         <div class="hero-line" v-reveal="{ delay: 300 }"><span></span></div>
       </div>
