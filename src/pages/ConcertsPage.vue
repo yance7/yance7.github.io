@@ -1,13 +1,13 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { concerts, concertGroups, concertMoods, concertStats } from '../data/content'
+import { concertGroups, concertMoods, concertStats } from '../data/content'
 import SectionHeading from '../components/SectionHeading.vue'
 import MetricStrip from '../components/MetricStrip.vue'
 
 const emit = defineEmits(['open-lightbox'])
 
 const carouselIndexes = ref({})
-const randomConcert = ref(null)
+const preloaded = new Set()
 
 const concertMetrics = [
   { value: String(concertStats.total), label: '现场', note: concertStats.yearRange },
@@ -33,11 +33,35 @@ function openLightbox(item, index = 0) {
     meta: { artist: item.artist, tour: item.tour }
   })
 }
-function pickRandom() {
-  const idx = Math.floor(Math.random() * concerts.length)
-  const item = concerts[idx]
-  randomConcert.value = item
-  openLightbox(item, 0)
+
+/* 悬停时预载海报，点击打开灯箱时无需等待网络 */
+function preloadItem(item) {
+  for (const name of item.images) {
+    const src = imagePath(name)
+    if (preloaded.has(src)) continue
+    preloaded.add(src)
+    const img = new Image()
+    img.src = src
+    img.decoding = 'async'
+  }
+}
+
+function tiltPoster(e) {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  const el = e.currentTarget
+  const rect = el.getBoundingClientRect()
+  const px = (e.clientX - rect.left) / rect.width - 0.5
+  const py = (e.clientY - rect.top) / rect.height - 0.5
+  el.style.setProperty('--rx', `${(-py * 5).toFixed(2)}deg`)
+  el.style.setProperty('--ry', `${(px * 7).toFixed(2)}deg`)
+  el.style.setProperty('--gx', `${((px + 0.5) * 100).toFixed(1)}%`)
+  el.style.setProperty('--gy', `${((py + 0.5) * 100).toFixed(1)}%`)
+}
+
+function resetPoster(e) {
+  const el = e.currentTarget
+  el.style.removeProperty('--rx')
+  el.style.removeProperty('--ry')
 }
 </script>
 
@@ -53,16 +77,6 @@ function pickRandom() {
       />
 
       <MetricStrip :metrics="concertMetrics" />
-    </section>
-
-    <!-- 随机回忆 -->
-    <section class="content">
-      <div class="random-memory" v-reveal>
-        <button class="btn-primary random-btn" type="button" @click="pickRandom">
-          随机回忆 <span aria-hidden="true">↻</span>
-        </button>
-        <p>从 {{ concertStats.total }} 场现场中随机打开一段记忆。</p>
-      </div>
     </section>
 
     <!-- 按年份分组 -->
@@ -83,9 +97,15 @@ function pickRandom() {
           :key="item.date"
           class="concert-row"
           v-reveal
+          @mouseenter="preloadItem(item)"
         >
           <div class="concert-date">{{ item.date }}<span></span></div>
-          <div class="concert-poster" :class="{ land: item.land }">
+          <div
+            class="concert-poster"
+            :class="{ land: item.land }"
+            @mousemove="tiltPoster"
+            @mouseleave="resetPoster"
+          >
             <img
               :src="currentImage(item, 0)"
               :alt="`${item.artist} ${item.tour} 海报`"
@@ -93,6 +113,9 @@ function pickRandom() {
               decoding="async"
               @click="openLightbox(item, carouselIndexes[item.date] || 0)"
             >
+            <div class="poster-hint" aria-hidden="true">
+              <span>打开档案</span><b>↗</b>
+            </div>
             <div v-if="item.images.length > 1" class="carousel-controls">
               <button type="button" aria-label="上一张" @click.stop="moveCarousel(item, -1)">←</button>
               <span>{{ (carouselIndexes[item.date] || 0) + 1 }} / {{ item.images.length }}</span>

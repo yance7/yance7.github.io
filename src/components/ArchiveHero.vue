@@ -17,6 +17,7 @@ const coordsLabel = computed(() =>
   props.error ? 'ARCHIVE / ERROR' : `ARCHIVE ${props.no} / ${props.total}`
 )
 const geo = computed(() => (props.error ? '—' : heroGeo[props.page] || '—'))
+const lyricChars = computed(() => props.title.split(''))
 </script>
 
 <template>
@@ -25,9 +26,20 @@ const geo = computed(() => (props.error ? '—' : heroGeo[props.page] || '—'))
       <div class="hero-main">
         <p class="hero-kicker" v-reveal>{{ kicker }}</p>
         <h1 v-if="isHome" class="hero-name" v-reveal="{ delay: 90 }">Yance<span>.</span></h1>
-        <h1 v-else class="hero-title" v-reveal="{ delay: 90 }">{{ title }}</h1>
+        <h1 v-else class="hero-title hero-lyric" :aria-label="title">
+          <span
+            v-for="(ch, i) in lyricChars"
+            :key="`${ch}-${i}`"
+            class="lyric-char"
+            :style="{ '--ci': i }"
+            aria-hidden="true"
+          >{{ ch }}</span>
+        </h1>
         <p class="hero-copy" v-reveal="{ delay: 180 }">{{ copy }}</p>
-        <p v-if="!isHome" class="lyric-note" v-reveal="{ delay: 240 }">LYRIC / PERSONAL ARCHIVE</p>
+        <p v-if="!isHome" class="lyric-note" v-reveal="{ delay: 240 }">
+          LYRIC / PERSONAL ARCHIVE
+          <span class="lyric-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        </p>
         <div class="hero-line" v-reveal="{ delay: 300 }"><span></span></div>
       </div>
 

@@ -62,8 +62,8 @@ import MetricStrip from '../components/MetricStrip.vue'
         >
           <div class="track-year">
             <span class="track-yr">{{ phase.year }}</span>
-            <span class="track-node" aria-hidden="true"><i></i></span>
           </div>
+          <span class="track-node" aria-hidden="true"><i></i></span>
           <div class="track-body">
             <span class="track-phase">{{ phase.phase }}</span>
             <small class="track-en">{{ phase.en }}</small>

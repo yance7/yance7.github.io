@@ -37,9 +37,9 @@ function toggleMethod(title) {
     >
       <div class="tl-side">
         <span class="tl-date">{{ item.date }}</span>
-        <span class="tl-node" aria-hidden="true"><i></i></span>
         <StatusBadge v-if="item.status" :status="item.status" :label="statusLabel(item.status)" />
       </div>
+      <span class="tl-node" aria-hidden="true"><i></i></span>
       <div class="tl-body">
         <span class="tl-tag" :class="tagClass(item.tag)">{{ item.tag }}</span>
         <h3>{{ item.title }}</h3>

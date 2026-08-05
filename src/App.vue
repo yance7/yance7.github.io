@@ -8,6 +8,7 @@ import ArchiveHero from './components/ArchiveHero.vue'
 import SiteFooter from './components/SiteFooter.vue'
 import ImageLightbox from './components/ImageLightbox.vue'
 import ScrollProgress from './components/ScrollProgress.vue'
+import CursorGlow from './components/CursorGlow.vue'
 
 import HomePage from './pages/HomePage.vue'
 import AcademicsPage from './pages/AcademicsPage.vue'
@@ -59,6 +60,7 @@ function moveLightbox(step) {
     <div class="ambient ambient-two"></div>
     <div class="grain"></div>
 
+    <CursorGlow />
     <ScrollProgress />
 
     <SiteHeader :page="page" />

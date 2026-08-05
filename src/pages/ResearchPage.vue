@@ -25,15 +25,25 @@ import TimelineTrack from '../components/TimelineTrack.vue'
         accent="技术栈。"
         copy="横跨深度学习、可解释 AI、微生物组分析与后端工程的方法栈。"
       />
-      <div class="methods-grid">
-        <div
-          v-for="(m, i) in researchMethods"
-          :key="m.label"
-          class="method-chip"
-          v-reveal="{ delay: i * 50 }"
-        >
-          <strong>{{ m.label }}</strong>
-          <small>{{ m.en }}</small>
+      <div class="toolchain-panel" v-reveal>
+        <div class="toolchain-head">
+          <span class="tc-head-label">TOOLCHAIN // {{ researchMethods.length }} MODULES</span>
+          <span class="tc-head-status"><i></i> ONLINE</span>
+        </div>
+        <div class="toolchain-grid">
+          <article
+            v-for="(m, i) in researchMethods"
+            :key="m.label"
+            class="toolchain-cell"
+            :style="{ '--i': i }"
+          >
+            <span class="tc-no">{{ String(i + 1).padStart(2, '0') }}</span>
+            <div class="tc-main">
+              <strong>{{ m.label }}</strong>
+              <small>{{ m.en }}</small>
+            </div>
+            <span class="tc-cat">{{ m.cat }}</span>
+          </article>
         </div>
       </div>
     </section>

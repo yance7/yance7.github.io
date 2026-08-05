@@ -261,15 +261,15 @@ export const research = [
 ]
 
 export const researchMethods = [
-  { label: 'PyTorch', en: 'Deep Learning' },
-  { label: 'EfficientNet', en: 'Backbone' },
-  { label: 'CBAM / LightCRA', en: 'Attention' },
-  { label: 'Grad-CAM', en: 'Interpretability' },
-  { label: 'ONNX', en: 'Deployment' },
-  { label: 'FastAPI', en: 'Backend' },
-  { label: 'HuggingFace', en: 'Hosting' },
-  { label: '16S rRNA', en: 'Microbiome' },
-  { label: 'Random Forest', en: 'Regression' }
+  { label: 'PyTorch', en: 'Deep Learning', cat: 'DEEP LEARNING' },
+  { label: 'EfficientNet', en: 'Backbone', cat: 'DEEP LEARNING' },
+  { label: 'CBAM / LightCRA', en: 'Attention', cat: 'DEEP LEARNING' },
+  { label: 'Grad-CAM', en: 'Interpretability', cat: 'EXPLAINABLE AI' },
+  { label: 'ONNX', en: 'Deployment', cat: 'ENGINEERING' },
+  { label: 'FastAPI', en: 'Backend', cat: 'ENGINEERING' },
+  { label: 'HuggingFace', en: 'Hosting', cat: 'ENGINEERING' },
+  { label: '16S rRNA', en: 'Microbiome', cat: 'SCIENCE' },
+  { label: 'Random Forest', en: 'Regression', cat: 'SCIENCE' }
 ]
 
 /* ---------- 领导力 ---------- */

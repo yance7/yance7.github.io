@@ -11,6 +11,9 @@ const emit = defineEmits(['close', 'prev', 'next'])
 const loading = ref(true)
 let lastFocus = null
 
+function onImgLoad() { loading.value = false }
+function onImgError() { loading.value = false }
+
 function onKey(e) {
   if (e.key === 'Escape') emit('close')
   else if (e.key === 'ArrowLeft') emit('prev')
@@ -47,12 +50,15 @@ watch(() => props.index, () => { loading.value = true })
 
       <figure class="lb-stage">
         <img
-          v-if="!loading"
           :src="images[index]"
-          alt="演唱会海报大图"
-          @load="loading = false"
+          :alt="meta ? `${meta.artist} · ${meta.tour} 海报大图` : '演唱会海报大图'"
+          :class="{ loaded: !loading }"
+          fetchpriority="high"
+          decoding="async"
+          @load="onImgLoad"
+          @error="onImgError"
         >
-        <div v-else class="lb-loading" aria-label="加载中"><i></i></div>
+        <div v-if="loading" class="lb-loading" aria-label="加载中"><i></i></div>
         <figcaption v-if="meta" class="lb-meta">
           <span>{{ meta.artist }} · {{ meta.tour }}</span>
           <span>{{ index + 1 }} / {{ images.length }}</span>
