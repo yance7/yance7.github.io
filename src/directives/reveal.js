@@ -9,7 +9,7 @@ function ensureObserver() {
           observer.unobserve(entry.target)
         }
       })
-    }, { threshold: 0.12, rootMargin: '0px 0px -36px 0px' })
+    }, { threshold: 0.08, rootMargin: '0px 0px -60px 0px' })
   }
   return observer
 }
@@ -17,6 +17,12 @@ function ensureObserver() {
 export default {
   mounted(el, binding) {
     if (!('IntersectionObserver' in window)) {
+      el.classList.add('revealed')
+      return
+    }
+
+    /* 尊重 prefers-reduced-motion */
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       el.classList.add('revealed')
       return
     }
@@ -29,7 +35,7 @@ export default {
     }
     if (delay) el.style.transitionDelay = `${delay}ms`
 
-    /* 支持 v-reveal="{ variant: 'fade-up' | 'fade-left' | 'fade-right' | 'clip' | 'scale' }" */
+    /* 支持 v-reveal="{ variant: 'fade-up' | 'fade-left' | 'fade-right' | 'clip' | 'scale' | 'blur' }" */
     const variant = binding.value?.variant || 'fade-up'
     el.dataset.revealVariant = variant
 

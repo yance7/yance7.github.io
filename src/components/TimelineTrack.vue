@@ -1,19 +1,27 @@
 <script setup>
+import { reactive } from 'vue'
 import StatusBadge from './StatusBadge.vue'
 
 defineProps({
   items: { type: Array, required: true }
 })
 
+const openMethod = reactive({})
+
 function tagClass(tag) {
   if (tag.includes('WEB TOOL')) return 'aqua'
   if (tag.includes('PUBLISHED')) return 'gold'
   if (tag.includes('DEEP')) return 'violet'
+  if (tag.includes('MULTIMODAL')) return 'violet'
   return 'dim'
 }
 
 function statusLabel(status) {
   return { active: '进行中', published: '已发表', completed: '已完成' }[status] || ''
+}
+
+function toggleMethod(title) {
+  openMethod[title] = !openMethod[title]
 }
 </script>
 
@@ -37,30 +45,47 @@ function statusLabel(status) {
         <h3>{{ item.title }}</h3>
         <p>{{ item.text }}</p>
 
-        <!-- 研究方法论 -->
+        <!-- 关键指标条 -->
+        <div class="tl-metrics" v-if="item.metrics">
+          <div class="metric-item" v-for="m in item.metrics" :key="m.label">
+            <strong>{{ m.value }}</strong>
+            <span>{{ m.label }}</span>
+          </div>
+        </div>
+
+        <!-- 可展开方法论 -->
         <div v-if="item.methodology" class="tl-method">
-          <div class="method-grid">
-            <div class="method-cell" v-reveal="{ delay: 60 }">
+          <button
+            class="method-toggle"
+            :class="{ open: openMethod[item.title] }"
+            type="button"
+            :aria-expanded="!!openMethod[item.title]"
+            @click="toggleMethod(item.title)"
+          >
+            {{ openMethod[item.title] ? '收起方法论' : '展开方法论' }}
+          </button>
+          <div class="method-grid" :class="{ open: openMethod[item.title] }">
+            <div class="method-cell">
               <span class="method-label">QUESTION</span>
               <p>{{ item.methodology.question }}</p>
             </div>
-            <div class="method-cell" v-reveal="{ delay: 120 }">
+            <div class="method-cell">
               <span class="method-label">HYPOTHESIS</span>
               <p>{{ item.methodology.hypothesis }}</p>
             </div>
-            <div class="method-cell" v-reveal="{ delay: 180 }">
+            <div class="method-cell">
               <span class="method-label">METHOD</span>
               <p>{{ item.methodology.method }}</p>
             </div>
-            <div class="method-cell" v-reveal="{ delay: 240 }">
+            <div class="method-cell">
               <span class="method-label">PROTOTYPE</span>
               <p>{{ item.methodology.prototype }}</p>
             </div>
-            <div class="method-cell" v-reveal="{ delay: 300 }">
+            <div class="method-cell">
               <span class="method-label">RESULT</span>
               <p>{{ item.methodology.result }}</p>
             </div>
-            <div class="method-cell" v-reveal="{ delay: 360 }">
+            <div class="method-cell">
               <span class="method-label">NEXT</span>
               <p>{{ item.methodology.next }}</p>
             </div>

@@ -12,7 +12,7 @@ import TimelineTrack from '../components/TimelineTrack.vue'
         label="LAB NOTES"
         title="把论文"
         accent="写成产品。"
-        copy="从智慧农业到可解释 AI，每一个研究项目都包含完整的提问、假设、方法、原型、结果与下一步。"
+        copy="五个研究项目，按时间倒序堆叠。每一个都包含提问、假设、方法、原型、结果与下一步——点击展开方法论即可看见完整的思考路径。"
       />
     </section>
 
@@ -23,6 +23,7 @@ import TimelineTrack from '../components/TimelineTrack.vue'
         label="TOOLCHAIN"
         title="方法与"
         accent="技术栈。"
+        copy="横跨深度学习、可解释 AI、微生物组分析与后端工程的方法栈。"
       />
       <div class="methods-grid">
         <div

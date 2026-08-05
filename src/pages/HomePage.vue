@@ -1,10 +1,12 @@
 <script setup>
-import { worlds, stats, research, nowActive } from '../data/content'
+import { ref } from 'vue'
+import { worlds, stats, research, nowActive, leadership, activities } from '../data/content'
 import SectionHeading from '../components/SectionHeading.vue'
 import MetricStrip from '../components/MetricStrip.vue'
 import StatusBadge from '../components/StatusBadge.vue'
 
 const currentResearch = research[0]
+const expandedActivity = ref(null)
 </script>
 
 <template>
@@ -83,6 +85,67 @@ const currentResearch = research[0]
         accent="但努力会。"
       />
       <MetricStrip :metrics="stats" />
+    </section>
+
+    <!-- 第四段：领导力 -->
+    <section class="content home-leadership">
+      <SectionHeading
+        no="04"
+        label="LEADERSHIP"
+        title="在集体中"
+        accent="生长。"
+        copy="四个领导力职位，从副社长到社长，从生物社到科技创新社，从执行到组织。"
+      />
+      <div class="leadership-grid">
+        <article
+          v-for="(item, i) in leadership"
+          :key="item.role + item.org"
+          class="leadership-card"
+          v-reveal="{ delay: i * 60 }"
+        >
+          <span class="leadership-role">{{ item.role }}</span>
+          <span class="leadership-org">{{ item.org }}</span>
+          <span class="leadership-period">{{ item.period }}</span>
+          <p class="leadership-note" v-if="item.note">{{ item.note }}</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- 第五段：活动经历 -->
+    <section class="content home-activities">
+      <SectionHeading
+        no="05"
+        label="ACTIVITIES"
+        title="在行动中"
+        accent="学习。"
+        copy="五段活动经历，从志愿服务到学术会议，从 AI 伦理到微积分教学。"
+      />
+      <div class="activity-list">
+        <div
+          v-for="(item, i) in activities"
+          :key="item.title"
+          class="activity-row"
+          :class="{ expanded: expandedActivity === i }"
+          v-reveal="{ delay: i * 60 }"
+        >
+          <button
+            class="activity-btn"
+            type="button"
+            :aria-expanded="expandedActivity === i"
+            @click="expandedActivity = expandedActivity === i ? null : i"
+          >
+            <span class="activity-period">{{ item.period }}</span>
+            <div class="activity-info">
+              <strong>{{ item.title }}</strong>
+              <small>{{ item.org }}</small>
+            </div>
+            <span class="activity-arrow" aria-hidden="true">↘</span>
+          </button>
+          <div class="activity-detail" v-if="expandedActivity === i">
+            <p>{{ item.detail }}</p>
+          </div>
+        </div>
+      </div>
     </section>
   </div>
 </template>

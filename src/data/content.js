@@ -1,5 +1,5 @@
 /* ==========================================================================
-   双生档案馆 2.0 · 内容数据
+   静默工作室 · 内容数据（与简历 main.tex 一一对应）
    ========================================================================== */
 
 export const navItems = [
@@ -11,101 +11,158 @@ export const navItems = [
   { key: 'concerts', label: '演唱会', en: 'Concerts', href: 'concerts.html', desc: '现场记忆档案' }
 ]
 
+/* ---------- 标化成绩 ---------- */
 export const stats = [
   { value: '4.0', label: 'GPA', note: '未加权满分绩点' },
   { value: '1490', label: 'SAT', note: '数学 800 · 语文 690' },
-  { value: '9', label: 'AP 5分', note: '全部满分通过' },
-  { value: '108', label: 'TOEFL', note: '学术英语能力' }
+  { value: '108', label: 'TOEFL', note: 'R29 · L27 · S23 · W29' },
+  { value: '7.5', label: 'IELTS', note: 'L8 · R9 · W7.5 · S6' }
 ]
 
-/* ---------- 学业轨迹 ---------- */
+/* ---------- 教育履历 ---------- */
+export const education = [
+  { period: '2024.02 — 至今', name: '北京市第八十中学国际部', en: 'International Dept, Beijing No.80 High School' },
+  { period: '2021.09 — 2024.01', name: '北京陈经纶中学团结湖分校', en: 'Beijing Chen Jinglun MS Tuanjiehu Branch' },
+  { period: '2015.09 — 2021.07', name: '朝阳实验小学', en: 'Chaoyang Experimental Primary School' }
+]
+
+/* ---------- 学习轨迹（按年级） ---------- */
 export const academicTimeline = [
   {
-    year: '2024',
-    phase: 'Foundation',
-    en: '基础阶段',
-    items: ['进入国际课程体系', '开始 AP 微积分 BC 与物理 1 学习', '首次 TOEFL 108 分']
+    year: 'Grade 10', phase: 'Foundation', en: '基础阶段',
+    items: ['AP Calculus BC · 5', 'AP Physics 1 · 5', 'AP Computer Science A · 5', '首次 TOEFL 108']
   },
   {
-    year: '2025',
-    phase: 'AP / SAT / TOEFL',
-    en: '标化集中期',
-    items: ['3 门 AP 全部 5 分', 'SAT 1490（数学 800）', '完成计算机科学 A']
+    year: 'Grade 11', phase: 'Advanced', en: '进阶集中期',
+    items: ['AP Biology · 5', 'AP Chemistry · 5', 'AP Statistics · 5', 'AP Environmental Science · 5', 'AP CS Principles · 5', 'AP Microeconomics · 5', 'SAT 1490（M800）', 'IELTS 7.5']
   },
   {
-    year: '2026',
-    phase: 'Research-oriented',
-    en: '研究导向',
-    items: ['6 门 AP 进行中', 'FishFreshNet 论文发表', 'FreshEye 工具上线']
+    year: 'Grade 12', phase: 'Research', en: '研究导向',
+    items: ['AP Physics C: Mechanics（待出分）', 'AP Physics C: E&M（待出分）', 'AP Macroeconomics（待出分）', 'FishFreshNet 论文发表', 'FreshEye 工具上线']
   }
 ]
 
+/* ---------- AP 成绩档案（9 门已得 5 分 + 3 门待出分） ---------- */
 export const apScores = [
-  { name: '微积分 BC', en: 'Calculus BC', year: '2025', score: 5 },
-  { name: '物理 1', en: 'Physics 1', year: '2025', score: 5 },
-  { name: '计算机科学 A', en: 'Computer Science A', year: '2025', score: 5 },
-  { name: '生物学', en: 'Biology', year: '2026', score: 5 },
-  { name: '化学', en: 'Chemistry', year: '2026', score: 5 },
-  { name: '统计学', en: 'Statistics', year: '2026', score: 5 },
-  { name: '环境科学', en: 'Environmental Science', year: '2026', score: 5 },
-  { name: '心理学', en: 'Psychology', year: '2026', score: 5 },
-  { name: '宏观经济学', en: 'Macroeconomics', year: '2026', score: 5 }
+  { name: '微积分 BC', en: 'Calculus BC', year: 'Grade 10', score: 5, status: 'done' },
+  { name: '物理 1', en: 'Physics 1', year: 'Grade 10', score: 5, status: 'done' },
+  { name: '计算机科学 A', en: 'Computer Science A', year: 'Grade 10', score: 5, status: 'done' },
+  { name: '生物学', en: 'Biology', year: 'Grade 11', score: 5, status: 'done' },
+  { name: '化学', en: 'Chemistry', year: 'Grade 11', score: 5, status: 'done' },
+  { name: '统计学', en: 'Statistics', year: 'Grade 11', score: 5, status: 'done' },
+  { name: '环境科学', en: 'Environmental Science', year: 'Grade 11', score: 5, status: 'done' },
+  { name: '计算机科学原理', en: 'CS Principles', year: 'Grade 11', score: 5, status: 'done' },
+  { name: '微观经济学', en: 'Microeconomics', year: 'Grade 11', score: 5, status: 'done' },
+  { name: '物理 C 力学', en: 'Physics C: Mechanics', year: 'Grade 12', score: null, status: 'pending' },
+  { name: '物理 C 电磁学', en: 'Physics C: E&M', year: 'Grade 12', score: null, status: 'pending' },
+  { name: '宏观经济学', en: 'Macroeconomics', year: 'Grade 12', score: null, status: 'pending' }
 ]
 
-/* ---------- 荣誉奖章册 ---------- */
+/* ---------- 荣誉奖项（13 项，按时间倒序） ---------- */
 export const honorCategories = [
   { key: 'all', label: '全部' },
-  { key: 'gold', label: '国际金牌' },
-  { key: 'aqua', label: '卓越银章' },
-  { key: 'violet', label: '稳步积累' }
+  { key: 'platinum', label: '国际金牌' },
+  { key: 'gold', label: '国际奖牌' },
+  { key: 'silver', label: '国家级' },
+  { key: 'bronze', label: '区域级' }
+]
+
+export const honorStats = [
+  { value: '13', label: '项荣誉', note: '2025 — 2026' },
+  { value: '3', label: '国际金牌', note: 'BBO · UKChO · USACO' },
+  { value: '5', label: '国际奖牌', note: '银 · 铜 · 优秀' },
+  { value: '5', label: '国家/区域', note: '一/二/三等奖' }
 ]
 
 export const honors = [
   {
-    level: 'I', title: '国际金牌', en: 'PREMIER', color: 'gold', category: 'gold',
-    items: [
-      { text: 'TRAE AI 创意大赛 · Top 300 / 约 14,000', detail: '在约 14,000 名参赛者中进入前 300，提交了基于 AI 视觉的创意应用方案。' },
-      { text: '英国化学奥赛 · 全球金奖', detail: 'UKChO 英国化学奥林匹克竞赛，全球金奖。' },
-      { text: '英国生物奥赛 · 全球金奖', detail: 'BBO 英国生物奥林匹克竞赛，全球金奖。' },
-      { text: '国际化学竞赛 · 金奖', detail: 'International Chemistry Olympiad 金奖。' }
-    ]
+    date: '2026.08', level: 'silver', title: '第九届全国青少年人工智能创新挑战赛 · 三等奖',
+    org: 'National Youth AI Innovation Challenge',
+    detail: '国家级人工智能创新挑战赛，在算法设计与工程实现环节获得三等奖。'
   },
   {
-    level: 'II', title: '卓越银章', en: 'DISTINGUISHED', color: 'aqua', category: 'aqua',
-    items: [
-      { text: '全国中学生物理竞赛 · 省级一等奖', detail: 'CPhO 全国中学生物理竞赛省级一等奖。' },
-      { text: '全国中学生数学竞赛 · 省级一等奖', detail: 'CMO 全国中学生数学竞赛省级一等奖。' },
-      { text: 'USACO · Gold Division', detail: 'USA Computing Olympiad 金级别。' },
-      { text: '国际计算机竞赛 · 银奖', detail: 'International Olympiad in Informatics 银奖。' }
-    ]
+    date: '2026.07', level: 'gold', title: 'TRAE AI 创意大赛 · Top 300',
+    org: '约 14,000 参赛者',
+    detail: '在约 14,000 名参赛者中进入前 300，提交了基于 AI 视觉的创意应用方案。'
   },
   {
-    level: 'III', title: '稳步积累', en: 'MERIT', color: 'violet', category: 'violet',
-    items: [
-      { text: '科技创新项目 · 优秀奖', detail: '校级科技创新项目评选优秀奖。' },
-      { text: '校级学术研究奖', detail: '年度学术研究成果校级表彰。' },
-      { text: '综合素质发展奖', detail: '全面发展综合素质表彰。' },
-      { text: '社区科学传播志愿者', detail: '参与社区科普传播志愿服务。' }
-    ]
+    date: '2026.05', level: 'platinum', title: '英国化学奥赛 UKChO · 全球金奖',
+    org: 'UK Chemistry Olympiad',
+    detail: 'UKChO 英国化学奥林匹克竞赛全球金奖，考察无机、有机、物理化学综合能力。'
+  },
+  {
+    date: '2026.05', level: 'gold', title: '美国生物奥赛 USABO · 全球银奖',
+    org: 'USA Biology Olympiad',
+    detail: 'USABO 美国生物奥林匹克竞赛全球银奖。'
+  },
+  {
+    date: '2026.05', level: 'gold', title: '加拿大化学竞赛 CCC · 全国铜奖',
+    org: 'Canadian Chemistry Contest',
+    detail: '加拿大化学竞赛（CCC）全国铜奖。'
+  },
+  {
+    date: '2026.05', level: 'gold', title: 'Senior Physics Challenge · 全球铜奖',
+    org: 'UK Senior Physics Challenge',
+    detail: '英国物理挑战赛全球铜奖。'
+  },
+  {
+    date: '2026.03', level: 'platinum', title: '英国生物奥赛 BBO · 全球金奖',
+    org: 'British Biology Olympiad',
+    detail: 'BBO 英国生物奥林匹克竞赛全球金奖。'
+  },
+  {
+    date: '2026.03', level: 'gold', title: 'iHOSA 全国轮 BCE · 全国优秀奖',
+    org: 'iHOSA National Round',
+    detail: 'iHOSA 全国轮 BCE（基础化学与生物）全国优秀奖。'
+  },
+  {
+    date: '2026.03', level: 'silver', title: '北京青少年科技创新大赛 · 二等奖',
+    org: 'Beijing Adolescents S&T Innovation Contest',
+    detail: '北京青少年科技创新大赛二等奖。'
+  },
+  {
+    date: '2026.02', level: 'platinum', title: 'USACO 2025-2026 赛季 · Gold Division',
+    org: 'USA Computing Olympiad',
+    detail: 'USACO 2025-2026 赛季金级别，算法与数据结构竞赛。'
+  },
+  {
+    date: '2026.01', level: 'silver', title: '北京朝阳青少年金鹏科技论坛 · 二等奖',
+    org: 'Chaoyang Jinping Technology Forum',
+    detail: '朝阳区金鹏科技论坛二等奖。'
+  },
+  {
+    date: '2025.12', level: 'silver', title: '北京朝阳青少年科技创新大赛 · 一等奖',
+    org: 'Chaoyang Adolescents S&T Innovation Contest',
+    detail: '朝阳区青少年科技创新大赛一等奖。'
+  },
+  {
+    date: '2025.04', level: 'bronze', title: '加拿大化学竞赛 CCC · 区域优秀奖',
+    org: 'Canadian Chemistry Contest',
+    detail: '加拿大化学竞赛（CCC）区域优秀奖。'
   }
 ]
 
-/* ---------- 研究实验室 ---------- */
+/* ---------- 研究项目（5 项，按时间倒序） ---------- */
 export const research = [
   {
     date: '2026.04 — 至今',
     tag: 'WEB TOOL',
     status: 'active',
-    title: '鲜眸 FreshEye：水产品新鲜度 AI 智能评估',
+    title: 'FreshEye：AI 水产品新鲜度评估网页工具',
     org: '个人项目 · HuggingFace Spaces + GitHub Pages',
     text: '将 FishFreshNet 研究线转化为零安装网页工具，用户上传鱼眼照片即可获得新鲜度等级、置信度与 Grad-CAM 热力图。',
-    link: 'https://fresheye.yance777.com',
+    link: 'https://github.com/yance77777/FreshEye',
+    metrics: [
+      { value: '零安装', label: '浏览器端' },
+      { value: 'Grad-CAM', label: '可解释性' },
+      { value: '4 标签', label: '报告导出' }
+    ],
     methodology: {
       question: '如何让水产品新鲜度评估从实验室走向日常使用？',
       hypothesis: '轻量化 CNN 配合 Grad-CAM 可视化，能在浏览器端实现实时、可解释的新鲜度分级。',
-      method: 'FishFreshNet V2 模型 + ONNX 推理 + 前端 Grad-CAM 热力图渲染',
-      prototype: 'HuggingFace Spaces 部署，零安装网页工具',
-      result: '99.29% 准确率，推理延迟 < 200ms',
+      method: 'FishFreshNet V2 模型 + ONNX 推理 + Dockerized FastAPI 后端 + 响应式前端',
+      prototype: 'Hugging Face Spaces 部署，零安装网页工具，深海蓝青色 UI，支持拖拽上传与一键 PDF 导出',
+      result: '上线运行，推理延迟 < 200ms，全本地可搜索历史记录',
       next: '移动端适配 + 多品种鱼类支持'
     }
   },
@@ -113,16 +170,22 @@ export const research = [
     date: '2026.04 — 2026.06',
     tag: 'DEEP LEARNING',
     status: 'published',
-    title: 'FishFreshNet V2：轻量化可解释水产品新鲜度评估',
-    org: '个人项目 · FishFreshNet V2',
-    text: '引入环形区域注意力 LightCRA 与 ECA，实现 99.29% 准确率，同时保持轻量化部署能力。',
-    link: 'https://github.com/yance7/FishFreshNetV2',
+    title: 'FishFreshNet V2：轻量可解释鱼眼新鲜度评估',
+    org: '个人研究 · FishFreshNet V2',
+    text: '引入轻量环形区域注意力 LightCRA，配合 ECA 通道注意力，实现 99.29% 准确率，同时保持轻量化部署能力。',
+    link: 'https://github.com/yance77777/FishFreshNetV2',
+    metrics: [
+      { value: '99.29%', label: '准确率' },
+      { value: '4.095M', label: '参数量' },
+      { value: '5.31ms', label: '推理延迟' },
+      { value: 'V2-Lite 95.72%', label: '超轻量版' }
+    ],
     methodology: {
       question: '如何在保持轻量化的同时提升鱼眼新鲜度分类的可解释性？',
-      hypothesis: '环形区域注意力机制能捕捉鱼眼虹膜的径向退化特征，配合 ECA 通道注意力提升判别力。',
-      method: 'LightCRA 模块 + ECA 通道注意力 + Grad-CAM 可视化分析',
+      hypothesis: '环形区域注意力机制能捕捉鱼眼虹膜的径向退化特征，配合 ECA 通道注意力实现近零成本再校准。',
+      method: 'LightCRA 模块（仅增 0.083M 参数）+ ECA 通道注意力 + 五种子平均 + 配对 t 检验 + 消融实验',
       prototype: 'PyTorch 实现，在 MFED 数据集上训练与验证',
-      result: '99.29% 准确率，模型体积 < 8MB',
+      result: '99.29% 准确率（4.095M 参数，5.31ms/图）；V2-Lite 95.72% 准确率（0.929M 参数，0.061G FLOPs）',
       next: '部署为网页工具 FreshEye'
     }
   },
@@ -130,44 +193,120 @@ export const research = [
     date: '2026.02 — 2026.04',
     tag: 'PUBLISHED · ICIPAI 2026',
     status: 'published',
-    title: 'FishFreshNet V1：基于注意力机制的评估框架',
-    org: '国际会议论文 · FishFreshNet V1',
-    text: '构建多阶段鱼眼数据集 MFED，结合 CBAM 与 Grad-CAM 完成轻量化、可解释的新鲜度分级。',
-    link: 'https://github.com/yance7/FishFreshNetV1',
+    title: 'FishFreshNet V1：基于注意力机制的轻量可解释评估框架',
+    org: '国际会议论文 · ICIPAI 2026',
+    text: '构建多阶段鱼眼数据集 MFED，将 CBAM 集成到 EfficientNet-B0，配合 Grad-CAM 完成轻量化、可解释的新鲜度分级。',
+    link: 'https://github.com/yance77777/FishFreshNetV1',
+    metrics: [
+      { value: '98.88%', label: '准确率' },
+      { value: '4.22M', label: '参数量' },
+      { value: '0.41G', label: 'FLOPs' },
+      { value: '4800 张', label: 'MFED 数据集' }
+    ],
     methodology: {
       question: '如何利用鱼眼图像实现自动化、可解释的水产品新鲜度分级？',
       hypothesis: 'CBAM 注意力机制能有效聚焦鱼眼虹膜纹理变化区域，配合 Grad-CAM 提供可解释性。',
-      method: 'CBAM 注意力 + Grad-CAM + 多阶段鱼眼数据集 MFED',
-      prototype: '论文投稿 ICIPAI 2026',
-      result: '论文被接收，准确率 97.8%',
-      next: '升级为 V2 版本，引入环形区域注意力'
+      method: 'EfficientNet-B0 backbone + CBAM 注意力 + Grad-CAM 可视化；MFED 数据集（3 级 × 20 样本 × 5 角度 × 4 光照 = 4800 张）',
+      prototype: '论文投稿 ICIPAI 2026（第三届图像处理与人工智能国际会议）',
+      result: '论文被接收，98.88% 准确率，超越 VGG16 与 ResNet18，体积可移动端部署',
+      next: '升级为 V2 版本，引入环形区域注意力 LightCRA'
     }
   },
   {
     date: '2025.07 — 2025.12',
     tag: 'MULTIMODAL',
     status: 'completed',
-    title: '基于多模态特征融合的鱼类摄食强度评估',
-    org: '个人研究 · 数字渔业',
-    text: '融合音频与视觉信息，探索水下环境中鱼类行为识别与摄食强度评估。',
+    title: '基于多模态特征融合与通道注意力的鱼类摄食强度评估',
+    org: '国家数字渔业创新中心 · 国家科学人才计划项目',
+    text: '融合水下音频 Mel 频谱与水面视觉帧，通过 CNN6-ResNet34 双分支与 SE-Block 通道注意力实现实时鱼类摄食强度分级。',
+    link: '',
+    metrics: [
+      { value: '91.82%', label: '准确率' },
+      { value: '7611', label: '多模态样本对' },
+      { value: '+9.25%', label: '超音频单模态' },
+      { value: '+3.78%', label: '超图像单模态' }
+    ],
     methodology: {
-      question: '如何利用多模态信息评估鱼类摄食强度？',
+      question: '如何利用多模态信息评估鱼类摄食强度，解决因投喂不精确导致的饲料浪费与水污染？',
       hypothesis: '音频特征与视觉特征的融合能比单一模态更准确地判断摄食强度。',
-      method: '音频频谱分析 + 视觉行为识别 + 多模态融合网络',
-      prototype: '实验验证阶段',
-      result: '完成数据采集与初步模型训练',
+      method: 'CNN6-ResNet34 双分支架构 + SE-Block 通道注意力融合模块 + 7611 多模态样本对',
+      prototype: '国家数字渔业创新中心实验验证',
+      result: '91.82% 测试准确率，超越音频单模态 9.25%、图像单模态 3.78%',
       next: '扩展数据集并优化融合策略'
+    }
+  },
+  {
+    date: '2024.12 — 2025.04',
+    tag: 'PUBLISHED · ICBB 2026',
+    status: 'published',
+    title: '不同外源增强剂对玉米生长的影响与机制研究',
+    org: '国际会议论文 · ICBB 2026（第八届生物技术与生物医学国际会议）',
+    text: '研究可降解生物刺激素（壳寡糖 COS 与 γ-PGA）能否与化肥协同提升玉米氮利用率，通过 16S rRNA 测序与随机森林回归量化根际微生物群落。',
+    link: '',
+    metrics: [
+      { value: '102.9%', label: '生物量增长' },
+      { value: '1% COS', label: '最优处理' },
+      { value: 'Bacillota', label: '关键菌门' },
+      { value: '16S rRNA', label: '测序方法' }
+    ],
+    methodology: {
+      question: '可降解生物刺激素能否与化肥协同提升玉米氮利用率（通常低于 40%）？',
+      hypothesis: '壳寡糖与 γ-PGA 能协同改善玉米氮吸收，并通过根际微生物群落变化促进生长。',
+      method: '量化生物量、养分积累、抗氧化酶与根际细菌群落；16S rRNA 测序 + 随机森林回归模型',
+      prototype: 'ICBB 2026 论文发表',
+      result: '1% COS 处理使生物量增长 102.9%，Bacillota 被识别为关键产量驱动菌门',
+      next: '拓展至其他作物与田间试验'
     }
   }
 ]
 
 export const researchMethods = [
-  { label: 'PyTorch', en: 'Deep Learning Framework' },
-  { label: 'ONNX', en: 'Model Deployment' },
+  { label: 'PyTorch', en: 'Deep Learning' },
+  { label: 'EfficientNet', en: 'Backbone' },
+  { label: 'CBAM / LightCRA', en: 'Attention' },
   { label: 'Grad-CAM', en: 'Interpretability' },
-  { label: 'HuggingFace Spaces', en: 'Web Deployment' },
-  { label: 'GitHub Pages', en: 'Static Hosting' },
-  { label: 'FastAPI', en: 'Backend API' }
+  { label: 'ONNX', en: 'Deployment' },
+  { label: 'FastAPI', en: 'Backend' },
+  { label: 'HuggingFace', en: 'Hosting' },
+  { label: '16S rRNA', en: 'Microbiome' },
+  { label: 'Random Forest', en: 'Regression' }
+]
+
+/* ---------- 领导力 ---------- */
+export const leadership = [
+  { role: '社长', org: 'iHOSA 科技创新社', period: '2025.09 — 2026.09', note: '' },
+  { role: '副社长', org: '生物社', period: '2025.09 — 2026.09', note: '' },
+  { role: '社长', org: '学生自治会', period: '2025.09 — 2026.09', note: '负责国际部约 600 名学生的卫生检查、值周与宣传工作' },
+  { role: '副社长', org: '学生自治会', period: '2024.09 — 2025.09', note: '' }
+]
+
+/* ---------- 活动经历 ---------- */
+export const activities = [
+  {
+    title: '"保护地球，低碳生活" 志愿活动', period: '2024.03 — 2024.04',
+    org: '北京志愿者联合会',
+    detail: '累计 72 小时志愿服务，制作社交媒体视频推广有机果蔬与节能理念。'
+  },
+  {
+    title: 'Pioneer 全球问题解决学院', period: '2024.09 — 2024.12',
+    org: 'Pioneer Global · 课程：Analyzing AI',
+    detail: '教授评分 A-。完成关于引导高中生用 AI 对抗学术不诚实的报告，探讨科技与社会核心议题。'
+  },
+  {
+    title: 'Pioneer 研究院', period: '2025.06 — 2025.08',
+    org: 'Pioneer Research Institute · 计算中的批判意识',
+    detail: '研究标题：将价值敏感设计应用于农业无人机。教授评分 A+。构建农业无人机量化评估体系，结合 SUS 量表实现闭环。'
+  },
+  {
+    title: '北京市第八十中学学术报告会（第六届 & 第七届）', period: '2025.12 & 2026.06',
+    org: 'Beijing No.80 High School',
+    detail: '连续两届汇报研究成果，从 CNN/ResNet 到注意力机制与多模态学习，展示 FishFreshNet V1 到 V2 的演进。'
+  },
+  {
+    title: 'AP 微积分 BC 助教', period: '2025.11 — 2026.04',
+    org: 'Teaching Assistant',
+    detail: '辅导同学微分方程、泰勒级数等概念；编写 70 页 AP 微积分 BC 学习手册。'
+  }
 ]
 
 /* ---------- 作品 Showcase ---------- */
@@ -179,7 +318,7 @@ export const projects = [
     role: '全栈开发 · 模型训练 · UI 设计',
     stack: ['PyTorch', 'ONNX', 'Vue 3', 'HuggingFace Spaces'],
     href: 'https://fresheye.yance777.com',
-    github: 'https://github.com/yance7/FishFreshNetV2'
+    github: 'https://github.com/yance77777/FreshEye'
   },
   {
     title: '余响', en: 'Encore', domain: 'encore.yance777.com', tone: 'gold', icon: 'note',
@@ -188,7 +327,7 @@ export const projects = [
     role: '前端开发 · UI 设计 · 内容策划',
     stack: ['Vue 3', 'Vite', 'GitHub Pages'],
     href: 'https://encore.yance777.com',
-    github: 'https://github.com/yance7/encore'
+    github: 'https://github.com/yance77777/encore'
   }
 ]
 

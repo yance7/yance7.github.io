@@ -8,7 +8,6 @@ import ArchiveHero from './components/ArchiveHero.vue'
 import SiteFooter from './components/SiteFooter.vue'
 import ImageLightbox from './components/ImageLightbox.vue'
 import ScrollProgress from './components/ScrollProgress.vue'
-import ArchiveCursor from './components/ArchiveCursor.vue'
 
 import HomePage from './pages/HomePage.vue'
 import AcademicsPage from './pages/AcademicsPage.vue'
@@ -61,7 +60,6 @@ function moveLightbox(step) {
     <div class="grain"></div>
 
     <ScrollProgress />
-    <ArchiveCursor />
 
     <SiteHeader :page="page" />
 
