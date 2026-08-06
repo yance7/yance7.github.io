@@ -10,6 +10,7 @@ defineProps({
     class="showcase"
     :class="project.tone"
     v-reveal
+    v-spotlight
   >
     <!-- 设备模拟窗口 -->
     <div class="sc-frame" aria-hidden="true">

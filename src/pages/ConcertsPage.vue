@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { concertGroups, concertMoods, concertStats } from '../data/content'
+import { concerts, concertGroups, concertMoods, concertStats } from '../data/content'
 import SectionHeading from '../components/SectionHeading.vue'
 import MetricStrip from '../components/MetricStrip.vue'
 
@@ -9,10 +9,14 @@ const emit = defineEmits(['open-lightbox'])
 const carouselIndexes = ref({})
 const preloaded = new Set()
 
+const venueCount = computed(() => new Set(concerts.map((c) => c.venue)).size)
+const artistCount = computed(() => concertStats.artists.split(' · ').length)
+const posterCount = computed(() => new Set(concerts.flatMap((c) => c.images)).size)
+
 const concertMetrics = [
   { value: String(concertStats.total), label: '现场', note: concertStats.yearRange },
-  { value: '3', label: '场馆', note: concertStats.venues },
-  { value: '9+', label: '艺人', note: concertStats.artists.slice(0, 20) + '...' }
+  { value: String(venueCount.value), label: '场馆', note: concertStats.venues },
+  { value: `${artistCount.value}+`, label: '艺人', note: `${posterCount.value} 张海报` }
 ]
 
 const sortedYears = computed(() => Object.keys(concertGroups).sort())

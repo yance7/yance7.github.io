@@ -36,6 +36,7 @@ import TimelineTrack from '../components/TimelineTrack.vue'
             :key="m.label"
             class="toolchain-cell"
             :style="{ '--i': i }"
+            v-spotlight
           >
             <span class="tc-no">{{ String(i + 1).padStart(2, '0') }}</span>
             <div class="tc-main">

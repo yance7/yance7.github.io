@@ -2,6 +2,7 @@
 import { computed, ref, onMounted } from 'vue'
 import { navItems, pageMeta } from './data/content'
 import { useTheme } from './composables/useTheme'
+import { useMusicNotes } from './composables/useMusicNotes'
 
 import SiteHeader from './components/SiteHeader.vue'
 import ArchiveHero from './components/ArchiveHero.vue'
@@ -24,6 +25,7 @@ const { theme, initTheme } = useTheme()
 const lightbox = ref(null)
 
 onMounted(initTheme)
+useMusicNotes()
 
 const currentNav = computed(() => navItems.find((item) => item.key === page))
 const pageNo = computed(() => (currentNav.value ? navItems.indexOf(currentNav.value) + 1 : 0))
@@ -57,6 +59,7 @@ function moveLightbox(step) {
 
 <template>
   <div class="site-shell" :class="`theme-${theme}`">
+    <a class="skip-link" href="#main">跳到主要内容</a>
     <div class="ambient ambient-one"></div>
     <div class="ambient ambient-two"></div>
     <div class="grain"></div>
@@ -66,7 +69,7 @@ function moveLightbox(step) {
 
     <SiteHeader :page="page" />
 
-    <main>
+    <main id="main">
       <ArchiveHero
         :page="page"
         :no="archiveNo"

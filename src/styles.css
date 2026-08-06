@@ -39,6 +39,16 @@ img { display: block; max-width: 100%; }
   border-radius: var(--radius-xs);
 }
 
+/* ===== 无障碍跳转链接 ===== */
+.skip-link {
+  position: fixed; top: -100px; left: 16px; z-index: var(--z-toast);
+  padding: 10px 16px; border-radius: var(--radius-md);
+  background: var(--ink); color: var(--bg);
+  font-family: var(--mono); font-size: 11px; letter-spacing: .12em;
+  transition: top var(--dur-fast) var(--ease-apple);
+}
+.skip-link:focus { top: 16px; }
+
 /* ===== 外壳与氛围 ===== */
 .site-shell { position: relative; min-height: 100vh; overflow: hidden; }
 
@@ -73,6 +83,16 @@ img { display: block; max-width: 100%; }
   background: radial-gradient(circle, var(--glow-gold), transparent 65%);
   opacity: .3;
 }
+
+/* ===== 卡片光标光晕 ===== */
+.spotlight { position: relative; overflow: hidden; }
+.spotlight-halo {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  opacity: 0; transition: opacity var(--dur-base);
+  background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), var(--glow-gold), transparent 70%);
+  mix-blend-mode: soft-light;
+}
+.spotlight:hover .spotlight-halo { opacity: 1; }
 
 /* ===== 滚动进度条 ===== */
 .scroll-progress {
@@ -775,10 +795,11 @@ img { display: block; max-width: 100%; }
 
 /* ===== 首页 · 领导力 ===== */
 .leadership-grid {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+  display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 1fr; gap: 14px;
 }
 .leadership-card {
-  position: relative; padding: 24px 22px; overflow: hidden;
+  position: relative; display: flex; flex-direction: column;
+  padding: 24px 22px; overflow: hidden;
   border: 1px solid var(--line); background: var(--surface);
   backdrop-filter: blur(var(--glass-blur));
   border-radius: var(--radius-lg); box-shadow: var(--shadow-1);
@@ -806,7 +827,7 @@ img { display: block; max-width: 100%; }
   margin-bottom: 10px;
 }
 .leadership-note {
-  margin: 0; font-size: 12px; color: var(--muted); line-height: 1.7;
+  margin: 0; margin-top: auto; font-size: 12px; color: var(--muted); line-height: 1.7;
   padding-top: 10px; border-top: 1px dashed var(--line);
 }
 
@@ -1041,6 +1062,22 @@ img { display: block; max-width: 100%; }
 }
 @keyframes spin { to { transform: rotate(360deg) } }
 
+/* ===== 彩蛋 · 音符雨 ===== */
+.music-note {
+  position: fixed; bottom: -48px; z-index: var(--z-toast);
+  color: var(--gold); opacity: 0; pointer-events: none;
+  text-shadow: 0 0 18px var(--glow-gold);
+  animation: note-rise 2.2s var(--ease-out) forwards;
+}
+@keyframes note-rise {
+  0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(-8deg); }
+  12% { opacity: 1; }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--drift, 0px), calc(var(--rise, 180px) * -1), 0) rotate(10deg);
+  }
+}
+
 /* ===== 按钮 ===== */
 .btn-primary, .btn-ghost {
   display: inline-flex; align-items: center; gap: 8px; padding: 13px 22px;
@@ -1190,4 +1227,6 @@ img { display: block; max-width: 100%; }
   }
   .reveal { opacity: 1; transform: none; clip-path: none; filter: none; }
   .lyric-char { opacity: 1; transform: none; animation: none !important; }
+  .music-note { display: none; }
+  .spotlight-halo { display: none; }
 }

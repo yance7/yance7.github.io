@@ -222,8 +222,8 @@ export const research = [
     tag: 'MULTIMODAL',
     status: 'completed',
     title: '基于多模态特征融合与通道注意力的鱼类摄食强度评估',
-    org: '国家数字渔业创新中心 · 国家科学人才计划项目',
-    text: '融合水下音频 Mel 频谱与水面视觉帧，通过 CNN6-ResNet34 双分支与 SE-Block 通道注意力实现实时鱼类摄食强度分级。',
+    org: '国家数字渔业创新中心 · 英才计划',
+    text: '融合水下音频梅尔语谱图与水面视觉帧，通过 CNN6-ResNet34 双分支与 SE-Block 通道注意力实现实时鱼类摄食强度分级。',
     link: '',
     metrics: [
       { value: '91.82%', label: '准确率' },
@@ -286,7 +286,7 @@ export const researchMethods = [
 export const leadership = [
   { role: '社长', org: 'iHOSA 科技创新社', period: '2025.09 — 2026.09', note: '' },
   { role: '副社长', org: '生物社', period: '2025.09 — 2026.09', note: '' },
-  { role: '主席', org: '学生自主管理委员会', period: '2025.09 — 2026.09', note: '负责国际部约 600 名学生的卫生检查、值周与宣传工作' },
+  { role: '主席', org: '学生自主管理委员会', period: '2025.09 — 2026.09', note: '' },
   { role: '副主席', org: '学生自主管理委员会', period: '2024.09 — 2025.09', note: '' }
 ]
 
@@ -386,7 +386,7 @@ export const pageMeta = {
   academics: ['ACADEMICS / 学业', '我一路向北', '绩点、标化与 AP 成绩，是努力留下的可读痕迹。', { artist: '周杰伦', song: '一路向北', album: '十一月的萧邦' }],
   honors: ['HONORS / 荣誉', '一步一步往上爬', '奖项是坐标，不是终点；真正重要的是仍然保持向上的惯性。', { artist: '周杰伦', song: '蜗牛', album: 'Fantasy Plus' }],
   research: ['RESEARCH / 研究', '我不完美的梦，你陪着我想', '从智慧农业到可解释 AI，把论文里的模型推向浏览器里能点开的产品。', { artist: 'TFBOYS', song: '不完美小孩', album: '我们的时光' }],
-  works: ['WORKS / 作品', '承认不勇敢，你能不能别离开', '两个已经上线的小世界，记录想法如何离开纸面，开始被真实使用。', { artist: '汪苏泷', song: '小星星', album: '慢慢懂' }],
+  works: ['WORKS / 作品', '我写下的传世乐章，在你看来也许不过是白纸一张', '两个已经上线的小世界，记录想法如何离开纸面，开始被真实使用。', { artist: '汪苏泷', song: '传世乐章', album: '传世乐章' }],
   concerts: ['CONCERTS / 演唱会', '缘分让我们相遇乱世以外', '十四场现场，十七张海报，记录那些被灯光和合唱重新定义的夜晚。', { artist: '邓紫棋', song: '光年之外', album: '' }]
 }
 

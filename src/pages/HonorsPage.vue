@@ -62,6 +62,7 @@ function toggleExpand(i) {
           class="honor-card"
           :class="[h.level, { expanded: expanded === i }]"
           v-reveal="{ delay: i * 60 }"
+          v-spotlight
         >
           <div class="honor-date-col">
             <span class="honor-date">{{ h.date }}</span>
