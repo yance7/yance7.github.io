@@ -752,8 +752,14 @@ img { display: block; max-width: 100%; }
 }
 .method-cell p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.75; }
 
-.tl-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 18px; }
+.tl-foot {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap; margin-top: 18px;
+}
+.tl-foot-meta { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .tl-org { font-family: var(--mono); font-size: 10px; letter-spacing: .06em; color: var(--dim); }
+.tl-doi { font-family: var(--mono); font-size: 9px; letter-spacing: .04em; color: var(--dim); }
+.tl-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 .tl-link {
   display: inline-flex; align-items: center; gap: 6px;
   font-family: var(--mono); font-size: 10px; letter-spacing: .18em; color: var(--gold);
@@ -761,6 +767,11 @@ img { display: block; max-width: 100%; }
   transition: border-color var(--dur-base), transform var(--dur-base) var(--ease-apple);
 }
 .tl-link:hover { border-color: var(--gold); transform: translateX(4px); }
+.tl-paper-tag {
+  font-family: var(--mono); font-size: 8px; letter-spacing: .12em;
+  color: var(--aqua); border: 1px solid var(--line);
+  border-radius: var(--radius-full); padding: 2px 7px;
+}
 
 /* ===== 首页 · 领导力 ===== */
 .leadership-grid {

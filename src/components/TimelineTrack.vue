@@ -93,10 +93,25 @@ function toggleMethod(title) {
         </div>
 
         <div class="tl-foot">
-          <span class="tl-org">{{ item.org }}</span>
-          <a v-if="item.link" :href="item.link" target="_blank" rel="noopener" class="tl-link">
-            OPEN PROJECT <span aria-hidden="true">↗</span>
-          </a>
+          <div class="tl-foot-meta">
+            <span class="tl-org">{{ item.org }}</span>
+            <span v-if="item.paper" class="tl-doi">DOI · {{ item.paper.doi }}</span>
+          </div>
+          <div class="tl-actions">
+            <a
+              v-if="item.paper"
+              :href="item.paper.href"
+              target="_blank"
+              rel="noopener"
+              class="tl-link"
+            >
+              READ PAPER <span class="tl-paper-tag">{{ item.paper.tag }}</span>
+              <span aria-hidden="true">↗</span>
+            </a>
+            <a v-if="item.link" :href="item.link" target="_blank" rel="noopener" class="tl-link">
+              OPEN PROJECT <span aria-hidden="true">↗</span>
+            </a>
+          </div>
         </div>
       </div>
     </article>

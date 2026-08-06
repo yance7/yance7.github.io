@@ -197,6 +197,11 @@ export const research = [
     org: '国际会议论文 · ICIPAI 2026',
     text: '构建多阶段鱼眼数据集 MFED，将 CBAM 集成到 EfficientNet-B0，配合 Grad-CAM 完成轻量化、可解释的新鲜度分级。',
     link: 'https://github.com/yance77777/FishFreshNetV1',
+    paper: {
+      href: 'https://ieeexplore.ieee.org/abstract/document/11605650',
+      doi: '10.1109/ICIPAI70034.2026.11605650',
+      tag: 'IEEE XPLORE'
+    },
     metrics: [
       { value: '98.88%', label: '准确率' },
       { value: '4.22M', label: '参数量' },
@@ -243,6 +248,11 @@ export const research = [
     org: '国际会议论文 · ICBB 2026（第八届生物技术与生物医学国际会议）',
     text: '研究可降解生物刺激素（壳寡糖 COS 与 γ-PGA）能否与化肥协同提升玉米氮利用率，通过 16S rRNA 测序与随机森林回归量化根际微生物群落。',
     link: '',
+    paper: {
+      href: 'https://www.bio-conferences.org/articles/bioconf/abs/2026/30/bioconf_icbb2026_02029/bioconf_icbb2026_02029.html',
+      doi: '10.1051/bioconf/202623702029',
+      tag: 'OPEN ACCESS'
+    },
     metrics: [
       { value: '102.9%', label: '生物量增长' },
       { value: '1% COS', label: '最优处理' },
