@@ -8,6 +8,10 @@ export default {
     halo.className = 'spotlight-halo'
     halo.setAttribute('aria-hidden', 'true')
     el.appendChild(halo)
+    const scan = document.createElement('span')
+    scan.className = 'spotlight-scan'
+    scan.setAttribute('aria-hidden', 'true')
+    el.appendChild(scan)
     el.classList.add('spotlight')
 
     let raf = 0
@@ -25,6 +29,7 @@ export default {
       cancelAnimationFrame(raf)
       el.removeEventListener('pointermove', move)
       halo.remove()
+      scan.remove()
       el.classList.remove('spotlight')
     }
   },

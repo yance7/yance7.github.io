@@ -1,6 +1,7 @@
 <script setup>
 import { reactive } from 'vue'
 import StatusBadge from './StatusBadge.vue'
+import CopyCitation from './CopyCitation.vue'
 
 defineProps({
   items: { type: Array, required: true }
@@ -98,6 +99,7 @@ function toggleMethod(title) {
             <span v-if="item.paper" class="tl-doi">DOI · {{ item.paper.doi }}</span>
           </div>
           <div class="tl-actions">
+            <CopyCitation v-if="item.citation" :citation="item.citation" />
             <a
               v-if="item.paper"
               :href="item.paper.href"

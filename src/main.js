@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import reveal from './directives/reveal'
 import spotlight from './directives/spotlight'
+import magnetic from './directives/magnetic'
 import './styles.css'
 import './theme.css'
 
@@ -16,6 +17,7 @@ Array.from(document.body.children).forEach((child) => {
 const app = createApp(App)
 app.directive('reveal', reveal)
 app.directive('spotlight', spotlight)
+app.directive('magnetic', magnetic)
 app.mount('#app')
 
 if ('serviceWorker' in navigator) {

@@ -4,6 +4,7 @@ import { honors, honorCategories, honorStats } from '../data/content'
 import SectionHeading from '../components/SectionHeading.vue'
 import MetricStrip from '../components/MetricStrip.vue'
 import ArchiveFilter from '../components/ArchiveFilter.vue'
+import SectionDots from '../components/SectionDots.vue'
 
 const activeCategory = ref('all')
 const expanded = ref(null)
@@ -34,8 +35,15 @@ function toggleExpand(i) {
 
 <template>
   <div class="page-honors">
+    <SectionDots
+      :sections="[
+        { id: 'sec-milestones', label: 'MILESTONES' },
+        { id: 'sec-honors-archive', label: 'ARCHIVE' }
+      ]"
+    />
+
     <!-- 01 · 统计条 -->
-    <section class="content">
+    <section id="sec-milestones" class="content">
       <SectionHeading
         no="01"
         label="MILESTONES"
@@ -47,7 +55,7 @@ function toggleExpand(i) {
     </section>
 
     <!-- 02 · 时间轴奖项卡片 -->
-    <section class="content">
+    <section id="sec-honors-archive" class="content">
       <SectionHeading
         no="02"
         label="ARCHIVE"

@@ -48,10 +48,10 @@ defineProps({
       </div>
 
       <div class="sc-actions">
-        <a class="btn-primary" :href="project.href" target="_blank" rel="noopener">
+        <a class="btn-primary" :href="project.href" target="_blank" rel="noopener" v-magnetic>
           ENTER PROJECT <span aria-hidden="true">→</span>
         </a>
-        <a v-if="project.github" class="btn-ghost" :href="project.github" target="_blank" rel="noopener">
+        <a v-if="project.github" class="btn-ghost" :href="project.github" target="_blank" rel="noopener" v-magnetic>
           GITHUB <span aria-hidden="true">↗</span>
         </a>
       </div>

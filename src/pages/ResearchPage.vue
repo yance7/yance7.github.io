@@ -2,11 +2,20 @@
 import { research, researchMethods } from '../data/content'
 import SectionHeading from '../components/SectionHeading.vue'
 import TimelineTrack from '../components/TimelineTrack.vue'
+import SectionDots from '../components/SectionDots.vue'
 </script>
 
 <template>
   <div class="page-research">
-    <section class="content">
+    <SectionDots
+      :sections="[
+        { id: 'sec-lab-notes', label: 'LAB NOTES' },
+        { id: 'sec-toolchain', label: 'TOOLCHAIN' },
+        { id: 'sec-research-timeline', label: 'TIMELINE' }
+      ]"
+    />
+
+    <section id="sec-lab-notes" class="content">
       <SectionHeading
         no="01"
         label="LAB NOTES"
@@ -17,7 +26,7 @@ import TimelineTrack from '../components/TimelineTrack.vue'
     </section>
 
     <!-- 方法与技术栈 -->
-    <section class="content">
+    <section id="sec-toolchain" class="content">
       <SectionHeading
         no="02"
         label="TOOLCHAIN"
@@ -50,7 +59,7 @@ import TimelineTrack from '../components/TimelineTrack.vue'
     </section>
 
     <!-- 研究时间轴 -->
-    <section class="content">
+    <section id="sec-research-timeline" class="content">
       <SectionHeading
         no="03"
         label="TIMELINE"

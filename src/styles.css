@@ -93,6 +93,19 @@ img { display: block; max-width: 100%; }
   mix-blend-mode: soft-light;
 }
 .spotlight:hover .spotlight-halo { opacity: 1; }
+.spotlight-scan {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: linear-gradient(115deg, transparent 25%, var(--glow-gold) 48%, rgba(255, 255, 255, .18) 52%, transparent 75%);
+  opacity: 0; transform: translateX(-130%);
+}
+.spotlight:hover .spotlight-scan {
+  opacity: 1;
+  animation: scanline-sweep .95s var(--ease-apple) both;
+}
+@keyframes scanline-sweep {
+  from { transform: translateX(-130%); }
+  to { transform: translateX(130%); }
+}
 
 /* ===== 滚动进度条 ===== */
 .scroll-progress {
@@ -310,7 +323,7 @@ img { display: block; max-width: 100%; }
 .hero-scroll span { width: 1px; height: 36px; background: linear-gradient(var(--gold), transparent); }
 
 /* ===== 内容区与章节标题 ===== */
-.content { max-width: var(--w-max); margin: 0 auto; padding: 0 var(--w-pad) 130px; }
+.content { max-width: var(--w-max); margin: 0 auto; padding: 0 var(--w-pad) 130px; scroll-margin-top: 28px; }
 .section-head { position: relative; max-width: var(--w-read); margin-bottom: 48px; padding-top: 20px; }
 .section-no {
   position: absolute; top: 0; left: 0; line-height: 1;
@@ -530,6 +543,18 @@ img { display: block; max-width: 100%; }
 .honor-card.peak { color: var(--level-platinum); }
 .honor-card.excellent { color: var(--level-gold); }
 .honor-card.emerging { color: var(--level-silver); }
+@keyframes honor-stamp {
+  0% { transform: scale(1.06); }
+  55% { transform: scale(.985); }
+  100% { transform: scale(1); }
+}
+@keyframes dot-stamp {
+  0% { transform: scale(2.2); opacity: 0; }
+  60% { transform: scale(.85); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.honor-card.revealed { animation: honor-stamp .55s var(--ease-spring); }
+.honor-card.revealed .honor-level-dot { animation: dot-stamp .55s var(--ease-spring) both; }
 .honor-date-col {
   display: flex; flex-direction: column; align-items: flex-start; gap: 12px;
   padding-top: 4px;
@@ -748,6 +773,33 @@ img { display: block; max-width: 100%; }
   color: var(--aqua); border: 1px solid var(--line);
   border-radius: var(--radius-full); padding: 2px 7px;
 }
+.copy-citation { white-space: nowrap; }
+
+/* ===== 章节导航点 ===== */
+.section-dots {
+  position: fixed; right: 26px; top: 50%; transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 14px;
+  z-index: var(--z-nav);
+}
+.section-dot { display: flex; align-items: center; gap: 9px; color: var(--dim); }
+.section-dot i {
+  width: 8px; height: 8px; border-radius: 50%;
+  border: 1px solid var(--line); background: var(--surface);
+  transition: background-color var(--dur-base), border-color var(--dur-base),
+    box-shadow var(--dur-base), transform var(--dur-base) var(--ease-apple);
+}
+.section-dot:hover i,
+.section-dot.active i {
+  background: var(--gold); border-color: var(--gold);
+  box-shadow: 0 0 10px var(--glow-gold); transform: scale(1.25);
+}
+.section-dot-label {
+  font-family: var(--mono); font-size: 9px; letter-spacing: .14em;
+  white-space: nowrap; opacity: 0; transform: translateX(-5px);
+  transition: opacity var(--dur-base), transform var(--dur-base) var(--ease-apple);
+}
+.section-dot:hover .section-dot-label,
+.section-dot.active .section-dot-label { opacity: 1; transform: none; }
 
 /* ===== 首页 · 领导力 ===== */
 .leadership-grid {
@@ -979,6 +1031,20 @@ img { display: block; max-width: 100%; }
 }
 .foot-links a:hover { opacity: .75; }
 
+/* ===== 终端状态行 ===== */
+.terminal-status {
+  display: flex; align-items: center; gap: 16px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: .08em; color: var(--dim);
+}
+.term-line { white-space: pre; }
+.term-caret {
+  display: inline-block; width: 7px; height: 13px; margin-left: 2px;
+  background: var(--gold); vertical-align: -2px;
+  animation: caret-blink 1.1s steps(1) infinite;
+}
+@keyframes caret-blink { 50% { opacity: 0; } }
+.term-time { color: var(--aqua); white-space: nowrap; }
+
 /* ===== 灯箱 ===== */
 .lightbox {
   position: fixed; inset: 0; z-index: var(--z-modal);
@@ -1084,6 +1150,7 @@ img { display: block; max-width: 100%; }
 /* ===== 响应式 ===== */
 @media (max-width: 900px) {
   .nav-status { display: none; }
+  .section-dots { display: none; }
   .nav-rail { gap: 14px; }
   .nav-rail a .nav-en { display: none; }
   .nav-rail a .nav-num { display: none; }
@@ -1183,4 +1250,5 @@ img { display: block; max-width: 100%; }
   .lyric-char { opacity: 1; transform: none; animation: none !important; }
   .music-note { display: none; }
   .spotlight-halo { display: none; }
+  .spotlight-scan { display: none; }
 }

@@ -6,7 +6,7 @@
    · 跨域 / 非 GET：直接放行
    · 激活时清除旧缓存 + 通知客户端刷新
    ============================================ */
-var CACHE = 'yance-v16';
+var CACHE = 'yance-v17';
 var PRECACHE = [
   './',
   './index.html',
