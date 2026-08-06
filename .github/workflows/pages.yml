@@ -26,12 +26,15 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+      - name: Stage deployable files
+        run: |
+          mkdir -p dist
+          cp ./*.html dist/
+          cp -r assets dist/
+          cp CNAME robots.txt sitemap.xml service-worker.js .nojekyll dist/
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: |
-            .
-            !node_modules
-            !.git
+          path: dist
 
   deploy:
     needs: build
