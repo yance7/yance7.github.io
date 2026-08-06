@@ -2,11 +2,10 @@
 
 ## Project Structure & Module Organization
 
-- `src/` — Vue 3 source code:
-  - `components/` — reusable PascalCase `.vue` components
+- `src/` — React 19 source code:
+  - `components/` — reusable PascalCase `.jsx` components
   - `pages/` — one component per page (Home, Academics, Honors, Research, Works, Concerts, 404)
-  - `composables/` — `useX.js` helpers (theme, scroll progress)
-  - `directives/` — custom Vue directives
+  - `hooks/` — `useX.js` helpers (theme, scroll progress, spotlight, magnetic)
   - `data/content.js` — centralized site copy and data
   - `styles.css` + `theme.css` — base styles and light/dark theme tokens
 - `html-src/` — source HTML entry points. `vite.config.js` copies these to the repo root at build start; edit here, never root `*.html`.

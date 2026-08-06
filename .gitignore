@@ -19,5 +19,5 @@ test-screenshots/
 # Trae spec / 临时工作目录
 .trae/
 
-# Vue build
+# React build
 node_modules/

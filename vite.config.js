@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
+import react from '@vitejs/plugin-react'
 import { copyFileSync, existsSync, readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join, resolve } from 'node:path'
@@ -27,7 +27,7 @@ function restoreHtmlSources() {
 }
 
 export default defineConfig({
-  plugins: [vue(), restoreHtmlSources()],
+  plugins: [react(), restoreHtmlSources()],
   build: {
     outDir: '.',
     emptyOutDir: false,
