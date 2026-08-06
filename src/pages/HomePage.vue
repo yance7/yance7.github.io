@@ -1,11 +1,8 @@
 <script setup>
 import { ref } from 'vue'
-import { worlds, stats, research, nowActive, leadership, activities } from '../data/content'
+import { worlds, leadership, activities } from '../data/content'
 import SectionHeading from '../components/SectionHeading.vue'
-import MetricStrip from '../components/MetricStrip.vue'
-import StatusBadge from '../components/StatusBadge.vue'
 
-const currentResearch = research[0]
 const expandedActivity = ref(null)
 </script>
 
@@ -46,53 +43,10 @@ const expandedActivity = ref(null)
       </div>
     </section>
 
-    <!-- 第二段：当前研究 -->
-    <section class="content home-now">
-      <SectionHeading
-        no="02"
-        label="NOW ACTIVE"
-        title="正在"
-        accent="发生。"
-        copy="此刻最重要的工作，是把论文里的模型变成浏览器里能点开的产品。"
-      />
-
-      <a
-        v-if="currentResearch"
-        class="now-active"
-        :href="currentResearch.link || '#'"
-        :target="currentResearch.link ? '_blank' : undefined"
-        :rel="currentResearch.link ? 'noopener' : undefined"
-        v-reveal
-        v-spotlight
-      >
-        <div class="now-status">
-          <StatusBadge status="active" label="NOW" />
-          <span class="now-time">{{ nowActive.lastUpdate }}</span>
-        </div>
-        <div class="now-body">
-          <strong>{{ currentResearch.title }}</strong>
-          <small>{{ currentResearch.date }} · {{ currentResearch.tag }}</small>
-        </div>
-        <span class="now-tag">{{ currentResearch.tag }}</span>
-        <span class="now-arrow" aria-hidden="true">↗</span>
-      </a>
-    </section>
-
-    <!-- 第三段：数据 -->
-    <section class="content home-data">
-      <SectionHeading
-        no="03"
-        label="METRICS"
-        title="数字不会说谎，"
-        accent="但努力会。"
-      />
-      <MetricStrip :metrics="stats" />
-    </section>
-
-    <!-- 第四段：领导力 -->
+    <!-- 第二段：领导力 -->
     <section class="content home-leadership">
       <SectionHeading
-        no="04"
+        no="02"
         label="LEADERSHIP"
         title="在集体中"
         accent="生长。"
@@ -114,10 +68,10 @@ const expandedActivity = ref(null)
       </div>
     </section>
 
-    <!-- 第五段：活动经历 -->
+    <!-- 第三段：活动经历 -->
     <section class="content home-activities">
       <SectionHeading
-        no="05"
+        no="03"
         label="ACTIVITIES"
         title="在行动中"
         accent="学习。"

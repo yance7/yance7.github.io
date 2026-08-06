@@ -413,38 +413,6 @@ img { display: block; max-width: 100%; }
 .world-card.accent-aqua .world-no { color: var(--aqua); }
 .world-card.accent-violet .world-no { color: var(--violet); }
 
-/* ===== 首页 · 当前进行时 ===== */
-.now-active {
-  position: relative; display: flex; align-items: center; gap: 30px;
-  padding: 30px 34px; overflow: hidden;
-  border: 1px solid var(--line); background: var(--surface);
-  backdrop-filter: blur(var(--glass-blur));
-  border-radius: var(--radius-lg); box-shadow: var(--shadow-1);
-  transition: border-color var(--dur-base), box-shadow var(--dur-base), transform var(--dur-base) var(--ease-apple);
-}
-.now-active::before {
-  content: ''; position: absolute; inset: 0;
-  background: linear-gradient(105deg, transparent 55%, var(--glow-gold) 140%);
-  opacity: 0; transition: opacity var(--dur-base);
-}
-.now-active:hover { border-color: var(--gold); box-shadow: var(--shadow-2); transform: translateY(-3px); }
-.now-active:hover::before { opacity: 1; }
-.now-status { display: flex; flex-direction: column; gap: 8px; }
-.now-time { font-family: var(--mono); font-size: 10px; color: var(--dim); }
-.now-body { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 5px; min-width: 0; flex: 1; }
-.now-body strong { font-family: var(--serif); font-size: clamp(1.15rem, 2.4vw, 1.7rem); font-weight: 500; }
-.now-body small { font-family: var(--mono); font-size: 10px; letter-spacing: .08em; color: var(--dim); }
-.now-tag {
-  position: relative; z-index: 1; white-space: nowrap;
-  font-family: var(--mono); font-size: 10px; letter-spacing: .18em; color: var(--aqua);
-  border: 1px solid var(--line); padding: 5px 11px; border-radius: var(--radius-full);
-}
-.now-arrow {
-  position: relative; z-index: 1; font-size: 22px; color: var(--gold);
-  transition: transform var(--dur-base) var(--ease-apple);
-}
-.now-active:hover .now-arrow { transform: translate(4px, -4px); }
-
 /* ===== 学业 · 教育履历 ===== */
 .education-track {
   position: relative; padding-left: 8px;
@@ -473,26 +441,6 @@ img { display: block; max-width: 100%; }
   font-family: var(--mono); font-size: 10px; letter-spacing: .06em;
   color: var(--dim); text-transform: uppercase;
 }
-
-/* ===== 学业 · 学习轨迹 ===== */
-.academic-track { position: relative; padding-left: 8px; }
-.track-rail {
-  position: absolute; left: 118px; top: 14px; bottom: 14px; width: 1px;
-  background: var(--line);
-}
-.track-item { position: relative; display: grid; grid-template-columns: 118px 44px 1fr; padding: 26px 0; }
-.track-year { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; padding-right: 18px; }
-.track-yr { font-family: var(--display); font-style: italic; font-size: 2rem; color: var(--gold); }
-.track-node {
-  position: relative; justify-self: center; width: 16px; height: 16px; margin-top: 6px;
-  border-radius: 50%; border: 2px solid var(--gold); background: var(--bg);
-}
-.track-node i { position: absolute; inset: 3px; border-radius: 50%; background: var(--gold); }
-.track-body { padding-left: 26px; }
-.track-phase { font-family: var(--mono); font-size: 10px; letter-spacing: .2em; color: var(--aqua); text-transform: uppercase; }
-.track-en { display: block; margin-top: 2px; font-family: var(--mono); font-size: 10px; color: var(--dim); }
-.track-list { margin-top: 14px; }
-.track-list li { padding: 5px 0; color: var(--muted); border-bottom: 1px dashed var(--line); }
 
 /* ===== 学业 · AP 档案表 ===== */
 .ap-panel {
@@ -550,6 +498,15 @@ img { display: block; max-width: 100%; }
 .filter-btn.active {
   background: var(--ink); border-color: var(--ink); color: var(--bg);
 }
+.filter-count {
+  display: inline-grid; place-items: center;
+  min-width: 18px; height: 18px; margin-left: 8px; padding: 0 5px;
+  border-radius: var(--radius-full);
+  background: var(--line); color: var(--dim);
+  font-size: 9px; letter-spacing: 0;
+  transition: background-color var(--dur-base), color var(--dur-base);
+}
+.filter-btn.active .filter-count { background: var(--bg); color: var(--ink); }
 
 /* ===== 荣誉 · 时间轴奖项卡片 ===== */
 .honor-timeline {
@@ -570,10 +527,9 @@ img { display: block; max-width: 100%; }
 }
 .honor-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-2); }
 .honor-card:hover::before { width: 6px; }
-.honor-card.platinum { color: var(--level-platinum); }
-.honor-card.gold { color: var(--level-gold); }
-.honor-card.silver { color: var(--level-silver); }
-.honor-card.bronze { color: var(--level-bronze); }
+.honor-card.peak { color: var(--level-platinum); }
+.honor-card.excellent { color: var(--level-gold); }
+.honor-card.emerging { color: var(--level-silver); }
 .honor-date-col {
   display: flex; flex-direction: column; align-items: flex-start; gap: 12px;
   padding-top: 4px;
@@ -795,7 +751,7 @@ img { display: block; max-width: 100%; }
 
 /* ===== 首页 · 领导力 ===== */
 .leadership-grid {
-  display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 1fr; gap: 14px;
+  display: grid; grid-template-columns: repeat(2, 1fr); grid-auto-rows: 1fr; gap: 14px;
 }
 .leadership-card {
   position: relative; display: flex; flex-direction: column;
@@ -1138,8 +1094,6 @@ img { display: block; max-width: 100%; }
   .leadership-grid { grid-template-columns: repeat(2, 1fr); }
   .activity-btn { grid-template-columns: 110px 1fr 28px; gap: 18px; padding: 18px 20px; }
   .activity-detail p { padding-left: 138px; }
-  .track-rail { left: 92px; }
-  .track-item { grid-template-columns: 92px 32px 1fr; }
   .tl-rail { left: 92px; }
   .tl-item { grid-template-columns: 92px 32px 1fr; }
   .tl-item::after { left: 124px; }
@@ -1189,10 +1143,10 @@ img { display: block; max-width: 100%; }
   .activity-period { grid-column: 1 / -1; }
   .activity-detail p { padding: 0 20px 18px; }
 
-  .track-rail, .tl-rail { left: 6px; }
-  .track-item, .tl-item { grid-template-columns: 1fr; padding-left: 18px; }
-  .track-item::after, .tl-item::after { left: 18px; }
-  .track-year, .tl-side, .track-node, .tl-node { display: none; }
+  .tl-rail { left: 6px; }
+  .tl-item { grid-template-columns: 1fr; padding-left: 18px; }
+  .tl-item::after { left: 18px; }
+  .tl-side, .tl-node { display: none; }
   .track-body, .tl-body { padding-left: 0; }
 
   .method-grid { grid-template-columns: 1fr; }

@@ -1,5 +1,5 @@
 <script setup>
-import { stats, education, academicTimeline, apScores } from '../data/content'
+import { stats, education, apScores } from '../data/content'
 import SectionHeading from '../components/SectionHeading.vue'
 import MetricStrip from '../components/MetricStrip.vue'
 </script>
@@ -42,43 +42,10 @@ import MetricStrip from '../components/MetricStrip.vue'
       <MetricStrip :metrics="stats" large />
     </section>
 
-    <!-- 02 · 学习轨迹 -->
+    <!-- 02 · AP 档案表 -->
     <section class="content">
       <SectionHeading
         no="02"
-        label="TIMELINE"
-        title="学习"
-        accent="轨迹。"
-        copy="从基础课程到研究导向，三年三步。"
-      />
-
-      <div class="academic-track">
-        <div class="track-rail" aria-hidden="true"></div>
-        <article
-          v-for="(phase, i) in academicTimeline"
-          :key="phase.year"
-          class="track-item"
-          v-reveal="{ delay: i * 100 }"
-        >
-          <div class="track-year">
-            <span class="track-yr">{{ phase.year }}</span>
-          </div>
-          <span class="track-node" aria-hidden="true"><i></i></span>
-          <div class="track-body">
-            <span class="track-phase">{{ phase.phase }}</span>
-            <small class="track-en">{{ phase.en }}</small>
-            <ul class="track-list">
-              <li v-for="item in phase.items" :key="item">{{ item }}</li>
-            </ul>
-          </div>
-        </article>
-      </div>
-    </section>
-
-    <!-- 03 · AP 档案表 -->
-    <section class="content">
-      <SectionHeading
-        no="03"
         label="AP ARCHIVE"
         title="AP 成绩"
         accent="档案。"

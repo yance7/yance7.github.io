@@ -26,22 +26,6 @@ export const education = [
   { period: '2015.09 — 2021.07', name: '朝阳实验小学', en: 'Chaoyang Experimental Primary School' }
 ]
 
-/* ---------- 学习轨迹（按年级） ---------- */
-export const academicTimeline = [
-  {
-    year: 'Grade 10', phase: 'Foundation', en: '基础阶段',
-    items: ['AP Calculus BC · 5', 'AP Physics 1 · 5', 'AP Computer Science A · 5', '首次 TOEFL 108']
-  },
-  {
-    year: 'Grade 11', phase: 'Advanced', en: '进阶集中期',
-    items: ['AP Biology · 5', 'AP Chemistry · 5', 'AP Statistics · 5', 'AP Environmental Science · 5', 'AP CS Principles · 5', 'AP Microeconomics · 5', 'SAT 1490（M800）', 'IELTS 7.5']
-  },
-  {
-    year: 'Grade 12', phase: 'Research', en: '研究导向',
-    items: ['AP Physics C: Mechanics（待出分）', 'AP Physics C: E&M（待出分）', 'AP Macroeconomics（待出分）', 'FishFreshNet 论文发表', 'FreshEye 工具上线']
-  }
-]
-
 /* ---------- AP 成绩档案（9 门已得 5 分 + 3 门待出分） ---------- */
 export const apScores = [
   { name: '微积分 BC', en: 'Calculus BC', year: 'Grade 10', score: 5, status: 'done' },
@@ -61,82 +45,81 @@ export const apScores = [
 /* ---------- 荣誉奖项（13 项，按时间倒序） ---------- */
 export const honorCategories = [
   { key: 'all', label: '全部' },
-  { key: 'platinum', label: '国际金牌' },
-  { key: 'gold', label: '国际奖牌' },
-  { key: 'silver', label: '国家级' },
-  { key: 'bronze', label: '区域级' }
+  { key: 'peak', label: '领航级', en: 'PIONEER' },
+  { key: 'excellent', label: '卓越级', en: 'DISTINGUISHED' },
+  { key: 'emerging', label: '新锐级', en: 'MERIT' }
 ]
 
 export const honorStats = [
   { value: '13', label: '项荣誉', note: '2025 — 2026' },
-  { value: '3', label: '国际金牌', note: 'BBO · UKChO · USACO' },
-  { value: '5', label: '国际奖牌', note: '银 · 铜 · 优秀' },
-  { value: '5', label: '国家/区域', note: '一/二/三等奖' }
+  { value: '4', label: '领航级', note: 'UKChO · BBO · USACO · TRAE' },
+  { value: '2', label: '卓越级', note: 'USABO · 北京科创大赛' },
+  { value: '7', label: '新锐级', note: '国际 · 国家 · 区域' }
 ]
 
 export const honors = [
   {
-    date: '2026.08', level: 'silver', title: '第九届全国青少年人工智能创新挑战赛 · 三等奖',
+    date: '2026.08', level: 'emerging', title: '第九届全国青少年人工智能创新挑战赛 · 三等奖',
     org: 'National Youth AI Innovation Challenge',
     detail: '国家级人工智能创新挑战赛，在算法设计与工程实现环节获得三等奖。'
   },
   {
-    date: '2026.07', level: 'gold', title: 'TRAE AI 创意大赛 · Top 300',
+    date: '2026.07', level: 'peak', title: 'TRAE AI 创意大赛 · Top 300',
     org: '约 14,000 参赛者',
     detail: '在约 14,000 名参赛者中进入前 300，提交了基于 AI 视觉的创意应用方案。'
   },
   {
-    date: '2026.05', level: 'platinum', title: '英国化学奥赛 UKChO · 全球金奖',
+    date: '2026.05', level: 'peak', title: '英国化学奥赛 UKChO · 全球金奖',
     org: 'UK Chemistry Olympiad',
     detail: 'UKChO 英国化学奥林匹克竞赛全球金奖，考察无机、有机、物理化学综合能力。'
   },
   {
-    date: '2026.05', level: 'gold', title: '美国生物奥赛 USABO · 全球银奖',
+    date: '2026.05', level: 'excellent', title: '美国生物奥赛 USABO · 全球银奖',
     org: 'USA Biology Olympiad',
     detail: 'USABO 美国生物奥林匹克竞赛全球银奖。'
   },
   {
-    date: '2026.05', level: 'gold', title: '加拿大化学竞赛 CCC · 全国铜奖',
+    date: '2026.05', level: 'emerging', title: '加拿大化学竞赛 CCC · 全国铜奖',
     org: 'Canadian Chemistry Contest',
     detail: '加拿大化学竞赛（CCC）全国铜奖。'
   },
   {
-    date: '2026.05', level: 'gold', title: 'Senior Physics Challenge · 全球铜奖',
+    date: '2026.05', level: 'emerging', title: 'Senior Physics Challenge · 全球铜奖',
     org: 'UK Senior Physics Challenge',
     detail: '英国物理挑战赛全球铜奖。'
   },
   {
-    date: '2026.03', level: 'platinum', title: '英国生物奥赛 BBO · 全球金奖',
+    date: '2026.03', level: 'peak', title: '英国生物奥赛 BBO · 全球金奖',
     org: 'British Biology Olympiad',
     detail: 'BBO 英国生物奥林匹克竞赛全球金奖。'
   },
   {
-    date: '2026.03', level: 'gold', title: 'iHOSA 全国轮 BCE · 全国优秀奖',
+    date: '2026.03', level: 'emerging', title: 'iHOSA 全国轮 BCE · 全国优秀奖',
     org: 'iHOSA National Round',
     detail: 'iHOSA 全国轮 BCE（基础化学与生物）全国优秀奖。'
   },
   {
-    date: '2026.03', level: 'silver', title: '北京青少年科技创新大赛 · 二等奖',
+    date: '2026.03', level: 'excellent', title: '北京青少年科技创新大赛 · 二等奖',
     org: 'Beijing Adolescents S&T Innovation Contest',
     detail: '北京青少年科技创新大赛二等奖。'
   },
   {
-    date: '2026.02', level: 'platinum', title: 'USACO 2025-2026 赛季 · Gold Division',
+    date: '2026.02', level: 'peak', title: 'USACO 2025-2026 赛季 · Gold Division',
     org: 'USA Computing Olympiad',
     detail: 'USACO 2025-2026 赛季金级别，算法与数据结构竞赛。'
   },
   {
-    date: '2026.01', level: 'silver', title: '北京朝阳青少年金鹏科技论坛 · 二等奖',
+    date: '2026.01', level: 'emerging', title: '北京朝阳青少年金鹏科技论坛 · 二等奖',
     org: 'Chaoyang Jinping Technology Forum',
     detail: '朝阳区金鹏科技论坛二等奖。'
   },
   {
-    date: '2025.12', level: 'silver', title: '北京朝阳青少年科技创新大赛 · 一等奖',
+    date: '2025.12', level: 'emerging', title: '北京朝阳青少年科技创新大赛 · 一等奖',
     org: 'Chaoyang Adolescents S&T Innovation Contest',
     detail: '朝阳区青少年科技创新大赛一等奖。'
   },
   {
-    date: '2025.04', level: 'bronze', title: '加拿大化学竞赛 CCC · 区域优秀奖',
+    date: '2025.04', level: 'emerging', title: '加拿大化学竞赛 CCC · 区域优秀奖',
     org: 'Canadian Chemistry Contest',
     detail: '加拿大化学竞赛（CCC）区域优秀奖。'
   }
@@ -407,11 +390,3 @@ export const worlds = [
   { key: 'works', no: '04', label: '作品', en: 'Works', icon: '♬', href: 'works.html', desc: '两个已经上线的小世界，记录想法如何离开纸面，开始被真实使用。', accent: 'aqua' },
   { key: 'concerts', no: '05', label: '演唱会', en: 'Concerts', icon: '♪', href: 'concerts.html', desc: '十四场现场，十七张海报，记录那些被灯光和合唱重新定义的夜晚。', accent: 'gold' }
 ]
-
-/* ---------- "现在进行时" 数据 ---------- */
-export const nowActive = {
-  research: 'FishFreshNet V2 · FreshEye 网页工具',
-  status: '研究中 · 持续迭代',
-  location: '北京',
-  lastUpdate: '2026.08'
-}

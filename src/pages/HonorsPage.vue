@@ -9,11 +9,18 @@ const activeCategory = ref('all')
 const expanded = ref(null)
 
 const levelLabel = {
-  platinum: '国际金牌',
-  gold: '国际奖牌',
-  silver: '国家级',
-  bronze: '区域级'
+  peak: '领航级',
+  excellent: '卓越级',
+  emerging: '新锐级'
 }
+
+const categoryCounts = computed(() => {
+  const counts = { all: honors.length }
+  for (const h of honors) {
+    counts[h.level] = (counts[h.level] || 0) + 1
+  }
+  return counts
+})
 
 const filteredHonors = computed(() => {
   if (activeCategory.value === 'all') return honors
@@ -46,11 +53,12 @@ function toggleExpand(i) {
         label="ARCHIVE"
         title="十三枚"
         accent="坐标。"
-        copy="2025 — 2026 赛季的十三项记录，按时间倒序排列，覆盖国际、国家与区域三级。"
+        copy="2025 — 2026 赛季的十三项记录，按时间倒序排列，分为领航、卓越与新锐三档。"
       />
 
       <ArchiveFilter
         :categories="honorCategories"
+        :counts="categoryCounts"
         :active="activeCategory"
         @filter="activeCategory = $event"
       />

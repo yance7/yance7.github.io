@@ -1,6 +1,7 @@
 <script setup>
 defineProps({
   categories: { type: Array, required: true },
+  counts: { type: Object, default: () => ({}) },
   active: { type: String, default: 'all' }
 })
 const emit = defineEmits(['filter'])
@@ -17,7 +18,7 @@ const emit = defineEmits(['filter'])
       :aria-selected="active === cat.key"
       @click="emit('filter', cat.key)"
     >
-      {{ cat.label }}
+      {{ cat.label }}<span v-if="counts[cat.key]" class="filter-count">{{ counts[cat.key] }}</span>
     </button>
   </div>
 </template>
