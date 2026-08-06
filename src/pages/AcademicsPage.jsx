@@ -10,8 +10,8 @@ export default function AcademicsPage() {
         <SectionHeading
           no="00"
           label="EDUCATION"
-          title="三所"
-          accent="学校。"
+          title="求学"
+          accent="经历"
           copy="从朝阳实验小学到八十中学国际部，十一年求学的物理坐标。"
         />
         <div className="education-track">
@@ -30,7 +30,7 @@ export default function AcademicsPage() {
           no="01"
           label="SCOREBOARD"
           title="数字不会说谎，"
-          accent="但努力会。"
+          accent="但努力会"
           copy="绩点、标化与英语能力测试，是努力留下的可读痕迹。"
         />
         <MetricStrip metrics={stats} large />
@@ -41,7 +41,7 @@ export default function AcademicsPage() {
           no="02"
           label="AP ARCHIVE"
           title="AP 成绩"
-          accent="档案。"
+          accent="档案"
           copy="9 门 AP 全部 5 分，覆盖理科、社科与计算机；Grade 12 三门待出分。"
         />
 

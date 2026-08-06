@@ -10,11 +10,7 @@ export function useSpotlight(ref) {
     const halo = document.createElement('span')
     halo.className = 'spotlight-halo'
     halo.setAttribute('aria-hidden', 'true')
-    const scan = document.createElement('span')
-    scan.className = 'spotlight-scan'
-    scan.setAttribute('aria-hidden', 'true')
     el.appendChild(halo)
-    el.appendChild(scan)
     el.classList.add('spotlight')
 
     let raf = 0
@@ -32,7 +28,6 @@ export function useSpotlight(ref) {
       cancelAnimationFrame(raf)
       el.removeEventListener('pointermove', move)
       halo.remove()
-      scan.remove()
       el.classList.remove('spotlight')
     }
   }, [ref])

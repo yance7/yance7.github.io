@@ -37,8 +37,8 @@ export default function ResearchPage() {
           no="01"
           label="LAB NOTES"
           title="把论文"
-          accent="写成产品。"
-          copy="五个研究项目，按时间倒序堆叠。每一个都包含提问、假设、方法、原型、结果与下一步——点击展开方法论即可看见完整的思考路径。"
+          accent="写成产品"
+          copy="五个研究项目，从智慧农业到可解释 AI，按时间倒序陈列。每一条都保留提问、假设、方法、原型、结果与下一步——展开方法论，就能看到一条可以复现的思考路径。"
         />
       </section>
 
@@ -47,7 +47,7 @@ export default function ResearchPage() {
           no="02"
           label="TOOLCHAIN"
           title="方法与"
-          accent="技术栈。"
+          accent="技术栈"
           copy="横跨深度学习、可解释 AI、微生物组分析与后端工程的方法栈。"
         />
         <Reveal className="toolchain-panel">
@@ -66,7 +66,7 @@ export default function ResearchPage() {
           no="03"
           label="TIMELINE"
           title="研究"
-          accent="时间轴。"
+          accent="时间轴"
         />
         <TimelineTrack items={research} />
       </section>

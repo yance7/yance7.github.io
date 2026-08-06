@@ -72,7 +72,7 @@ export default function HonorsPage() {
           no="01"
           label="MILESTONES"
           title="每一枚奖章，都是"
-          accent="向上的证据。"
+          accent="向上的证据"
           copy="奖项是坐标，不是终点；真正重要的是仍然保持向上的惯性。"
         />
         <MetricStrip metrics={honorStats} />
@@ -83,7 +83,7 @@ export default function HonorsPage() {
           no="02"
           label="ARCHIVE"
           title="十三枚"
-          accent="坐标。"
+          accent="坐标"
           copy="2025 — 2026 赛季的十三项记录，按时间倒序排列，分为领航、卓越与新锐三档。"
         />
 

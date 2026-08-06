@@ -93,19 +93,6 @@ img { display: block; max-width: 100%; }
   mix-blend-mode: soft-light;
 }
 .spotlight:hover .spotlight-halo { opacity: 1; }
-.spotlight-scan {
-  position: absolute; inset: 0; z-index: 0; pointer-events: none;
-  background: linear-gradient(115deg, transparent 25%, var(--glow-gold) 48%, rgba(255, 255, 255, .18) 52%, transparent 75%);
-  opacity: 0; transform: translateX(-130%);
-}
-.spotlight:hover .spotlight-scan {
-  opacity: 1;
-  animation: scanline-sweep .95s var(--ease-apple) both;
-}
-@keyframes scanline-sweep {
-  from { transform: translateX(-130%); }
-  to { transform: translateX(130%); }
-}
 
 /* ===== 滚动进度条 ===== */
 .scroll-progress {
@@ -672,6 +659,9 @@ img { display: block; max-width: 100%; }
   padding: 30px 0;
   transition: transform var(--dur-base) var(--ease-apple);
 }
+.tl-item:hover { transform: translateX(4px); }
+.tl-item .tl-body h3 { transition: color var(--dur-base); }
+.tl-item:hover .tl-body h3 { color: var(--gold); }
 .tl-item::after {
   content: ''; position: absolute; left: 162px; right: 0; bottom: 0; height: 1px;
   background: linear-gradient(90deg, var(--line), transparent);
@@ -742,6 +732,18 @@ img { display: block; max-width: 100%; }
 }
 .method-grid.open {
   max-height: 1200px; opacity: 1;
+}
+.method-grid.open .method-cell {
+  animation: method-cell-in .4s var(--ease-out) both;
+}
+.method-grid.open .method-cell:nth-child(2) { animation-delay: 40ms; }
+.method-grid.open .method-cell:nth-child(3) { animation-delay: 80ms; }
+.method-grid.open .method-cell:nth-child(4) { animation-delay: 120ms; }
+.method-grid.open .method-cell:nth-child(5) { animation-delay: 160ms; }
+.method-grid.open .method-cell:nth-child(6) { animation-delay: 200ms; }
+@keyframes method-cell-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
 }
 .method-cell {
   background: var(--surface-strong); padding: 18px 22px;
@@ -1250,5 +1252,4 @@ img { display: block; max-width: 100%; }
   .lyric-char { opacity: 1; transform: none; animation: none !important; }
   .music-note { display: none; }
   .spotlight-halo { display: none; }
-  .spotlight-scan { display: none; }
 }

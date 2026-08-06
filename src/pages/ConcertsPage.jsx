@@ -3,6 +3,7 @@ import { concerts, concertGroups, concertMoods, concertStats } from '../data/con
 import SectionHeading from '../components/SectionHeading.jsx'
 import MetricStrip from '../components/MetricStrip.jsx'
 import Reveal from '../components/Reveal.jsx'
+import SectionDots from '../components/SectionDots.jsx'
 
 const sortedYears = Object.keys(concertGroups).sort()
 const venueCount = new Set(concerts.map((c) => c.venue)).size
@@ -14,6 +15,11 @@ const concertMetrics = [
   { value: String(venueCount), label: '场馆', note: concertStats.venues },
   { value: `${artistCount}+`, label: '艺人', note: `${posterCount} 张海报` }
 ]
+
+const YEAR_NAV = sortedYears.map((year) => ({
+  id: `sec-year-${year}`,
+  label: `YEAR ${year}`
+}))
 
 const preloaded = new Set()
 
@@ -114,19 +120,21 @@ export default function ConcertsPage({ onOpenLightbox }) {
 
   return (
     <div className="page-concerts">
+      <SectionDots sections={YEAR_NAV} />
+
       <section className="content">
         <SectionHeading
           no="01"
           label="LIVE ARCHIVE"
           title="现场是"
-          accent="另一种记忆。"
-          copy="点击海报进入全屏档案。每张图都保留原始比例，轮播记录同一场演出的不同视觉。"
+          accent="另一种记忆"
+          copy="每一场都收进档案：点击海报查看大图，同一夜晚的多重视角可以轮播翻阅。"
         />
         <MetricStrip metrics={concertMetrics} />
       </section>
 
       {sortedYears.map((year) => (
-        <section key={year} className="content concert-group">
+        <section key={year} id={`sec-year-${year}`} className="content concert-group">
           <Reveal className="group-header">
             <span className="group-year">{year}</span>
             <p className="group-mood">{concertMoods[year] || ''}</p>

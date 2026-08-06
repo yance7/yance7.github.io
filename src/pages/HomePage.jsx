@@ -92,7 +92,7 @@ export default function HomePage() {
           no="02"
           label="LEADERSHIP"
           title="在集体中"
-          accent="生长。"
+          accent="生长"
           copy="四个领导力职位，从副主席到主席、副社长到社长，从执行到组织。"
         />
         <div className="leadership-grid">
@@ -105,7 +105,7 @@ export default function HomePage() {
           no="03"
           label="ACTIVITIES"
           title="在行动中"
-          accent="学习。"
+          accent="学习"
           copy="五段活动经历，从志愿服务到学术会议，从 AI 伦理到微积分教学。"
         />
         <div className="activity-list">
