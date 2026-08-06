@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import vue from '@vitejs/plugin-vue'
 import { copyFileSync, existsSync, readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join, resolve } from 'node:path'
@@ -27,7 +27,7 @@ function restoreHtmlSources() {
 }
 
 export default defineConfig({
-  plugins: [react(), restoreHtmlSources()],
+  plugins: [vue(), restoreHtmlSources()],
   build: {
     outDir: '.',
     emptyOutDir: false,
@@ -42,15 +42,9 @@ export default defineConfig({
         notFound: '404.html'
       },
       output: {
-        entryFileNames: 'assets/vue/[name]-[hash].js',
-        chunkFileNames: 'assets/vue/[name]-[hash].js',
-        assetFileNames: (info) => {
-          const name = info.names[0] || ''
-          if (/\.(jpg|jpeg|png|svg|webmanifest)$/.test(name)) {
-            return 'assets/vue/[name][extname]'
-          }
-          return 'assets/vue/[name]-[hash][extname]'
-        }
+        entryFileNames: 'assets/vue/[name].js',
+        chunkFileNames: 'assets/vue/[name].js',
+        assetFileNames: 'assets/vue/[name][extname]'
       }
     }
   },
