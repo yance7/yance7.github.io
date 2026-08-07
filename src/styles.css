@@ -91,6 +91,21 @@ img { display: block; max-width: 100%; }
   transform: scaleX(0);
   transition: transform .1s linear;
 }
+.scroll-to-top {
+  position: fixed; right: var(--w-pad); bottom: 24px; z-index: var(--z-nav);
+  display: inline-flex; flex-direction: column; align-items: center; gap: 2px;
+  width: 44px; height: 48px; padding: 7px 5px 5px;
+  border: 1px solid var(--line); border-radius: var(--radius-full);
+  background: var(--surface-strong); color: var(--ink);
+  box-shadow: var(--shadow-1); opacity: 0; pointer-events: none;
+  transform: translateY(10px);
+  transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out),
+    background-color var(--dur-base), border-color var(--dur-base), color var(--dur-base);
+}
+.scroll-to-top.visible { opacity: 1; pointer-events: auto; transform: none; }
+.scroll-to-top:hover { border-color: var(--gold); background: var(--gold); color: #141414; }
+.scroll-to-top span { font-size: 17px; line-height: 1; }
+.scroll-to-top small { font-family: var(--mono); font-size: 7px; letter-spacing: .12em; line-height: 1; }
 
 /* ===== 顶部导航 ===== */
 .site-nav {
@@ -1196,6 +1211,7 @@ img { display: block; max-width: 100%; }
   .concert-info h3 { font-size: 1.8rem; }
 
   .site-footer { flex-direction: column; align-items: flex-start; gap: 14px; }
+  .scroll-to-top { right: 16px; bottom: 18px; }
 
   .lightbox { padding: 18px 10px; gap: 8px; }
   .lightbox img { max-width: 82vw; max-height: 76vh; }

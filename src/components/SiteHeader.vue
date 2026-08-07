@@ -1,10 +1,20 @@
 <script setup>
-import { ref, watch, onUnmounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { navItems } from '../data/content'
 import ThemeOrbit from './ThemeOrbit.vue'
 
 const props = defineProps({ page: String })
 const menuOpen = ref(false)
+const menuTrigger = ref(null)
+
+function closeMenu(restoreFocus = false) {
+  menuOpen.value = false
+  if (restoreFocus) requestAnimationFrame(() => menuTrigger.value?.focus())
+}
+
+function onKeydown(event) {
+  if (event.key === 'Escape' && menuOpen.value) closeMenu(true)
+}
 
 watch(menuOpen, (open) => {
   document.body.style.overflow = open ? 'hidden' : ''
@@ -13,6 +23,9 @@ watch(menuOpen, (open) => {
 onUnmounted(() => {
   document.body.style.overflow = ''
 })
+
+onMounted(() => window.addEventListener('keydown', onKeydown))
+onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 </script>
 
 <template>
@@ -20,9 +33,11 @@ onUnmounted(() => {
     <a class="wordmark" href="index.html">Yance<span>.</span></a>
 
     <button
+      ref="menuTrigger"
       class="menu-trigger"
       type="button"
       :aria-expanded="menuOpen"
+      aria-controls="mobile-navigation"
       :aria-label="menuOpen ? '关闭导航' : '打开导航'"
       @click="menuOpen = !menuOpen"
     >
@@ -37,7 +52,7 @@ onUnmounted(() => {
         :class="{ active: page === item.key }"
         :aria-current="page === item.key ? 'page' : undefined"
         :style="{ '--di': i }"
-        @click="menuOpen = false"
+        @click="closeMenu()"
       >
         <small class="nav-num">0{{ i + 1 }}</small>
         <span class="nav-text">
@@ -55,15 +70,15 @@ onUnmounted(() => {
 
   <!-- 移动端全屏菜单遮罩 -->
   <Teleport to="body">
-    <div v-if="menuOpen" class="mobile-menu-overlay" @click.self="menuOpen = false">
-      <nav class="mobile-menu" aria-label="移动端导航">
+    <div v-if="menuOpen" class="mobile-menu-overlay" @click.self="closeMenu()">
+      <nav id="mobile-navigation" class="mobile-menu" aria-label="移动端导航">
         <a
           v-for="(item, i) in navItems"
           :key="item.key"
           :href="item.href"
           :class="{ active: page === item.key }"
           :style="{ '--di': i }"
-          @click="menuOpen = false"
+          @click="closeMenu()"
         >
           <small class="mm-num">0{{ i + 1 }}</small>
           <span class="mm-label">{{ item.label }}</span>

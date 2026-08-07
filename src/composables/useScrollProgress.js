@@ -2,11 +2,14 @@ import { ref, onMounted, onUnmounted } from 'vue'
 
 export function useScrollProgress() {
   const progress = ref(0)
+  const showTop = ref(false)
 
   function update() {
     const el = document.documentElement
     const max = el.scrollHeight - el.clientHeight
-    progress.value = max > 0 ? Math.min(el.scrollTop / max, 1) : 0
+    const top = window.scrollY || el.scrollTop
+    progress.value = max > 0 ? Math.min(top / max, 1) : 0
+    showTop.value = top > 480
   }
 
   let ticking = false
@@ -31,5 +34,5 @@ export function useScrollProgress() {
     window.removeEventListener('resize', onScroll)
   })
 
-  return { progress }
+  return { progress, showTop }
 }
