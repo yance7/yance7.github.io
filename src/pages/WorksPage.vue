@@ -1,5 +1,5 @@
 <script setup>
-import { projects } from '../data/content'
+import { projects, contentMeta } from '../data/content'
 import SectionHeading from '../components/SectionHeading.vue'
 import ProjectShowcase from '../components/ProjectShowcase.vue'
 </script>
@@ -12,8 +12,9 @@ import ProjectShowcase from '../components/ProjectShowcase.vue'
         label="RELEASED WORLDS"
         title="让想法"
         accent="可以被打开。"
-        copy="两个已经上线的小世界，记录想法如何离开纸面，开始被真实使用。"
+        :copy="`${projects.length} 个已经上线的小世界，记录想法如何离开纸面，开始被真实使用。`"
       />
+      <p class="content-updated">LAST UPDATED · {{ contentMeta.updatedLabel }}</p>
 
       <div class="showcase-list">
         <ProjectShowcase

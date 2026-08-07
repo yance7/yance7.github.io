@@ -1,4 +1,6 @@
 <script setup>
+import StatusBadge from './StatusBadge.vue'
+
 defineProps({
   project: { type: Object, required: true },
   index: { type: Number, default: 0 }
@@ -18,7 +20,15 @@ defineProps({
         <span>{{ project.domain }}</span>
       </div>
       <div class="sc-frame-body">
-        <span class="sc-icon">{{ project.icon === 'eye' ? '◉' : '♫' }}</span>
+        <img
+          v-if="project.caseStudy?.visual"
+          class="sc-visual"
+          :src="project.caseStudy.visual.src"
+          :alt="project.caseStudy.visual.alt"
+          loading="lazy"
+          decoding="async"
+        >
+        <span v-if="!project.caseStudy?.visual" class="sc-icon">{{ project.icon === 'eye' ? '◉' : '♫' }}</span>
       </div>
     </div>
 
@@ -30,8 +40,54 @@ defineProps({
 
       <h3>{{ project.title }} <small>{{ project.en }}</small></h3>
 
+      <StatusBadge v-if="project.status" :status="project.status" :label="project.statusLabel" />
+
       <p class="sc-value">{{ project.value }}</p>
       <p class="sc-desc">{{ project.description }}</p>
+
+      <div v-if="project.caseStudy" class="sc-case-study">
+        <div class="sc-case-block">
+          <span class="sc-meta-label">PROBLEM</span>
+          <p>{{ project.caseStudy.problem }}</p>
+        </div>
+        <div class="sc-case-block">
+          <span class="sc-meta-label">RESEARCH FOUNDATION</span>
+          <a class="sc-research-link" :href="project.caseStudy.research.href">
+            <strong>{{ project.caseStudy.research.title }}</strong>
+            <span>{{ project.caseStudy.research.detail }} ↗</span>
+          </a>
+        </div>
+        <div class="sc-case-block">
+          <span class="sc-meta-label">PRODUCT FLOW</span>
+          <div class="sc-flow">
+            <span v-for="(step, stepIndex) in project.caseStudy.product" :key="step">
+              {{ step }}<b v-if="stepIndex < project.caseStudy.product.length - 1" aria-hidden="true">→</b>
+            </span>
+          </div>
+        </div>
+        <div class="sc-case-block">
+          <span class="sc-meta-label">ENGINEERING</span>
+          <div class="sc-tags">
+            <span v-for="tech in project.caseStudy.engineering" :key="tech" class="sc-tag">{{ tech }}</span>
+          </div>
+        </div>
+        <div class="sc-case-proof">
+          <span class="sc-meta-label">PROOF</span>
+          <div class="sc-proof-links">
+            <a
+              v-for="proof in project.caseStudy.proof"
+              :key="proof.label"
+              :href="proof.href"
+              :target="proof.external ? '_blank' : undefined"
+              :rel="proof.external ? 'noopener' : undefined"
+            >
+              <span>{{ proof.label }}</span>
+              <strong>{{ proof.value }}</strong>
+              <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+        </div>
+      </div>
 
       <div class="sc-meta">
         <div class="sc-role">

@@ -2,6 +2,7 @@
 import { reactive } from 'vue'
 import StatusBadge from './StatusBadge.vue'
 import CopyCitation from './CopyCitation.vue'
+import { statusLabels } from '../data/content'
 
 defineProps({
   items: { type: Array, required: true }
@@ -17,10 +18,6 @@ function tagClass(tag) {
   return 'dim'
 }
 
-function statusLabel(status) {
-  return { active: '进行中', published: '已发表', completed: '已完成' }[status] || ''
-}
-
 function toggleMethod(title) {
   openMethod[title] = !openMethod[title]
 }
@@ -32,13 +29,14 @@ function toggleMethod(title) {
     <article
       v-for="item in items"
       :key="item.title"
+      :id="item.id"
       class="tl-item"
       :class="{ active: item.status === 'active' }"
       v-reveal
     >
       <div class="tl-side">
         <span class="tl-date">{{ item.date }}</span>
-        <StatusBadge v-if="item.status" :status="item.status" :label="statusLabel(item.status)" />
+        <StatusBadge v-if="item.status" :status="item.status" :label="statusLabels[item.status]" />
       </div>
       <span class="tl-node" aria-hidden="true"><i></i></span>
       <div class="tl-body">
@@ -112,6 +110,22 @@ function toggleMethod(title) {
             </a>
             <a v-if="item.link" :href="item.link" target="_blank" rel="noopener" class="tl-link">
               OPEN PROJECT <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+        </div>
+        <div v-if="item.proof?.length" class="tl-proof">
+          <span class="tl-proof-label">PROOF</span>
+          <div class="tl-proof-list">
+            <a
+              v-for="proof in item.proof"
+              :key="proof.label"
+              :href="proof.href"
+              :target="proof.external ? '_blank' : undefined"
+              :rel="proof.external ? 'noopener' : undefined"
+            >
+              <span>{{ proof.label }}</span>
+              <strong>{{ proof.value }}</strong>
+              <span aria-hidden="true">↗</span>
             </a>
           </div>
         </div>

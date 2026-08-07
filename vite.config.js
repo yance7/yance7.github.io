@@ -1,46 +1,46 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import { copyFileSync, existsSync, readdirSync } from 'node:fs'
+import { copyFileSync, cpSync, existsSync, mkdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join, resolve } from 'node:path'
 
 const rootDir = dirname(fileURLToPath(import.meta.url))
+const htmlRoot = resolve(rootDir, 'html-src')
+const pageNames = ['index', 'academics', 'honors', 'research', 'works', 'concerts', '404']
 
-/**
- * 构建前从 html-src/ 恢复源码 HTML 入口。
- * 由于 build.outDir 为项目根目录，上一次构建会把 HTML 改写成产物引用
- * （/assets/vue/main.js），若不恢复，下一次构建会以旧产物为入口，导致更新丢失。
- */
-function restoreHtmlSources() {
+function copyStaticAssets() {
   return {
-    name: 'restore-html-sources',
-    buildStart() {
-      const srcDir = resolve(rootDir, 'html-src')
-      if (!existsSync(srcDir)) return
-      for (const file of readdirSync(srcDir)) {
-        if (file.endsWith('.html')) {
-          copyFileSync(join(srcDir, file), join(rootDir, file))
-        }
+    name: 'copy-static-assets',
+    closeBundle() {
+      const outputDir = resolve(rootDir, 'dist')
+      const outputAssets = join(outputDir, 'assets')
+      mkdirSync(outputAssets, { recursive: true })
+
+      for (const file of ['og-card.svg', 'favicon.svg', 'site.webmanifest']) {
+        copyFileSync(resolve(rootDir, 'assets', file), join(outputAssets, file))
+      }
+      for (const directory of ['concerts', 'case']) {
+        cpSync(resolve(rootDir, 'assets', directory), join(outputAssets, directory), { recursive: true })
+      }
+      for (const file of ['CNAME', 'robots.txt', 'sitemap.xml']) {
+        if (existsSync(resolve(rootDir, file))) copyFileSync(resolve(rootDir, file), join(outputDir, file))
       }
     }
   }
 }
 
+const htmlInputs = Object.fromEntries(
+  pageNames.map((name) => [name, resolve(rootDir, 'html-src', `${name}.html`)])
+)
+
 export default defineConfig({
-  plugins: [vue(), restoreHtmlSources()],
+  root: htmlRoot,
+  plugins: [vue(), copyStaticAssets()],
   build: {
-    outDir: '.',
-    emptyOutDir: false,
+    outDir: resolve(rootDir, 'dist'),
+    emptyOutDir: true,
     rollupOptions: {
-      input: {
-        index: 'index.html',
-        academics: 'academics.html',
-        honors: 'honors.html',
-        research: 'research.html',
-        works: 'works.html',
-        concerts: 'concerts.html',
-        notFound: '404.html'
-      },
+      input: htmlInputs,
       output: {
         entryFileNames: 'assets/vue/[name]-[hash].js',
         chunkFileNames: 'assets/vue/[name]-[hash].js',
@@ -48,5 +48,8 @@ export default defineConfig({
       }
     }
   },
-  publicDir: false
+  publicDir: false,
+  server: {
+    fs: { allow: [rootDir] }
+  }
 })

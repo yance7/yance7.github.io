@@ -11,6 +11,19 @@ export const navItems = [
   { key: 'concerts', label: '演唱会', en: 'Concerts', href: 'concerts.html', desc: '现场记忆档案' }
 ]
 
+export const contentMeta = {
+  updatedAt: '2026-08-07',
+  updatedLabel: 'AUG 07, 2026'
+}
+
+export const statusLabels = {
+  active: '进行中',
+  published: '已发表',
+  completed: '已完成',
+  deployed: '已部署',
+  opensource: '开放源码'
+}
+
 /* ---------- 标化成绩 ---------- */
 export const stats = [
   { value: '4.0', label: 'GPA', note: '未加权满分绩点' },
@@ -134,13 +147,19 @@ export const honorStats = honorStatMeta.map(({ level, label, note }) => ({
 /* ---------- 研究项目（5 项，按时间倒序） ---------- */
 export const research = [
   {
+    id: 'fresheye',
     date: '2026.04 — 至今',
+    updatedAt: contentMeta.updatedAt,
     tag: 'WEB TOOL',
     status: 'active',
     title: 'FreshEye：AI 水产品新鲜度评估网页工具',
     org: '个人项目 · HuggingFace Spaces + GitHub Pages',
     text: '将 FishFreshNet 研究线转化为零安装网页工具，用户上传鱼眼照片即可获得新鲜度等级、置信度与 Grad-CAM 热力图。',
     link: 'https://github.com/yance77777/FreshEye',
+    proof: [
+      { label: 'SOURCE', value: 'GitHub', href: 'https://github.com/yance77777/FreshEye', external: true },
+      { label: 'DEPLOYED AS', value: 'FreshEye', href: 'works.html#project-fresheye' }
+    ],
     metrics: [
       { value: '零安装', label: '浏览器端' },
       { value: 'Grad-CAM', label: '可解释性' },
@@ -156,13 +175,19 @@ export const research = [
     }
   },
   {
+    id: 'fishfreshnet-v2',
     date: '2026.04 — 2026.06',
+    updatedAt: contentMeta.updatedAt,
     tag: 'DEEP LEARNING',
     status: 'published',
     title: 'FishFreshNet V2：轻量可解释鱼眼新鲜度评估',
     org: '个人研究 · FishFreshNet V2',
     text: '引入轻量环形区域注意力 LightCRA，配合 ECA 通道注意力，实现 99.29% 准确率，同时保持轻量化部署能力。',
     link: 'https://github.com/yance77777/FishFreshNetV2',
+    proof: [
+      { label: 'EXPERIMENT', value: 'Five seeds', href: 'https://github.com/yance77777/FishFreshNetV2', external: true },
+      { label: 'DEPLOYED AS', value: 'FreshEye', href: 'works.html#project-fresheye' }
+    ],
     metrics: [
       { value: '99.29%', label: '准确率' },
       { value: '4.095M', label: '参数量' },
@@ -179,13 +204,19 @@ export const research = [
     }
   },
   {
+    id: 'fishfreshnet-v1',
     date: '2026.02 — 2026.04',
+    updatedAt: contentMeta.updatedAt,
     tag: 'PUBLISHED · ICIPAI 2026',
     status: 'published',
     title: 'FishFreshNet V1：基于注意力机制的轻量可解释评估框架',
     org: '国际会议论文 · ICIPAI 2026',
     text: '构建多阶段鱼眼数据集 MFED，将 CBAM 集成到 EfficientNet-B0，配合 Grad-CAM 完成轻量化、可解释的新鲜度分级。',
     link: 'https://github.com/yance77777/FishFreshNetV1',
+    proof: [
+      { label: 'PAPER', value: 'ICIPAI 2026', href: 'https://ieeexplore.ieee.org/abstract/document/11605650', external: true },
+      { label: 'SOURCE', value: 'GitHub', href: 'https://github.com/yance77777/FishFreshNetV1', external: true }
+    ],
     paper: {
       href: 'https://ieeexplore.ieee.org/abstract/document/11605650',
       doi: '10.1109/ICIPAI70034.2026.11605650',
@@ -215,7 +246,9 @@ export const research = [
     }
   },
   {
+    id: 'multimodal-feeding',
     date: '2025.07 — 2025.12',
+    updatedAt: contentMeta.updatedAt,
     tag: 'MULTIMODAL',
     status: 'completed',
     title: '基于多模态特征融合与通道注意力的鱼类摄食强度评估',
@@ -238,7 +271,9 @@ export const research = [
     }
   },
   {
+    id: 'corn-growth',
     date: '2024.12 — 2025.04',
+    updatedAt: contentMeta.updatedAt,
     tag: 'PUBLISHED · ICBB 2026',
     status: 'published',
     title: '不同外源增强剂对玉米生长的影响与机制研究',
@@ -288,7 +323,7 @@ export const researchMethods = [
   { label: 'Random Forest', en: 'Regression', cat: 'SCIENCE' }
 ]
 
-export const featuredResearch = research.slice(0, 2)
+export const featuredResearch = research.filter((item) => item.id === 'fishfreshnet-v2')
 
 /* ---------- 领导力 ---------- */
 export const leadership = [
@@ -330,15 +365,32 @@ export const activities = [
 /* ---------- 作品 Showcase ---------- */
 export const projects = [
   {
+    id: 'fresheye', status: 'deployed', statusLabel: statusLabels.deployed, updatedAt: contentMeta.updatedAt,
     title: '鲜眸', en: 'FreshEye', domain: 'fresheye.yance777.com', tone: 'aqua', icon: 'eye',
     description: '上传鱼眼照片，AI 评估水产品新鲜度，输出等级、置信度与 Grad-CAM 热力图。',
     value: '让水产品新鲜度评估从实验室走向日常使用。',
     role: '全栈开发 · 模型训练 · UI 设计',
     stack: ['PyTorch', 'ONNX', 'Vue 3', 'HuggingFace Spaces'],
     href: 'https://fresheye.yance777.com',
-    github: 'https://github.com/yance77777/FreshEye'
+    github: 'https://github.com/yance77777/FreshEye',
+    caseStudy: {
+      visual: { src: 'assets/case/fresheye-dashboard.svg', alt: 'FreshEye 产品界面示意图' },
+      problem: '传统新鲜度评估依赖人工判断或实验室方法，难以在日常场景中快速复核。',
+      research: {
+        title: 'FishFreshNet V2',
+        detail: '99.29% accuracy · 4.095M parameters',
+        href: 'research.html#fishfreshnet-v2'
+      },
+      product: ['Upload', 'Inference', 'Confidence', 'Grad-CAM', 'PDF'],
+      engineering: ['Vue 3', 'FastAPI', 'ONNX / PyTorch', 'Docker', 'Hugging Face Spaces'],
+      proof: [
+        { label: 'LIVE PRODUCT', value: 'fresheye.yance777.com', href: 'https://fresheye.yance777.com', external: true },
+        { label: 'SOURCE', value: 'GitHub', href: 'https://github.com/yance77777/FreshEye', external: true }
+      ]
+    }
   },
   {
+    id: 'encore', status: 'deployed', statusLabel: statusLabels.deployed, updatedAt: contentMeta.updatedAt,
     title: '余响', en: 'Encore', domain: 'encore.yance777.com', tone: 'gold', icon: 'note',
     description: '记录演唱会足迹，把每一站灯光与合唱收进属于音乐的屋子。',
     value: '把散落的演唱会记忆收进一个可以反复打开的档案。',

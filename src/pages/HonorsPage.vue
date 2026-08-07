@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { honors, honorCategories, honorStats } from '../data/content'
+import { honors, honorCategories, honorStats, contentMeta } from '../data/content'
 import SectionHeading from '../components/SectionHeading.vue'
 import MetricStrip from '../components/MetricStrip.vue'
 import ArchiveFilter from '../components/ArchiveFilter.vue'
@@ -59,10 +59,11 @@ function toggleExpand(i) {
       <SectionHeading
         no="02"
         label="ARCHIVE"
-        title="十三枚"
+        :title="`${honors.length} 枚`"
         accent="坐标。"
         copy="按时间倒序排列，分为领航、卓越与新锐三档。"
       />
+      <p class="content-updated">LAST UPDATED · {{ contentMeta.updatedLabel }}</p>
 
       <ArchiveFilter
         :categories="honorCategories"

@@ -21,3 +21,4 @@ test-screenshots/
 
 # Vue build
 node_modules/
+/dist/

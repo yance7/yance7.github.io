@@ -1,5 +1,5 @@
 <script setup>
-import { research, researchMethods } from '../data/content'
+import { research, researchMethods, contentMeta } from '../data/content'
 import SectionHeading from '../components/SectionHeading.vue'
 import TimelineTrack from '../components/TimelineTrack.vue'
 import SectionDots from '../components/SectionDots.vue'
@@ -21,8 +21,9 @@ import SectionDots from '../components/SectionDots.vue'
         label="LAB NOTES"
         title="把论文"
         accent="写成产品。"
-        copy="五个研究项目，按时间倒序堆叠。每一个都包含提问、假设、方法、原型、结果与下一步——点击展开方法论即可看见完整的思考路径。"
+        :copy="`${research.length} 个研究项目，按时间倒序堆叠。每一个都包含提问、假设、方法、原型、结果与下一步——点击展开方法论即可看见完整的思考路径。`"
       />
+      <p class="content-updated">LAST UPDATED · {{ contentMeta.updatedLabel }}</p>
     </section>
 
     <!-- 方法与技术栈 -->

@@ -8,10 +8,52 @@ const expandedActivity = ref(null)
 
 <template>
   <div class="page-home">
-    <!-- 第一段：五个小世界 -->
-    <section class="content home-worlds">
+    <!-- 第一段：精选研究与产品 -->
+    <section class="content home-focus">
       <SectionHeading
         no="01"
+        label="SELECTED WORK"
+        title="研究如何"
+        accent="离开纸面。"
+        copy="先看正在被继续推进的研究，再看已经可以打开使用的产品。"
+      />
+      <div class="home-focus-grid">
+        <a
+          v-for="(item, i) in featuredResearch"
+          :key="item.title"
+          class="focus-card focus-research"
+          :href="`research.html#${item.id}`"
+          v-reveal="{ delay: i * 70 }"
+        >
+          <span class="focus-label">RESEARCH / 0{{ i + 1 }}</span>
+          <strong>{{ item.title }}</strong>
+          <p class="focus-proof">{{ item.metrics[0].value }} {{ item.metrics[0].label }} · {{ item.metrics[1].value }} {{ item.metrics[1].label }}</p>
+          <p>{{ item.text }}</p>
+          <span class="focus-link">阅读研究 <span aria-hidden="true">↗</span></span>
+        </a>
+        <a
+          v-for="(item, i) in featuredProjects"
+          :key="item.title"
+          class="focus-card focus-product"
+          :class="item.tone"
+          :href="item.href"
+          target="_blank"
+          rel="noopener"
+          v-reveal="{ delay: (i + featuredResearch.length) * 70 }"
+        >
+          <span class="focus-label">PRODUCT / 0{{ i + 1 }}</span>
+          <strong>{{ item.title }} <small>{{ item.en }}</small></strong>
+          <p class="focus-proof">{{ item.caseStudy ? 'RESEARCH → PRODUCT' : item.domain }}</p>
+          <p>{{ item.value }}</p>
+          <span class="focus-link">打开产品 <span aria-hidden="true">↗</span></span>
+        </a>
+      </div>
+    </section>
+
+    <!-- 第二段：五个小世界 -->
+    <section class="content home-worlds">
+      <SectionHeading
+        no="02"
         label="EXPLORE"
         title="五个"
         accent="小世界"
@@ -42,46 +84,7 @@ const expandedActivity = ref(null)
       </div>
     </section>
 
-    <section class="content home-focus">
-      <SectionHeading
-        no="02"
-        label="SELECTED WORK"
-        title="研究如何"
-        accent="离开纸面。"
-        copy="先看正在被继续推进的研究，再看已经可以打开使用的产品。"
-      />
-      <div class="home-focus-grid">
-        <a
-          v-for="(item, i) in featuredResearch"
-          :key="item.title"
-          class="focus-card focus-research"
-          href="research.html"
-          v-reveal="{ delay: i * 70 }"
-        >
-          <span class="focus-label">RESEARCH / 0{{ i + 1 }}</span>
-          <strong>{{ item.title }}</strong>
-          <p>{{ item.text }}</p>
-          <span class="focus-link">阅读研究 <span aria-hidden="true">↗</span></span>
-        </a>
-        <a
-          v-for="(item, i) in featuredProjects"
-          :key="item.title"
-          class="focus-card focus-product"
-          :class="item.tone"
-          :href="item.href"
-          target="_blank"
-          rel="noopener"
-          v-reveal="{ delay: (i + featuredResearch.length) * 70 }"
-        >
-          <span class="focus-label">PRODUCT / 0{{ i + 1 }}</span>
-          <strong>{{ item.title }} <small>{{ item.en }}</small></strong>
-          <p>{{ item.value }}</p>
-          <span class="focus-link">打开产品 <span aria-hidden="true">↗</span></span>
-        </a>
-      </div>
-    </section>
-
-    <!-- 第二段：领导力 -->
+    <!-- 第三段：领导力 -->
     <section class="content home-leadership">
       <SectionHeading
         no="03"
@@ -105,7 +108,7 @@ const expandedActivity = ref(null)
       </div>
     </section>
 
-    <!-- 第三段：活动经历 -->
+    <!-- 第四段：活动经历 -->
     <section class="content home-activities">
       <SectionHeading
         no="04"
