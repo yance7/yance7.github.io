@@ -3,6 +3,10 @@ import { ref } from 'vue'
 const THEME_KEY = 'yance-theme'
 const theme = ref('light')
 
+function systemTheme() {
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+}
+
 function applyTheme(value, rippleEl) {
   theme.value = value
   document.documentElement.dataset.theme = value
@@ -41,12 +45,13 @@ function toggleTheme(rippleEl) {
 }
 
 function initTheme() {
-  let saved = 'light'
-  try { saved = localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light' } catch (e) { /* ignore */ }
-  theme.value = saved
-  document.documentElement.dataset.theme = saved
+  let saved = null
+  try { saved = localStorage.getItem(THEME_KEY) } catch (e) { /* ignore */ }
+  const value = saved === 'dark' || saved === 'light' ? saved : systemTheme()
+  theme.value = value
+  document.documentElement.dataset.theme = value
   const meta = document.querySelector('meta[name="theme-color"]')
-  if (meta) meta.setAttribute('content', saved === 'dark' ? '#0A0D12' : '#F3F0E8')
+  if (meta) meta.setAttribute('content', value === 'dark' ? '#0A0D12' : '#F3F0E8')
 }
 
 export function useTheme() {

@@ -14,8 +14,8 @@ defineProps({
     v-reveal
   >
     <!-- 设备模拟窗口 -->
-    <div class="sc-frame" aria-hidden="true">
-      <div class="sc-frame-bar">
+    <div class="sc-frame">
+      <div class="sc-frame-bar" aria-hidden="true">
         <i></i><i></i><i></i>
         <span>{{ project.domain }}</span>
       </div>
@@ -28,7 +28,7 @@ defineProps({
           loading="lazy"
           decoding="async"
         >
-        <span v-if="!project.caseStudy?.visual" class="sc-icon">{{ project.icon === 'eye' ? '◉' : '♫' }}</span>
+        <span v-if="!project.caseStudy?.visual" class="sc-icon" aria-hidden="true">{{ project.icon === 'eye' ? '◉' : '♫' }}</span>
       </div>
     </div>
 

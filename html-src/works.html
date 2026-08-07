@@ -6,14 +6,15 @@
   <title>作品 · Yance</title>
   <meta name="description" content="鲜眸 FreshEye 与余响 Encore——两个已上线的网页工具，把研究做成能直接打开使用的产品。">
   <meta name="theme-color" content="#F4EEE2">
-  <meta name="color-scheme" content="light">
+  <meta name="color-scheme" content="light dark">
   <meta property="og:title" content="作品 · Yance">
   <meta property="og:description" content="鲜眸 FreshEye 与余响 Encore——两个已上线的网页工具。">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://www.yance777.com/works.html">
   <meta property="og:site_name" content="Yance · 个人主页">
   <meta property="og:locale" content="zh_CN">
-  <meta property="og:image" content="https://www.yance777.com/assets/og-card.svg">
+  <meta property="og:image" content="https://www.yance777.com/assets/og-card.png">
+  <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="Yance · Researcher / Builder">
@@ -23,7 +24,7 @@
   <link rel="manifest" href="/assets/site.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <script>try { if (localStorage.getItem('yance-theme') === 'dark') document.documentElement.dataset.theme = 'dark' } catch (e) {}</script>
+  <script>try { const saved = localStorage.getItem('yance-theme'); const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches; if (saved === 'dark' || (!saved && systemDark)) document.documentElement.dataset.theme = 'dark' } catch (e) {}</script>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500;1,9..144,600&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;700&display=swap">
   <script type="module" src="../src/main.js"></script>
 </head>

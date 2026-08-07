@@ -45,7 +45,7 @@
   --surface-overlay: var(--surface-strong);
   /* Motion: Enter = reveal / Hover = one interaction / State = color */
   --motion-enter: var(--dur-slow);
-  --motion-interaction: var(--dur-base);
+  --motion-interaction: var(--dur-fast);
 
   /* 圆角（更柔和） */
   --radius-xs: 3px;
@@ -68,11 +68,11 @@
   --z-modal: 60;
   --z-toast: 80;
 
-  /* 动画时长（更丝滑） */
-  --dur-micro: .2s;
-  --dur-fast: .32s;
-  --dur-base: .5s;
-  --dur-slow: .8s;
+  /* 动画时长：操作利落，叙事渐入 */
+  --dur-micro: .12s;
+  --dur-fast: .2s;
+  --dur-base: .32s;
+  --dur-slow: .6s;
   --dur-page: 1.2s;
 
   /* 内容宽度 */

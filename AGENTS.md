@@ -10,15 +10,16 @@
   - `data/content.js` — centralized site copy and data
   - `styles.css` + `theme.css` — base styles and light/dark theme tokens
 - `html-src/` — source HTML entry points. `vite.config.js` copies these to the repo root at build start; edit here, never root `*.html`.
-- `assets/` — static media (concert posters in `assets/concerts/`, case-study visuals in `assets/case/`).
+- `public/assets/` — static media (concert posters in `public/assets/concerts/`, case-study visuals in `public/assets/case/`).
 - `html-src/` is the HTML source; `dist/` is the generated GitHub Pages artifact and is ignored by Git.
-- Root files: `CNAME`, `robots.txt`, and `sitemap.xml` are copied into `dist/` during the build.
+- `public/` — Vite-native static assets and deployment metadata (`CNAME`, `robots.txt`, `sitemap.xml`).
 
 ## Build, Test, and Development Commands
 
 - `npm install` — install dependencies.
 - `npm run dev` — start the Vite dev server with hot reload.
 - `npm run build` — production build; output is written to `dist/`.
+- `npm run smoke` — verify all generated pages, hashed entries, and required static assets.
 - `npm run preview` — serve the production build locally to verify it before committing.
 
 ## Coding Style & Naming Conventions
@@ -44,6 +45,7 @@
 ## Agent-Specific Instructions
 
 - Edit `html-src/*.html` as the source of truth; do not edit root `*.html` directly.
-- Never hand-edit `assets/vue/` build output; regenerate it with `npm run build`.
+- Never hand-edit `dist/` build output; regenerate it with `npm run build`.
+- Regenerate the social preview image with `python scripts/render-og-card.py` after changing the OG card design.
 - Update shared content in `src/data/content.js`; keep page-specific content in the matching `src/pages/*.vue`.
 - After deployment changes, verify the `dist/` artifact and the GitHub Pages workflow run.

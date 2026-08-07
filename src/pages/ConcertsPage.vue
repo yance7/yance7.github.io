@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { concerts, concertGroups, concertMoods, concertStats } from '../data/content'
+import { concerts, concertGroups, concertMoods, concertStats, isConcertUpcoming } from '../data/content'
 import SectionHeading from '../components/SectionHeading.vue'
 import MetricStrip from '../components/MetricStrip.vue'
 
@@ -14,7 +14,7 @@ const artistCount = computed(() => concertStats.artistCount)
 const posterCount = computed(() => concertStats.posterCount)
 
 const concertMetrics = [
-  { value: String(concertStats.total), label: '现场', note: concertStats.yearRange },
+  { value: String(concertStats.attended), label: '已赴约', note: `${concertStats.upcoming} 待相见` },
   { value: String(venueCount.value), label: '场馆', note: concertStats.venues },
   { value: `${artistCount.value}+`, label: '艺人', note: `${posterCount.value} 张海报` }
 ]
@@ -22,6 +22,7 @@ const concertMetrics = [
 const sortedYears = computed(() => Object.keys(concertGroups).sort())
 
 function imagePath(name) { return `assets/concerts/${name}` }
+function formatConcertDate(date) { return date.replaceAll('-', '.') }
 function currentImage(item, index) {
   return imagePath(item.images[carouselIndexes.value[item.date] || index || 0])
 }
@@ -96,12 +97,15 @@ function resetPoster(e) {
       <div class="concert-list">
         <article
           v-for="item in concertGroups[year]"
-          :key="item.date"
+          :key="item.id"
           class="concert-row"
+          :class="{ upcoming: isConcertUpcoming(item) }"
           v-reveal
           @mouseenter="preloadItem(item)"
         >
-          <div class="concert-date">{{ item.date }}<span></span></div>
+          <time class="concert-date" :datetime="item.date">
+            {{ formatConcertDate(item.date) }}<span></span>
+          </time>
           <div
             class="concert-poster"
             :class="{ land: item.land }"
@@ -131,7 +135,10 @@ function resetPoster(e) {
             </div>
           </div>
           <div class="concert-info">
-            <span>{{ item.venue }}</span>
+            <span class="concert-status" :class="{ upcoming: isConcertUpcoming(item) }">
+              {{ isConcertUpcoming(item) ? 'UPCOMING · 待相见' : 'ATTENDED · 已赴约' }}
+            </span>
+            <span class="concert-venue">{{ item.venue }}</span>
             <h3>{{ item.artist }}</h3>
             <p>{{ item.tour }}</p>
           </div>

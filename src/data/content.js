@@ -16,6 +16,13 @@ export const contentMeta = {
   updatedLabel: 'AUG 07, 2026'
 }
 
+export const pageMetadata = {
+  honors: { updatedAt: '2026-08-07', updatedLabel: 'AUG 07, 2026' },
+  research: { updatedAt: '2026-08-07', updatedLabel: 'AUG 07, 2026' },
+  works: { updatedAt: '2026-08-07', updatedLabel: 'AUG 07, 2026' },
+  concerts: { updatedAt: '2026-08-07', updatedLabel: 'AUG 07, 2026' }
+}
+
 export const statusLabels = {
   active: '进行中',
   published: '已发表',
@@ -405,35 +412,47 @@ export const featuredProjects = projects.filter((item) => item.id === 'fresheye'
 
 /* ---------- 演唱会记忆档案 ---------- */
 export const concerts = [
-  ['2024.08.25', '邓紫棋', 'I AM GLORIA 演唱会', '鸟巢', ['concert-202408-deng-ziqi.jpg']],
-  ['2025.04.18', '张杰', '未·Live — 开往1982', '鸟巢', ['concert-202504-zhang-jie.jpg']],
-  ['2025.08.10', '谢霆锋', 'Evolution Nic Live 进化演唱会', '大莲花', ['concert-202508-xie-tingfeng.jpg']],
-  ['2025.09.19', '陶喆', 'Soul Power Ⅱ 演唱会', '鸟巢', ['concert-202509-tao-zhe.jpg']],
-  ['2025.10.06', '张艺兴', '大航海5 · 美猴王闹天宫', '鸟巢', ['concert-202510-zhang-yixing-01.jpg', 'concert-202510-zhang-yixing-02.jpg']],
-  ['2025.11.08', 'KPL 总决赛', 'KPL Annual Finals 2025', '鸟巢', ['concert-202511-kpl-01.jpg', 'concert-202511-kpl-02.jpg', 'concert-202511-kpl-03.jpg'], true],
-  ['2026.03.14', '黄子弘凡', 'OPEN WORLD 开放世界', '鸟巢', ['concert-202603-huang-zihongfan.jpg']],
-  ['2026.04.19', '张杰', '未·Live — 开往1982', '鸟巢', ['concert-202604-zhang-jie.jpg']],
-  ['2026.05.15', '五月天', '5525 + 2 回到那一天', '鸟巢', ['concert-202605-mayday.jpg']],
-  ['2026.05.31', '京东 618 夏日歌会', 'JD 618 Summer Concert', '北京工人体育场', ['concert-202605-summer-01.jpg', 'concert-202605-summer-02.jpg']],
-  ['2026.06.26', '周杰伦', '龙拳 · 北京嘉年华 2026', '鸟巢', ['concert-202606-zhou-jielun.jpg']],
-  ['2026.07.26', '薛之谦', '万兽之王演唱会', '鸟巢', ['concert-202607-xue-zhiqian.jpg']],
-  ['2026.08.19', '汪苏泷', '明日世界演唱会', '鸟巢', ['concert-202608-wang-sulong.jpg']],
-  ['2026.08.30', '汪苏泷', '明日世界演唱会', '鸟巢', ['concert-202608-wang-sulong.jpg']]
-].map(([date, artist, tour, venue, images, land = false]) => ({ date, artist, tour, venue, images, land }))
+  { id: 'dengziqi-2024-08-25', date: '2024-08-25', artist: '邓紫棋', tour: 'I AM GLORIA 演唱会', venue: '鸟巢', images: ['concert-202408-deng-ziqi.jpg'] },
+  { id: 'zhangjie-2025-04-18', date: '2025-04-18', artist: '张杰', tour: '未·Live — 开往1982', venue: '鸟巢', images: ['concert-202504-zhang-jie.jpg'] },
+  { id: 'xietingfeng-2025-08-10', date: '2025-08-10', artist: '谢霆锋', tour: 'Evolution Nic Live 进化演唱会', venue: '大莲花', images: ['concert-202508-xie-tingfeng.jpg'] },
+  { id: 'taozhe-2025-09-19', date: '2025-09-19', artist: '陶喆', tour: 'Soul Power Ⅱ 演唱会', venue: '鸟巢', images: ['concert-202509-tao-zhe.jpg'] },
+  { id: 'zhangyixing-2025-10-06', date: '2025-10-06', artist: '张艺兴', tour: '大航海5 · 美猴王闹天宫', venue: '鸟巢', images: ['concert-202510-zhang-yixing-01.jpg', 'concert-202510-zhang-yixing-02.jpg'] },
+  { id: 'kpl-2025-11-08', date: '2025-11-08', artist: 'KPL 总决赛', tour: 'KPL Annual Finals 2025', venue: '鸟巢', images: ['concert-202511-kpl-01.jpg', 'concert-202511-kpl-02.jpg', 'concert-202511-kpl-03.jpg'], land: true },
+  { id: 'huangzihongfan-2026-03-14', date: '2026-03-14', artist: '黄子弘凡', tour: 'OPEN WORLD 开放世界', venue: '鸟巢', images: ['concert-202603-huang-zihongfan.jpg'] },
+  { id: 'zhangjie-2026-04-19', date: '2026-04-19', artist: '张杰', tour: '未·Live — 开往1982', venue: '鸟巢', images: ['concert-202604-zhang-jie.jpg'] },
+  { id: 'mayday-2026-05-15', date: '2026-05-15', artist: '五月天', tour: '5525 + 2 回到那一天', venue: '鸟巢', images: ['concert-202605-mayday.jpg'] },
+  { id: 'jd-summer-2026-05-31', date: '2026-05-31', artist: '京东 618 夏日歌会', tour: 'JD 618 Summer Concert', venue: '北京工人体育场', images: ['concert-202605-summer-01.jpg', 'concert-202605-summer-02.jpg'] },
+  { id: 'zhoujielun-2026-06-26', date: '2026-06-26', artist: '周杰伦', tour: '龙拳 · 北京嘉年华 2026', venue: '鸟巢', images: ['concert-202606-zhou-jielun.jpg'] },
+  { id: 'xuezhiqian-2026-07-26', date: '2026-07-26', artist: '薛之谦', tour: '万兽之王演唱会', venue: '鸟巢', images: ['concert-202607-xue-zhiqian.jpg'] },
+  { id: 'wangsulong-2026-08-19', date: '2026-08-19', artist: '汪苏泷', tour: '明日世界演唱会', venue: '鸟巢', images: ['concert-202608-wang-sulong.jpg'] },
+  { id: 'wangsulong-2026-08-30', date: '2026-08-30', artist: '汪苏泷', tour: '明日世界演唱会', venue: '鸟巢', images: ['concert-202608-wang-sulong.jpg'] }
+]
 
 /* 按年份分组 */
+export function isConcertUpcoming(concert, now = new Date()) {
+  return new Date(`${concert.date}T23:59:59+08:00`) > now
+}
+
+export const upcomingConcerts = concerts.filter((concert) => isConcertUpcoming(concert))
+export const attendedConcerts = concerts.filter((concert) => !isConcertUpcoming(concert))
+
 export const concertGroups = concerts.reduce((groups, item) => {
-  const year = item.date.split('.')[0]
+  const year = item.date.split('-')[0]
   if (!groups[year]) groups[year] = []
   groups[year].push(item)
   return groups
 }, {})
 
-export const concertMoods = {
+const concertMoods = {
   '2024': '第一次走进鸟巢，灯光亮起的瞬间，世界安静了。',
   '2025': '从春到冬，五场现场，五次被音乐重新定义的夜晚。',
   '2026': '上半年八场，音乐成为生活节奏的一部分。'
 }
+
+const attended2026 = attendedConcerts.filter((concert) => concert.date.startsWith('2026-')).length
+const upcoming2026 = upcomingConcerts.filter((concert) => concert.date.startsWith('2026-')).length
+concertMoods['2026'] = `${attended2026} 场已赴约，${upcoming2026} 场待相见。`
+export { concertMoods }
 
 const concertVenues = [...new Set(concerts.map((concert) => concert.venue))]
 const concertArtists = [...new Set(concerts.map((concert) => concert.artist))]
@@ -441,6 +460,8 @@ const concertPosters = new Set(concerts.flatMap((concert) => concert.images))
 
 export const concertStats = {
   total: concerts.length,
+  attended: attendedConcerts.length,
+  upcoming: upcomingConcerts.length,
   venues: concertVenues.join(' / '),
   artists: concertArtists.join(' · '),
   artistCount: concertArtists.length,

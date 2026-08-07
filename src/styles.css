@@ -1026,8 +1026,9 @@ img { display: block; max-width: 100%; }
   border-radius: var(--radius-sm);
   transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--ty, 0px));
   transition: transform var(--dur-base) var(--ease-spring), box-shadow var(--dur-base), border-color var(--dur-base);
-  will-change: transform;
 }
+.concert-row.upcoming .poster-open img { filter: saturate(.72); }
+.concert-row.upcoming .concert-date { color: var(--dim); }
 .concert-poster.land { aspect-ratio: 16/9; }
 .concert-poster:hover {
   --ty: -6px;
@@ -1047,6 +1048,7 @@ img { display: block; max-width: 100%; }
   .poster-hint {
     position: absolute; left: 12px; top: 12px; z-index: 2;
   display: flex; align-items: center; justify-content: space-between;
+  pointer-events: none;
   padding: 9px 12px; border-radius: var(--radius-sm);
   background: rgba(10, 13, 18, .66); backdrop-filter: blur(8px);
   color: #F1EEE7;
@@ -1058,6 +1060,7 @@ img { display: block; max-width: 100%; }
 .poster-hint b { color: var(--gold); font-size: 14px; }
 .carousel-controls {
   position: absolute; left: 10px; right: 10px; bottom: 10px;
+  z-index: 3;
   display: flex; align-items: center; justify-content: space-between;
   padding: 6px 8px; border-radius: var(--radius-sm);
   background: rgba(10, 13, 18, .62); backdrop-filter: blur(8px);
@@ -1065,7 +1068,9 @@ img { display: block; max-width: 100%; }
 }
 .carousel-controls button { border: 0; background: transparent; color: inherit; font-size: 14px; padding: 2px 6px; }
 .carousel-controls button:hover { color: var(--gold); }
-.concert-info > span { font-family: var(--mono); font-size: 10px; letter-spacing: .18em; color: var(--aqua); text-transform: uppercase; }
+.concert-info > span { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: .18em; color: var(--aqua); text-transform: uppercase; }
+.concert-info .concert-status.upcoming { color: var(--gold); }
+.concert-info .concert-venue { margin-top: 5px; color: var(--dim); letter-spacing: .08em; }
 .concert-info h3 { margin: 12px 0 7px; font-family: var(--serif); font-size: clamp(1.7rem, 2.7vw, 2.8rem); font-weight: 500; }
 .concert-info p { margin: 0; color: var(--muted); font-size: 1.08rem; }
 
