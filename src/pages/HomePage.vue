@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import { worlds, leadership, activities } from '../data/content'
+import { worlds, featuredResearch, featuredProjects, leadership, activities } from '../data/content'
 import SectionHeading from '../components/SectionHeading.vue'
 
 const expandedActivity = ref(null)
@@ -42,10 +42,49 @@ const expandedActivity = ref(null)
       </div>
     </section>
 
+    <section class="content home-focus">
+      <SectionHeading
+        no="02"
+        label="SELECTED WORK"
+        title="研究如何"
+        accent="离开纸面。"
+        copy="先看正在被继续推进的研究，再看已经可以打开使用的产品。"
+      />
+      <div class="home-focus-grid">
+        <a
+          v-for="(item, i) in featuredResearch"
+          :key="item.title"
+          class="focus-card focus-research"
+          href="research.html"
+          v-reveal="{ delay: i * 70 }"
+        >
+          <span class="focus-label">RESEARCH / 0{{ i + 1 }}</span>
+          <strong>{{ item.title }}</strong>
+          <p>{{ item.text }}</p>
+          <span class="focus-link">阅读研究 <span aria-hidden="true">↗</span></span>
+        </a>
+        <a
+          v-for="(item, i) in featuredProjects"
+          :key="item.title"
+          class="focus-card focus-product"
+          :class="item.tone"
+          :href="item.href"
+          target="_blank"
+          rel="noopener"
+          v-reveal="{ delay: (i + featuredResearch.length) * 70 }"
+        >
+          <span class="focus-label">PRODUCT / 0{{ i + 1 }}</span>
+          <strong>{{ item.title }} <small>{{ item.en }}</small></strong>
+          <p>{{ item.value }}</p>
+          <span class="focus-link">打开产品 <span aria-hidden="true">↗</span></span>
+        </a>
+      </div>
+    </section>
+
     <!-- 第二段：领导力 -->
     <section class="content home-leadership">
       <SectionHeading
-        no="02"
+        no="03"
         label="LEADERSHIP"
         title="在集体中"
         accent="生长。"
@@ -69,7 +108,7 @@ const expandedActivity = ref(null)
     <!-- 第三段：活动经历 -->
     <section class="content home-activities">
       <SectionHeading
-        no="03"
+        no="04"
         label="ACTIVITIES"
         title="在行动中"
         accent="学习。"
@@ -84,9 +123,11 @@ const expandedActivity = ref(null)
           v-reveal="{ delay: i * 60 }"
         >
           <button
+            :id="`activity-trigger-${i}`"
             class="activity-btn"
             type="button"
             :aria-expanded="expandedActivity === i"
+            :aria-controls="`activity-${i}`"
             @click="expandedActivity = expandedActivity === i ? null : i"
           >
             <span class="activity-period">{{ item.period }}</span>
@@ -96,7 +137,13 @@ const expandedActivity = ref(null)
             </div>
             <span class="activity-arrow" aria-hidden="true">↘</span>
           </button>
-          <div class="activity-detail" v-if="expandedActivity === i">
+          <div
+            v-if="expandedActivity === i"
+            :id="`activity-${i}`"
+            class="activity-detail"
+            role="region"
+            :aria-labelledby="`activity-trigger-${i}`"
+          >
             <p>{{ item.detail }}</p>
           </div>
         </div>

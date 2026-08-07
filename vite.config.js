@@ -42,9 +42,9 @@ export default defineConfig({
         notFound: '404.html'
       },
       output: {
-        entryFileNames: 'assets/vue/[name].js',
-        chunkFileNames: 'assets/vue/[name].js',
-        assetFileNames: 'assets/vue/[name][extname]'
+        entryFileNames: 'assets/vue/[name]-[hash].js',
+        chunkFileNames: 'assets/vue/[name]-[hash].js',
+        assetFileNames: 'assets/vue/[name]-[hash][extname]'
       }
     }
   },

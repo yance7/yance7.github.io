@@ -1,7 +1,8 @@
 <script setup>
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { navItems } from '../data/content'
 import ThemeOrbit from './ThemeOrbit.vue'
+import { useBodyScrollLock } from '../composables/useBodyScrollLock'
 
 const props = defineProps({ page: String })
 const menuOpen = ref(false)
@@ -12,16 +13,46 @@ function closeMenu(restoreFocus = false) {
   if (restoreFocus) requestAnimationFrame(() => menuTrigger.value?.focus())
 }
 
-function onKeydown(event) {
-  if (event.key === 'Escape' && menuOpen.value) closeMenu(true)
+function getMenuLinks() {
+  return [...document.querySelectorAll('#mobile-navigation a[href]')]
 }
 
-watch(menuOpen, (open) => {
-  document.body.style.overflow = open ? 'hidden' : ''
+function onKeydown(event) {
+  if (!menuOpen.value) return
+  if (event.key === 'Escape') {
+    event.preventDefault()
+    closeMenu(true)
+    return
+  }
+  if (event.key !== 'Tab') return
+
+  const links = getMenuLinks()
+  if (!links.length) return
+  const first = links[0]
+  const last = links[links.length - 1]
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault()
+    last.focus()
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault()
+    first.focus()
+  }
+}
+
+useBodyScrollLock(menuOpen)
+
+watch(menuOpen, async (open) => {
+  document.querySelector('#main')?.toggleAttribute('inert', open)
+  document.querySelector('.site-footer')?.toggleAttribute('inert', open)
+  if (open) {
+    await nextTick()
+    getMenuLinks()[0]?.focus()
+  }
 })
 
 onUnmounted(() => {
-  document.body.style.overflow = ''
+  document.querySelector('#main')?.removeAttribute('inert')
+  document.querySelector('.site-footer')?.removeAttribute('inert')
 })
 
 onMounted(() => window.addEventListener('keydown', onKeydown))
@@ -70,7 +101,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 
   <!-- 移动端全屏菜单遮罩 -->
   <Teleport to="body">
-    <div v-if="menuOpen" class="mobile-menu-overlay" @click.self="closeMenu()">
+    <div v-if="menuOpen" class="mobile-menu-overlay" role="dialog" aria-modal="true" aria-label="移动端导航" @click.self="closeMenu(true)">
       <nav id="mobile-navigation" class="mobile-menu" aria-label="移动端导航">
         <a
           v-for="(item, i) in navItems"
@@ -78,7 +109,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
           :href="item.href"
           :class="{ active: page === item.key }"
           :style="{ '--di': i }"
-          @click="closeMenu()"
+          @click="closeMenu(true)"
         >
           <small class="mm-num">0{{ i + 1 }}</small>
           <span class="mm-label">{{ item.label }}</span>

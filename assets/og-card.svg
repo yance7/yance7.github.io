@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Yance · Researcher / Builder</title>
+  <desc id="desc">个人档案：深度学习、智慧农业、产品与音乐。</desc>
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F7F2E8"/>
+      <stop offset="1" stop-color="#E9E0D0"/>
+    </linearGradient>
+    <radialGradient id="aqua" cx="80%" cy="8%" r="55%">
+      <stop offset="0" stop-color="#79D9C9" stop-opacity=".38"/>
+      <stop offset="1" stop-color="#79D9C9" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="gold" cx="12%" cy="88%" r="50%">
+      <stop offset="0" stop-color="#C6974E" stop-opacity=".28"/>
+      <stop offset="1" stop-color="#C6974E" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#paper)"/>
+  <rect width="1200" height="630" fill="url(#aqua)"/>
+  <rect width="1200" height="630" fill="url(#gold)"/>
+  <path d="M74 92H1126M74 538H1126" stroke="#A96F20" stroke-opacity=".35"/>
+  <path d="M74 92V538M1126 92V538" stroke="#1E726D" stroke-opacity=".2"/>
+  <circle cx="1018" cy="166" r="84" fill="none" stroke="#A96F20" stroke-width="3" stroke-opacity=".7"/>
+  <circle cx="1018" cy="166" r="34" fill="#1A1D23"/>
+  <circle cx="1006" cy="154" r="7" fill="#F7F2E8"/>
+  <text x="110" y="188" fill="#A96F20" font-family="monospace" font-size="18" letter-spacing="6">PERSONAL ARCHIVE / 2026</text>
+  <text x="104" y="348" fill="#1A1D23" font-family="Georgia, serif" font-size="144" font-style="italic">Yance.</text>
+  <text x="110" y="410" fill="#5A5E66" font-family="Arial, sans-serif" font-size="24" letter-spacing="3">RESEARCHER · BUILDER · MUSIC LISTENER</text>
+  <text x="110" y="492" fill="#1E726D" font-family="monospace" font-size="18" letter-spacing="2">DEEP LEARNING / SMART AGRICULTURE / PRODUCTS</text>
+</svg>

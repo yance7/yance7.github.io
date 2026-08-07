@@ -7,7 +7,7 @@
 :root {
   /* 字体族 */
   --sans: "Noto Sans SC", "Inter", system-ui, -apple-system, sans-serif;
-  --serif: "Noto Serif SC", "Songti SC", "SimSun", serif;
+  --serif: "Noto Sans SC", "Songti SC", "SimSun", sans-serif;
   --display: "Fraunces", "Cormorant Garamond", Georgia, serif;
   --mono: "JetBrains Mono", ui-monospace, "SF Mono", "Cascadia Code", monospace;
 
@@ -27,6 +27,11 @@
   --space-2xl: 80px;
   --space-3xl: 120px;
   --space-4xl: 180px;
+
+  /* 可读的最小文本级别，装饰性文字也不低于 11px */
+  --text-xs: .6875rem;
+  --text-sm: .75rem;
+  --text-meta: .8125rem;
 
   /* 圆角（更柔和） */
   --radius-xs: 3px;

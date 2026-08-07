@@ -8,14 +8,13 @@ const emit = defineEmits(['filter'])
 </script>
 
 <template>
-  <div class="honor-filter" role="tablist" aria-label="荣誉分类筛选">
+  <div class="honor-filter" aria-label="荣誉分类筛选">
     <button
       v-for="cat in categories"
       :key="cat.key"
       class="filter-btn"
       :class="{ active: active === cat.key, [cat.key]: true }"
-      role="tab"
-      :aria-selected="active === cat.key"
+      :aria-pressed="active === cat.key"
       @click="emit('filter', cat.key)"
     >
       {{ cat.label }}<span v-if="counts[cat.key]" class="filter-count">{{ counts[cat.key] }}</span>

@@ -50,13 +50,6 @@ export const honorCategories = [
   { key: 'emerging', label: '新锐级', en: 'MERIT' }
 ]
 
-export const honorStats = [
-  { value: '13', label: '项荣誉', note: '2025 — 2026' },
-  { value: '4', label: '领航级', note: 'UKChO · BBO · USACO · TRAE' },
-  { value: '2', label: '卓越级', note: 'USABO · 北京科创大赛' },
-  { value: '7', label: '新锐级', note: '国际 · 国家 · 区域' }
-]
-
 export const honors = [
   {
     date: '2026.08', level: 'emerging', title: '第九届全国青少年人工智能创新挑战赛 · 三等奖',
@@ -124,6 +117,19 @@ export const honors = [
     detail: '加拿大化学竞赛（CCC）区域优秀奖。'
   }
 ]
+
+const honorStatMeta = [
+  { level: 'all', label: '项荣誉', note: '2025 — 2026' },
+  { level: 'peak', label: '领航级', note: 'UKChO · BBO · USACO · TRAE' },
+  { level: 'excellent', label: '卓越级', note: 'USABO · 北京科创大赛' },
+  { level: 'emerging', label: '新锐级', note: '国际 · 国家 · 区域' }
+]
+
+export const honorStats = honorStatMeta.map(({ level, label, note }) => ({
+  value: String(level === 'all' ? honors.length : honors.filter((honor) => honor.level === level).length),
+  label,
+  note
+}))
 
 /* ---------- 研究项目（5 项，按时间倒序） ---------- */
 export const research = [
@@ -282,6 +288,8 @@ export const researchMethods = [
   { label: 'Random Forest', en: 'Regression', cat: 'SCIENCE' }
 ]
 
+export const featuredResearch = research.slice(0, 2)
+
 /* ---------- 领导力 ---------- */
 export const leadership = [
   { role: '社长', org: 'iHOSA 科技创新社', period: '2025.09 — 2026.09', note: '' },
@@ -341,6 +349,8 @@ export const projects = [
   }
 ]
 
+export const featuredProjects = projects
+
 /* ---------- 演唱会记忆档案 ---------- */
 export const concerts = [
   ['2024.08.25', '邓紫棋', 'I AM GLORIA 演唱会', '鸟巢', ['concert-202408-deng-ziqi.jpg']],
@@ -373,10 +383,16 @@ export const concertMoods = {
   '2026': '上半年八场，音乐成为生活节奏的一部分。'
 }
 
+const concertVenues = [...new Set(concerts.map((concert) => concert.venue))]
+const concertArtists = [...new Set(concerts.map((concert) => concert.artist))]
+const concertPosters = new Set(concerts.flatMap((concert) => concert.images))
+
 export const concertStats = {
   total: concerts.length,
-  venues: '鸟巢 / 大莲花 / 工人体育场',
-  artists: '邓紫棋 · 张杰 · 谢霆锋 · 陶喆 · 张艺兴 · 五月天 · 周杰伦 · 薛之谦 · 汪苏泷',
+  venues: concertVenues.join(' / '),
+  artists: concertArtists.join(' · '),
+  artistCount: concertArtists.length,
+  posterCount: concertPosters.size,
   yearRange: '2024 — 2026'
 }
 
@@ -387,7 +403,7 @@ export const pageMeta = {
   honors: ['HONORS / 荣誉', '一步一步往上爬', '奖项是坐标，不是终点；真正重要的是仍然保持向上的惯性。', { artist: '周杰伦', song: '蜗牛', album: 'Fantasy Plus' }],
   research: ['RESEARCH / 研究', '我不完美的梦，你陪着我想', '从智慧农业到可解释 AI，把论文里的模型推向浏览器里能点开的产品。', { artist: 'TFBOYS', song: '不完美小孩', album: '我们的时光' }],
   works: ['WORKS / 作品', '因为我已慢慢懂，努力就能成功', '两个已经上线的小世界，记录想法如何离开纸面，开始被真实使用。', { artist: '汪苏泷', song: '慢慢懂', album: '慢慢懂' }],
-  concerts: ['CONCERTS / 演唱会', '缘分让我们相遇乱世以外', '十四场现场，十七张海报，记录那些被灯光和合唱重新定义的夜晚。', { artist: '邓紫棋', song: '光年之外', album: '' }]
+  concerts: ['CONCERTS / 演唱会', '缘分让我们相遇乱世以外', '演唱会足迹与海报，记录那些被灯光和合唱重新定义的夜晚。', { artist: '邓紫棋', song: '光年之外', album: '' }]
 }
 
 export const heroGeo = {
@@ -405,5 +421,5 @@ export const worlds = [
   { key: 'honors', no: '02', label: '荣誉', en: 'Honors', icon: '❖', href: 'honors.html', desc: '奖项是坐标，不是终点；真正重要的是仍然保持向上的惯性。', accent: 'violet' },
   { key: 'research', no: '03', label: '研究', en: 'Research', icon: '◉', href: 'research.html', desc: '从智慧农业到可解释 AI，把论文里的模型推向浏览器里能点开的产品。', accent: 'gold' },
   { key: 'works', no: '04', label: '作品', en: 'Works', icon: '♬', href: 'works.html', desc: '两个已经上线的小世界，记录想法如何离开纸面，开始被真实使用。', accent: 'aqua' },
-  { key: 'concerts', no: '05', label: '演唱会', en: 'Concerts', icon: '♪', href: 'concerts.html', desc: '十四场现场，十七张海报，记录那些被灯光和合唱重新定义的夜晚。', accent: 'gold' }
+  { key: 'concerts', no: '05', label: '演唱会', en: 'Concerts', icon: '♪', href: 'concerts.html', desc: '演唱会足迹与海报，记录那些被灯光和合唱重新定义的夜晚。', accent: 'gold' }
 ]

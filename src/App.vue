@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, onMounted, defineAsyncComponent } from 'vue'
 import { navItems, pageMeta } from './data/content'
 import { useTheme } from './composables/useTheme'
 import { useMusicNotes } from './composables/useMusicNotes'
@@ -10,12 +10,6 @@ import SiteFooter from './components/SiteFooter.vue'
 import ImageLightbox from './components/ImageLightbox.vue'
 import ScrollProgress from './components/ScrollProgress.vue'
 
-import HomePage from './pages/HomePage.vue'
-import AcademicsPage from './pages/AcademicsPage.vue'
-import HonorsPage from './pages/HonorsPage.vue'
-import ResearchPage from './pages/ResearchPage.vue'
-import WorksPage from './pages/WorksPage.vue'
-import ConcertsPage from './pages/ConcertsPage.vue'
 import NotFoundPage from './pages/NotFoundPage.vue'
 
 const page = document.body.dataset.page || 'home'
@@ -38,12 +32,12 @@ const heroCopy = computed(() => (isError ? '返回首页，重新选择一个方
 const heroCredit = computed(() => (isError ? null : pageMeta[page][3] || null))
 
 const pageMap = {
-  home: HomePage,
-  academics: AcademicsPage,
-  honors: HonorsPage,
-  research: ResearchPage,
-  works: WorksPage,
-  concerts: ConcertsPage
+  home: defineAsyncComponent(() => import('./pages/HomePage.vue')),
+  academics: defineAsyncComponent(() => import('./pages/AcademicsPage.vue')),
+  honors: defineAsyncComponent(() => import('./pages/HonorsPage.vue')),
+  research: defineAsyncComponent(() => import('./pages/ResearchPage.vue')),
+  works: defineAsyncComponent(() => import('./pages/WorksPage.vue')),
+  concerts: defineAsyncComponent(() => import('./pages/ConcertsPage.vue'))
 }
 const currentPage = computed(() => (isError ? NotFoundPage : pageMap[page] || NotFoundPage))
 

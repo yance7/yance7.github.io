@@ -10,8 +10,8 @@ const carouselIndexes = ref({})
 const preloaded = new Set()
 
 const venueCount = computed(() => new Set(concerts.map((c) => c.venue)).size)
-const artistCount = computed(() => concertStats.artists.split(' · ').length)
-const posterCount = computed(() => new Set(concerts.flatMap((c) => c.images)).size)
+const artistCount = computed(() => concertStats.artistCount)
+const posterCount = computed(() => concertStats.posterCount)
 
 const concertMetrics = [
   { value: String(concertStats.total), label: '现场', note: concertStats.yearRange },
@@ -58,8 +58,6 @@ function tiltPoster(e) {
   const py = (e.clientY - rect.top) / rect.height - 0.5
   el.style.setProperty('--rx', `${(-py * 5).toFixed(2)}deg`)
   el.style.setProperty('--ry', `${(px * 7).toFixed(2)}deg`)
-  el.style.setProperty('--gx', `${((px + 0.5) * 100).toFixed(1)}%`)
-  el.style.setProperty('--gy', `${((py + 0.5) * 100).toFixed(1)}%`)
 }
 
 function resetPoster(e) {
@@ -110,16 +108,22 @@ function resetPoster(e) {
             @mousemove="tiltPoster"
             @mouseleave="resetPoster"
           >
-            <img
-              :src="currentImage(item, 0)"
-              :alt="`${item.artist} ${item.tour} 海报`"
-              loading="lazy"
-              decoding="async"
+            <button
+              class="poster-open"
+              type="button"
+              :aria-label="`打开 ${item.artist} ${item.tour} 海报档案`"
               @click="openLightbox(item, carouselIndexes[item.date] || 0)"
             >
-            <div class="poster-hint" aria-hidden="true">
-              <span>打开档案</span><b>↗</b>
-            </div>
+              <img
+                :src="currentImage(item, 0)"
+                :alt="`${item.artist} ${item.tour} 海报`"
+                loading="lazy"
+                decoding="async"
+              >
+              <span class="poster-hint" aria-hidden="true">
+                <span>打开档案</span><b>↗</b>
+              </span>
+            </button>
             <div v-if="item.images.length > 1" class="carousel-controls">
               <button type="button" aria-label="上一张" @click.stop="moveCarousel(item, -1)">←</button>
               <span>{{ (carouselIndexes[item.date] || 0) + 1 }} / {{ item.images.length }}</span>

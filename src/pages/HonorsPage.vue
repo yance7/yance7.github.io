@@ -61,7 +61,7 @@ function toggleExpand(i) {
         label="ARCHIVE"
         title="十三枚"
         accent="坐标。"
-        copy="2025 — 2026 赛季的十三项记录，按时间倒序排列，分为领航、卓越与新锐三档。"
+        copy="按时间倒序排列，分为领航、卓越与新锐三档。"
       />
 
       <ArchiveFilter
