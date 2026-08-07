@@ -55,7 +55,7 @@ export const apScores = [
   { name: '宏观经济学', en: 'Macroeconomics', year: 'Grade 12', score: null, status: 'pending' }
 ]
 
-/* ---------- 荣誉奖项（13 项，按时间倒序） ---------- */
+/* ---------- 荣誉奖项（按时间倒序） ---------- */
 export const honorCategories = [
   { key: 'all', label: '全部' },
   { key: 'peak', label: '领航级', en: 'PIONEER' },
@@ -401,7 +401,7 @@ export const projects = [
   }
 ]
 
-export const featuredProjects = projects
+export const featuredProjects = projects.filter((item) => item.id === 'fresheye')
 
 /* ---------- 演唱会记忆档案 ---------- */
 export const concerts = [
