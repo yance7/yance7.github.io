@@ -27,7 +27,6 @@ const expandedActivity = ref(null)
           :href="w.href"
           :style="{ '--wi': i }"
           v-reveal="{ delay: i * 80 }"
-          v-spotlight
         >
           <div class="world-left">
             <span class="world-no">{{ w.no }}</span>
@@ -58,7 +57,6 @@ const expandedActivity = ref(null)
           :key="item.role + item.org"
           class="leadership-card"
           v-reveal="{ delay: i * 60 }"
-          v-spotlight
         >
           <span class="leadership-role">{{ item.role }}</span>
           <span class="leadership-org">{{ item.org }}</span>

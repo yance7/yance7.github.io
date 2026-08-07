@@ -85,27 +85,6 @@ img { display: block; max-width: 100%; }
 }
 
 /* ===== 卡片光标光晕 ===== */
-.spotlight { position: relative; overflow: hidden; }
-.spotlight-halo {
-  position: absolute; inset: 0; z-index: 0; pointer-events: none;
-  opacity: 0; transition: opacity var(--dur-base);
-  background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), var(--glow-gold), transparent 70%);
-  mix-blend-mode: soft-light;
-}
-.spotlight:hover .spotlight-halo { opacity: 1; }
-.spotlight-scan {
-  position: absolute; inset: 0; z-index: 0; pointer-events: none;
-  background: linear-gradient(115deg, transparent 25%, var(--glow-gold) 48%, rgba(255, 255, 255, .18) 52%, transparent 75%);
-  opacity: 0; transform: translateX(-130%);
-}
-.spotlight:hover .spotlight-scan {
-  opacity: 1;
-  animation: scanline-sweep .95s var(--ease-apple) both;
-}
-@keyframes scanline-sweep {
-  from { transform: translateX(-130%); }
-  to { transform: translateX(130%); }
-}
 
 /* ===== 滚动进度条 ===== */
 .scroll-progress {
@@ -1249,6 +1228,4 @@ img { display: block; max-width: 100%; }
   .reveal { opacity: 1; transform: none; clip-path: none; filter: none; }
   .lyric-char { opacity: 1; transform: none; animation: none !important; }
   .music-note { display: none; }
-  .spotlight-halo { display: none; }
-  .spotlight-scan { display: none; }
 }
