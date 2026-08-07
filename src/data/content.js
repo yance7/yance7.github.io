@@ -374,7 +374,7 @@ export const projects = [
     href: 'https://fresheye.yance777.com',
     github: 'https://github.com/yance77777/FreshEye',
     caseStudy: {
-      visual: { src: 'assets/case/fresheye-dashboard.svg', alt: 'FreshEye 产品界面示意图' },
+      visual: { src: 'assets/case/fresheye-og-cover.png', alt: 'FreshEye 官方产品封面图' },
       problem: '传统新鲜度评估依赖人工判断或实验室方法，难以在日常场景中快速复核。',
       research: {
         title: 'FishFreshNet V2',
