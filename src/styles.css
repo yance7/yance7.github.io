@@ -76,13 +76,6 @@ img { display: block; max-width: 100%; }
 }
 
 /* ===== 光标环境光 ===== */
-.cursor-glow {
-  position: fixed; top: 0; left: 0; z-index: 2;
-  width: 320px; height: 320px; pointer-events: none;
-  transform: translate(calc(var(--cg-x, 50vw) - 50%), calc(var(--cg-y, 50vh) - 50%));
-  background: radial-gradient(circle, var(--glow-gold), transparent 65%);
-  opacity: .3;
-}
 
 /* ===== 卡片光标光晕 ===== */
 
@@ -382,13 +375,7 @@ img { display: block; max-width: 100%; }
   transition: transform var(--dur-base) var(--ease-apple), background-color var(--dur-base) var(--ease-soft);
   overflow: hidden;
 }
-.world-card::after {
-  content: ''; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(105deg, transparent 60%, var(--glow-gold) 140%);
-  opacity: 0; transition: opacity var(--dur-base) var(--ease-soft);
-}
 .world-card:hover { transform: translateX(8px); background: var(--surface-tint); }
-.world-card:hover::after { opacity: 1; }
 .world-card:hover .world-arrow { opacity: 1; transform: none; }
 .world-left { display: flex; align-items: center; gap: 16px; }
 .world-no { font-family: var(--mono); font-size: 10px; letter-spacing: .18em; color: var(--gold); }
