@@ -10,7 +10,8 @@ import TerminalStatus from './TerminalStatus.vue'
     </div>
     <TerminalStatus />
     <div class="foot-links">
-      <a href="https://github.com/yance7" target="_blank" rel="noopener">GITHUB ↗</a>
+      <a href="https://github.com/yance7" target="_blank" rel="noopener">PERSONAL PROFILE ↗</a>
+      <a href="https://github.com/yance77777" target="_blank" rel="noopener">RESEARCH REPOS ↗</a>
       <a href="mailto:yance777@outlook.com">CONTACT ↗</a>
     </div>
   </footer>

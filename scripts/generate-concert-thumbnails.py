@@ -12,7 +12,12 @@ MAX_SIZE = (640, 640)
 def main():
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     generated = 0
-    for source in sorted(SOURCE_DIR.glob('*.jpg')):
+    sources = [
+        source
+        for pattern in ('*.jpg', '*.jpeg', '*.png')
+        for source in SOURCE_DIR.glob(pattern)
+    ]
+    for source in sorted(sources):
         output = OUTPUT_DIR / f'{source.stem}.webp'
         with Image.open(source) as image:
             image.thumbnail(MAX_SIZE, Image.Resampling.LANCZOS)

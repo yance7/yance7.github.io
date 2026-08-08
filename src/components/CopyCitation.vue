@@ -1,15 +1,18 @@
-<script setup>
-import { ref } from 'vue'
+<script setup lang="ts">
+import { ref, onUnmounted } from 'vue'
 
 const props = defineProps({
   citation: { type: String, required: true }
 })
 
-const copied = ref(false)
-let timer = 0
+type CopyState = 'idle' | 'success' | 'error'
+
+const state = ref<CopyState>('idle')
+let timer: ReturnType<typeof setTimeout> | undefined
 
 async function copy() {
   const text = props.citation
+  clearTimeout(timer)
   try {
     if (navigator.clipboard && window.isSecureContext) {
       await navigator.clipboard.writeText(text)
@@ -23,20 +26,25 @@ async function copy() {
       document.execCommand('copy')
       ta.remove()
     }
-    copied.value = true
+    state.value = 'success'
     clearTimeout(timer)
-    timer = setTimeout(() => { copied.value = false }, 2000)
-  } catch { /* 复制失败时静默 */ }
+    timer = setTimeout(() => { state.value = 'idle' }, 2000)
+  } catch {
+    state.value = 'error'
+  }
 }
+
+onUnmounted(() => clearTimeout(timer))
 </script>
 
 <template>
   <button
     class="tl-link copy-citation"
     type="button"
-    :aria-label="copied ? '已复制引用' : '复制引用'"
+    :aria-label="state === 'success' ? '已复制引用' : '复制引用'"
     @click="copy"
   >
-    {{ copied ? '已复制 ✓' : '复制引用' }}
+    {{ state === 'success' ? '已复制 ✓' : '复制引用' }}
   </button>
+  <span v-if="state === 'error'" class="copy-error" role="status" aria-live="polite">复制失败，请手动复制</span>
 </template>

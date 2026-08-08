@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)))
 const dist = join(root, 'dist')
 const pages = ['index', 'academics', 'honors', 'research', 'works', 'concerts', '404']
-const { concerts, concertGroups, getConcertState } = await import(new URL('../src/data/index.js', import.meta.url))
+const { concerts, concertGroups, getConcertState } = await import(new URL('../src/data/index.ts', import.meta.url))
 
 function read(path) {
   return readFileSync(join(dist, path), 'utf8')

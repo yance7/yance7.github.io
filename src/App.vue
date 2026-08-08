@@ -25,11 +25,12 @@ const pageNo = computed(() => (currentNav.value ? navItems.indexOf(currentNav.va
 const archiveNo = computed(() => String(pageNo.value).padStart(2, '0'))
 const isHome = page === 'home'
 const isError = !currentNav.value
+const meta = computed(() => pageMeta[currentNav.value?.key || 'home'])
 
-const kicker = computed(() => (isError ? '404 / NOT FOUND' : pageMeta[page][0]))
-const heroTitle = computed(() => (isError ? '这一页走丢了' : pageMeta[page][1]))
-const heroCopy = computed(() => (isError ? '返回首页，重新选择一个方向。' : pageMeta[page][2]))
-const heroCredit = computed(() => (isError ? null : pageMeta[page][3] || null))
+const kicker = computed(() => (isError ? '404 / NOT FOUND' : meta.value.kicker))
+const heroTitle = computed(() => (isError ? '这一页走丢了' : meta.value.title))
+const heroCopy = computed(() => (isError ? '返回首页，重新选择一个方向。' : meta.value.copy))
+const heroCredit = computed(() => (isError ? null : meta.value.credit || null))
 
 const pageMap = {
   home: defineAsyncComponent(() => import('./pages/HomePage.vue')),

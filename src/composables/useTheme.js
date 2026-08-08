@@ -2,21 +2,27 @@ import { ref } from 'vue'
 
 const THEME_KEY = 'yance-theme'
 const theme = ref('light')
+let systemMedia = null
+let systemListenerAttached = false
 
 function systemTheme() {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 }
 
-function applyTheme(value, rippleEl) {
+function setTheme(value) {
   theme.value = value
   document.documentElement.dataset.theme = value
 
-  try {
-    localStorage.setItem(THEME_KEY, value)
-  } catch (e) { /* 隐私模式下静默失败 */ }
-
   const meta = document.querySelector('meta[name="theme-color"]')
   if (meta) meta.setAttribute('content', value === 'dark' ? '#0A0D12' : '#F3F0E8')
+}
+
+function applyTheme(value, rippleEl) {
+  setTheme(value)
+
+  try {
+    localStorage.setItem(THEME_KEY, value)
+  } catch { /* 隐私模式下静默失败 */ }
 
   /* 主题切换环境光扩散动画 */
   if (rippleEl && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -46,12 +52,17 @@ function toggleTheme(rippleEl) {
 
 function initTheme() {
   let saved = null
-  try { saved = localStorage.getItem(THEME_KEY) } catch (e) { /* ignore */ }
+  try { saved = localStorage.getItem(THEME_KEY) } catch { /* ignore */ }
   const value = saved === 'dark' || saved === 'light' ? saved : systemTheme()
-  theme.value = value
-  document.documentElement.dataset.theme = value
-  const meta = document.querySelector('meta[name="theme-color"]')
-  if (meta) meta.setAttribute('content', value === 'dark' ? '#0A0D12' : '#F3F0E8')
+  setTheme(value)
+
+  if (!systemMedia) systemMedia = window.matchMedia('(prefers-color-scheme: dark)')
+  if (!saved && !systemListenerAttached) {
+    const onSystemThemeChange = (event) => setTheme(event.matches ? 'dark' : 'light')
+    if (systemMedia.addEventListener) systemMedia.addEventListener('change', onSystemThemeChange)
+    else systemMedia.addListener(onSystemThemeChange)
+    systemListenerAttached = true
+  }
 }
 
 export function useTheme() {

@@ -34,9 +34,22 @@ img { display: block; max-width: 100%; }
 ::-webkit-scrollbar-track { background: transparent; }
 
 :focus-visible {
-  outline: 2px solid var(--gold);
-  outline-offset: 3px;
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--bg);
   border-radius: var(--radius-xs);
+}
+
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
 }
 
 /* ===== 无障碍跳转链接 ===== */
@@ -113,7 +126,6 @@ img { display: block; max-width: 100%; }
   display: flex; align-items: center; gap: 26px;
   max-width: var(--w-wide); margin: 0 auto; padding: 22px var(--w-pad);
   border-bottom: 1px solid var(--line);
-  backdrop-filter: blur(12px);
 }
 .wordmark {
   font-family: var(--display); font-size: 2.05rem; font-style: italic;
@@ -161,6 +173,13 @@ img { display: block; max-width: 100%; }
   animation: menu-fade-in var(--dur-base) var(--ease-out);
 }
 @keyframes menu-fade-in { from { opacity: 0 } to { opacity: 1 } }
+.mobile-menu-close {
+  position: absolute; top: 22px; right: var(--w-pad); z-index: 1;
+  width: 40px; height: 40px; padding: 0; border: 1px solid var(--line-strong);
+  border-radius: 50%; background: var(--surface-strong); color: var(--ink);
+  font-family: var(--mono); font-size: 1.2rem; line-height: 1;
+}
+.mobile-menu-close:hover { border-color: var(--gold); color: var(--gold); }
 .mobile-menu {
   display: flex; flex-direction: column; gap: 0;
   width: 100%; max-width: 420px; padding: 0 32px;
@@ -332,11 +351,11 @@ img { display: block; max-width: 100%; }
 .status-badge.published .status-dot { background: var(--gold); }
 .status-badge.completed .status-dot { background: var(--dim); }
 .status-badge.deployed .status-dot { background: var(--aqua); box-shadow: 0 0 8px var(--glow-aqua); }
-.status-badge.opensource .status-dot { background: var(--violet); }
+.status-badge.open-source .status-dot { background: var(--violet); }
 .status-badge.active { color: var(--aqua); border-color: var(--glow-aqua); }
 .status-badge.published { color: var(--gold); border-color: var(--glow-gold); }
 .status-badge.deployed { color: var(--aqua); border-color: var(--glow-aqua); }
-.status-badge.opensource { color: var(--violet); border-color: var(--glow-violet); }
+.status-badge.open-source { color: var(--violet); border-color: var(--glow-violet); }
 
 /* ===== 指标条 ===== */
 .metric-strip {
@@ -803,7 +822,10 @@ img { display: block; max-width: 100%; }
   display: flex; flex-direction: column; gap: 14px;
   z-index: var(--z-nav);
 }
-.section-dot { display: flex; align-items: center; gap: 9px; color: var(--dim); }
+.section-dot {
+  display: flex; align-items: center; gap: 9px; min-width: 28px; min-height: 28px;
+  padding: 8px; margin: -8px; color: var(--dim);
+}
 .section-dot i {
   width: 8px; height: 8px; border-radius: 50%;
   border: 1px solid var(--line); background: var(--surface);
@@ -1071,9 +1093,9 @@ img { display: block; max-width: 100%; }
 .concert-row.upcoming .concert-date { color: var(--dim); }
 .concert-poster.land { aspect-ratio: 16/9; }
 .concert-poster:hover {
-  --ty: -6px;
+  --ty: -2px;
   border-color: var(--gold);
-  box-shadow: 0 18px 48px rgba(15, 17, 22, .24), 0 0 28px var(--glow-gold);
+  box-shadow: var(--shadow-1);
 }
   .poster-open {
       position: absolute; inset: 0; z-index: 1; display: block; width: 100%; height: 100%;
@@ -1085,7 +1107,7 @@ img { display: block; max-width: 100%; }
   transition: transform var(--dur-slow) var(--ease-apple), filter var(--dur-slow);
 }
 .concert-poster picture { display: block; width: 100%; height: 100%; }
-.concert-poster:hover img { transform: scale(1.07); filter: saturate(1.18) contrast(1.03); }
+.concert-poster:hover img { transform: scale(1.025); filter: saturate(1.04); }
   .poster-hint {
     position: absolute; left: 12px; top: 12px; z-index: 2;
   display: flex; align-items: center; justify-content: space-between;
@@ -1182,6 +1204,14 @@ img { display: block; max-width: 100%; }
   border: 2px solid var(--line); border-top-color: var(--gold);
   animation: spin .9s linear infinite;
 }
+.lb-error { display: grid; gap: 10px; justify-items: center; color: var(--text-secondary); }
+.lb-error p { margin: 0; }
+.lb-retry {
+  padding: 7px 14px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
+  background: var(--surface-strong); color: var(--text-primary);
+}
+.lb-retry:hover { border-color: var(--gold); color: var(--gold-text); }
+.copy-error { display: block; margin-top: 6px; color: var(--text-accent); font-size: var(--text-xs); }
 @keyframes spin { to { transform: rotate(360deg) } }
 
 /* ===== 彩蛋 · 音符雨 ===== */

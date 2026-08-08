@@ -1,3 +1,5 @@
+import type { Concert } from './types'
+
 export const concerts = [
   { id: 'dengziqi-2024-08-25', date: '2024-08-25', artist: '邓紫棋', tour: 'I AM GLORIA 演唱会', venue: '鸟巢', images: ['concert-202408-deng-ziqi.jpg'] },
   { id: 'zhangjie-2025-04-18', date: '2025-04-18', artist: '张杰', tour: '未·Live — 开往1982', venue: '鸟巢', images: ['concert-202504-zhang-jie.jpg'] },
@@ -13,14 +15,16 @@ export const concerts = [
   { id: 'xuezhiqian-2026-07-26', date: '2026-07-26', artist: '薛之谦', tour: '万兽之王演唱会', venue: '鸟巢', images: ['concert-202607-xue-zhiqian.jpg'] },
   { id: 'wangsulong-2026-08-19', date: '2026-08-19', artist: '汪苏泷', tour: '明日世界演唱会', venue: '鸟巢', images: ['concert-202608-wang-sulong.jpg'] },
   { id: 'wangsulong-2026-08-30', date: '2026-08-30', artist: '汪苏泷', tour: '明日世界演唱会', venue: '鸟巢', images: ['concert-202608-wang-sulong.jpg'] }
-]
+] satisfies Concert[]
+
+export const concertsUpdatedAt = '2026-08-08'
 
 /* 按年份分组 */
-export function isConcertUpcoming(concert, now = new Date()) {
+export function isConcertUpcoming(concert: Concert, now = new Date()) {
   return new Date(`${concert.date}T23:59:59+08:00`) > now
 }
 
-export const concertGroups = concerts.reduce((groups, item) => {
+export const concertGroups = concerts.reduce<Record<string, Concert[]>>((groups, item) => {
   const year = item.date.split('-')[0]
   if (!groups[year]) groups[year] = []
   groups[year].push(item)

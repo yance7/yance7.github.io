@@ -1,6 +1,17 @@
-export type Status = 'active' | 'complete' | 'planned' | 'archived' | 'published' | 'completed' | 'deployed' | 'opensource'
+export type Status =
+  | 'active'
+  | 'completed'
+  | 'published'
+  | 'deployed'
+  | 'open-source'
+  | 'planned'
+  | 'archived'
+
+export type ProofType = 'paper' | 'source' | 'demo' | 'dataset' | 'experiment' | 'deployment'
+export type HonorLevel = 'peak' | 'excellent' | 'emerging'
 
 export interface ProofLink {
+  type: ProofType
   label: string
   value: string
   href: string
@@ -43,6 +54,12 @@ export interface ResearchItem {
   citation?: string
   proof?: ProofLink[]
   updatedAt: string
+}
+
+export interface ResearchMethod {
+  label: string
+  en: string
+  cat: string
 }
 
 export interface CaseStudyVisual {
@@ -94,7 +111,6 @@ export interface Concert {
   artist: string
   tour: string
   venue: string
-  city: string
   status?: Status
   images: string[]
   land?: boolean
@@ -102,10 +118,81 @@ export interface Concert {
 }
 
 export interface Honor {
-  year: string
+  id: string
+  date: string
   title: string
   detail: string
-  category: string
-  level: string
-  featured?: boolean
+  org: string
+  level: HonorLevel
+}
+
+export type AcademicStat = Metric
+
+export interface Education {
+  period: string
+  name: string
+  en: string
+}
+
+export interface ApScore {
+  name: string
+  en: string
+  year: string
+  score: number | null
+  status: 'done' | 'pending'
+}
+
+export interface Leadership {
+  role: string
+  org: string
+  period: string
+  note: string
+}
+
+export interface Activity {
+  id: string
+  title: string
+  period: string
+  org: string
+  detail: string
+  featured: boolean
+}
+
+export interface SiteNavItem {
+  key: PageKey
+  label: string
+  en: string
+  href: string
+  desc: string
+}
+
+export interface HeroCredit {
+  artist: string
+  song: string
+  album: string
+}
+
+export interface PageMeta {
+  kicker: string
+  title: string
+  copy: string
+  credit?: HeroCredit
+}
+
+export type PageKey = 'home' | 'academics' | 'honors' | 'research' | 'works' | 'concerts'
+
+export interface World {
+  key: PageKey
+  no: string
+  label: string
+  en: string
+  icon: string
+  href: string
+  desc: string
+  accent: 'aqua' | 'violet' | 'gold'
+}
+
+export interface PageMetadata {
+  updatedAt: string
+  updatedLabel: string
 }

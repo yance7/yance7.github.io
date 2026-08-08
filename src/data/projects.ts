@@ -1,4 +1,5 @@
-import { statusLabels } from './site.js'
+import { statusLabels } from './site'
+import type { Project } from './types'
 
 export const projects = [
   {
@@ -26,8 +27,8 @@ export const projects = [
       product: ['Upload', 'Inference', 'Confidence', 'Grad-CAM', 'PDF'],
       engineering: ['Vue 3', 'FastAPI', 'ONNX / PyTorch', 'Docker', 'Hugging Face Spaces'],
       proof: [
-        { label: 'LIVE PRODUCT', value: 'fresheye.yance777.com', href: 'https://fresheye.yance777.com', external: true },
-        { label: 'SOURCE', value: 'GitHub', href: 'https://github.com/yance77777/FreshEye', external: true }
+        { type: 'deployment', label: 'LIVE PRODUCT', value: 'fresheye.yance777.com', href: 'https://fresheye.yance777.com', external: true },
+        { type: 'source', label: 'SOURCE', value: 'GitHub', href: 'https://github.com/yance77777/FreshEye', external: true }
       ]
     }
   },
@@ -42,7 +43,7 @@ export const projects = [
     href: 'https://encore.yance777.com',
     github: 'https://github.com/yance77777/encore'
   }
-]
+] satisfies Project[]
 
 export const featuredProjects = projects.filter((item) => item.id === 'fresheye')
 

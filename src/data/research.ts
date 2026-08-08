@@ -1,3 +1,5 @@
+import type { ResearchItem, ResearchMethod } from './types'
+
 export const research = [
   {
     id: 'fresheye',
@@ -10,8 +12,8 @@ export const research = [
     text: '将 FishFreshNet 研究线转化为零安装网页工具，用户上传鱼眼照片即可获得新鲜度等级、置信度与 Grad-CAM 热力图。',
     link: 'https://github.com/yance77777/FreshEye',
     proof: [
-      { label: 'SOURCE', value: 'GitHub', href: 'https://github.com/yance77777/FreshEye', external: true },
-      { label: 'DEPLOYED AS', value: 'FreshEye', href: 'works.html#project-fresheye' }
+      { type: 'source', label: 'SOURCE', value: 'GitHub', href: 'https://github.com/yance77777/FreshEye', external: true },
+      { type: 'deployment', label: 'DEPLOYED AS', value: 'FreshEye', href: 'works.html#project-fresheye' }
     ],
     metrics: [
       { value: '零安装', label: '浏览器端' },
@@ -38,13 +40,13 @@ export const research = [
     text: '引入轻量环形区域注意力 LightCRA，配合 ECA 通道注意力，实现 99.29% 准确率，同时保持轻量化部署能力。',
     link: 'https://github.com/yance77777/FishFreshNetV2',
     proof: [
-      { label: 'EXPERIMENT', value: 'Five seeds', href: 'https://github.com/yance77777/FishFreshNetV2', external: true },
-      { label: 'DEPLOYED AS', value: 'FreshEye', href: 'works.html#project-fresheye' }
+      { type: 'experiment', label: 'EXPERIMENT', value: 'Five seeds', href: 'https://github.com/yance77777/FishFreshNetV2', external: true },
+      { type: 'deployment', label: 'DEPLOYED AS', value: 'FreshEye', href: 'works.html#project-fresheye' }
     ],
     metrics: [
-      { value: '99.29%', label: '准确率' },
-      { value: '4.095M', label: '参数量' },
-      { value: '5.31ms', label: '推理延迟' },
+      { value: '99.29%', label: '准确率', note: '5-seed mean' },
+      { value: '4.095M', label: '参数量', note: 'V2 model' },
+      { value: '5.31ms', label: '推理延迟', note: 'device setup' },
       { value: 'V2-Lite 95.72%', label: '超轻量版' }
     ],
     methodology: {
@@ -67,8 +69,8 @@ export const research = [
     text: '构建多阶段鱼眼数据集 MFED，将 CBAM 集成到 EfficientNet-B0，配合 Grad-CAM 完成轻量化、可解释的新鲜度分级。',
     link: 'https://github.com/yance77777/FishFreshNetV1',
     proof: [
-      { label: 'PAPER', value: 'ICIPAI 2026', href: 'https://ieeexplore.ieee.org/abstract/document/11605650', external: true },
-      { label: 'SOURCE', value: 'GitHub', href: 'https://github.com/yance77777/FishFreshNetV1', external: true }
+      { type: 'paper', label: 'PAPER', value: 'ICIPAI 2026', href: 'https://ieeexplore.ieee.org/abstract/document/11605650', external: true },
+      { type: 'source', label: 'SOURCE', value: 'GitHub', href: 'https://github.com/yance77777/FishFreshNetV1', external: true }
     ],
     paper: {
       href: 'https://ieeexplore.ieee.org/abstract/document/11605650',
@@ -162,7 +164,7 @@ export const research = [
       next: '拓展至其他作物与田间试验'
     }
   }
-]
+] satisfies ResearchItem[]
 
 export const researchMethods = [
   { label: 'PyTorch', en: 'Deep Learning', cat: 'DEEP LEARNING' },
@@ -174,7 +176,7 @@ export const researchMethods = [
   { label: 'HuggingFace', en: 'Hosting', cat: 'ENGINEERING' },
   { label: '16S rRNA', en: 'Microbiome', cat: 'SCIENCE' },
   { label: 'Random Forest', en: 'Regression', cat: 'SCIENCE' }
-]
+] satisfies ResearchMethod[]
 
 export const featuredResearch = research.filter((item) => item.id === 'fishfreshnet-v2')
 

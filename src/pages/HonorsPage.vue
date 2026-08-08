@@ -1,22 +1,23 @@
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue'
 import { honors, honorCategories, honorStats, pageMetadata } from '../data'
+import type { HonorLevel } from '../data/types'
 import SectionHeading from '../components/SectionHeading.vue'
 import MetricStrip from '../components/MetricStrip.vue'
 import ArchiveFilter from '../components/ArchiveFilter.vue'
 import SectionDots from '../components/SectionDots.vue'
 
-const activeCategory = ref('all')
-const expanded = ref(null)
+const activeCategory = ref<'all' | HonorLevel>('all')
+const expandedId = ref<string | null>(null)
 
-const levelLabel = {
+const levelLabel: Record<string, string> = {
   peak: '领航级',
   excellent: '卓越级',
   emerging: '新锐级'
 }
 
 const categoryCounts = computed(() => {
-  const counts = { all: honors.length }
+  const counts: Record<'all' | HonorLevel, number> = { all: honors.length, peak: 0, excellent: 0, emerging: 0 }
   for (const h of honors) {
     counts[h.level] = (counts[h.level] || 0) + 1
   }
@@ -28,8 +29,13 @@ const filteredHonors = computed(() => {
   return honors.filter((h) => h.level === activeCategory.value)
 })
 
-function toggleExpand(i) {
-  expanded.value = expanded.value === i ? null : i
+function setCategory(category: string) {
+  activeCategory.value = category as 'all' | HonorLevel
+  expandedId.value = null
+}
+
+function toggleExpand(id: string) {
+  expandedId.value = expandedId.value === id ? null : id
 }
 </script>
 
@@ -69,15 +75,16 @@ function toggleExpand(i) {
         :categories="honorCategories"
         :counts="categoryCounts"
         :active="activeCategory"
-        @filter="activeCategory = $event"
+        @filter="setCategory"
       />
 
       <div class="honor-timeline">
         <article
           v-for="(h, i) in filteredHonors"
-          :key="h.title"
+          :key="h.id"
           class="honor-card"
-          :class="[h.level, { expanded: expanded === i }]"
+          :class="[h.level, { expanded: expandedId === h.id }]"
+          :id="`honor-${h.id}`"
           v-reveal="{ delay: i * 60 }"
         >
           <div class="honor-date-col">
@@ -88,14 +95,15 @@ function toggleExpand(i) {
             <span class="honor-level-tag">{{ levelLabel[h.level] }}</span>
             <h3>{{ h.title }}</h3>
             <span class="honor-org">{{ h.org }}</span>
-            <p class="honor-detail">{{ h.detail }}</p>
+            <p v-if="expandedId === h.id" :id="`honor-detail-${h.id}`" class="honor-detail">{{ h.detail }}</p>
             <button
               class="honor-expand"
               type="button"
-              :aria-expanded="expanded === i"
-              @click="toggleExpand(i)"
+              :aria-expanded="expandedId === h.id"
+              :aria-controls="`honor-detail-${h.id}`"
+              @click="toggleExpand(h.id)"
             >
-              {{ expanded === i ? '收起' : '详情' }}
+              {{ expandedId === h.id ? '收起' : '详情' }}
             </button>
           </div>
         </article>

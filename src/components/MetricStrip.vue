@@ -6,7 +6,7 @@ const props = withDefaults(defineProps<{ metrics: Metric[]; large?: boolean }>()
 
 const displays = ref(props.metrics.map((m) => String(m.value)))
 const cards = ref<HTMLElement[]>([])
-let raf = 0
+const rafs = new Set<number>()
 let observers: IntersectionObserver[] = []
 
 function setCard(el: unknown, index: number) {
@@ -28,13 +28,19 @@ function animateIndex(i: number) {
   if (!parsed) return
   const start = performance.now()
   const duration = 900
+  let currentRaf = 0
   const step = (now: number) => {
+    rafs.delete(currentRaf)
     const t = Math.min((now - start) / duration, 1)
     const eased = 1 - Math.pow(1 - t, 3)
     displays.value[i] = (parsed.num * eased).toFixed(parsed.decimals) + parsed.suffix
-    if (t < 1) raf = requestAnimationFrame(step)
+    if (t < 1) {
+      currentRaf = requestAnimationFrame(step)
+      rafs.add(currentRaf)
+    }
   }
-  raf = requestAnimationFrame(step)
+  currentRaf = requestAnimationFrame(step)
+  rafs.add(currentRaf)
 }
 
 onMounted(() => {
@@ -54,7 +60,8 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  cancelAnimationFrame(raf)
+  rafs.forEach((id) => cancelAnimationFrame(id))
+  rafs.clear()
   observers.forEach((obs) => obs.disconnect())
 })
 </script>

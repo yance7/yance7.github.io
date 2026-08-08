@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { worlds, featuredResearch, featuredProjects, leadership, activities } from '../data'
 import SectionHeading from '../components/SectionHeading.vue'
 
-const selectedActivities = computed(() => [activities[2], activities[0], activities[4]])
+const selectedActivities = computed(() => activities.filter((item) => item.featured))
 </script>
 
 <template>
@@ -107,7 +107,7 @@ const selectedActivities = computed(() => [activities[2], activities[0], activit
         <div class="beyond-column" v-reveal="{ delay: 80 }">
           <span class="beyond-label">SELECTED ACTIVITIES</span>
           <div class="beyond-activity-list">
-            <article v-for="item in selectedActivities" :key="item.title" class="beyond-activity">
+            <article v-for="item in selectedActivities" :key="item.id" class="beyond-activity">
               <time>{{ item.period }}</time>
               <div>
                 <strong>{{ item.title }}</strong>

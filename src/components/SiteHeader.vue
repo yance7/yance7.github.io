@@ -4,17 +4,18 @@ import { navItems } from '../data'
 import ThemeOrbit from './ThemeOrbit.vue'
 import { useBodyScrollLock } from '../composables/useBodyScrollLock'
 
-const props = defineProps({ page: String })
+defineProps({ page: String })
 const menuOpen = ref(false)
 const menuTrigger = ref(null)
+const menuClose = ref(null)
 
 function closeMenu(restoreFocus = false) {
   menuOpen.value = false
   if (restoreFocus) requestAnimationFrame(() => menuTrigger.value?.focus())
 }
 
-function getMenuLinks() {
-  return [...document.querySelectorAll('#mobile-navigation a[href]')]
+function getMenuFocusable() {
+  return [...document.querySelectorAll('.mobile-menu-overlay button:not([disabled]), .mobile-menu-overlay a[href]')]
 }
 
 function onKeydown(event) {
@@ -26,10 +27,10 @@ function onKeydown(event) {
   }
   if (event.key !== 'Tab') return
 
-  const links = getMenuLinks()
-  if (!links.length) return
-  const first = links[0]
-  const last = links[links.length - 1]
+  const focusable = getMenuFocusable()
+  if (!focusable.length) return
+  const first = focusable[0]
+  const last = focusable[focusable.length - 1]
   if (event.shiftKey && document.activeElement === first) {
     event.preventDefault()
     last.focus()
@@ -46,7 +47,7 @@ watch(menuOpen, async (open) => {
   document.querySelector('.site-footer')?.toggleAttribute('inert', open)
   if (open) {
     await nextTick()
-    getMenuLinks()[0]?.focus()
+    menuClose.value?.focus()
   }
 })
 
@@ -102,6 +103,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   <!-- 移动端全屏菜单遮罩 -->
   <Teleport to="body">
     <div v-if="menuOpen" class="mobile-menu-overlay" role="dialog" aria-modal="true" aria-label="移动端导航" @click.self="closeMenu(true)">
+      <button ref="menuClose" class="mobile-menu-close" type="button" aria-label="关闭导航" @click="closeMenu(true)">×</button>
       <nav id="mobile-navigation" class="mobile-menu" aria-label="移动端导航">
         <a
           v-for="(item, i) in navItems"

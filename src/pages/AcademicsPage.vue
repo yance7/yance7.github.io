@@ -11,9 +11,9 @@ import MetricStrip from '../components/MetricStrip.vue'
       <SectionHeading
         no="00"
         label="EDUCATION"
-        title="三所"
-        accent="学校。"
-        copy="从朝阳实验小学到八十中学国际部，十一年求学的物理坐标。"
+        title="学习轨迹"
+        accent="两段经历。"
+        copy="记录当前阶段与近年的学习轨迹，保留必要的公开信息。"
       />
       <div class="education-track">
         <article

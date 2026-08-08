@@ -13,11 +13,10 @@ function formatTime() {
     timeZone: 'Asia/Shanghai',
     hour: '2-digit',
     minute: '2-digit',
-    second: '2-digit',
     hour12: false
   }).formatToParts(new Date())
   const get = (type) => parts.find((p) => p.type === type)?.value || '00'
-  return `BEIJING ${get('hour')}:${get('minute')}:${get('second')}`
+  return `BEIJING ${get('hour')}:${get('minute')}`
 }
 
 function startType() {
@@ -33,7 +32,7 @@ function startType() {
 
 onMounted(() => {
   time.value = formatTime()
-  clockTimer = setInterval(() => { time.value = formatTime() }, 1000)
+  clockTimer = setInterval(() => { time.value = formatTime() }, 60000)
 
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     typed.value = TEXT

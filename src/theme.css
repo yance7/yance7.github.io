@@ -7,7 +7,7 @@
 :root {
   /* 字体族 */
   --sans: "Noto Sans SC", "Inter", system-ui, -apple-system, sans-serif;
-  --serif: "Noto Sans SC", "Songti SC", "SimSun", sans-serif;
+  --serif: "Songti SC", "STSong", "SimSun", serif;
   --display: "Fraunces", Georgia, serif;
   --mono: "JetBrains Mono", ui-monospace, "SF Mono", "Cascadia Code", monospace;
 
@@ -104,7 +104,8 @@
   /* 文字 */
   --ink: #1A1D23;
   --muted: #5A5E66;
-  --dim: #8C9097;
+  --dim: #687078;
+  --dim-soft: #8C9097;
 
   /* 线条 */
   --line: rgba(32, 35, 41, .12);
@@ -112,9 +113,18 @@
   --line-faint: rgba(32, 35, 41, .06);
 
   /* 强调色 */
-  --gold: #A96F20;
+  --gold: #8F601A;
+  --gold-text: #8F601A;
   --aqua: #1E726D;
   --violet: #6B5F8A;
+  --focus: #8F601A;
+
+  --text-primary: var(--ink);
+  --text-secondary: var(--muted);
+  --text-tertiary: var(--dim);
+  --text-accent: var(--gold-text);
+  --text-technical: var(--aqua);
+  --text-decorative: var(--dim-soft);
 
   /* 阴影（分层、柔和） */
   --shadow-1: 0 1px 2px rgba(69, 57, 40, .03), 0 4px 16px rgba(69, 57, 40, .05);
@@ -142,9 +152,9 @@
   --ambient-color: rgba(255, 248, 230, .9);
 
   /* 等级色彩（荣誉卡片用） */
-  --level-platinum: #A96F20;
+  --level-platinum: #8F601A;
   --level-gold: #1E726D;
-  --level-silver: #8C9097;
+  --level-silver: #687078;
   --level-bronze: #B08968;
 }
 
@@ -165,7 +175,8 @@
   /* 文字 */
   --ink: #F3F0E9;
   --muted: #A0A4AE;
-  --dim: #6E727D;
+  --dim: #7B808A;
+  --dim-soft: #6E727D;
 
   /* 线条 */
   --line: rgba(235, 238, 245, .13);
@@ -174,8 +185,17 @@
 
   /* 强调色 */
   --gold: #E8B962;
+  --gold-text: #E8B962;
   --aqua: #6DDED0;
   --violet: #A698E6;
+  --focus: #E8B962;
+
+  --text-primary: var(--ink);
+  --text-secondary: var(--muted);
+  --text-tertiary: var(--dim);
+  --text-accent: var(--gold-text);
+  --text-technical: var(--aqua);
+  --text-decorative: var(--dim-soft);
 
   /* 阴影（分层、深邃） */
   --shadow-1: 0 1px 2px rgba(0, 0, 0, .15), 0 4px 16px rgba(0, 0, 0, .3);

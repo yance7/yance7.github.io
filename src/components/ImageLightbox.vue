@@ -10,6 +10,8 @@ const props = defineProps({
 const emit = defineEmits(['close', 'prev', 'next'])
 
 const loading = ref(true)
+const loadError = ref(false)
+const retryKey = ref(0)
 const dialogRef = ref(null)
 const closeButton = ref(null)
 const isOpen = ref(true)
@@ -17,8 +19,21 @@ let lastFocus = null
 
 useBodyScrollLock(isOpen)
 
-function onImgLoad() { loading.value = false }
-function onImgError() { loading.value = false }
+function onImgLoad() {
+  loading.value = false
+  loadError.value = false
+}
+
+function onImgError() {
+  loading.value = false
+  loadError.value = true
+}
+
+function retryImage() {
+  loading.value = true
+  loadError.value = false
+  retryKey.value += 1
+}
 
 function onKey(e) {
   if (e.key === 'Escape') {
@@ -54,7 +69,10 @@ onUnmounted(() => {
   if (lastFocus && lastFocus.focus) lastFocus.focus()
 })
 
-watch(() => props.index, () => { loading.value = true })
+watch(() => [props.index, props.images[props.index]], () => {
+  loading.value = true
+  loadError.value = false
+})
 </script>
 
 <template>
@@ -73,6 +91,7 @@ watch(() => props.index, () => { loading.value = true })
 
       <figure class="lb-stage">
         <img
+          :key="`${images[index]}-${retryKey}`"
           :src="images[index]"
           :alt="meta ? `${meta.artist} · ${meta.tour} 海报大图` : '演唱会海报大图'"
           :class="{ loaded: !loading }"
@@ -81,11 +100,21 @@ watch(() => props.index, () => { loading.value = true })
           @load="onImgLoad"
           @error="onImgError"
         >
-        <div v-if="loading" class="lb-loading" aria-label="加载中"><i></i></div>
+        <div v-if="loading" class="lb-loading" role="status" aria-live="polite">
+          <span class="sr-only">正在加载图片</span>
+          <i aria-hidden="true"></i>
+        </div>
+        <div v-else-if="loadError" class="lb-error" role="alert">
+          <p>图片加载失败</p>
+          <button type="button" class="lb-retry" @click="retryImage">重试</button>
+        </div>
         <figcaption v-if="meta" class="lb-meta">
           <span>{{ meta.artist }} · {{ meta.tour }}</span>
           <span>{{ index + 1 }} / {{ images.length }}</span>
         </figcaption>
+        <p class="sr-only" aria-live="polite">
+          {{ meta ? `${meta.artist} · ${meta.tour}` : '演唱会海报' }}，第 {{ index + 1 }} 张，共 {{ images.length }} 张
+        </p>
       </figure>
 
       <button v-if="images.length > 1" class="lb-nav lb-next" type="button" aria-label="下一张" @click="emit('next')">→</button>

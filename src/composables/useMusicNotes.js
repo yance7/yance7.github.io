@@ -7,6 +7,8 @@ let progress = 0
 let timers = []
 
 function onKey(e) {
+  const target = e.target
+  if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target?.isContentEditable) return
   const key = e.key.toLowerCase()
   if (key === SEQUENCE[progress]) {
     progress += 1

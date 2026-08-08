@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { concerts, concertGroups, concertMoods, concertStats, upcomingConcerts, isConcertUpcoming } from '../data'
 import SectionHeading from '../components/SectionHeading.vue'
 import MetricStrip from '../components/MetricStrip.vue'
+import { originalImageUrl, thumbnailUrl } from '../utils/concertMedia'
 
 const emit = defineEmits(['open-lightbox'])
 
@@ -21,25 +22,24 @@ const concertMetrics = [
 
 const sortedYears = computed(() => Object.keys(concertGroups).sort())
 
-function imagePath(name) { return `assets/concerts/${name}` }
-function thumbnailPath(name) { return `assets/concerts/thumbs/${name.replace(/\.[^.]+$/, '.webp')}` }
 function formatConcertDate(date) { return date.replaceAll('-', '.') }
 function formatNextDate(date) {
   const [, month, day] = date.split('-')
   const monthLabel = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'][Number(month) - 1]
   return `${monthLabel} ${day}`
 }
-function currentImage(item, index) {
-  return imagePath(item.images[carouselIndexes.value[item.date] || index || 0])
+function currentImageName(item, fallbackIndex = 0) {
+  const index = carouselIndexes.value[item.id] ?? fallbackIndex
+  return item.images[index]
 }
 function moveCarousel(item, step) {
-  const current = carouselIndexes.value[item.date] || 0
+  const current = carouselIndexes.value[item.id] || 0
   const next = (current + step + item.images.length) % item.images.length
-  carouselIndexes.value = { ...carouselIndexes.value, [item.date]: next }
+  carouselIndexes.value = { ...carouselIndexes.value, [item.id]: next }
 }
 function openLightbox(item, index = 0) {
   emit('open-lightbox', {
-    images: item.images.map(imagePath),
+    images: item.images.map(originalImageUrl),
     index,
     meta: { artist: item.artist, tour: item.tour }
   })
@@ -47,14 +47,12 @@ function openLightbox(item, index = 0) {
 
 /* 悬停时预载海报，点击打开灯箱时无需等待网络 */
 function preloadItem(item) {
-  for (const name of item.images) {
-    const src = imagePath(name)
-    if (preloaded.has(src)) continue
-    preloaded.add(src)
-    const img = new Image()
-    img.src = src
-    img.decoding = 'async'
-  }
+  const src = originalImageUrl(currentImageName(item))
+  if (preloaded.has(src)) return
+  preloaded.add(src)
+  const img = new Image()
+  img.src = src
+  img.decoding = 'async'
 }
 
 function tiltPoster(e) {
@@ -63,8 +61,8 @@ function tiltPoster(e) {
   const rect = el.getBoundingClientRect()
   const px = (e.clientX - rect.left) / rect.width - 0.5
   const py = (e.clientY - rect.top) / rect.height - 0.5
-  el.style.setProperty('--rx', `${(-py * 5).toFixed(2)}deg`)
-  el.style.setProperty('--ry', `${(px * 7).toFixed(2)}deg`)
+  el.style.setProperty('--rx', `${(-py * 2.5).toFixed(2)}deg`)
+  el.style.setProperty('--ry', `${(px * 3).toFixed(2)}deg`)
 }
 
 function resetPoster(e) {
@@ -131,6 +129,7 @@ function resetPoster(e) {
           :class="{ upcoming: isConcertUpcoming(item) }"
           v-reveal
           @mouseenter="preloadItem(item)"
+          @focusin="preloadItem(item)"
         >
           <time class="concert-date" :datetime="item.date">
             {{ formatConcertDate(item.date) }}<span></span>
@@ -145,12 +144,12 @@ function resetPoster(e) {
               class="poster-open"
               type="button"
               :aria-label="`打开 ${item.artist} ${item.tour} 海报档案`"
-              @click="openLightbox(item, carouselIndexes[item.date] || 0)"
+              @click="openLightbox(item, carouselIndexes[item.id] || 0)"
             >
               <picture>
-                <source :srcset="thumbnailPath(currentImage(item, 0))" type="image/webp">
+                <source :srcset="thumbnailUrl(currentImageName(item))" type="image/webp">
                 <img
-                  :src="currentImage(item, 0)"
+                  :src="originalImageUrl(currentImageName(item))"
                   :alt="`${item.artist} ${item.tour} 海报`"
                   :width="item.land ? 640 : 480"
                   :height="item.land ? 360 : 640"
@@ -164,7 +163,7 @@ function resetPoster(e) {
             </button>
             <div v-if="item.images.length > 1" class="carousel-controls">
               <button type="button" aria-label="上一张" @click.stop="moveCarousel(item, -1)">←</button>
-              <span>{{ (carouselIndexes[item.date] || 0) + 1 }} / {{ item.images.length }}</span>
+              <span>{{ (carouselIndexes[item.id] || 0) + 1 }} / {{ item.images.length }}</span>
               <button type="button" aria-label="下一张" @click.stop="moveCarousel(item, 1)">→</button>
             </div>
           </div>
