@@ -31,10 +31,15 @@ function onKeydown(event) {
   if (!focusable.length) return
   const first = focusable[0]
   const last = focusable[focusable.length - 1]
-  if (event.shiftKey && document.activeElement === first) {
+  const currentIndex = focusable.indexOf(document.activeElement)
+  if (currentIndex >= 0) {
+    event.preventDefault()
+    const nextIndex = (currentIndex + (event.shiftKey ? -1 : 1) + focusable.length) % focusable.length
+    focusable[nextIndex].focus()
+  } else if (event.shiftKey) {
     event.preventDefault()
     last.focus()
-  } else if (!event.shiftKey && document.activeElement === last) {
+  } else {
     event.preventDefault()
     first.focus()
   }

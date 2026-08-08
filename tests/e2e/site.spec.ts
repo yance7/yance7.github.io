@@ -49,6 +49,23 @@ test('research methodology disclosure and proof links are reachable', async ({ p
   await expect(page.locator('.tl-proof a').first()).toHaveAttribute('href', /https?:\/\//)
 })
 
+test('research deployment link lands on the FreshEye case study', async ({ page }) => {
+  await page.goto('/research.html')
+  await page.locator('a[href="works.html#project-fresheye"]').first().click()
+  await expect(page).toHaveURL(/works\.html#project-fresheye/)
+  await expect(page.locator('#project-fresheye')).toBeInViewport()
+})
+
+test('FreshEye product preview switches between input, result, and explain', async ({ page }) => {
+  await page.goto('/works.html#project-fresheye')
+  const tabs = page.locator('.sc-shot-tabs [role="tab"]')
+  await expect(tabs).toHaveCount(3)
+  await tabs.filter({ hasText: 'RESULT' }).click()
+  await expect(page.locator('[role="tabpanel"]')).toContainText('Fresh')
+  await tabs.filter({ hasText: 'EXPLAIN' }).click()
+  await expect(page.locator('[role="tabpanel"]')).toContainText('Grad-CAM')
+})
+
 test('concert thumbnails respond and carousel/lightbox controls work', async ({ page }) => {
   await page.goto('/concerts.html')
   const thumbnail = await page.locator('picture source').first().getAttribute('srcset')
@@ -70,7 +87,7 @@ test('concert thumbnails respond and carousel/lightbox controls work', async ({ 
   await expect(page.locator('.lightbox')).toHaveCount(0)
 })
 
-for (const route of ['index.html', 'research.html', 'works.html', 'concerts.html']) {
+for (const route of ['index.html', 'academics.html', 'honors.html', 'research.html', 'works.html', 'concerts.html']) {
   test(`axe audit: ${route}`, async ({ page }) => {
     await page.goto(`/${route}`)
     const results = await new AxeBuilder({ page }).analyze()

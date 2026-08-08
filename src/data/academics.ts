@@ -1,5 +1,7 @@
 import type { AcademicStat, ApScore, Education } from './types'
 
+export const academicsUpdatedAt = '2026-08-08'
+
 export const stats = [
   { value: '4.0', label: 'GPA', note: '未加权满分绩点' },
   { value: '1490', label: 'SAT', note: '数学 800 · 语文 690' },

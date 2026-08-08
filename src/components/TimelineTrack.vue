@@ -49,6 +49,7 @@ function toggleMethod(id: string) {
           <div class="metric-item" v-for="m in item.metrics" :key="m.label">
             <strong>{{ m.value }}</strong>
             <span>{{ m.label }}</span>
+            <small v-if="m.note">{{ m.note }}</small>
           </div>
         </div>
 

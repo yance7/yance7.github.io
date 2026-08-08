@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
+import { THEME_COLORS } from './src/themeColors.js'
 
 const rootDir = dirname(fileURLToPath(import.meta.url))
 const htmlRoot = resolve(rootDir, 'html-src')
@@ -11,9 +12,20 @@ const htmlInputs = Object.fromEntries(
   pageNames.map((name) => [name, resolve(rootDir, 'html-src', `${name}.html`)])
 )
 
+function themeTokenPlugin() {
+  return {
+    name: 'theme-token-bootstrap',
+    transformIndexHtml(html) {
+      return html
+        .replaceAll('__THEME_COLOR_LIGHT__', THEME_COLORS.light)
+        .replaceAll('__THEME_COLOR_DARK__', THEME_COLORS.dark)
+    }
+  }
+}
+
 export default defineConfig({
   root: htmlRoot,
-  plugins: [vue()],
+  plugins: [themeTokenPlugin(), vue()],
   build: {
     outDir: resolve(rootDir, 'dist'),
     emptyOutDir: true,

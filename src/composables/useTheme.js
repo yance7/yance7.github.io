@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { THEME_COLORS } from '../themeColors'
 
 const THEME_KEY = 'yance-theme'
 const theme = ref('light')
@@ -14,7 +15,7 @@ function setTheme(value) {
   document.documentElement.dataset.theme = value
 
   const meta = document.querySelector('meta[name="theme-color"]')
-  if (meta) meta.setAttribute('content', value === 'dark' ? '#0A0D12' : '#F3F0E8')
+  if (meta) meta.setAttribute('content', value === 'dark' ? THEME_COLORS.dark : THEME_COLORS.light)
 }
 
 function applyTheme(value, rippleEl) {
@@ -25,7 +26,11 @@ function applyTheme(value, rippleEl) {
   } catch { /* 隐私模式下静默失败 */ }
 
   /* 主题切换环境光扩散动画 */
-  if (rippleEl && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if (
+    rippleEl &&
+    !window.matchMedia('(prefers-reduced-motion: reduce)').matches &&
+    !window.matchMedia('(pointer: coarse)').matches
+  ) {
     const rect = rippleEl.getBoundingClientRect()
     const cx = rect.left + rect.width / 2
     const cy = rect.top + rect.height / 2
@@ -42,7 +47,7 @@ function applyTheme(value, rippleEl) {
     ripple.style.width = ripple.style.height = (maxDim * 2.4) + 'px'
     document.body.appendChild(ripple)
     requestAnimationFrame(() => ripple.classList.add('active'))
-    setTimeout(() => ripple.remove(), 1100)
+    setTimeout(() => ripple.remove(), 800)
   }
 }
 
@@ -58,7 +63,13 @@ function initTheme() {
 
   if (!systemMedia) systemMedia = window.matchMedia('(prefers-color-scheme: dark)')
   if (!saved && !systemListenerAttached) {
-    const onSystemThemeChange = (event) => setTheme(event.matches ? 'dark' : 'light')
+    const onSystemThemeChange = (event) => {
+      let currentSaved = null
+      try { currentSaved = localStorage.getItem(THEME_KEY) } catch { /* ignore */ }
+      if (currentSaved !== 'light' && currentSaved !== 'dark') {
+        setTheme(event.matches ? 'dark' : 'light')
+      }
+    }
     if (systemMedia.addEventListener) systemMedia.addEventListener('change', onSystemThemeChange)
     else systemMedia.addListener(onSystemThemeChange)
     systemListenerAttached = true

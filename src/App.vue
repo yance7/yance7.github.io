@@ -16,8 +16,26 @@ const page = document.body.dataset.page || 'home'
 const { theme, initTheme } = useTheme()
 
 const lightbox = ref(null)
+let hashScrolled = false
 
-onMounted(initTheme)
+function scrollToHashTarget(attempt = 0) {
+  if (hashScrolled || !window.location.hash) return
+  const id = decodeURIComponent(window.location.hash.slice(1))
+  const target = document.getElementById(id)
+  if (!target) {
+    if (attempt < 60) window.setTimeout(() => scrollToHashTarget(attempt + 1), 50)
+    return
+  }
+  requestAnimationFrame(() => {
+    target.scrollIntoView({ block: 'start' })
+    hashScrolled = true
+  })
+}
+
+onMounted(() => {
+  initTheme()
+  scrollToHashTarget()
+})
 useMusicNotes()
 
 const currentNav = computed(() => navItems.find((item) => item.key === page))

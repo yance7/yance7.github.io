@@ -85,6 +85,9 @@ export interface ProjectCaseStudy {
   visuals?: CaseStudyVisual[]
 }
 
+export type ProjectTone = 'aqua' | 'gold' | 'violet'
+export type ProjectIcon = 'eye' | 'note'
+
 export interface Project {
   id: string
   title: string
@@ -96,8 +99,8 @@ export interface Project {
   description: string
   href: string
   github?: string
-  icon: string
-  tone: string
+  icon: ProjectIcon
+  tone: ProjectTone
   status?: Status
   statusLabel?: string
   updatedAt: string
@@ -111,7 +114,6 @@ export interface Concert {
   artist: string
   tour: string
   venue: string
-  status?: Status
   images: string[]
   land?: boolean
   note?: string

@@ -73,7 +73,7 @@
   --dur-fast: .2s;
   --dur-base: .32s;
   --dur-slow: .6s;
-  --dur-page: 1.2s;
+  --dur-page: .72s;
 
   /* 内容宽度 */
   --w-max: 1240px;
@@ -104,7 +104,7 @@
   /* 文字 */
   --ink: #1A1D23;
   --muted: #5A5E66;
-  --dim: #687078;
+  --dim: #656D75;
   --dim-soft: #8C9097;
 
   /* 线条 */
@@ -280,6 +280,10 @@
 
 .theme-ripple.active {
   animation: theme-ripple-expand var(--dur-page) var(--ease-out) forwards;
+}
+
+@media (pointer: coarse) {
+  .theme-ripple { display: none; }
 }
 
 @keyframes theme-ripple-expand {

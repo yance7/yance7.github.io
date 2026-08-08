@@ -33,8 +33,7 @@ export const concertGroups = concerts.reduce<Record<string, Concert[]>>((groups,
 
 const baseConcertMoods = {
   '2024': '第一次走进鸟巢，灯光亮起的瞬间，世界安静了。',
-  '2025': '从春到冬，五场现场，五次被音乐重新定义的夜晚。',
-  '2026': '上半年八场，音乐成为生活节奏的一部分。'
+  '2025': '从春到冬，五场现场，五次被音乐重新定义的夜晚。'
 }
 
 const concertVenues = [...new Set(concerts.map((concert) => concert.venue))]

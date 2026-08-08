@@ -25,6 +25,12 @@ for (const page of pages) {
 
 for (const asset of [
   'assets/og-card.png',
+  'assets/og-home.png',
+  'assets/og-academics.png',
+  'assets/og-honors.png',
+  'assets/og-research.png',
+  'assets/og-works.png',
+  'assets/og-concerts.png',
   'assets/favicon.svg',
   'assets/site.webmanifest',
   'assets/case/fresheye-og-cover.png',
@@ -36,8 +42,11 @@ for (const asset of [
 }
 
 const index = read('index.html')
-assert(index.includes('assets/og-card.png'), 'OG image 未使用 PNG')
+assert(index.includes('assets/og-home.png'), '首页未使用专属 OG image')
 assert(!index.includes('og-card.svg'), 'OG image 仍引用 SVG')
+for (const [page, slug] of Object.entries({ index: 'home', academics: 'academics', honors: 'honors', research: 'research', works: 'works', concerts: 'concerts' })) {
+  assert(read(`${page}.html`).includes(`assets/og-${slug}.png`), `${page}.html 未使用专属 OG image`)
+}
 
 for (const asset of [
   'assets/case/fresheye-sample-fresh.webp',
@@ -65,6 +74,8 @@ const styles = readFileSync(join(root, 'src/styles.css'), 'utf8')
 const concertsSource = readFileSync(join(root, 'src/pages/ConcertsPage.vue'), 'utf8')
 const mainSource = readFileSync(join(root, 'src/main.js'), 'utf8')
 assert(showcase.includes('class="sc-evidence"'), 'FreshEye evidence block missing')
+assert(showcase.includes(':id="`project-${project.id}`"'), 'Project showcase anchor missing')
+assert(showcase.includes('sc-shot-tabs'), 'FreshEye product screenshot switcher missing')
 assert(concertsSource.includes('class="next-up"'), 'Concert NEXT UP block missing')
 assert(concertsSource.includes('<picture>'), 'Concert picture source missing')
 assert(!mainSource.includes('legacy-sw-cleanup'), 'Legacy Service Worker cleanup code remains')

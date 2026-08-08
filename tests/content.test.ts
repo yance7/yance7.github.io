@@ -29,6 +29,14 @@ describe('content contracts', () => {
     expect(projects.every((project) => project.updatedAt && project.status)).toBe(true)
     expect(research.every((item) => item.updatedAt && item.id)).toBe(true)
     expect(pageMetadata.concerts.updatedAt).toBe('2026-08-08')
+    expect(pageMetadata.home.updatedAt).toBe('2026-08-08')
+    expect(pageMetadata.academics.updatedAt).toBe('2026-08-08')
     expect(formatUpdatedLabel(pageMetadata.research.updatedAt)).toMatch(/^[A-Z]{3} \d{2}, \d{4}$/)
+  })
+
+  it('keeps published FishFreshNet V1 metrics aligned with the paper result', () => {
+    const v1 = research.find((item) => item.id === 'fishfreshnet-v1')
+    expect(v1?.metrics?.[0]).toEqual({ value: '99.23%', label: '准确率', note: 'MFED · paper result' })
+    expect(v1?.methodology?.result).toContain('99.23%')
   })
 })

@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { worlds, featuredResearch, featuredProjects, leadership, activities } from '../data'
+import { worlds, featuredResearch, featuredProjects, leadership, activities, pageMetadata } from '../data'
 import SectionHeading from '../components/SectionHeading.vue'
 
 const selectedActivities = computed(() => activities.filter((item) => item.featured))
@@ -17,6 +17,7 @@ const selectedActivities = computed(() => activities.filter((item) => item.featu
         accent="离开纸面。"
         copy="先看正在被继续推进的研究，再看已经可以打开使用的产品。"
       />
+      <p class="content-updated">LAST UPDATED · {{ pageMetadata.home.updatedLabel }}</p>
       <div class="home-focus-grid">
         <a
           v-for="(item, i) in featuredResearch"
@@ -31,22 +32,30 @@ const selectedActivities = computed(() => activities.filter((item) => item.featu
           <p>{{ item.text }}</p>
           <span class="focus-link">阅读研究 <span aria-hidden="true">↗</span></span>
         </a>
-        <a
+
+        <div v-if="featuredResearch.length && featuredProjects.length" class="home-focus-connector" aria-hidden="true">
+          <span>RESEARCH → PRODUCT</span>
+          <i></i>
+        </div>
+
+        <article
           v-for="(item, i) in featuredProjects"
           :key="item.title"
           class="focus-card focus-product"
           :class="item.tone"
-          :href="item.href"
-          target="_blank"
-          rel="noopener"
           v-reveal="{ delay: (i + featuredResearch.length) * 70 }"
         >
-          <span class="focus-label">PRODUCT / 0{{ i + 1 }}</span>
-          <strong>{{ item.title }} <small>{{ item.en }}</small></strong>
-          <p class="focus-proof">{{ item.caseStudy ? 'RESEARCH → PRODUCT' : item.domain }}</p>
-          <p>{{ item.value }}</p>
-          <span class="focus-link">打开产品 <span aria-hidden="true">↗</span></span>
-        </a>
+          <a class="focus-card-main" :href="item.caseStudy ? `works.html#project-${item.id}` : item.href">
+            <span class="focus-label">PRODUCT / 0{{ i + 1 }}</span>
+            <strong>{{ item.title }} <small>{{ item.en }}</small></strong>
+            <p class="focus-proof">{{ item.caseStudy ? 'RESEARCH → PRODUCT' : item.domain }}</p>
+            <p>{{ item.value }}</p>
+            <span class="focus-link">查看产品案例 <span aria-hidden="true">↗</span></span>
+          </a>
+          <a class="focus-live-link" :href="item.href" target="_blank" rel="noopener">
+            LIVE PRODUCT <span aria-hidden="true">↗</span>
+          </a>
+        </article>
       </div>
     </section>
 

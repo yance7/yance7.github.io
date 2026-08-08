@@ -18,7 +18,7 @@ export const research = [
     metrics: [
       { value: '零安装', label: '浏览器端' },
       { value: 'Grad-CAM', label: '可解释性' },
-      { value: '4 标签', label: '报告导出' }
+      { value: 'PDF', label: '报告导出' }
     ],
     methodology: {
       question: '如何让水产品新鲜度评估从实验室走向日常使用？',
@@ -86,7 +86,7 @@ export const research = [
   doi={10.1109/ICIPAI70034.2026.11605650}
 }`,
     metrics: [
-      { value: '98.88%', label: '准确率' },
+      { value: '99.23%', label: '准确率', note: 'MFED · paper result' },
       { value: '4.22M', label: '参数量' },
       { value: '0.41G', label: 'FLOPs' },
       { value: '4800 张', label: 'MFED 数据集' }
@@ -96,7 +96,7 @@ export const research = [
       hypothesis: 'CBAM 注意力机制能有效聚焦鱼眼虹膜纹理变化区域，配合 Grad-CAM 提供可解释性。',
       method: 'EfficientNet-B0 backbone + CBAM 注意力 + Grad-CAM 可视化；MFED 数据集（3 级 × 20 样本 × 5 角度 × 4 光照 = 4800 张）',
       prototype: '论文投稿 ICIPAI 2026（第三届图像处理与人工智能国际会议）',
-      result: '论文被接收，98.88% 准确率，超越 VGG16 与 ResNet18，体积可移动端部署',
+      result: '论文被接收，99.23% 准确率，超越 VGG16 与 ResNet18，体积可移动端部署',
       next: '升级为 V2 版本，引入环形区域注意力 LightCRA'
     }
   },
