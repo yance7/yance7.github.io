@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, onMounted, defineAsyncComponent } from 'vue'
+import { computed, ref, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
 import { navItems, pageMeta } from './data'
 import { useTheme } from './composables/useTheme'
 import { useMusicNotes } from './composables/useMusicNotes'
@@ -17,25 +17,30 @@ const { theme, initTheme } = useTheme()
 
 const lightbox = ref(null)
 let hashScrolled = false
+let hashObserver = null
 
-function scrollToHashTarget(attempt = 0) {
+function scrollToHashTarget() {
   if (hashScrolled || !window.location.hash) return
   const id = decodeURIComponent(window.location.hash.slice(1))
-  const target = document.getElementById(id)
-  if (!target) {
-    if (attempt < 60) window.setTimeout(() => scrollToHashTarget(attempt + 1), 50)
-    return
-  }
-  requestAnimationFrame(() => {
+  const scroll = () => {
+    const target = document.getElementById(id)
+    if (!target) return false
     target.scrollIntoView({ block: 'start' })
     hashScrolled = true
-  })
+    hashObserver?.disconnect()
+    hashObserver = null
+    return true
+  }
+  if (scroll()) return
+  hashObserver = new MutationObserver(scroll)
+  hashObserver.observe(document.querySelector('#main') || document.body, { childList: true, subtree: true })
 }
 
 onMounted(() => {
   initTheme()
   scrollToHashTarget()
 })
+onUnmounted(() => hashObserver?.disconnect())
 useMusicNotes()
 
 const currentNav = computed(() => navItems.find((item) => item.key === page))

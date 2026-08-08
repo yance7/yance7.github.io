@@ -1,5 +1,11 @@
 import { expect, test } from '@playwright/test'
+import type { Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
+
+async function expectAccessible(page: Page) {
+  const results = await new AxeBuilder({ page }).analyze()
+  expect(results.violations).toEqual([])
+}
 
 test('all archive pages boot and expose the main landmark', async ({ page }) => {
   for (const route of ['index.html', 'academics.html', 'honors.html', 'research.html', 'works.html', 'concerts.html']) {
@@ -61,9 +67,29 @@ test('FreshEye product preview switches between input, result, and explain', asy
   const tabs = page.locator('.sc-shot-tabs [role="tab"]')
   await expect(tabs).toHaveCount(3)
   await tabs.filter({ hasText: 'RESULT' }).click()
-  await expect(page.locator('[role="tabpanel"]')).toContainText('Fresh')
+  await expect(page.locator('#shot-panel-result')).toContainText('Fresh')
   await tabs.filter({ hasText: 'EXPLAIN' }).click()
-  await expect(page.locator('[role="tabpanel"]')).toContainText('Grad-CAM')
+  await expect(page.locator('#shot-panel-explain')).toContainText('Grad-CAM')
+})
+
+test('FreshEye tabs support roving keyboard navigation', async ({ page }) => {
+  await page.goto('/works.html#project-fresheye')
+  const input = page.getByRole('tab', { name: /INPUT/ })
+  const result = page.getByRole('tab', { name: /RESULT/ })
+  const explain = page.getByRole('tab', { name: /EXPLAIN/ })
+
+  await input.focus()
+  await page.keyboard.press('ArrowRight')
+  await expect(result).toBeFocused()
+  await expect(result).toHaveAttribute('aria-selected', 'true')
+  await page.keyboard.press('ArrowRight')
+  await expect(explain).toBeFocused()
+  await page.keyboard.press('Home')
+  await expect(input).toBeFocused()
+  await page.keyboard.press('End')
+  await expect(explain).toBeFocused()
+  await page.keyboard.press('ArrowLeft')
+  await expect(result).toBeFocused()
 })
 
 test('concert thumbnails respond and carousel/lightbox controls work', async ({ page }) => {
@@ -87,10 +113,37 @@ test('concert thumbnails respond and carousel/lightbox controls work', async ({ 
   await expect(page.locator('.lightbox')).toHaveCount(0)
 })
 
+test('interactive states remain accessible after opening', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/index.html')
+  await page.locator('.menu-trigger').click()
+  await expectAccessible(page)
+  await page.locator('.mobile-menu-close').click()
+
+  await page.goto('/honors.html')
+  await page.locator('.honor-expand').first().click()
+  await expectAccessible(page)
+
+  await page.goto('/research.html')
+  await page.locator('.method-toggle').first().click()
+  await expectAccessible(page)
+
+  await page.goto('/works.html')
+  await page.getByRole('tab', { name: /EXPLAIN/ }).click()
+  await expect(page.locator('#shot-panel-explain')).toBeVisible()
+  await page.waitForTimeout(400)
+  await expectAccessible(page)
+
+  await page.goto('/concerts.html')
+  await page.locator('.poster-open').first().click()
+  await expect(page.locator('.lightbox')).toBeVisible()
+  await expectAccessible(page)
+  await page.keyboard.press('Escape')
+})
+
 for (const route of ['index.html', 'academics.html', 'honors.html', 'research.html', 'works.html', 'concerts.html']) {
   test(`axe audit: ${route}`, async ({ page }) => {
     await page.goto(`/${route}`)
-    const results = await new AxeBuilder({ page }).analyze()
-    expect(results.violations).toEqual([])
+    await expectAccessible(page)
   })
 }

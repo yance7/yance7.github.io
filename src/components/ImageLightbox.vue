@@ -16,12 +16,28 @@ const dialogRef = ref(null)
 const closeButton = ref(null)
 const isOpen = ref(true)
 let lastFocus = null
+const neighborPreloaded = new Set()
 
 useBodyScrollLock(isOpen)
+
+function preloadNeighbors(index) {
+  if (props.images.length < 2) return
+  const total = props.images.length
+  const neighborIndexes = [(index - 1 + total) % total, (index + 1) % total]
+  neighborIndexes.forEach((neighborIndex) => {
+    const src = props.images[neighborIndex]
+    if (neighborPreloaded.has(src)) return
+    const image = new Image()
+    image.decoding = 'async'
+    image.src = src
+    neighborPreloaded.add(src)
+  })
+}
 
 function onImgLoad() {
   loading.value = false
   loadError.value = false
+  preloadNeighbors(props.index)
 }
 
 function onImgError() {
@@ -72,7 +88,8 @@ onUnmounted(() => {
 watch(() => [props.index, props.images[props.index]], () => {
   loading.value = true
   loadError.value = false
-})
+  preloadNeighbors(props.index)
+}, { immediate: true })
 </script>
 
 <template>
