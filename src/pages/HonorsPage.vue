@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { honors, honorCategories, honorStats, pageMetadata } from '../data/content'
+import { honors, honorCategories, honorStats, pageMetadata } from '../data'
 import SectionHeading from '../components/SectionHeading.vue'
 import MetricStrip from '../components/MetricStrip.vue'
 import ArchiveFilter from '../components/ArchiveFilter.vue'

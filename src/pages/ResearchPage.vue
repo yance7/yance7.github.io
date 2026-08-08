@@ -1,5 +1,5 @@
 <script setup>
-import { research, researchMethods, pageMetadata } from '../data/content'
+import { research, researchMethods, pageMetadata } from '../data'
 import SectionHeading from '../components/SectionHeading.vue'
 import TimelineTrack from '../components/TimelineTrack.vue'
 import SectionDots from '../components/SectionDots.vue'
@@ -9,31 +9,32 @@ import SectionDots from '../components/SectionDots.vue'
   <div class="page-research">
     <SectionDots
       :sections="[
-        { id: 'sec-lab-notes', label: 'LAB NOTES' },
-        { id: 'sec-toolchain', label: 'TOOLCHAIN' },
-        { id: 'sec-research-timeline', label: 'TIMELINE' }
+        { id: 'sec-research-timeline', label: 'RESEARCH' },
+        { id: 'sec-toolchain', label: 'METHODS' }
       ]"
     />
 
-    <section id="sec-lab-notes" class="content">
+    <!-- 研究结果优先于工具清单，让第一次进入页面的人先看到成果。 -->
+    <section id="sec-research-timeline" class="content">
       <SectionHeading
         no="01"
-        label="LAB NOTES"
-        title="把论文"
-        accent="写成产品。"
-        :copy="`${research.length} 个研究项目，按时间倒序堆叠。每一个都包含提问、假设、方法、原型、结果与下一步——点击展开方法论即可看见完整的思考路径。`"
+        label="RESEARCH"
+        title="研究"
+        accent="时间轴。"
+        :copy="`${research.length} 个研究项目，按时间倒序呈现结果、论文、代码与产品证据。点击展开方法论，可继续阅读完整的思考路径。`"
       />
-<p class="content-updated">LAST UPDATED · {{ pageMetadata.research.updatedLabel }}</p>
+      <p class="content-updated">LAST UPDATED · {{ pageMetadata.research.updatedLabel }}</p>
+      <TimelineTrack :items="research" />
     </section>
 
     <!-- 方法与技术栈 -->
     <section id="sec-toolchain" class="content">
       <SectionHeading
         no="02"
-        label="TOOLCHAIN"
+        label="METHODS"
         title="方法与"
         accent="技术栈。"
-        copy="横跨深度学习、可解释 AI、微生物组分析与后端工程的方法栈。"
+        minor
       />
       <div class="toolchain-panel" v-reveal>
         <div class="toolchain-head">
@@ -56,17 +57,6 @@ import SectionDots from '../components/SectionDots.vue'
           </article>
         </div>
       </div>
-    </section>
-
-    <!-- 研究时间轴 -->
-    <section id="sec-research-timeline" class="content">
-      <SectionHeading
-        no="03"
-        label="TIMELINE"
-        title="研究"
-        accent="时间轴。"
-      />
-      <TimelineTrack :items="research" />
     </section>
   </div>
 </template>

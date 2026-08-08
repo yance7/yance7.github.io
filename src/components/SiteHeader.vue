@@ -1,6 +1,6 @@
 <script setup>
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
-import { navItems } from '../data/content'
+import { navItems } from '../data'
 import ThemeOrbit from './ThemeOrbit.vue'
 import { useBodyScrollLock } from '../composables/useBodyScrollLock'
 

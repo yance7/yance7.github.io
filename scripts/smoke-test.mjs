@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)))
 const dist = join(root, 'dist')
 const pages = ['index', 'academics', 'honors', 'research', 'works', 'concerts', '404']
-const { concerts, concertGroups, concertMoods, isConcertUpcoming } = await import(new URL('../src/data/content.js', import.meta.url))
+const { concerts, concertGroups, getConcertState } = await import(new URL('../src/data/index.js', import.meta.url))
 
 function read(path) {
   return readFileSync(join(dist, path), 'utf8')
@@ -39,15 +39,37 @@ const index = read('index.html')
 assert(index.includes('assets/og-card.png'), 'OG image 未使用 PNG')
 assert(!index.includes('og-card.svg'), 'OG image 仍引用 SVG')
 
+for (const asset of [
+  'assets/case/fresheye-sample-fresh.webp',
+  'assets/case/fresheye-sample-highly-fresh.webp',
+  'assets/case/fresheye-sample-not-fresh.webp'
+]) {
+  assert(existsSync(join(dist, asset)), `FreshEye sample missing: ${asset}`)
+}
+
+for (const image of new Set(concerts.flatMap((concert) => concert.images))) {
+  const thumbnail = image.replace(/\.[^.]+$/, '.webp')
+  assert(existsSync(join(dist, 'assets/concerts/thumbs', thumbnail)), `Concert thumbnail missing: ${thumbnail}`)
+}
+
 const fixedNow = new Date('2026-08-07T12:00:00+08:00')
-const upcoming = concerts.filter((concert) => isConcertUpcoming(concert, fixedNow))
+const state = getConcertState(fixedNow)
+const upcoming = state.upcoming
 assert(concerts.every((concert) => concert.id && /^\d{4}-\d{2}-\d{2}$/.test(concert.date)), 'Concert 数据未使用对象与 ISO 日期')
 assert(upcoming.length === 2, `Concert upcoming 预期 2 场，实际 ${upcoming.length} 场`)
 assert(concertGroups['2026']?.length === 8, 'Concert 年份分组未正确解析 ISO 日期')
-assert(concertMoods['2026'] === '6 场已赴约，2 场待相见。', 'Concert 2026 文案与状态统计不一致')
+assert(state.moods['2026'] === '6 场已赴约，2 场待相见。', 'Concert 2026 文案与状态统计不一致')
 
 const showcase = readFileSync(join(root, 'src/components/ProjectShowcase.vue'), 'utf8')
 const styles = readFileSync(join(root, 'src/styles.css'), 'utf8')
+const concertsSource = readFileSync(join(root, 'src/pages/ConcertsPage.vue'), 'utf8')
+const mainSource = readFileSync(join(root, 'src/main.js'), 'utf8')
+assert(showcase.includes('class="sc-evidence"'), 'FreshEye evidence block missing')
+assert(concertsSource.includes('class="next-up"'), 'Concert NEXT UP block missing')
+assert(concertsSource.includes('<picture>'), 'Concert picture source missing')
+assert(!mainSource.includes('legacy-sw-cleanup'), 'Legacy Service Worker cleanup code remains')
+assert(!styles.includes('font-size: 10px') && !styles.includes('font-size: 11px'), 'Tiny font token found')
+assert(!styles.includes('.lyric-eq') && !styles.includes('.coords-bar'), 'Hero decoration styles remain')
 assert(!showcase.includes('class="sc-frame" aria-hidden="true"'), 'Case Study 图片仍被 aria-hidden 父节点隐藏')
 assert(styles.includes('z-index: 3;'), 'Concert carousel controls 缺少层级保护')
 console.log(`smoke: ${pages.length} pages and static assets verified`)

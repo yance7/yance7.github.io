@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { concerts, concertGroups, concertMoods, concertStats, isConcertUpcoming } from '../data/content'
+import { concerts, concertGroups, concertMoods, concertStats, upcomingConcerts, isConcertUpcoming } from '../data'
 import SectionHeading from '../components/SectionHeading.vue'
 import MetricStrip from '../components/MetricStrip.vue'
 
@@ -22,7 +22,13 @@ const concertMetrics = [
 const sortedYears = computed(() => Object.keys(concertGroups).sort())
 
 function imagePath(name) { return `assets/concerts/${name}` }
+function thumbnailPath(name) { return `assets/concerts/thumbs/${name.replace(/\.[^.]+$/, '.webp')}` }
 function formatConcertDate(date) { return date.replaceAll('-', '.') }
+function formatNextDate(date) {
+  const [, month, day] = date.split('-')
+  const monthLabel = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'][Number(month) - 1]
+  return `${monthLabel} ${day}`
+}
 function currentImage(item, index) {
   return imagePath(item.images[carouselIndexes.value[item.date] || index || 0])
 }
@@ -80,6 +86,28 @@ function resetPoster(e) {
       />
 
       <MetricStrip :metrics="concertMetrics" />
+
+      <div v-if="upcomingConcerts.length" class="next-up" aria-labelledby="next-up-title" v-reveal>
+        <div class="next-up-head">
+          <span id="next-up-title" class="next-up-label">NEXT UP</span>
+          <span class="next-up-note">现实时间</span>
+        </div>
+        <div class="next-up-list">
+          <a
+            v-for="item in upcomingConcerts"
+            :key="item.id"
+            class="next-up-card"
+            :href="`#concert-${item.id}`"
+          >
+            <time :datetime="item.date">{{ formatNextDate(item.date) }}</time>
+            <span>
+              <strong>{{ item.artist }}</strong>
+              <small>{{ item.tour }} · {{ item.venue }}</small>
+            </span>
+            <span aria-hidden="true">↘</span>
+          </a>
+        </div>
+      </div>
     </section>
 
     <!-- 按年份分组 -->
@@ -98,6 +126,7 @@ function resetPoster(e) {
         <article
           v-for="item in concertGroups[year]"
           :key="item.id"
+          :id="`concert-${item.id}`"
           class="concert-row"
           :class="{ upcoming: isConcertUpcoming(item) }"
           v-reveal
@@ -118,12 +147,17 @@ function resetPoster(e) {
               :aria-label="`打开 ${item.artist} ${item.tour} 海报档案`"
               @click="openLightbox(item, carouselIndexes[item.date] || 0)"
             >
-              <img
-                :src="currentImage(item, 0)"
-                :alt="`${item.artist} ${item.tour} 海报`"
-                loading="lazy"
-                decoding="async"
-              >
+              <picture>
+                <source :srcset="thumbnailPath(currentImage(item, 0))" type="image/webp">
+                <img
+                  :src="currentImage(item, 0)"
+                  :alt="`${item.artist} ${item.tour} 海报`"
+                  :width="item.land ? 640 : 480"
+                  :height="item.land ? 360 : 640"
+                  loading="lazy"
+                  decoding="async"
+                >
+              </picture>
               <span class="poster-hint" aria-hidden="true">
                 <span>打开档案</span><b>↗</b>
               </span>

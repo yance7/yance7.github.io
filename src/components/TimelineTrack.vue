@@ -1,16 +1,16 @@
-<script setup>
+<script setup lang="ts">
 import { reactive } from 'vue'
 import StatusBadge from './StatusBadge.vue'
 import CopyCitation from './CopyCitation.vue'
-import { statusLabels } from '../data/content'
+import { statusLabels } from '../data'
+import type { ResearchItem } from '../data/types'
 
-defineProps({
-  items: { type: Array, required: true }
-})
+defineProps<{ items: ResearchItem[] }>()
+const statusLabelMap: Record<string, string> = statusLabels
 
-const openMethod = reactive({})
+const openMethod = reactive<Record<string, boolean>>({})
 
-function tagClass(tag) {
+function tagClass(tag: string) {
   if (tag.includes('WEB TOOL')) return 'aqua'
   if (tag.includes('PUBLISHED')) return 'gold'
   if (tag.includes('DEEP')) return 'violet'
@@ -18,7 +18,7 @@ function tagClass(tag) {
   return 'dim'
 }
 
-function toggleMethod(title) {
+function toggleMethod(title: string) {
   openMethod[title] = !openMethod[title]
 }
 </script>
@@ -36,7 +36,7 @@ function toggleMethod(title) {
     >
       <div class="tl-side">
         <span class="tl-date">{{ item.date }}</span>
-        <StatusBadge v-if="item.status" :status="item.status" :label="statusLabels[item.status]" />
+        <StatusBadge v-if="item.status" :status="item.status" :label="statusLabelMap[item.status]" />
       </div>
       <span class="tl-node" aria-hidden="true"><i></i></span>
       <div class="tl-body">

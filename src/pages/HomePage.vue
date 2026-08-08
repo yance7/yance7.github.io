@@ -1,9 +1,9 @@
 <script setup>
-import { ref } from 'vue'
-import { worlds, featuredResearch, featuredProjects, leadership, activities } from '../data/content'
+import { computed } from 'vue'
+import { worlds, featuredResearch, featuredProjects, leadership, activities } from '../data'
 import SectionHeading from '../components/SectionHeading.vue'
 
-const expandedActivity = ref(null)
+const selectedActivities = computed(() => [activities[2], activities[0], activities[4]])
 </script>
 
 <template>
@@ -84,72 +84,42 @@ const expandedActivity = ref(null)
       </div>
     </section>
 
-    <!-- 第三段：领导力 -->
-    <section class="content home-leadership">
+    <!-- 第三段：在实验室之外的组织与行动 -->
+    <section class="content home-beyond">
       <SectionHeading
         no="03"
-        label="LEADERSHIP"
+        label="BEYOND THE LAB"
         title="在集体中"
-        accent="生长。"
-        copy="四个领导力职位，从副主席到主席、副社长到社长，从执行到组织。"
+        accent="继续生长。"
+        copy="精选领导力与活动经历，保留那些最能说明组织、协作与行动力的片段。"
       />
-      <div class="leadership-grid">
-        <article
-          v-for="(item, i) in leadership"
-          :key="item.role + item.org"
-          class="leadership-card"
-          v-reveal="{ delay: i * 60 }"
-        >
-          <span class="leadership-role">{{ item.role }}</span>
-          <span class="leadership-org">{{ item.org }}</span>
-          <span class="leadership-period">{{ item.period }}</span>
-          <p class="leadership-note" v-if="item.note">{{ item.note }}</p>
-        </article>
-      </div>
-    </section>
-
-    <!-- 第四段：活动经历 -->
-    <section class="content home-activities">
-      <SectionHeading
-        no="04"
-        label="ACTIVITIES"
-        title="在行动中"
-        accent="学习。"
-        copy="五段活动经历，从志愿服务到学术会议，从 AI 伦理到微积分教学。"
-      />
-      <div class="activity-list">
-        <div
-          v-for="(item, i) in activities"
-          :key="item.title"
-          class="activity-row"
-          :class="{ expanded: expandedActivity === i }"
-          v-reveal="{ delay: i * 60 }"
-        >
-          <button
-            :id="`activity-trigger-${i}`"
-            class="activity-btn"
-            type="button"
-            :aria-expanded="expandedActivity === i"
-            :aria-controls="`activity-${i}`"
-            @click="expandedActivity = expandedActivity === i ? null : i"
-          >
-            <span class="activity-period">{{ item.period }}</span>
-            <div class="activity-info">
-              <strong>{{ item.title }}</strong>
-              <small>{{ item.org }}</small>
-            </div>
-            <span class="activity-arrow" aria-hidden="true">↘</span>
-          </button>
-          <div
-            v-if="expandedActivity === i"
-            :id="`activity-${i}`"
-            class="activity-detail"
-            role="region"
-            :aria-labelledby="`activity-trigger-${i}`"
-          >
-            <p>{{ item.detail }}</p>
+      <div class="home-beyond-grid">
+        <div class="beyond-column" v-reveal>
+          <span class="beyond-label">LEADERSHIP</span>
+          <div class="beyond-leadership-list">
+            <article v-for="item in leadership" :key="item.role + item.org" class="beyond-leadership">
+              <strong>{{ item.role }}</strong>
+              <span>{{ item.org }}</span>
+              <small>{{ item.period }}</small>
+            </article>
           </div>
         </div>
+        <div class="beyond-column" v-reveal="{ delay: 80 }">
+          <span class="beyond-label">SELECTED ACTIVITIES</span>
+          <div class="beyond-activity-list">
+            <article v-for="item in selectedActivities" :key="item.title" class="beyond-activity">
+              <time>{{ item.period }}</time>
+              <div>
+                <strong>{{ item.title }}</strong>
+                <small>{{ item.org }}</small>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+      <div class="beyond-links">
+        <a href="academics.html">EXPLORE ACADEMICS <span aria-hidden="true">↗</span></a>
+        <a href="honors.html">VIEW HONORS <span aria-hidden="true">↗</span></a>
       </div>
     </section>
   </div>

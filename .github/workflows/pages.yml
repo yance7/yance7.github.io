@@ -27,6 +27,8 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Typecheck Vue app
+        run: npm run typecheck
       - name: Build site
         run: npm run build
       - name: Smoke test artifact

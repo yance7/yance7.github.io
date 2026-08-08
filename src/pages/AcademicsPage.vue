@@ -1,5 +1,5 @@
 <script setup>
-import { stats, education, apScores } from '../data/content'
+import { stats, education, apScores } from '../data'
 import SectionHeading from '../components/SectionHeading.vue'
 import MetricStrip from '../components/MetricStrip.vue'
 </script>

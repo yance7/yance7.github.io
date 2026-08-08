@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { heroGeo } from '../data/content'
+import { heroGeo } from '../data'
 
 const props = defineProps({
   page: { type: String, required: true },
@@ -37,10 +37,6 @@ const lyricChars = computed(() => props.title.split(''))
           >{{ ch }}</span>
         </h1>
         <p class="hero-copy" v-reveal="{ delay: 180 }">{{ copy }}</p>
-        <p v-if="!isHome" class="lyric-note" v-reveal="{ delay: 240 }">
-          LYRIC / PERSONAL ARCHIVE
-          <span class="lyric-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-        </p>
         <p v-if="credit && !isHome" class="lyric-credit" v-reveal="{ delay: 270 }">
           <b>{{ credit.artist }}</b>
           <i aria-hidden="true">/</i>
@@ -52,11 +48,10 @@ const lyricChars = computed(() => props.title.split(''))
         <div class="hero-line" v-reveal="{ delay: 300 }"><span></span></div>
       </div>
 
-      <aside class="hero-side" aria-hidden="true">
+      <aside v-if="isHome" class="hero-side" aria-hidden="true">
         <div class="archive-coords">
           <span class="coords-label">{{ coordsLabel }}</span>
           <span class="coords-geo">{{ geo }}</span>
-          <span class="coords-bar"><i></i></span>
         </div>
         <div v-if="isHome" class="hero-scroll"><span></span>SCROLL</div>
       </aside>

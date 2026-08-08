@@ -1,7 +1,9 @@
-<script setup>
-defineProps({
-  status: { type: String, default: 'active' },
-  label: { type: String, default: '' }
+<script setup lang="ts">
+import type { Status } from '../data/types'
+
+withDefaults(defineProps<{ status?: Status; label?: string }>(), {
+  status: 'active',
+  label: ''
 })
 </script>
 

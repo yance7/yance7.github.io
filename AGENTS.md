@@ -49,3 +49,9 @@
 - Regenerate the social preview image with `python scripts/render-og-card.py` after changing the OG card design.
 - Update shared content in `src/data/content.js`; keep page-specific content in the matching `src/pages/*.vue`.
 - After deployment changes, verify the `dist/` artifact and the GitHub Pages workflow run.
+
+## Current Quality Gates
+
+- Shared content is split into page-scoped modules under `src/data/`, with `src/data/index.js` as the public entry and `src/data/types.ts` for core contracts.
+- Run `npm run typecheck` before committing Vue or data changes.
+- Run `npm run images:concerts` after adding or replacing concert posters.

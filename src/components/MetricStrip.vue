@@ -1,17 +1,19 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
+import type { Metric } from '../data/types'
 
-const props = defineProps({
-  metrics: { type: Array, required: true },
-  large: { type: Boolean, default: false }
-})
+const props = withDefaults(defineProps<{ metrics: Metric[]; large?: boolean }>(), { large: false })
 
 const displays = ref(props.metrics.map((m) => String(m.value)))
-const cards = ref([])
+const cards = ref<HTMLElement[]>([])
 let raf = 0
-let observers = []
+let observers: IntersectionObserver[] = []
 
-function parseValue(value) {
+function setCard(el: unknown, index: number) {
+  if (el instanceof Element) cards.value[index] = el as HTMLElement
+}
+
+function parseValue(value: string) {
   const match = String(value).match(/^(-?\d+(?:\.\d+)?)(.*)$/)
   if (!match) return null
   return {
@@ -21,12 +23,12 @@ function parseValue(value) {
   }
 }
 
-function animateIndex(i) {
+function animateIndex(i: number) {
   const parsed = parseValue(props.metrics[i].value)
   if (!parsed) return
   const start = performance.now()
   const duration = 900
-  const step = (now) => {
+  const step = (now: number) => {
     const t = Math.min((now - start) / duration, 1)
     const eased = 1 - Math.pow(1 - t, 3)
     displays.value[i] = (parsed.num * eased).toFixed(parsed.decimals) + parsed.suffix
@@ -48,7 +50,7 @@ onMounted(() => {
     }, { threshold: 0.3 })
     obs.observe(el)
     return obs
-  }).filter(Boolean)
+  }).filter((observer): observer is IntersectionObserver => observer !== null)
 })
 
 onUnmounted(() => {
@@ -63,7 +65,7 @@ onUnmounted(() => {
       v-for="(m, i) in metrics"
       :key="m.label"
       class="metric-card"
-      :ref="(el) => { if (el) cards[i] = el }"
+      :ref="(el) => setCard(el, i)"
       v-reveal
     >
       <b>{{ displays[i] ?? m.value }}</b>

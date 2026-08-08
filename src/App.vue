@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, onMounted, defineAsyncComponent } from 'vue'
-import { navItems, pageMeta } from './data/content'
+import { navItems, pageMeta } from './data'
 import { useTheme } from './composables/useTheme'
 import { useMusicNotes } from './composables/useMusicNotes'
 

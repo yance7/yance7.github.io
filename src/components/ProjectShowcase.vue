@@ -1,10 +1,8 @@
-<script setup>
+<script setup lang="ts">
 import StatusBadge from './StatusBadge.vue'
+import type { Project } from '../data/types'
 
-defineProps({
-  project: { type: Object, required: true },
-  index: { type: Number, default: 0 }
-})
+withDefaults(defineProps<{ project: Project; index?: number }>(), { index: 0 })
 </script>
 
 <template>
@@ -25,11 +23,24 @@ defineProps({
           class="sc-visual"
           :src="project.caseStudy.visual.src"
           :alt="project.caseStudy.visual.alt"
+          width="1200"
+          height="630"
           loading="lazy"
           decoding="async"
         >
         <span v-if="!project.caseStudy?.visual" class="sc-icon" aria-hidden="true">{{ project.icon === 'eye' ? '◉' : '♫' }}</span>
       </div>
+    </div>
+
+    <div v-if="project.caseStudy?.visuals" class="sc-evidence" aria-label="FreshEye 真实输入样本">
+      <div class="sc-evidence-head">
+        <span>REAL INPUTS</span>
+        <span>MODEL CONTEXT</span>
+      </div>
+      <figure v-for="visual in project.caseStudy.visuals" :key="visual.src" class="sc-evidence-item">
+        <img :src="visual.src" :alt="visual.alt" width="600" height="600" loading="lazy" decoding="async">
+        <figcaption>{{ visual.label }}</figcaption>
+      </figure>
     </div>
 
     <div class="sc-content">
