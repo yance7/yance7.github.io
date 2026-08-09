@@ -8,7 +8,7 @@ async function expectAccessible(page: Page) {
 }
 
 test('all archive pages boot and expose the main landmark', async ({ page }) => {
-  for (const route of ['index.html', 'academics.html', 'honors.html', 'research.html', 'works.html', 'concerts.html']) {
+  for (const route of ['index.html', 'academics.html', 'honors.html', 'research.html', 'works.html', 'concerts.html', '404.html']) {
     await page.goto(`/${route}`)
     await expect(page.locator('main#main')).toBeVisible()
   }
@@ -166,6 +166,17 @@ test('reduced motion keeps project content immediately available', async ({ page
   await expect(firstProject).toHaveCSS('transform', 'none')
 })
 
+test('fast page jumps do not leave passed reveal content hidden', async ({ page }) => {
+  for (const route of ['index.html', 'academics.html', 'honors.html', 'research.html', 'works.html', 'concerts.html']) {
+    await page.goto(`/${route}`)
+    await expect(page.locator('.content').first()).toBeVisible()
+    await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
+    expect(await page.locator('.reveal').count()).toBeGreaterThan(0)
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight))
+    await expect.poll(() => page.locator('.reveal:not(.revealed)').count()).toBe(0)
+  }
+})
+
 test('archive pages omit the visible last updated label', async ({ page }) => {
   for (const route of ['index.html', 'academics.html', 'honors.html', 'research.html', 'works.html', 'concerts.html']) {
     await page.goto(`/${route}`)
@@ -227,7 +238,7 @@ test('interactive states remain accessible after opening', async ({ page }) => {
   await page.keyboard.press('Escape')
 })
 
-for (const route of ['index.html', 'academics.html', 'honors.html', 'research.html', 'works.html', 'concerts.html']) {
+for (const route of ['index.html', 'academics.html', 'honors.html', 'research.html', 'works.html', 'concerts.html', '404.html']) {
   test(`axe audit: ${route}`, async ({ page }) => {
     await page.goto(`/${route}`)
     await expectAccessible(page)

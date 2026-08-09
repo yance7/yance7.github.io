@@ -84,6 +84,7 @@
   /* 强调色 */
   --gold: #A5681E;
   --gold-text: #8E5816;
+  --action-fill: #8E5816;
   --aqua: #277E76;
   --violet: #695F98;
   --focus: #8D5815;
@@ -156,6 +157,7 @@
   /* 强调色 */
   --gold: #E8B962;
   --gold-text: #E8B962;
+  --action-fill: #E8B962;
   --aqua: #6DDED0;
   --violet: #A698E6;
   --focus: #E8B962;

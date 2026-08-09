@@ -1837,7 +1837,7 @@ img { display: block; max-width: 100%; }
   transition: transform var(--dur-base) var(--ease-spring), background-color var(--dur-base), border-color var(--dur-base), box-shadow var(--dur-base);
 }
 .btn-primary {
-  background: var(--gold); color: var(--accent-contrast); border: 1px solid var(--gold);
+  background: var(--action-fill); color: var(--accent-contrast); border: 1px solid var(--action-fill);
   box-shadow: 0 8px 24px var(--glow-gold);
 }
 .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 32px var(--glow-gold); }
