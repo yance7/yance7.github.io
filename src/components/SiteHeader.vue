@@ -1,24 +1,24 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { navItems } from '../data'
 import ThemeOrbit from './ThemeOrbit.vue'
 import { useBodyScrollLock } from '../composables/useBodyScrollLock'
 
-defineProps({ page: String })
+defineProps<{ page?: string }>()
 const menuOpen = ref(false)
-const menuTrigger = ref(null)
-const menuClose = ref(null)
+const menuTrigger = ref<HTMLButtonElement | null>(null)
+const menuClose = ref<HTMLButtonElement | null>(null)
 
 function closeMenu(restoreFocus = false) {
   menuOpen.value = false
   if (restoreFocus) requestAnimationFrame(() => menuTrigger.value?.focus())
 }
 
-function getMenuFocusable() {
-  return [...document.querySelectorAll('.mobile-menu-overlay button:not([disabled]), .mobile-menu-overlay a[href]')]
+function getMenuFocusable(): HTMLElement[] {
+  return [...document.querySelectorAll<HTMLElement>('.mobile-menu-overlay button:not([disabled]), .mobile-menu-overlay a[href]')]
 }
 
-function onKeydown(event) {
+function onKeydown(event: KeyboardEvent) {
   if (!menuOpen.value) return
   if (event.key === 'Escape') {
     event.preventDefault()
@@ -31,7 +31,7 @@ function onKeydown(event) {
   if (!focusable.length) return
   const first = focusable[0]
   const last = focusable[focusable.length - 1]
-  const currentIndex = focusable.indexOf(document.activeElement)
+  const currentIndex = focusable.indexOf(document.activeElement as HTMLElement)
   if (currentIndex >= 0) {
     event.preventDefault()
     const nextIndex = (currentIndex + (event.shiftKey ? -1 : 1) + focusable.length) % focusable.length
@@ -115,6 +115,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
           :key="item.key"
           :href="item.href"
           :class="{ active: page === item.key }"
+          :aria-current="page === item.key ? 'page' : undefined"
           :style="{ '--di': i }"
           @click="closeMenu(true)"
         >

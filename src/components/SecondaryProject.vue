@@ -28,7 +28,7 @@ defineProps<{ project: Project }>()
       <p class="secondary-project-desc">{{ project.description }}</p>
       <div class="secondary-project-actions">
         <a class="btn-primary" :href="project.href" target="_blank" rel="noopener" v-magnetic>
-          ENTER PROJECT <span aria-hidden="true">→</span>
+          ENTER PROJECT <span aria-hidden="true">↗</span>
         </a>
         <a v-if="project.github" class="btn-ghost" :href="project.github" target="_blank" rel="noopener" v-magnetic>
           RESEARCH REPO <span aria-hidden="true">↗</span>

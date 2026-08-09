@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
 import { navItems, pageMeta } from './data'
 import { useTheme } from './composables/useTheme'
@@ -12,12 +12,23 @@ import ScrollProgress from './components/ScrollProgress.vue'
 
 import NotFoundPage from './pages/NotFoundPage.vue'
 
+interface LightboxMeta {
+  artist: string
+  tour: string
+}
+
+interface LightboxPayload {
+  images: string[]
+  index: number
+  meta?: LightboxMeta | null
+}
+
 const page = document.body.dataset.page || 'home'
 const { theme, initTheme } = useTheme()
 
-const lightbox = ref(null)
+const lightbox = ref<LightboxPayload | null>(null)
 let hashScrolled = false
-let hashObserver = null
+let hashObserver: MutationObserver | null = null
 
 function scrollToHashTarget() {
   if (hashScrolled || !window.location.hash) return
@@ -63,11 +74,11 @@ const pageMap = {
   works: defineAsyncComponent(() => import('./pages/WorksPage.vue')),
   concerts: defineAsyncComponent(() => import('./pages/ConcertsPage.vue'))
 }
-const currentPage = computed(() => (isError ? NotFoundPage : pageMap[page] || NotFoundPage))
+const currentPage = computed(() => (isError ? NotFoundPage : pageMap[page as keyof typeof pageMap] || NotFoundPage))
 
-function handleLightbox(data) { lightbox.value = data }
+function handleLightbox(data: LightboxPayload) { lightbox.value = data }
 function closeLightbox() { lightbox.value = null }
-function moveLightbox(step) {
+function moveLightbox(step: number) {
   if (!lightbox.value) return
   const total = lightbox.value.images.length
   lightbox.value.index = (lightbox.value.index + step + total) % total

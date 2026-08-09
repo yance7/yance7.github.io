@@ -1,4 +1,4 @@
-import type { ResearchItem, ResearchMethod } from './types'
+import type { FeaturedResearch, ResearchItem, ResearchMethod } from './types'
 
 export const research = [
   {
@@ -10,9 +10,9 @@ export const research = [
     title: 'FreshEye：AI 水产品新鲜度评估网页工具',
     org: '个人项目 · HuggingFace Spaces + GitHub Pages',
     text: '将 FishFreshNet 研究线转化为零安装网页工具，用户上传鱼眼照片即可获得新鲜度等级、置信度与 Grad-CAM 热力图。',
-    link: 'https://github.com/yance77777/FreshEye',
+    link: 'https://github.com/yance7/FreshEye',
     proof: [
-      { type: 'source', label: 'SOURCE', value: 'GitHub', href: 'https://github.com/yance77777/FreshEye', external: true },
+      { type: 'source', label: 'SOURCE', value: 'GitHub', href: 'https://github.com/yance7/FreshEye', external: true },
       { type: 'deployment', label: 'DEPLOYED AS', value: 'FreshEye', href: 'works.html#project-fresheye' }
     ],
     metrics: [
@@ -38,9 +38,9 @@ export const research = [
     title: 'FishFreshNet V2：轻量可解释鱼眼新鲜度评估',
     org: '个人研究 · FishFreshNet V2',
     text: '引入轻量环形区域注意力 LightCRA，配合 ECA 通道注意力，实现 99.29% 准确率，同时保持轻量化部署能力。',
-    link: 'https://github.com/yance77777/FishFreshNetV2',
+    link: 'https://github.com/yance7/FishFreshNetV2',
     proof: [
-      { type: 'experiment', label: 'EXPERIMENT', value: 'Five seeds', href: 'https://github.com/yance77777/FishFreshNetV2', external: true },
+      { type: 'experiment', label: 'EXPERIMENT', value: 'Five seeds', href: 'https://github.com/yance7/FishFreshNetV2', external: true },
       { type: 'deployment', label: 'DEPLOYED AS', value: 'FreshEye', href: 'works.html#project-fresheye' }
     ],
     metrics: [
@@ -67,10 +67,10 @@ export const research = [
     title: 'FishFreshNet V1：基于注意力机制的轻量可解释评估框架',
     org: '国际会议论文 · ICIPAI 2026',
     text: '构建多阶段鱼眼数据集 MFED，将 CBAM 集成到 EfficientNet-B0，配合 Grad-CAM 完成轻量化、可解释的新鲜度分级。',
-    link: 'https://github.com/yance77777/FishFreshNetV1',
+    link: 'https://github.com/yance7/FishFreshNetV1',
     proof: [
       { type: 'paper', label: 'PAPER', value: 'ICIPAI 2026', href: 'https://ieeexplore.ieee.org/abstract/document/11605650', external: true },
-      { type: 'source', label: 'SOURCE', value: 'GitHub', href: 'https://github.com/yance77777/FishFreshNetV1', external: true }
+      { type: 'source', label: 'SOURCE', value: 'GitHub', href: 'https://github.com/yance7/FishFreshNetV1', external: true }
     ],
     paper: {
       href: 'https://ieeexplore.ieee.org/abstract/document/11605650',
@@ -178,6 +178,21 @@ export const researchMethods = [
   { label: 'Random Forest', en: 'Regression', cat: 'SCIENCE' }
 ] satisfies ResearchMethod[]
 
-export const featuredResearch = research.filter((item) => item.id === 'fishfreshnet-v2')
+function toFeaturedResearch(item: ResearchItem): FeaturedResearch {
+  const metrics = item.metrics
+  if (!metrics || metrics.length < 2) {
+    throw new Error(`Featured research item ${item.id} needs two summary metrics`)
+  }
+  return {
+    id: item.id,
+    title: item.title,
+    text: item.text,
+    summaryMetrics: [metrics[0], metrics[1]]
+  }
+}
+
+export const featuredResearch = research
+  .filter((item) => item.id === 'fishfreshnet-v2')
+  .map(toFeaturedResearch)
 
 /* ---------- 领导力 ---------- */

@@ -1,16 +1,18 @@
 import { ref } from 'vue'
 import { THEME_COLORS } from '../themeColors'
 
+export type Theme = 'light' | 'dark'
+
 const THEME_KEY = 'yance-theme'
-const theme = ref('light')
-let systemMedia = null
+const theme = ref<Theme>('light')
+let systemMedia: MediaQueryList | null = null
 let systemListenerAttached = false
 
-function systemTheme() {
+function systemTheme(): Theme {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 }
 
-function setTheme(value) {
+function setTheme(value: Theme) {
   theme.value = value
   document.documentElement.dataset.theme = value
 
@@ -18,14 +20,13 @@ function setTheme(value) {
   if (meta) meta.setAttribute('content', value === 'dark' ? THEME_COLORS.dark : THEME_COLORS.light)
 }
 
-function applyTheme(value, rippleEl) {
+function applyTheme(value: Theme, rippleEl: HTMLElement | null = null) {
   setTheme(value)
 
   try {
     localStorage.setItem(THEME_KEY, value)
   } catch { /* 隐私模式下静默失败 */ }
 
-  /* 主题切换环境光扩散动画 */
   if (
     rippleEl &&
     !window.matchMedia('(prefers-reduced-motion: reduce)').matches &&
@@ -42,29 +43,30 @@ function applyTheme(value, rippleEl) {
     )
     const ripple = document.createElement('div')
     ripple.className = 'theme-ripple'
-    ripple.style.left = cx + 'px'
-    ripple.style.top = cy + 'px'
-    ripple.style.width = ripple.style.height = (maxDim * 2.4) + 'px'
+    ripple.style.left = `${cx}px`
+    ripple.style.top = `${cy}px`
+    ripple.style.width = `${maxDim * 2.4}px`
+    ripple.style.height = `${maxDim * 2.4}px`
     document.body.appendChild(ripple)
     requestAnimationFrame(() => ripple.classList.add('active'))
-    setTimeout(() => ripple.remove(), 800)
+    window.setTimeout(() => ripple.remove(), 800)
   }
 }
 
-function toggleTheme(rippleEl) {
+function toggleTheme(rippleEl: HTMLElement | null = null) {
   applyTheme(theme.value === 'light' ? 'dark' : 'light', rippleEl)
 }
 
 function initTheme() {
-  let saved = null
+  let saved: string | null = null
   try { saved = localStorage.getItem(THEME_KEY) } catch { /* ignore */ }
-  const value = saved === 'dark' || saved === 'light' ? saved : systemTheme()
+  const value: Theme = saved === 'dark' || saved === 'light' ? saved : systemTheme()
   setTheme(value)
 
   if (!systemMedia) systemMedia = window.matchMedia('(prefers-color-scheme: dark)')
   if (!saved && !systemListenerAttached) {
-    const onSystemThemeChange = (event) => {
-      let currentSaved = null
+    const onSystemThemeChange = (event: MediaQueryListEvent) => {
+      let currentSaved: string | null = null
       try { currentSaved = localStorage.getItem(THEME_KEY) } catch { /* ignore */ }
       if (currentSaved !== 'light' && currentSaved !== 'dark') {
         setTheme(event.matches ? 'dark' : 'light')

@@ -1,30 +1,27 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 
-const props = defineProps({
-  sections: { type: Array, required: true }
-})
+interface SectionNavItem {
+  id: string
+  label: string
+}
+
+const props = defineProps<{ sections: SectionNavItem[] }>()
 
 const active = ref(props.sections[0]?.id || '')
-let observer = null
-
-function go(id) {
-  const el = document.getElementById(id)
-  if (!el) return
-  const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
-  el.scrollIntoView({ behavior, block: 'start' })
-}
+let observer: IntersectionObserver | null = null
 
 onMounted(() => {
   if (!('IntersectionObserver' in window)) return
-  observer = new IntersectionObserver((entries) => {
+  const nextObserver = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (entry.isIntersecting) active.value = entry.target.id
     })
   }, { rootMargin: '-35% 0px -55% 0px', threshold: 0 })
+  observer = nextObserver
   props.sections.forEach((s) => {
     const el = document.getElementById(s.id)
-    if (el) observer.observe(el)
+    if (el) nextObserver.observe(el)
   })
 })
 
@@ -42,7 +39,7 @@ onUnmounted(() => {
       :class="{ active: active === s.id }"
       :href="`#${s.id}`"
       :aria-label="s.label"
-      @click.prevent="go(s.id)"
+      :aria-current="active === s.id ? 'location' : undefined"
     >
       <i></i>
       <span class="section-dot-label">{{ s.label }}</span>

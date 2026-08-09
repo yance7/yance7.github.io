@@ -1,26 +1,35 @@
-<script setup>
+<script setup lang="ts">
 import { ref, nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { useBodyScrollLock } from '../composables/useBodyScrollLock'
 
-const props = defineProps({
-  images: { type: Array, required: true },
-  index: { type: Number, required: true },
-  meta: { type: Object, default: null }
-})
-const emit = defineEmits(['close', 'prev', 'next'])
+interface LightboxMeta {
+  artist: string
+  tour: string
+}
+
+const props = defineProps<{
+  images: string[]
+  index: number
+  meta?: LightboxMeta | null
+}>()
+const emit = defineEmits<{
+  close: []
+  prev: []
+  next: []
+}>()
 
 const loading = ref(true)
 const loadError = ref(false)
 const retryKey = ref(0)
-const dialogRef = ref(null)
-const closeButton = ref(null)
+const dialogRef = ref<HTMLElement | null>(null)
+const closeButton = ref<HTMLButtonElement | null>(null)
 const isOpen = ref(true)
-let lastFocus = null
+let lastFocus: HTMLElement | null = null
 const neighborPreloaded = new Set()
 
 useBodyScrollLock(isOpen)
 
-function preloadNeighbors(index) {
+function preloadNeighbors(index: number) {
   if (props.images.length < 2) return
   const total = props.images.length
   const neighborIndexes = [(index - 1 + total) % total, (index + 1) % total]
@@ -51,7 +60,7 @@ function retryImage() {
   retryKey.value += 1
 }
 
-function onKey(e) {
+function onKey(e: KeyboardEvent) {
   if (e.key === 'Escape') {
     e.preventDefault()
     emit('close')
@@ -59,7 +68,7 @@ function onKey(e) {
   else if (e.key === 'ArrowLeft') emit('prev')
   else if (e.key === 'ArrowRight') emit('next')
   else if (e.key === 'Tab') {
-    const focusable = [...dialogRef.value?.querySelectorAll('button:not([disabled])') || []]
+    const focusable = [...dialogRef.value?.querySelectorAll<HTMLButtonElement>('button:not([disabled])') || []]
     if (!focusable.length) return
     const first = focusable[0]
     const last = focusable[focusable.length - 1]
@@ -74,7 +83,7 @@ function onKey(e) {
 }
 
 onMounted(() => {
-  lastFocus = document.activeElement
+  lastFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
   window.addEventListener('keydown', onKey)
   nextTick(() => closeButton.value?.focus())
 })

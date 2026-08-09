@@ -1,9 +1,9 @@
-import { onUnmounted, unref, watch } from 'vue'
+import { onUnmounted, unref, watch, type MaybeRef } from 'vue'
 
 let lockCount = 0
 let previousOverflow = ''
 
-function setLocked(locked) {
+function setLocked(locked: boolean) {
   if (typeof document === 'undefined') return
 
   if (locked) {
@@ -17,7 +17,7 @@ function setLocked(locked) {
   if (lockCount === 0) document.body.style.overflow = previousOverflow
 }
 
-export function useBodyScrollLock(active) {
+export function useBodyScrollLock(active: MaybeRef<boolean>) {
   let locked = false
 
   watch(() => unref(active), (value) => {

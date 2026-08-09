@@ -56,6 +56,13 @@ export interface ResearchItem {
   updatedAt: string
 }
 
+export interface FeaturedResearch {
+  id: string
+  title: string
+  text: string
+  summaryMetrics: [Metric, Metric]
+}
+
 export interface ResearchMethod {
   label: string
   en: string
@@ -117,9 +124,15 @@ export interface ProjectCaseStudy {
   product: string[]
   engineering: string[]
   proof: ProofLink[]
+  evidenceLabel?: string
   visual?: {
     src: string
     alt: string
+  }
+  liveVisual?: {
+    src: string
+    alt: string
+    label: string
   }
   visuals?: CaseStudyVisual[]
   preview?: ProductPreview

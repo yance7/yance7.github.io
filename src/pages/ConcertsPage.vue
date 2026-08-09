@@ -158,7 +158,7 @@ function resetPoster(e) {
                 >
               </picture>
               <span class="poster-hint" aria-hidden="true">
-                <span>打开档案</span><b>↗</b>
+                <span>打开档案</span><b>＋</b>
               </span>
             </button>
             <div v-if="item.images.length > 1" class="carousel-controls">

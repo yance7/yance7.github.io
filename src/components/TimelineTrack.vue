@@ -129,7 +129,7 @@ function toggleMethod(id: string) {
             >
               <span>{{ proof.label }}</span>
               <strong>{{ proof.value }}</strong>
-              <span aria-hidden="true">↗</span>
+              <span aria-hidden="true">{{ proof.external ? '↗' : '→' }}</span>
             </a>
           </div>
         </div>

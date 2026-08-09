@@ -10,9 +10,15 @@ export const projects = [
     role: '全栈开发 · 模型训练 · UI 设计',
     stack: ['PyTorch', 'ONNX', 'Vue 3', 'HuggingFace Spaces'],
     href: 'https://fresheye.yance777.com',
-    github: 'https://github.com/yance77777/FreshEye',
+    github: 'https://github.com/yance7/FreshEye',
     caseStudy: {
       visual: { src: 'assets/case/fresheye-og-cover.png', alt: 'FreshEye 官方产品封面图' },
+      liveVisual: {
+        src: 'assets/case/fresheye-current-ui.png',
+        alt: 'FreshEye 当前线上结果界面：AI 新鲜度等级与置信度结果',
+        label: 'LIVE PRODUCT / CURRENT UI'
+      },
+      evidenceLabel: 'FreshEye 真实输入样本',
       visuals: [
         { src: 'assets/case/fresheye-sample-fresh.webp', label: 'FRESH SAMPLE', alt: 'FreshEye 真实输入样本：新鲜鱼眼图像' },
         { src: 'assets/case/fresheye-sample-highly-fresh.webp', label: 'HIGHLY FRESH', alt: 'FreshEye 真实输入样本：高度新鲜鱼眼图像' },
@@ -64,7 +70,7 @@ export const projects = [
       engineering: ['Vue 3', 'FastAPI', 'ONNX / PyTorch', 'Docker', 'Hugging Face Spaces'],
       proof: [
         { type: 'deployment', label: 'LIVE PRODUCT', value: 'fresheye.yance777.com', href: 'https://fresheye.yance777.com', external: true },
-        { type: 'source', label: 'SOURCE', value: 'GitHub', href: 'https://github.com/yance77777/FreshEye', external: true }
+        { type: 'source', label: 'SOURCE', value: 'GitHub', href: 'https://github.com/yance7/FreshEye', external: true }
       ]
     }
   },
@@ -77,7 +83,7 @@ export const projects = [
     stack: ['Vue 3', 'Vite', 'GitHub Pages'],
     previewImages: ['assets/concerts/concert-202510-zhang-yixing-01.jpg', 'assets/concerts/concert-202606-zhou-jielun.jpg'],
     href: 'https://encore.yance777.com',
-    github: 'https://github.com/yance77777/encore'
+    github: 'https://github.com/yance7/Encore'
   }
 ] satisfies Project[]
 

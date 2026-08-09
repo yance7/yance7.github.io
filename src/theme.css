@@ -260,6 +260,11 @@
 [data-theme='dark'] .grain { opacity: var(--grain-opacity); }
 [data-theme='dark'] .ambient { opacity: .72; }
 
+@media (max-width: 640px) {
+  [data-theme='light'] .grain, [data-theme='dark'] .grain { opacity: calc(var(--grain-opacity) * .5); }
+  [data-theme='light'] .ambient, [data-theme='dark'] .ambient { opacity: .45; }
+}
+
 /* ---------- 主题轨道按钮 ---------- */
 .theme-orbit .orbit-opt.sun { color: var(--gold); }
 .theme-orbit .orbit-opt.moon { color: var(--dim); }

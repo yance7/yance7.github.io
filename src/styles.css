@@ -169,9 +169,9 @@ img { display: block; max-width: 100%; }
   position: fixed; inset: 0; z-index: var(--z-overlay);
   background: var(--bg);
   display: flex; align-items: center; justify-content: center;
-  animation: menu-fade-in var(--dur-base) var(--ease-out);
+  animation: menu-enter var(--dur-base) var(--ease-out);
 }
-@keyframes menu-fade-in { from { opacity: 0 } to { opacity: 1 } }
+@keyframes menu-enter { from { transform: translateY(8px); } to { transform: none; } }
 .mobile-menu-close {
   position: absolute; top: 22px; right: var(--w-pad); z-index: 1;
   width: 40px; height: 40px; padding: 0; border: 1px solid var(--line-strong);
@@ -186,16 +186,19 @@ img { display: block; max-width: 100%; }
 .mobile-menu a {
   display: grid; grid-template-columns: auto 1fr auto; align-items: baseline; gap: 16px;
   padding: 18px 0; border-bottom: 1px solid var(--line);
-  color: var(--ink); opacity: 0; transform: translateX(-20px);
+  color: var(--ink); transform: translateX(-20px);
   animation: menu-item-in var(--dur-base) var(--ease-out) forwards;
   animation-delay: calc(var(--di) * 60ms + 100ms);
 }
-@keyframes menu-item-in { to { opacity: 1; transform: none } }
+@keyframes menu-item-in { to { transform: none } }
 .mobile-menu a .mm-num { font-family: var(--mono); font-size: var(--text-micro); color: var(--gold); }
 .mobile-menu a .mm-label { font-family: var(--serif); font-size: 1.6rem; font-weight: 500; }
 .mobile-menu a .mm-en { font-family: var(--mono); font-size: var(--text-micro); letter-spacing: .14em; color: var(--dim); }
 .mobile-menu a .mm-desc { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--muted); margin-top: -8px; }
 .mobile-menu a.active .mm-label { color: var(--gold); }
+[data-theme='light'] .mobile-menu a .mm-num { color: #704800; }
+[data-theme='light'] .mobile-menu a .mm-en,
+[data-theme='light'] .mobile-menu a .mm-desc { color: #4E5660; }
 
 /* ===== 主题轨道按钮 ===== */
 .theme-orbit {
@@ -240,11 +243,12 @@ img { display: block; max-width: 100%; }
 .hero-name {
   margin: 0 0 22px; font-family: var(--display); font-style: italic; font-weight: 600;
   font-size: clamp(5.5rem, 15vw, 12.5rem); line-height: .78; letter-spacing: -.04em;
-  color: var(--ink); text-shadow: 0 0 60px var(--glow-aqua);
+  color: var(--ink); text-shadow: none;
   opacity: 0; transform: translateY(20px);
   animation: hero-stagger-in var(--dur-slow) var(--ease-out) .22s forwards;
 }
 .hero-name span { color: var(--gold); }
+[data-theme='dark'] .hero-name { text-shadow: 0 0 44px rgba(109, 222, 208, .10); }
 .hero-title {
   margin: 0 0 22px; max-width: 900px;
   font-family: var(--serif); font-weight: 500;
@@ -437,9 +441,9 @@ img { display: block; max-width: 100%; }
     transition: opacity var(--dur-base) var(--ease-soft);
   }
   .home-focus-grid:has(.focus-research:is(:hover, :focus-visible)) .home-focus-connector,
-  .home-focus-grid:has(.focus-product:is(:hover, :focus-visible)) .home-focus-connector { opacity: 1; }
+  .home-focus-grid:has(.focus-product:is(:hover, :focus-within)) .home-focus-connector { opacity: 1; }
   .home-focus-grid:has(.focus-research:is(:hover, :focus-visible)) .focus-product,
-  .home-focus-grid:has(.focus-product:is(:hover, :focus-visible)) .focus-research { border-color: color-mix(in srgb, var(--aqua) 42%, var(--line)); }
+  .home-focus-grid:has(.focus-product:is(:hover, :focus-within)) .focus-research { border-color: color-mix(in srgb, var(--aqua) 42%, var(--line)); }
   .focus-card-main {
     display: flex;
     flex: 1;
@@ -1043,8 +1047,19 @@ img { display: block; max-width: 100%; }
 .sc-icon { font-size: 7rem; opacity: .25; transition: transform var(--dur-slow) var(--ease-apple), opacity var(--dur-base); }
 .showcase:hover .sc-icon { transform: scale(1.08); opacity: .4; }
 .sc-visual { display: block; width: min(92%, 520px); height: auto; border-radius: var(--radius-md); box-shadow: var(--shadow-3); }
+.sc-content { grid-column: 2; grid-row: 1; }
+.sc-live-evidence {
+  grid-column: 1 / -1; margin: 0; overflow: hidden;
+  border-top: 1px solid var(--line); background: var(--bg-deep);
+}
+.sc-live-evidence img { display: block; width: 100%; aspect-ratio: 36 / 25; object-fit: cover; object-position: center top; }
+.sc-live-evidence figcaption {
+  padding: 9px 14px; color: var(--aqua); font-family: var(--mono);
+  font-size: var(--text-micro); letter-spacing: .12em;
+}
 
 .sc-evidence { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 14px; border: 1px solid var(--line); background: var(--surface); }
+.sc-evidence { grid-column: 1 / -1; }
 .sc-evidence-head { grid-column: 1 / -1; display: flex; justify-content: space-between; color: var(--dim); font-family: var(--mono); font-size: var(--text-micro); letter-spacing: .14em; }
 .sc-evidence-item { min-width: 0; margin: 0; overflow: hidden; border: 1px solid var(--line); background: var(--bg-deep); }
 .sc-evidence-item img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
@@ -1093,6 +1108,19 @@ img { display: block; max-width: 100%; }
 .sc-tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .sc-tag { font-family: var(--mono); font-size: var(--text-xs); letter-spacing: .1em; padding: 3px 8px; border: 1px solid var(--line); border-radius: var(--radius-sm); color: var(--muted); }
 .sc-actions { display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
+
+/* ===== 深链落点确认 ===== */
+.showcase:target, .honor-card:target {
+  border-color: color-mix(in srgb, var(--aqua) 55%, var(--line));
+  animation: target-pulse .6s var(--ease-out) both;
+}
+.honor-card, .tl-item, .concert-row { scroll-margin-top: 32px; }
+.tl-item:target .tl-node i { background: var(--aqua); box-shadow: 0 0 0 6px var(--glow-aqua); }
+.concert-row:target { background: linear-gradient(90deg, var(--surface-tint), transparent); box-shadow: inset 3px 0 var(--aqua); }
+@keyframes target-pulse {
+  0% { box-shadow: 0 0 0 0 var(--glow-aqua), var(--shadow-1); }
+  100% { box-shadow: 0 0 0 5px transparent, var(--shadow-1); }
+}
 
 /* ===== 演唱会 ===== */
 .next-up {
@@ -1352,6 +1380,8 @@ img { display: block; max-width: 100%; }
   .tl-item::after { left: 124px; }
   .method-grid { grid-template-columns: 1fr; }
   .showcase { grid-template-columns: 1fr; }
+  .sc-content { grid-column: 1; grid-row: auto; }
+  .sc-live-evidence, .sc-evidence { grid-column: 1; }
   .sc-frame { min-height: 240px; }
   .secondary-project { grid-template-columns: 1fr; }
   .secondary-project-media { min-height: 220px; }

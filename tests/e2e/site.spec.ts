@@ -20,6 +20,7 @@ test('mobile navigation opens, traps focus, and closes explicitly', async ({ pag
   await page.locator('.menu-trigger').click()
   await expect(page.locator('.mobile-menu-overlay')).toBeVisible()
   await expect(page.locator('.mobile-menu-close')).toBeFocused()
+  await expect(page.locator('.mobile-menu a.active')).toHaveAttribute('aria-current', 'page')
   await page.keyboard.press('Tab')
   await expect(page.locator('.mobile-menu a').first()).toBeFocused()
   await page.locator('.mobile-menu-close').click()
@@ -34,6 +35,21 @@ test('theme preference persists after reload', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
   await page.reload()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+})
+
+test('home focus cards keep the research-product link on keyboard focus', async ({ page }) => {
+  await page.goto('/index.html')
+  await page.locator('.focus-product .focus-card-main').focus()
+  await expect(page.locator('.home-focus-connector')).toHaveCSS('opacity', '1')
+})
+
+test('section dots preserve native fragment navigation', async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 900 })
+  await page.goto('/honors.html')
+  const archiveDot = page.locator('.section-dot[href="#sec-honors-archive"]')
+  await archiveDot.click()
+  await expect(page).toHaveURL(/honors\.html#sec-honors-archive/)
+  await expect(archiveDot).toHaveAttribute('aria-current', 'location')
 })
 
 test('honors filtering and detail disclosure use stable ids', async ({ page }) => {
@@ -67,9 +83,14 @@ test('FreshEye product preview switches between input, result, and explain', asy
   const tabs = page.locator('.sc-shot-tabs [role="tab"]')
   await expect(tabs).toHaveCount(3)
   await tabs.filter({ hasText: 'RESULT' }).click()
-  await expect(page.locator('#shot-panel-result')).toContainText('Fresh')
+  await expect(tabs.filter({ hasText: 'RESULT' })).toHaveAttribute('aria-selected', 'true')
+  await expect(page.locator('.sc-result-panel')).toContainText('Fresh', { timeout: 10000 })
   await tabs.filter({ hasText: 'EXPLAIN' }).click()
-  await expect(page.locator('#shot-panel-explain')).toContainText('Grad-CAM')
+  await expect(tabs.filter({ hasText: 'EXPLAIN' })).toHaveAttribute('aria-selected', 'true')
+  await expect(page.locator('.sc-explain-panel')).toContainText('Grad-CAM', { timeout: 10000 })
+  await expect(page.getByRole('link', { name: /VIEW LIVE INTERFACE/ })).toHaveAttribute('href', 'https://fresheye.yance777.com')
+  await expect(page.locator('.sc-live-evidence img')).toHaveAttribute('alt', /当前线上结果界面/)
+  await expect(page.locator('.sc-evidence')).toHaveAttribute('aria-label', 'FreshEye 真实输入样本')
 })
 
 test('FreshEye tabs support roving keyboard navigation', async ({ page }) => {

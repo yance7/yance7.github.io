@@ -1,14 +1,13 @@
-/* 彩蛋：依次按下 y-a-n-c-e，屏幕上升起一串音符 */
 import { onMounted, onUnmounted } from 'vue'
 
 const SEQUENCE = ['y', 'a', 'n', 'c', 'e']
 const NOTES = ['♪', '♫', '♬', '♩']
 let progress = 0
-let timers = []
+let timers: number[] = []
 
-function onKey(e) {
+function onKey(e: KeyboardEvent) {
   const target = e.target
-  if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target?.isContentEditable) return
+  if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || (target instanceof HTMLElement && target.isContentEditable)) return
   const key = e.key.toLowerCase()
   if (key === SEQUENCE[progress]) {
     progress += 1
@@ -22,7 +21,7 @@ function onKey(e) {
 }
 
 function burst() {
-  const els = []
+  const els: HTMLElement[] = []
   for (let i = 0; i < 16; i += 1) {
     const el = document.createElement('i')
     el.className = 'music-note'
@@ -36,7 +35,7 @@ function burst() {
     document.body.appendChild(el)
     els.push(el)
   }
-  timers.push(setTimeout(() => {
+  timers.push(window.setTimeout(() => {
     els.forEach((el) => el.remove())
   }, 2600))
 }
@@ -48,7 +47,7 @@ export function useMusicNotes() {
   })
   onUnmounted(() => {
     window.removeEventListener('keydown', onKey)
-    timers.forEach(clearTimeout)
+    timers.forEach((timer) => window.clearTimeout(timer))
     timers = []
     document.querySelectorAll('.music-note').forEach((el) => el.remove())
   })

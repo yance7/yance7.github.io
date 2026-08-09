@@ -35,7 +35,23 @@ withDefaults(defineProps<{ project: Project; index?: number }>(), { index: 0 })
       </div>
     </div>
 
-    <div v-if="project.caseStudy?.visuals" class="sc-evidence" aria-label="FreshEye 真实输入样本">
+    <figure v-if="project.caseStudy?.liveVisual" class="sc-live-evidence">
+      <img
+        :src="project.caseStudy.liveVisual.src"
+        :alt="project.caseStudy.liveVisual.alt"
+        width="1440"
+        height="1000"
+        loading="lazy"
+        decoding="async"
+      >
+      <figcaption>{{ project.caseStudy.liveVisual.label }}</figcaption>
+    </figure>
+
+    <div
+      v-if="project.caseStudy?.visuals"
+      class="sc-evidence"
+      :aria-label="project.caseStudy.evidenceLabel || `${project.en} 真实输入样本`"
+    >
       <div class="sc-evidence-head">
         <span>REAL INPUTS</span>
         <span>MODEL CONTEXT</span>
@@ -68,7 +84,7 @@ withDefaults(defineProps<{ project: Project; index?: number }>(), { index: 0 })
           <span class="sc-meta-label">RESEARCH FOUNDATION</span>
           <a class="sc-research-link" :href="project.caseStudy.research.href">
             <strong>{{ project.caseStudy.research.title }}</strong>
-            <span>{{ project.caseStudy.research.detail }} ↗</span>
+            <span>{{ project.caseStudy.research.detail }} →</span>
           </a>
         </div>
         <div class="sc-case-block">
@@ -97,7 +113,7 @@ withDefaults(defineProps<{ project: Project; index?: number }>(), { index: 0 })
             >
               <span>{{ proof.label }}</span>
               <strong>{{ proof.value }}</strong>
-              <span aria-hidden="true">↗</span>
+              <span aria-hidden="true">{{ proof.external ? '↗' : '→' }}</span>
             </a>
           </div>
         </div>
@@ -118,7 +134,7 @@ withDefaults(defineProps<{ project: Project; index?: number }>(), { index: 0 })
 
       <div class="sc-actions">
         <a class="btn-primary" :href="project.href" target="_blank" rel="noopener" v-magnetic>
-          ENTER PROJECT <span aria-hidden="true">→</span>
+          ENTER PROJECT <span aria-hidden="true">↗</span>
         </a>
         <a v-if="project.github" class="btn-ghost" :href="project.github" target="_blank" rel="noopener" v-magnetic>
           RESEARCH REPO <span aria-hidden="true">↗</span>

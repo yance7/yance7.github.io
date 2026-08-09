@@ -34,6 +34,7 @@ for (const asset of [
   'assets/favicon.svg',
   'assets/site.webmanifest',
   'assets/case/fresheye-og-cover.png',
+  'assets/case/fresheye-current-ui.png',
   'CNAME',
   'robots.txt',
   'sitemap.xml'
@@ -46,6 +47,17 @@ assert(index.includes('assets/og-home.png'), '首页未使用专属 OG image')
 assert(!index.includes('og-card.svg'), 'OG image 仍引用 SVG')
 for (const [page, slug] of Object.entries({ index: 'home', academics: 'academics', honors: 'honors', research: 'research', works: 'works', concerts: 'concerts' })) {
   assert(read(`${page}.html`).includes(`assets/og-${slug}.png`), `${page}.html 未使用专属 OG image`)
+}
+const ogAlts = {
+  index: 'Yance · Research and product archive',
+  academics: 'Yance academic archive',
+  honors: 'Yance honors and competition archive',
+  research: 'Yance research archive',
+  works: 'FreshEye and Encore product portfolio',
+  concerts: 'Yance live music archive'
+}
+for (const [page, alt] of Object.entries(ogAlts)) {
+  assert(read(`${page}.html`).includes(`og:image:alt" content="${alt}"`), `${page}.html 未使用页面专属 OG image alt`)
 }
 
 for (const asset of [
@@ -75,6 +87,7 @@ const styles = readFileSync(join(root, 'src/styles.css'), 'utf8')
 const concertsSource = readFileSync(join(root, 'src/pages/ConcertsPage.vue'), 'utf8')
 const mainSource = readFileSync(join(root, 'src/main.js'), 'utf8')
 assert(showcase.includes('class="sc-evidence"'), 'FreshEye evidence block missing')
+assert(showcase.includes('class="sc-live-evidence"'), 'FreshEye live UI evidence block missing')
 assert(showcase.includes(':id="`project-${project.id}`"'), 'Project showcase anchor missing')
 assert(previewSource.includes('sc-shot-tabs'), 'FreshEye product screenshot switcher missing')
 assert(previewSource.includes('@keydown="onShotKeydown'), 'FreshEye tabs missing keyboard navigation')

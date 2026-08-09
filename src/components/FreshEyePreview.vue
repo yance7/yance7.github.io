@@ -138,6 +138,9 @@ function onShotKeydown(event: KeyboardEvent, index: number) {
     </Transition>
     <p class="sc-shot-caption" aria-live="polite">{{ activeShotMeta.caption }}</p>
     <p class="sc-preview-disclaimer">{{ preview.eyebrow }}</p>
+    <a class="sc-preview-live-link" :href="project.href" target="_blank" rel="noopener">
+      VIEW LIVE INTERFACE <span aria-hidden="true">↗</span>
+    </a>
   </div>
 </template>
 
@@ -203,6 +206,11 @@ function onShotKeydown(event: KeyboardEvent, index: number) {
 .sc-shot-caption, .sc-preview-disclaimer { margin: 0; border-top: 1px solid rgba(235, 238, 245, .1); color: #A5B2BB; line-height: 1.4; }
 .sc-shot-caption { padding: 8px 14px 4px; }
 .sc-preview-disclaimer { padding: 0 14px 11px; color: #A5B2BB; letter-spacing: .04em; }
+.sc-preview-live-link {
+  display: inline-flex; align-items: center; gap: 6px; margin: 0 14px 13px;
+  color: #8BE5D5; font-family: var(--mono); font-size: var(--text-micro); letter-spacing: .08em;
+}
+.sc-preview-live-link:hover { color: #F2FBF8; }
 .shot-enter-active, .shot-leave-active { transition: opacity .2s ease, transform .2s ease; }
 .shot-enter-from { opacity: 0; transform: translateY(5px); }
 .shot-leave-to { opacity: 0; transform: translateY(-5px); }

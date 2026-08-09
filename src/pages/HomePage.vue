@@ -21,16 +21,16 @@ const selectedActivities = computed(() => activities.filter((item) => item.featu
       <div class="home-focus-grid">
         <a
           v-for="(item, i) in featuredResearch"
-          :key="item.title"
+          :key="item.id"
           class="focus-card focus-research"
           :href="`research.html#${item.id}`"
           v-reveal="{ delay: i * 70 }"
         >
           <span class="focus-label">RESEARCH / 0{{ i + 1 }}</span>
           <strong>{{ item.title }}</strong>
-          <p class="focus-proof">{{ item.metrics[0].value }} {{ item.metrics[0].label }} · {{ item.metrics[1].value }} {{ item.metrics[1].label }}</p>
+          <p class="focus-proof">{{ item.summaryMetrics[0].value }} {{ item.summaryMetrics[0].label }} · {{ item.summaryMetrics[1].value }} {{ item.summaryMetrics[1].label }}</p>
           <p>{{ item.text }}</p>
-          <span class="focus-link">阅读研究 <span aria-hidden="true">↗</span></span>
+          <span class="focus-link">阅读研究 <span aria-hidden="true">→</span></span>
         </a>
 
         <div v-if="featuredResearch.length && featuredProjects.length" class="home-focus-connector" aria-hidden="true">
@@ -40,7 +40,7 @@ const selectedActivities = computed(() => activities.filter((item) => item.featu
 
         <article
           v-for="(item, i) in featuredProjects"
-          :key="item.title"
+          :key="item.id"
           class="focus-card focus-product"
           :class="item.tone"
           v-reveal="{ delay: (i + featuredResearch.length) * 70 }"
@@ -50,7 +50,7 @@ const selectedActivities = computed(() => activities.filter((item) => item.featu
             <strong>{{ item.title }} <small>{{ item.en }}</small></strong>
             <p class="focus-proof">{{ item.caseStudy ? 'RESEARCH → PRODUCT' : item.domain }}</p>
             <p>{{ item.value }}</p>
-            <span class="focus-link">查看产品案例 <span aria-hidden="true">↗</span></span>
+            <span class="focus-link">查看产品案例 <span aria-hidden="true">→</span></span>
           </a>
           <a class="focus-live-link" :href="item.href" target="_blank" rel="noopener">
             LIVE PRODUCT <span aria-hidden="true">↗</span>
@@ -88,7 +88,7 @@ const selectedActivities = computed(() => activities.filter((item) => item.featu
             <em>{{ w.en }}</em>
             <p>{{ w.desc }}</p>
           </div>
-          <span class="world-arrow" aria-hidden="true">↗</span>
+          <span class="world-arrow" aria-hidden="true">→</span>
         </a>
       </div>
     </section>
@@ -127,8 +127,8 @@ const selectedActivities = computed(() => activities.filter((item) => item.featu
         </div>
       </div>
       <div class="beyond-links">
-        <a href="academics.html">EXPLORE ACADEMICS <span aria-hidden="true">↗</span></a>
-        <a href="honors.html">VIEW HONORS <span aria-hidden="true">↗</span></a>
+        <a href="academics.html">EXPLORE ACADEMICS <span aria-hidden="true">→</span></a>
+        <a href="honors.html">VIEW HONORS <span aria-hidden="true">→</span></a>
       </div>
     </section>
   </div>
