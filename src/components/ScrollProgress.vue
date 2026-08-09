@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { useScrollProgress } from '../composables/useScrollProgress'
 const { progress, showTop } = useScrollProgress()
 

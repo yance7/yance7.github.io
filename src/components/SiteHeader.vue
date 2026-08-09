@@ -8,6 +8,7 @@ defineProps<{ page?: string }>()
 const menuOpen = ref(false)
 const menuTrigger = ref<HTMLButtonElement | null>(null)
 const menuClose = ref<HTMLButtonElement | null>(null)
+const menuOverlay = ref<HTMLElement | null>(null)
 
 function closeMenu(restoreFocus = false) {
   menuOpen.value = false
@@ -15,7 +16,8 @@ function closeMenu(restoreFocus = false) {
 }
 
 function getMenuFocusable(): HTMLElement[] {
-  return [...document.querySelectorAll<HTMLElement>('.mobile-menu-overlay button:not([disabled]), .mobile-menu-overlay a[href]')]
+  if (!menuOverlay.value) return []
+  return [...menuOverlay.value.querySelectorAll<HTMLElement>('button:not([disabled]), a[href]')]
 }
 
 function onKeydown(event: KeyboardEvent) {
@@ -107,7 +109,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 
   <!-- 移动端全屏菜单遮罩 -->
   <Teleport to="body">
-    <div v-if="menuOpen" class="mobile-menu-overlay" role="dialog" aria-modal="true" aria-label="移动端导航" @click.self="closeMenu(true)">
+    <div ref="menuOverlay" v-if="menuOpen" class="mobile-menu-overlay" role="dialog" aria-modal="true" aria-label="移动端导航" @click.self="closeMenu(true)">
       <button ref="menuClose" class="mobile-menu-close" type="button" aria-label="关闭导航" @click="closeMenu(true)">×</button>
       <nav id="mobile-navigation" class="mobile-menu" aria-label="移动端导航">
         <a

@@ -1,8 +1,8 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { useTheme } from '../composables/useTheme'
 const { theme, toggleTheme } = useTheme()
-const btn = ref(null)
+const btn = ref<HTMLButtonElement | null>(null)
 
 function onToggle() {
   toggleTheme(btn.value)

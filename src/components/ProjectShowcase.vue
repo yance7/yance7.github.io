@@ -22,18 +22,23 @@ const projectNo = computed(() => String(props.index + 1).padStart(2, '0'))
       </div>
       <div class="sc-head-status">
         <StatusBadge v-if="project.status" :status="project.status" :label="project.statusLabel" />
-        <a :href="project.href" target="_blank" rel="noopener">{{ project.domain }} <span aria-hidden="true">↗</span></a>
+        <a
+          :href="project.href"
+          target="_blank"
+          rel="noopener"
+          :aria-label="`打开 ${project.en} 网站`"
+        >{{ project.domain }} <span aria-hidden="true">↗</span></a>
       </div>
     </header>
 
     <div class="sc-dossier-main">
       <div class="sc-identity">
         <span class="sc-index" aria-hidden="true">{{ projectNo }}</span>
-        <div>
+        <div class="sc-identity-copy">
           <p class="sc-overline">{{ project.discipline }}</p>
           <h3>
             <span>{{ project.title }}</span>
-            <small>{{ project.en }}</small>
+            <small class="sc-wordmark">{{ project.en }}</small>
           </h3>
           <p class="sc-value">{{ project.value }}</p>
         </div>
@@ -43,10 +48,10 @@ const projectNo = computed(() => String(props.index + 1).padStart(2, '0'))
         <span class="sc-meta-label">PROJECT NOTE</span>
         <p class="sc-desc">{{ project.description }}</p>
         <div class="sc-actions">
-          <a class="btn-primary" :href="project.href" target="_blank" rel="noopener" v-magnetic>
+          <a class="btn-primary" :href="project.href" target="_blank" rel="noopener" v-magnetic="{ strength: 3.5 }">
             ENTER PROJECT <span aria-hidden="true">→</span>
           </a>
-          <a v-if="project.github" class="btn-ghost" :href="project.github" target="_blank" rel="noopener" v-magnetic>
+          <a v-if="project.github" class="btn-ghost" :href="project.github" target="_blank" rel="noopener" v-magnetic="{ strength: 3.5 }">
             SOURCE CODE <span aria-hidden="true">→</span>
           </a>
         </div>

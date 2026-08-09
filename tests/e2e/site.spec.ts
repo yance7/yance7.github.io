@@ -59,6 +59,7 @@ test('honors filtering and detail disclosure use stable ids', async ({ page }) =
   const detailButton = page.locator('.honor-expand').first()
   await detailButton.click()
   await expect(detailButton).toHaveAttribute('aria-expanded', 'true')
+  await expect(detailButton.locator('.disclosure-mark')).toHaveText('−')
   await expect(page.locator(`#${await detailButton.getAttribute('aria-controls')}`)).toBeVisible()
 })
 
@@ -67,6 +68,7 @@ test('research methodology disclosure and proof links are reachable', async ({ p
   const toggle = page.locator('.method-toggle').first()
   await toggle.click()
   await expect(toggle).toHaveAttribute('aria-expanded', 'true')
+  await expect(toggle.locator('.disclosure-mark')).toHaveText('−')
   const disclosure = page.locator(`#${await toggle.getAttribute('aria-controls')}`)
   await expect(disclosure).toHaveClass(/open/)
   await expect(disclosure.locator('.method-grid')).toHaveCSS('max-height', 'none')
@@ -105,6 +107,30 @@ test('works uses typographic project dossiers without legacy icons', async ({ pa
 
   const bodyFont = await page.locator('body').evaluate((element) => getComputedStyle(element).fontFamily)
   expect(bodyFont).toContain('Manrope Variable')
+
+  for (const width of [1440, 1100, 1024, 901, 900, 768, 390, 320]) {
+    await page.setViewportSize({ width, height: 844 })
+    const layouts = await page.locator('.sc-wordmark').evaluateAll((elements) => elements.map((element) => {
+      const range = document.createRange()
+      range.selectNodeContents(element)
+      const lineTops = [...range.getClientRects()].map((rect) => Math.round(rect.top))
+      const rect = element.getBoundingClientRect()
+      const container = element.closest('.sc-identity')?.getBoundingClientRect()
+      return {
+        lines: new Set(lineTops).size,
+        inside: !!container && rect.left >= container.left - 1 && rect.right <= container.right + 1
+      }
+    }))
+    expect(layouts, `project wordmarks at ${width}px`).toEqual([
+      { lines: 1, inside: true },
+      { lines: 1, inside: true }
+    ])
+
+    const sequenceFits = await page.locator('.sc-sequence li span').evaluateAll((elements) =>
+      elements.every((element) => element.scrollWidth <= element.clientWidth + 1)
+    )
+    expect(sequenceFits, `project flow labels at ${width}px`).toBe(true)
+  }
 
   await page.setViewportSize({ width: 390, height: 844 })
   await page.reload()

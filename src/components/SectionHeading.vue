@@ -1,11 +1,15 @@
-<script setup>
-defineProps({
-  no: { type: String, required: true },
-  label: { type: String, required: true },
-  title: { type: String, required: true },
-  accent: { type: String, default: '' },
-  copy: { type: String, default: '' },
-  minor: { type: Boolean, default: false }
+<script setup lang="ts">
+withDefaults(defineProps<{
+  no: string
+  label: string
+  title: string
+  accent?: string
+  copy?: string
+  minor?: boolean
+}>(), {
+  accent: '',
+  copy: '',
+  minor: false
 })
 </script>
 

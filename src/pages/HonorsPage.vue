@@ -102,6 +102,7 @@ function toggleExpand(id: string) {
               :aria-controls="`honor-detail-${h.id}`"
               @click="toggleExpand(h.id)"
             >
+              <span class="disclosure-mark" aria-hidden="true">{{ expandedId === h.id ? '−' : '+' }}</span>
               {{ expandedId === h.id ? '收起' : '详情' }}
             </button>
           </div>

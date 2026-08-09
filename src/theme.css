@@ -6,8 +6,8 @@
 /* ---------- 全局设计令牌（与主题无关） ---------- */
 :root {
   /* 字体族 */
-  --sans: "Manrope Variable", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
-  --serif: "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", "STSong", "SimSun", serif;
+  --sans: "Manrope Variable", "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  --serif: "Songti SC", "STSong", "Noto Serif CJK SC", "Source Han Serif SC", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
   --display: "Fraunces Variable", "Songti SC", "STSong", Georgia, serif;
   --mono: "JetBrains Mono Variable", "SF Mono", "Cascadia Code", ui-monospace, monospace;
 

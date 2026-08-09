@@ -63,6 +63,7 @@ function toggleMethod(id: string) {
             :aria-controls="`method-${item.id}`"
             @click="toggleMethod(item.id)"
           >
+            <span class="disclosure-mark" aria-hidden="true">{{ openMethod[item.id] ? '−' : '+' }}</span>
             {{ openMethod[item.id] ? '收起方法论' : '展开方法论' }}
           </button>
           <div
