@@ -1,4 +1,4 @@
 export const THEME_COLORS = Object.freeze({
-  light: '#F5F2EC',
-  dark: '#0B0E14'
+  light: '#F7F8F6',
+  dark: '#0A1014'
 })

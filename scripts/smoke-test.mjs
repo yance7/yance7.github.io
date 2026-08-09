@@ -96,6 +96,7 @@ for (const page of ['HomePage.vue', 'AcademicsPage.vue', 'HonorsPage.vue', 'Rese
 assert(!mainSource.includes('legacy-sw-cleanup'), 'Legacy Service Worker cleanup code remains')
 assert(!/font-size:\s*(?:[0-9]|10)px/.test(styles), 'Tiny font token found')
 assert(!styles.includes('.lyric-eq') && !styles.includes('.coords-bar'), 'Hero decoration styles remain')
+assert(!styles.includes('hero-works-break'), 'Works lyric still contains the forced line break')
 assert(!showcase.includes('class="sc-frame" aria-hidden="true"'), 'Case Study 图片仍被 aria-hidden 父节点隐藏')
 assert(styles.includes('z-index: 3;'), 'Concert carousel controls 缺少层级保护')
 console.log(`smoke: ${pages.length} pages and static assets verified`)

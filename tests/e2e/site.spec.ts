@@ -90,11 +90,16 @@ test('research deployment link lands on the FreshEye case study', async ({ page 
 
 test('works uses unified icon cards without product images', async ({ page }) => {
   await page.goto('/works.html')
-  await expect(page.locator('.hero-works-break')).toHaveCount(1)
+  const lyric = page.locator('.hero-works-title')
+  await expect(lyric).toHaveAttribute('aria-label', '（因为我已明白，努力就能成功）')
+  await expect(lyric).toHaveCSS('white-space', 'nowrap')
+  await expect(lyric.locator('br')).toHaveCount(0)
   await expect(page.locator('.showcase')).toHaveCount(2)
   await expect(page.locator('.page-works img')).toHaveCount(0)
   await expect(page.locator('.project-mark-eye')).toBeVisible()
   await expect(page.locator('.project-mark-spotlight')).toBeVisible()
+  await expect(page.locator('.mark-fish-halo')).toBeVisible()
+  await expect(page.locator('.mark-spotlight-halo')).toBeVisible()
 
   const ratios = await page.locator('.sc-visual-panel').evaluateAll((panels) => panels.map((panel) => {
     const rect = panel.getBoundingClientRect()
@@ -102,10 +107,33 @@ test('works uses unified icon cards without product images', async ({ page }) =>
   }))
   expect(Math.abs(ratios[0] - ratios[1])).toBeLessThan(0.03)
 
-  await page.locator('#project-fresheye').hover()
-  await expect(page.locator('.mark-fish-eye')).toHaveCSS('animation-name', 'fish-blink')
-  await page.locator('#project-encore').hover()
-  await expect(page.locator('.mark-spotlight-cone')).toHaveCSS('animation-name', 'spotlight-breathe')
+  const supportsFineHover = await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)
+  if (supportsFineHover) {
+    await page.locator('#project-fresheye').hover()
+    await expect(page.locator('.mark-fish-eye')).toHaveCSS('animation-name', 'fish-blink')
+    await page.locator('#project-encore').hover()
+    await expect(page.locator('.mark-spotlight-cone')).toHaveCSS('animation-name', 'spotlight-breathe')
+  }
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.reload()
+  const mobileLyric = page.locator('.hero-works-title')
+  const mobileLyricSize = await mobileLyric.evaluate((element) => ({
+    clientWidth: element.clientWidth,
+    scrollWidth: element.scrollWidth
+  }))
+  expect(mobileLyricSize.scrollWidth).toBeLessThanOrEqual(mobileLyricSize.clientWidth + 1)
+
+  await page.setViewportSize({ width: 320, height: 700 })
+  await page.reload()
+  const narrowLayout = await page.evaluate(() => ({
+    documentWidth: document.documentElement.scrollWidth,
+    viewportWidth: window.innerWidth,
+    lyricWidth: document.querySelector('.hero-works-title')?.scrollWidth || 0,
+    lyricBox: document.querySelector('.hero-works-title')?.clientWidth || 0
+  }))
+  expect(narrowLayout.documentWidth).toBeLessThanOrEqual(narrowLayout.viewportWidth)
+  expect(narrowLayout.lyricWidth).toBeLessThanOrEqual(narrowLayout.lyricBox + 1)
 })
 
 test('archive pages omit the visible last updated label', async ({ page }) => {

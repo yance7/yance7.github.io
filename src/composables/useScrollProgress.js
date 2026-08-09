@@ -12,15 +12,13 @@ export function useScrollProgress() {
     showTop.value = top > 480
   }
 
-  let ticking = false
+  let frame = 0
   function onScroll() {
-    if (!ticking) {
-      requestAnimationFrame(() => {
-        update()
-        ticking = false
-      })
-      ticking = true
-    }
+    if (frame) return
+    frame = requestAnimationFrame(() => {
+      update()
+      frame = 0
+    })
   }
 
   onMounted(() => {
@@ -32,6 +30,8 @@ export function useScrollProgress() {
   onUnmounted(() => {
     window.removeEventListener('scroll', onScroll)
     window.removeEventListener('resize', onScroll)
+    cancelAnimationFrame(frame)
+    frame = 0
   })
 
   return { progress, showTop }

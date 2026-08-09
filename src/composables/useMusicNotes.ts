@@ -6,6 +6,7 @@ let progress = 0
 let timers: number[] = []
 
 function onKey(e: KeyboardEvent) {
+  if (e.repeat) return
   const target = e.target
   if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || (target instanceof HTMLElement && target.isContentEditable)) return
   const key = e.key.toLowerCase()
@@ -35,9 +36,12 @@ function burst() {
     document.body.appendChild(el)
     els.push(el)
   }
-  timers.push(window.setTimeout(() => {
+  let timer = 0
+  timer = window.setTimeout(() => {
     els.forEach((el) => el.remove())
-  }, 2600))
+    timers = timers.filter((id) => id !== timer)
+  }, 2600)
+  timers.push(timer)
 }
 
 export function useMusicNotes() {
@@ -47,6 +51,7 @@ export function useMusicNotes() {
   })
   onUnmounted(() => {
     window.removeEventListener('keydown', onKey)
+    progress = 0
     timers.forEach((timer) => window.clearTimeout(timer))
     timers = []
     document.querySelectorAll('.music-note').forEach((el) => el.remove())

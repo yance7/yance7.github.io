@@ -1,9 +1,13 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import StatusBadge from './StatusBadge.vue'
 import ProjectMark from './ProjectMark.vue'
 import type { Project } from '../data/types'
 
-withDefaults(defineProps<{ project: Project; index?: number }>(), { index: 0 })
+const props = withDefaults(defineProps<{ project: Project; index?: number }>(), { index: 0 })
+const project = computed(() => props.project)
+const projectNo = computed(() => String(props.index + 1).padStart(2, '0'))
+const visualMode = computed(() => props.project.icon === 'eye' ? 'AI / FRESHNESS' : 'MUSIC / MEMORY')
 </script>
 
 <template>
@@ -11,28 +15,29 @@ withDefaults(defineProps<{ project: Project; index?: number }>(), { index: 0 })
     :id="`project-${project.id}`"
     class="showcase"
     :class="[project.tone, { 'has-case-study': project.caseStudy }]"
+    :data-project="project.id"
     v-reveal
   >
     <div class="sc-hero">
-      <div class="sc-visual-panel">
+      <div class="sc-visual-panel" aria-hidden="true">
         <div class="sc-visual-bar">
-          <span>PROJECT 0{{ index + 1 }}</span>
+          <span>PROJECT {{ projectNo }}</span>
           <span>{{ project.domain }}</span>
         </div>
         <ProjectMark :icon="project.icon" />
         <div class="sc-visual-caption">
-          <span>{{ project.icon === 'eye' ? 'AI / FRESHNESS' : 'MUSIC / MEMORY' }}</span>
+          <span class="sc-visual-signal"><i></i>{{ visualMode }}</span>
           <small>MOVE TO EXPLORE</small>
         </div>
       </div>
 
       <div class="sc-intro">
         <div class="sc-top">
-          <span class="sc-overline">PROJECT 0{{ index + 1 }}</span>
+          <span class="sc-overline">PROJECT {{ projectNo }}</span>
           <span class="sc-domain">{{ project.domain }}</span>
         </div>
         <div class="sc-title-row">
-          <span class="sc-index">0{{ index + 1 }}</span>
+          <span class="sc-index">{{ projectNo }}</span>
           <h3>{{ project.title }} <small>{{ project.en }}</small></h3>
         </div>
         <StatusBadge v-if="project.status" :status="project.status" :label="project.statusLabel" />

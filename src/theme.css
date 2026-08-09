@@ -92,9 +92,9 @@
   color-scheme: light;
 
   /* 背景层 */
-  --bg: #F7F9FB;
-  --bg-deep: #EDF1F5;
-  --bg-tint: #F1F4F8;
+  --bg: #F7F8F6;
+  --bg-deep: #EDF1F0;
+  --bg-tint: #F1F4F1;
 
   /* 表面层 */
   --surface: rgba(255, 255, 255, .88);
@@ -102,22 +102,23 @@
   --surface-tint: rgba(255, 255, 255, .72);
 
   /* 文字 */
-  --ink: #18212B;
-  --muted: #536171;
-  --dim: #687685;
-  --dim-soft: #8A96A3;
+  --ink: #1B2523;
+  --muted: #53615E;
+  --dim: #687773;
+  --dim-soft: #8E9A96;
 
   /* 线条 */
-  --line: rgba(32, 35, 41, .12);
-  --line-strong: rgba(32, 35, 41, .22);
-  --line-faint: rgba(32, 35, 41, .06);
+  --line: rgba(31, 45, 41, .13);
+  --line-strong: rgba(31, 45, 41, .23);
+  --line-faint: rgba(31, 45, 41, .06);
 
   /* 强调色 */
-  --gold: #A2661D;
-  --gold-text: #8D5815;
-  --aqua: #277B76;
+  --gold: #A5681E;
+  --gold-text: #8E5816;
+  --aqua: #277E76;
   --violet: #695F98;
   --focus: #8D5815;
+  --accent-contrast: #FFFAF0;
 
   --text-primary: var(--ink);
   --text-secondary: var(--muted);
@@ -163,25 +164,25 @@
   color-scheme: dark;
 
   /* 背景层 */
-  --bg: #0B0E14;
-  --bg-deep: #131822;
-  --bg-tint: #0E1218;
+  --bg: #0A1014;
+  --bg-deep: #121B20;
+  --bg-tint: #0E151A;
 
   /* 表面层 */
-  --surface: rgba(20, 26, 38, .68);
-  --surface-strong: rgba(26, 33, 46, .92);
-  --surface-tint: rgba(20, 26, 36, .5);
+  --surface: rgba(18, 28, 34, .72);
+  --surface-strong: rgba(24, 35, 42, .94);
+  --surface-tint: rgba(17, 27, 33, .58);
 
   /* 文字 */
   --ink: #F3F0E9;
-  --muted: #A0A4AE;
-  --dim: #7B808A;
-  --dim-soft: #6E727D;
+  --muted: #A2AAB0;
+  --dim: #7D878D;
+  --dim-soft: #707A80;
 
   /* 线条 */
-  --line: rgba(235, 238, 245, .13);
-  --line-strong: rgba(235, 238, 245, .26);
-  --line-faint: rgba(235, 238, 245, .06);
+  --line: rgba(235, 242, 245, .14);
+  --line-strong: rgba(235, 242, 245, .27);
+  --line-faint: rgba(235, 242, 245, .06);
 
   /* 强调色 */
   --gold: #E8B962;
@@ -189,6 +190,7 @@
   --aqua: #6DDED0;
   --violet: #A698E6;
   --focus: #E8B962;
+  --accent-contrast: #151616;
 
   --text-primary: var(--ink);
   --text-secondary: var(--muted);

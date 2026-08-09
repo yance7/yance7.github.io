@@ -19,6 +19,9 @@ const coordsLabel = computed(() =>
 )
 const geo = computed(() => (props.error ? '—' : heroGeo[props.page] || '—'))
 const lyricChars = computed(() => props.title.split(''))
+const accessibleTitle = computed(() =>
+  props.page === 'works' ? `（${props.title}）` : props.title
+)
 </script>
 
 <template>
@@ -27,14 +30,18 @@ const lyricChars = computed(() => props.title.split(''))
       <div class="hero-main">
         <p class="hero-kicker" v-reveal>{{ kicker }}</p>
         <h1 v-if="isHome" class="hero-name" v-reveal="{ delay: 90 }">Yance<span>.</span></h1>
-        <h1 v-else class="hero-title hero-lyric" :aria-label="title">
+        <h1
+          v-else
+          class="hero-title hero-lyric"
+          :class="{ 'hero-works-title': page === 'works' }"
+          :aria-label="accessibleTitle"
+        >
           <template v-for="(ch, i) in lyricChars" :key="`${ch}-${i}`">
             <span
               class="lyric-char"
               :style="{ '--ci': i }"
               aria-hidden="true"
             >{{ ch }}</span>
-            <br v-if="page === 'works' && ch === '，'" class="hero-works-break" aria-hidden="true">
           </template>
         </h1>
         <p class="hero-copy" v-reveal="{ delay: 180 }">{{ copy }}</p>
