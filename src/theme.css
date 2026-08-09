@@ -6,9 +6,9 @@
 /* ---------- 全局设计令牌（与主题无关） ---------- */
 :root {
   /* 字体族 */
-  --sans: "IBM Plex Sans Variable", "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
-  --serif: "Songti SC", "STSong", "Noto Serif CJK SC", "Source Han Serif SC", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
-  --display: "Fraunces Variable", "Songti SC", "STSong", Georgia, serif;
+  --sans: "Geist Variable", "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  --serif: "Songti SC", "STSong", "Noto Serif CJK SC", "Source Han Serif SC", "Microsoft YaHei UI", "Microsoft YaHei", serif;
+  --display: "Source Serif 4 Variable", "Songti SC", "STSong", Georgia, serif;
   --mono: "JetBrains Mono Variable", "SF Mono", "Cascadia Code", ui-monospace, monospace;
 
   /* 缓动函数（接近苹果 spring 的丝滑感） */
@@ -18,34 +18,10 @@
   --ease-apple: cubic-bezier(.28, .68, .53, .94);
   --ease-soft: cubic-bezier(.4, 0, .2, 1);
 
-  /* 间距标尺（更大留白） */
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 16px;
-  --space-lg: 24px;
-  --space-xl: 48px;
-  --space-2xl: 80px;
-  --space-3xl: 120px;
-  --space-4xl: 180px;
-
   /* 可读的最小文本级别，装饰性文字也不低于 11px */
   --text-micro: .6875rem;
   --text-xs: .75rem;
   --text-sm: .8125rem;
-  --text-meta: .8125rem;
-
-  /* Color: Gold = brand / Aqua = technical / Violet = rare accent */
-  --color-brand: var(--gold);
-  --color-technical: var(--aqua);
-  --color-rare: var(--violet);
-  /* Surface: Base / Raised / Interactive / Overlay */
-  --surface-base: var(--bg);
-  --surface-raised: var(--surface);
-  --surface-interactive: var(--surface-tint);
-  --surface-overlay: var(--surface-strong);
-  /* Motion: Enter = reveal / Hover = one interaction / State = color */
-  --motion-enter: var(--dur-slow);
-  --motion-interaction: var(--dur-fast);
 
   /* 圆角（更柔和） */
   --radius-xs: 3px;
@@ -55,10 +31,6 @@
   --radius-xl: 20px;
   --radius-2xl: 28px;
   --radius-full: 999px;
-
-  /* 边框 */
-  --border-thin: 1px;
-  --border-medium: 2px;
 
   /* z-index 层级 */
   --z-base: 1;
@@ -81,9 +53,6 @@
   --w-read: 760px;
   --w-pad: 5vw;
 
-  /* 主题切换环境光扩散 */
-  --ambient-radius: 0px;
-  --ambient-opacity: 0;
 }
 
 /* ---------- 亮色 · 暖白纸（默认） ---------- */

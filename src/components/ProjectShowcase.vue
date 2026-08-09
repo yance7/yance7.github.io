@@ -5,6 +5,7 @@ import type { Project } from '../data/types'
 
 const props = withDefaults(defineProps<{ project: Project; index?: number }>(), { index: 0 })
 const projectNo = computed(() => String(props.index + 1).padStart(2, '0'))
+const chapterCount = computed(() => String(props.project.story.chapters.length).padStart(2, '0'))
 </script>
 
 <template>
@@ -59,13 +60,12 @@ const projectNo = computed(() => String(props.index + 1).padStart(2, '0'))
     </div>
 
     <div class="sc-body">
-      <section class="sc-story" :aria-labelledby="`project-${project.id}-story`">
+      <section class="sc-story" :aria-label="`${project.en} project story`">
         <div class="sc-story-head">
           <div class="sc-story-ident">
             <span class="sc-meta-label">PROJECT STORY</span>
-            <span class="sc-story-count">{{ String(project.story.chapters.length).padStart(2, '0') }} CHAPTERS</span>
+            <span class="sc-story-count">{{ chapterCount }} CHAPTERS</span>
           </div>
-          <h4 :id="`project-${project.id}-story`">{{ project.story.label }}</h4>
           <p>{{ project.story.note }}</p>
         </div>
 

@@ -107,7 +107,6 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
     <div class="nav-status"><b></b><span>ONLINE / 2026</span></div>
   </header>
 
-  <!-- 移动端全屏菜单遮罩 -->
   <Teleport to="body">
     <div ref="menuOverlay" v-if="menuOpen" class="mobile-menu-overlay" role="dialog" aria-modal="true" aria-label="移动端导航" @click.self="closeMenu(true)">
       <button ref="menuClose" class="mobile-menu-close" type="button" aria-label="关闭导航" @click="closeMenu(true)">×</button>

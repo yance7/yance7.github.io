@@ -44,7 +44,6 @@ function toggleMethod(id: string) {
         <h3>{{ item.title }}</h3>
         <p>{{ item.text }}</p>
 
-        <!-- 关键指标条 -->
         <div class="tl-metrics" v-if="item.metrics">
           <div class="metric-item" v-for="m in item.metrics" :key="m.label">
             <strong>{{ m.value }}</strong>
@@ -53,7 +52,6 @@ function toggleMethod(id: string) {
           </div>
         </div>
 
-        <!-- 可展开方法论 -->
         <div v-if="item.methodology" class="tl-method">
           <button
             class="method-toggle"

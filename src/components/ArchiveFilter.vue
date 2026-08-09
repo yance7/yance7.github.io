@@ -13,6 +13,7 @@ const emit = defineEmits(['filter'])
       v-for="cat in categories"
       :key="cat.key"
       class="filter-btn"
+      type="button"
       :class="{ active: active === cat.key, [cat.key]: true }"
       :aria-pressed="active === cat.key"
       @click="emit('filter', cat.key)"

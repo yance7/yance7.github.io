@@ -107,10 +107,11 @@ test('works uses typographic project dossiers without legacy icons', async ({ pa
   await expect(page.locator('#project-encore .sc-identity h3')).toContainText('Encore')
 
   const bodyFont = await page.locator('body').evaluate((element) => getComputedStyle(element).fontFamily)
-  expect(bodyFont).toContain('IBM Plex Sans Variable')
+  expect(bodyFont).toContain('Geist Variable')
   await expect(page.locator('.sc-story-head')).toHaveCount(2)
-  await expect(page.locator('#project-fresheye .sc-story-head h4')).toHaveText('FROM RESEARCH TO PRODUCT')
-  await expect(page.locator('#project-encore .sc-story-head h4')).toHaveText('FROM LIVE TO MEMORY')
+  await expect(page.locator('.sc-story-head h4')).toHaveCount(0)
+  await expect(page.locator('.page-works')).not.toContainText('FROM RESEARCH TO PRODUCT')
+  await expect(page.locator('.page-works')).not.toContainText('FROM LIVE TO MEMORY')
 
   for (const width of [1440, 1100, 1024, 901, 900, 768, 390, 320]) {
     await page.setViewportSize({ width, height: 844 })
@@ -129,15 +130,6 @@ test('works uses typographic project dossiers without legacy icons', async ({ pa
       { lines: 1, inside: true },
       { lines: 1, inside: true }
     ])
-
-    const storyTitlesFit = await page.locator('.sc-story-head h4').evaluateAll((elements) =>
-      elements.every((element) => {
-        const rect = element.getBoundingClientRect()
-        const parent = element.closest('.sc-story-head')?.getBoundingClientRect()
-        return !!parent && rect.left >= parent.left - 1 && rect.right <= parent.right + 1 && element.scrollWidth <= element.clientWidth + 1
-      })
-    )
-    expect(storyTitlesFit, `story titles at ${width}px`).toBe(true)
 
     const sequenceFits = await page.locator('.sc-sequence li span').evaluateAll((elements) =>
       elements.every((element) => element.scrollWidth <= element.clientWidth + 1)
