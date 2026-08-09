@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import StatusBadge from './StatusBadge.vue'
-import FreshEyePreview from './FreshEyePreview.vue'
+import ProjectMark from './ProjectMark.vue'
 import type { Project } from '../data/types'
 
 withDefaults(defineProps<{ project: Project; index?: number }>(), { index: 0 })
@@ -13,53 +13,16 @@ withDefaults(defineProps<{ project: Project; index?: number }>(), { index: 0 })
     :class="project.tone"
     v-reveal
   >
-    <!-- 设备模拟窗口 -->
-    <div class="sc-frame">
-      <div class="sc-frame-bar" aria-hidden="true">
-        <i></i><i></i><i></i>
+    <div class="sc-visual-panel">
+      <div class="sc-visual-bar">
+        <span>PROJECT 0{{ index + 1 }}</span>
         <span>{{ project.domain }}</span>
       </div>
-      <div class="sc-frame-body">
-        <FreshEyePreview v-if="project.caseStudy?.preview" :project="project" />
-        <img
-          v-else-if="project.caseStudy?.visual"
-          class="sc-visual"
-          :src="project.caseStudy.visual.src"
-          :alt="project.caseStudy.visual.alt"
-          width="1200"
-          height="630"
-          loading="lazy"
-          decoding="async"
-        >
-        <span v-else class="sc-icon" aria-hidden="true">{{ project.icon === 'eye' ? '◉' : '♫' }}</span>
+      <ProjectMark :icon="project.icon" />
+      <div class="sc-visual-caption">
+        <span>{{ project.icon === 'eye' ? 'AI / FRESHNESS' : 'MUSIC / MEMORY' }}</span>
+        <small>MOVE TO EXPLORE</small>
       </div>
-    </div>
-
-    <figure v-if="project.caseStudy?.liveVisual" class="sc-live-evidence">
-      <img
-        :src="project.caseStudy.liveVisual.src"
-        :alt="project.caseStudy.liveVisual.alt"
-        width="1440"
-        height="1000"
-        loading="lazy"
-        decoding="async"
-      >
-      <figcaption>{{ project.caseStudy.liveVisual.label }}</figcaption>
-    </figure>
-
-    <div
-      v-if="project.caseStudy?.visuals"
-      class="sc-evidence"
-      :aria-label="project.caseStudy.evidenceLabel || `${project.en} 真实输入样本`"
-    >
-      <div class="sc-evidence-head">
-        <span>REAL INPUTS</span>
-        <span>MODEL CONTEXT</span>
-      </div>
-      <figure v-for="visual in project.caseStudy.visuals" :key="visual.src" class="sc-evidence-item">
-        <img :src="visual.src" :alt="visual.alt" width="600" height="600" loading="lazy" decoding="async">
-        <figcaption>{{ visual.label }}</figcaption>
-      </figure>
     </div>
 
     <div class="sc-content">

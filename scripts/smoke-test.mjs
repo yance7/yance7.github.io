@@ -34,7 +34,6 @@ for (const asset of [
   'assets/favicon.svg',
   'assets/site.webmanifest',
   'assets/case/fresheye-og-cover.png',
-  'assets/case/fresheye-current-ui.png',
   'CNAME',
   'robots.txt',
   'sitemap.xml'
@@ -60,14 +59,6 @@ for (const [page, alt] of Object.entries(ogAlts)) {
   assert(read(`${page}.html`).includes(`og:image:alt" content="${alt}"`), `${page}.html 未使用页面专属 OG image alt`)
 }
 
-for (const asset of [
-  'assets/case/fresheye-sample-fresh.webp',
-  'assets/case/fresheye-sample-highly-fresh.webp',
-  'assets/case/fresheye-sample-not-fresh.webp'
-]) {
-  assert(existsSync(join(dist, asset)), `FreshEye sample missing: ${asset}`)
-}
-
 for (const image of new Set(concerts.flatMap((concert) => concert.images))) {
   const thumbnail = image.replace(/\.[^.]+$/, '.webp')
   assert(existsSync(join(dist, 'assets/concerts/thumbs', thumbnail)), `Concert thumbnail missing: ${thumbnail}`)
@@ -82,21 +73,18 @@ assert(concertGroups['2026']?.length === 8, 'Concert 年份分组未正确解析
 assert(state.moods['2026'] === '6 场已赴约，2 场待相见。', 'Concert 2026 文案与状态统计不一致')
 
 const showcase = readFileSync(join(root, 'src/components/ProjectShowcase.vue'), 'utf8')
-const previewSource = readFileSync(join(root, 'src/components/FreshEyePreview.vue'), 'utf8')
 const styles = readFileSync(join(root, 'src/styles.css'), 'utf8')
 const concertsSource = readFileSync(join(root, 'src/pages/ConcertsPage.vue'), 'utf8')
 const mainSource = readFileSync(join(root, 'src/main.js'), 'utf8')
-assert(showcase.includes('class="sc-evidence"'), 'FreshEye evidence block missing')
-assert(showcase.includes('class="sc-live-evidence"'), 'FreshEye live UI evidence block missing')
 assert(showcase.includes(':id="`project-${project.id}`"'), 'Project showcase anchor missing')
-assert(previewSource.includes('sc-shot-tabs'), 'FreshEye product screenshot switcher missing')
-assert(previewSource.includes('@keydown="onShotKeydown'), 'FreshEye tabs missing keyboard navigation')
-assert(previewSource.includes(':aria-controls='), 'FreshEye tabs missing aria-controls')
-assert(!showcase.includes('sc-shot-tabs'), 'FreshEye preview remains coupled to ProjectShowcase')
+assert(showcase.includes('ProjectMark'), 'Project mark component missing')
+assert(!showcase.includes('<img'), 'Works cards must not render product images')
+assert(!showcase.includes('FreshEyePreview'), 'Works cards must not render product previews')
+assert(!showcase.includes('sc-live-evidence'), 'Works cards must not render live product screenshots')
 assert(concertsSource.includes('class="next-up"'), 'Concert NEXT UP block missing')
 assert(concertsSource.includes('<picture>'), 'Concert picture source missing')
 assert(!mainSource.includes('legacy-sw-cleanup'), 'Legacy Service Worker cleanup code remains')
-assert(!/font-size:\s*(?:[0-9]|10)px/.test(`${styles}\n${previewSource}`), 'Tiny font token found')
+assert(!/font-size:\s*(?:[0-9]|10)px/.test(styles), 'Tiny font token found')
 assert(!styles.includes('.lyric-eq') && !styles.includes('.coords-bar'), 'Hero decoration styles remain')
 assert(!showcase.includes('class="sc-frame" aria-hidden="true"'), 'Case Study 图片仍被 aria-hidden 父节点隐藏')
 assert(styles.includes('z-index: 3;'), 'Concert carousel controls 缺少层级保护')

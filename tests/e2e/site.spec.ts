@@ -78,39 +78,29 @@ test('research deployment link lands on the FreshEye case study', async ({ page 
   await expect(page.locator('#project-fresheye')).toBeInViewport()
 })
 
-test('FreshEye product preview switches between input, result, and explain', async ({ page }) => {
-  await page.goto('/works.html#project-fresheye')
-  const tabs = page.locator('.sc-shot-tabs [role="tab"]')
-  await expect(tabs).toHaveCount(3)
-  await tabs.filter({ hasText: 'RESULT' }).click()
-  await expect(tabs.filter({ hasText: 'RESULT' })).toHaveAttribute('aria-selected', 'true')
-  await expect(page.locator('.sc-result-panel')).toContainText('Fresh', { timeout: 10000 })
-  await tabs.filter({ hasText: 'EXPLAIN' }).click()
-  await expect(tabs.filter({ hasText: 'EXPLAIN' })).toHaveAttribute('aria-selected', 'true')
-  await expect(page.locator('.sc-explain-panel')).toContainText('Grad-CAM', { timeout: 10000 })
-  await expect(page.getByRole('link', { name: /VIEW LIVE INTERFACE/ })).toHaveAttribute('href', 'https://fresheye.yance777.com')
-  await expect(page.locator('.sc-live-evidence img')).toHaveAttribute('alt', /当前线上结果界面/)
-  await expect(page.locator('.sc-evidence')).toHaveAttribute('aria-label', 'FreshEye 真实输入样本')
+test('works uses unified icon cards without product images', async ({ page }) => {
+  await page.goto('/works.html')
+  await expect(page.locator('.showcase')).toHaveCount(2)
+  await expect(page.locator('.page-works img')).toHaveCount(0)
+  await expect(page.locator('.project-mark-eye')).toBeVisible()
+  await expect(page.locator('.project-mark-spotlight')).toBeVisible()
+
+  const ratios = await page.locator('.sc-visual-panel').evaluateAll((panels) => panels.map((panel) => {
+    const rect = panel.getBoundingClientRect()
+    return rect.width / rect.height
+  }))
+  expect(Math.abs(ratios[0] - ratios[1])).toBeLessThan(0.03)
+
+  await page.locator('#project-fresheye').hover()
+  await expect(page.locator('.mark-fish-eye')).toHaveCSS('animation-name', 'fish-blink')
+  await page.locator('#project-encore').hover()
+  await expect(page.locator('.mark-spotlight-cone')).toHaveCSS('animation-name', 'spotlight-breathe')
 })
 
-test('FreshEye tabs support roving keyboard navigation', async ({ page }) => {
-  await page.goto('/works.html#project-fresheye')
-  const input = page.getByRole('tab', { name: /INPUT/ })
-  const result = page.getByRole('tab', { name: /RESULT/ })
-  const explain = page.getByRole('tab', { name: /EXPLAIN/ })
-
-  await input.focus()
-  await page.keyboard.press('ArrowRight')
-  await expect(result).toBeFocused()
-  await expect(result).toHaveAttribute('aria-selected', 'true')
-  await page.keyboard.press('ArrowRight')
-  await expect(explain).toBeFocused()
-  await page.keyboard.press('Home')
-  await expect(input).toBeFocused()
-  await page.keyboard.press('End')
-  await expect(explain).toBeFocused()
-  await page.keyboard.press('ArrowLeft')
-  await expect(result).toBeFocused()
+test('academics pending scores use a compact badge', async ({ page }) => {
+  await page.goto('/academics.html')
+  const content = await page.locator('.ap-row.pending .ap-badge').first().evaluate((element) => getComputedStyle(element, '::after').content)
+  expect(content).toBe('"?"')
 })
 
 test('concert thumbnails respond and carousel/lightbox controls work', async ({ page }) => {
@@ -150,9 +140,6 @@ test('interactive states remain accessible after opening', async ({ page }) => {
   await expectAccessible(page)
 
   await page.goto('/works.html')
-  await page.getByRole('tab', { name: /EXPLAIN/ }).click()
-  await expect(page.locator('#shot-panel-explain')).toBeVisible()
-  await page.waitForTimeout(400)
   await expectAccessible(page)
 
   await page.goto('/concerts.html')

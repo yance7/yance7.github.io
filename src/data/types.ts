@@ -69,51 +69,6 @@ export interface ResearchMethod {
   cat: string
 }
 
-export interface CaseStudyVisual {
-  src: string
-  label: string
-  alt: string
-}
-
-export interface PreviewSignal {
-  label: string
-  value: string
-}
-
-export interface ProductPreview {
-  eyebrow: string
-  status: string
-  input: {
-    navigation: string[]
-    toolbar: string
-    format: string
-    title: string
-    hint: string
-    resolution: string
-    action: string
-  }
-  result: {
-    navigation: string[]
-    toolbar: string
-    status: string
-    label: string
-    className: string
-    confidenceLabel: string
-    confidence: string
-    dataset: string
-  }
-  explain: {
-    navigation: string[]
-    toolbar: string
-    model: string
-    evidenceLabel: string
-    method: string
-    label: string
-    description: string
-    signals: PreviewSignal[]
-  }
-}
-
 export interface ProjectCaseStudy {
   problem: string
   research: {
@@ -124,22 +79,10 @@ export interface ProjectCaseStudy {
   product: string[]
   engineering: string[]
   proof: ProofLink[]
-  evidenceLabel?: string
-  visual?: {
-    src: string
-    alt: string
-  }
-  liveVisual?: {
-    src: string
-    alt: string
-    label: string
-  }
-  visuals?: CaseStudyVisual[]
-  preview?: ProductPreview
 }
 
 export type ProjectTone = 'aqua' | 'gold' | 'violet'
-export type ProjectIcon = 'eye' | 'note'
+export type ProjectIcon = 'eye' | 'spotlight'
 
 export interface Project {
   id: string
@@ -157,7 +100,6 @@ export interface Project {
   status?: Status
   statusLabel?: string
   updatedAt: string
-  previewImages?: string[]
   caseStudy?: ProjectCaseStudy
 }
 
