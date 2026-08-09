@@ -67,8 +67,18 @@ test('research methodology disclosure and proof links are reachable', async ({ p
   const toggle = page.locator('.method-toggle').first()
   await toggle.click()
   await expect(toggle).toHaveAttribute('aria-expanded', 'true')
-  await expect(page.locator(`#${await toggle.getAttribute('aria-controls')}`)).toBeVisible()
+  const disclosure = page.locator(`#${await toggle.getAttribute('aria-controls')}`)
+  await expect(disclosure).toHaveClass(/open/)
+  await expect(disclosure.locator('.method-grid')).toHaveCSS('max-height', 'none')
   await expect(page.locator('.tl-proof a').first()).toHaveAttribute('href', /https?:\/\//)
+})
+
+test('research workbench groups tools without a trailing empty cell', async ({ page }) => {
+  await page.goto('/research.html')
+  await expect(page.locator('.toolchain-group')).toHaveCount(3)
+  await expect(page.locator('.toolchain-group').nth(0).locator('.tc-tool')).toHaveCount(4)
+  await expect(page.locator('.toolchain-group').nth(1).locator('.tc-tool')).toHaveCount(3)
+  await expect(page.locator('.toolchain-group').nth(2).locator('.tc-tool')).toHaveCount(2)
 })
 
 test('research deployment link lands on the FreshEye case study', async ({ page }) => {
@@ -80,6 +90,7 @@ test('research deployment link lands on the FreshEye case study', async ({ page 
 
 test('works uses unified icon cards without product images', async ({ page }) => {
   await page.goto('/works.html')
+  await expect(page.locator('.hero-works-break')).toHaveCount(1)
   await expect(page.locator('.showcase')).toHaveCount(2)
   await expect(page.locator('.page-works img')).toHaveCount(0)
   await expect(page.locator('.project-mark-eye')).toBeVisible()
@@ -97,6 +108,14 @@ test('works uses unified icon cards without product images', async ({ page }) =>
   await expect(page.locator('.mark-spotlight-cone')).toHaveCSS('animation-name', 'spotlight-breathe')
 })
 
+test('archive pages omit the visible last updated label', async ({ page }) => {
+  for (const route of ['index.html', 'academics.html', 'honors.html', 'research.html', 'works.html', 'concerts.html']) {
+    await page.goto(`/${route}`)
+    await expect(page.locator('.content-updated')).toHaveCount(0)
+    await expect(page.locator('body')).not.toContainText('LAST UPDATED')
+  }
+})
+
 test('academics pending scores use a compact badge', async ({ page }) => {
   await page.goto('/academics.html')
   const content = await page.locator('.ap-row.pending .ap-badge').first().evaluate((element) => getComputedStyle(element, '::after').content)
@@ -105,6 +124,7 @@ test('academics pending scores use a compact badge', async ({ page }) => {
 
 test('concert thumbnails respond and carousel/lightbox controls work', async ({ page }) => {
   await page.goto('/concerts.html')
+  await expect(page.locator('.metric-strip .metric-card')).toHaveCount(4)
   const thumbnail = await page.locator('picture source').first().getAttribute('srcset')
   expect(thumbnail).toBeTruthy()
   const response = await page.request.get(new URL(thumbnail!, 'http://127.0.0.1:4173').toString())

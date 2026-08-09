@@ -1,5 +1,5 @@
 <script setup>
-import { stats, education, apScores, pageMetadata } from '../data'
+import { stats, education, apScores } from '../data'
 import SectionHeading from '../components/SectionHeading.vue'
 import MetricStrip from '../components/MetricStrip.vue'
 </script>
@@ -15,7 +15,6 @@ import MetricStrip from '../components/MetricStrip.vue'
         accent="两段经历。"
         copy="记录当前阶段与近年的学习轨迹，保留必要的公开信息。"
       />
-      <p class="content-updated">LAST UPDATED · {{ pageMetadata.academics.updatedLabel }}</p>
       <div class="education-track">
         <article
           v-for="(edu, i) in education"

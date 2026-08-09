@@ -65,34 +65,41 @@ function toggleMethod(id: string) {
           >
             {{ openMethod[item.id] ? '收起方法论' : '展开方法论' }}
           </button>
-          <Transition name="method">
-            <div v-if="openMethod[item.id]" :id="`method-${item.id}`" class="method-grid open">
-              <div class="method-cell">
-                <span class="method-label">QUESTION</span>
-                <p>{{ item.methodology.question }}</p>
-              </div>
-              <div class="method-cell">
-                <span class="method-label">HYPOTHESIS</span>
-                <p>{{ item.methodology.hypothesis }}</p>
-              </div>
-              <div class="method-cell">
-                <span class="method-label">METHOD</span>
-                <p>{{ item.methodology.method }}</p>
-              </div>
-              <div class="method-cell">
-                <span class="method-label">PROTOTYPE</span>
-                <p>{{ item.methodology.prototype }}</p>
-              </div>
-              <div class="method-cell">
-                <span class="method-label">RESULT</span>
-                <p>{{ item.methodology.result }}</p>
-              </div>
-              <div class="method-cell">
-                <span class="method-label">NEXT</span>
-                <p>{{ item.methodology.next }}</p>
+          <div
+            :id="`method-${item.id}`"
+            class="method-disclosure"
+            :class="{ open: openMethod[item.id] }"
+            :aria-hidden="!openMethod[item.id]"
+          >
+            <div class="method-disclosure-inner">
+              <div class="method-grid">
+                <div class="method-cell">
+                  <span class="method-label">QUESTION</span>
+                  <p>{{ item.methodology.question }}</p>
+                </div>
+                <div class="method-cell">
+                  <span class="method-label">HYPOTHESIS</span>
+                  <p>{{ item.methodology.hypothesis }}</p>
+                </div>
+                <div class="method-cell">
+                  <span class="method-label">METHOD</span>
+                  <p>{{ item.methodology.method }}</p>
+                </div>
+                <div class="method-cell">
+                  <span class="method-label">PROTOTYPE</span>
+                  <p>{{ item.methodology.prototype }}</p>
+                </div>
+                <div class="method-cell">
+                  <span class="method-label">RESULT</span>
+                  <p>{{ item.methodology.result }}</p>
+                </div>
+                <div class="method-cell">
+                  <span class="method-label">NEXT</span>
+                  <p>{{ item.methodology.next }}</p>
+                </div>
               </div>
             </div>
-          </Transition>
+          </div>
         </div>
 
         <div class="tl-foot">

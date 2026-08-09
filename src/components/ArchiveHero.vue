@@ -28,13 +28,14 @@ const lyricChars = computed(() => props.title.split(''))
         <p class="hero-kicker" v-reveal>{{ kicker }}</p>
         <h1 v-if="isHome" class="hero-name" v-reveal="{ delay: 90 }">Yance<span>.</span></h1>
         <h1 v-else class="hero-title hero-lyric" :aria-label="title">
-          <span
-            v-for="(ch, i) in lyricChars"
-            :key="`${ch}-${i}`"
-            class="lyric-char"
-            :style="{ '--ci': i }"
-            aria-hidden="true"
-          >{{ ch }}</span>
+          <template v-for="(ch, i) in lyricChars" :key="`${ch}-${i}`">
+            <span
+              class="lyric-char"
+              :style="{ '--ci': i }"
+              aria-hidden="true"
+            >{{ ch }}</span>
+            <br v-if="page === 'works' && ch === '，'" class="hero-works-break" aria-hidden="true">
+          </template>
         </h1>
         <p class="hero-copy" v-reveal="{ delay: 180 }">{{ copy }}</p>
         <p v-if="credit && !isHome" class="lyric-credit" v-reveal="{ delay: 270 }">

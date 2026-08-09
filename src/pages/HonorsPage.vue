@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { honors, honorCategories, honorStats, pageMetadata } from '../data'
+import { honors, honorCategories, honorStats } from '../data'
 import type { HonorLevel } from '../data/types'
 import SectionHeading from '../components/SectionHeading.vue'
 import MetricStrip from '../components/MetricStrip.vue'
@@ -69,7 +69,6 @@ function toggleExpand(id: string) {
         accent="坐标。"
         copy="按时间倒序排列，分为领航、卓越与新锐三档。"
       />
-<p class="content-updated">LAST UPDATED · {{ pageMetadata.honors.updatedLabel }}</p>
 
       <ArchiveFilter
         :categories="honorCategories"

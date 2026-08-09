@@ -17,7 +17,8 @@ const posterCount = computed(() => concertStats.posterCount)
 const concertMetrics = [
   { value: String(concertStats.attended), label: '已赴约', note: `${concertStats.upcoming} 待相见` },
   { value: String(venueCount.value), label: '场馆', note: concertStats.venues },
-  { value: `${artistCount.value}+`, label: '艺人', note: `${posterCount.value} 张海报` }
+  { value: `${artistCount.value}+`, label: '艺人', note: `${posterCount.value} 张海报` },
+  { value: String(concertStats.total), label: '总现场', note: '已记录的演出' }
 ]
 
 const sortedYears = computed(() => Object.keys(concertGroups).sort())

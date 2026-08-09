@@ -1,4 +1,4 @@
-import type { FeaturedResearch, ResearchItem, ResearchMethod } from './types'
+import type { FeaturedResearch, ResearchItem, ResearchMethod, ResearchMethodGroup } from './types'
 
 export const research = [
   {
@@ -177,6 +177,30 @@ export const researchMethods = [
   { label: '16S rRNA', en: 'Microbiome', cat: 'SCIENCE' },
   { label: 'Random Forest', en: 'Regression', cat: 'SCIENCE' }
 ] satisfies ResearchMethod[]
+
+export const researchMethodGroups = [
+  {
+    id: 'modeling',
+    label: '模型与解释',
+    en: 'MODEL / EXPLAIN',
+    description: '用轻量模型把研究问题变成可验证、可解释的判断。',
+    items: researchMethods.filter((method) => method.cat === 'DEEP LEARNING' || method.cat === 'EXPLAINABLE AI')
+  },
+  {
+    id: 'delivery',
+    label: '工程与交付',
+    en: 'SHIP / OPERATE',
+    description: '把实验结果包装成可以部署、访问和持续迭代的产品。',
+    items: researchMethods.filter((method) => method.cat === 'ENGINEERING')
+  },
+  {
+    id: 'evidence',
+    label: '实验与证据',
+    en: 'MEASURE / PROVE',
+    description: '用数据集、统计检验和可重复实验支撑每一个结论。',
+    items: researchMethods.filter((method) => method.cat === 'SCIENCE')
+  }
+] satisfies ResearchMethodGroup[]
 
 function toFeaturedResearch(item: ResearchItem): FeaturedResearch {
   const metrics = item.metrics

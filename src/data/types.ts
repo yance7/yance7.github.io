@@ -69,6 +69,14 @@ export interface ResearchMethod {
   cat: string
 }
 
+export interface ResearchMethodGroup {
+  id: string
+  label: string
+  en: string
+  description: string
+  items: ResearchMethod[]
+}
+
 export interface ProjectCaseStudy {
   problem: string
   research: {

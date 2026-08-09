@@ -75,6 +75,8 @@ assert(state.moods['2026'] === '6 场已赴约，2 场待相见。', 'Concert 20
 const showcase = readFileSync(join(root, 'src/components/ProjectShowcase.vue'), 'utf8')
 const styles = readFileSync(join(root, 'src/styles.css'), 'utf8')
 const concertsSource = readFileSync(join(root, 'src/pages/ConcertsPage.vue'), 'utf8')
+const researchSource = readFileSync(join(root, 'src/pages/ResearchPage.vue'), 'utf8')
+const timelineSource = readFileSync(join(root, 'src/components/TimelineTrack.vue'), 'utf8')
 const mainSource = readFileSync(join(root, 'src/main.js'), 'utf8')
 assert(showcase.includes(':id="`project-${project.id}`"'), 'Project showcase anchor missing')
 assert(showcase.includes('ProjectMark'), 'Project mark component missing')
@@ -83,6 +85,14 @@ assert(!showcase.includes('FreshEyePreview'), 'Works cards must not render produ
 assert(!showcase.includes('sc-live-evidence'), 'Works cards must not render live product screenshots')
 assert(concertsSource.includes('class="next-up"'), 'Concert NEXT UP block missing')
 assert(concertsSource.includes('<picture>'), 'Concert picture source missing')
+assert(concertsSource.includes('concertStats.total'), 'Concert metrics must fill all four summary cells')
+assert(researchSource.includes('researchMethodGroups'), 'Research workbench groups missing')
+assert(timelineSource.includes('class="method-disclosure"'), 'Research method disclosure structure missing')
+assert(!timelineSource.includes('<Transition name="method">'), 'Research method disclosure still uses the expensive transition wrapper')
+assert(!styles.includes('max-height: 1200px'), 'Research method disclosure still uses a large max-height animation')
+for (const page of ['HomePage.vue', 'AcademicsPage.vue', 'HonorsPage.vue', 'ResearchPage.vue', 'WorksPage.vue']) {
+  assert(!readFileSync(join(root, 'src/pages', page), 'utf8').includes('LAST UPDATED'), `${page} still renders LAST UPDATED`)
+}
 assert(!mainSource.includes('legacy-sw-cleanup'), 'Legacy Service Worker cleanup code remains')
 assert(!/font-size:\s*(?:[0-9]|10)px/.test(styles), 'Tiny font token found')
 assert(!styles.includes('.lyric-eq') && !styles.includes('.coords-bar'), 'Hero decoration styles remain')

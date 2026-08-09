@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { worlds, featuredResearch, featuredProjects, leadership, activities, pageMetadata } from '../data'
+import { worlds, featuredResearch, featuredProjects, leadership, activities } from '../data'
 import SectionHeading from '../components/SectionHeading.vue'
 
 const selectedActivities = computed(() => activities.filter((item) => item.featured))
@@ -17,7 +17,6 @@ const selectedActivities = computed(() => activities.filter((item) => item.featu
         accent="离开纸面。"
         copy="先看正在被继续推进的研究，再看已经可以打开使用的产品。"
       />
-      <p class="content-updated">LAST UPDATED · {{ pageMetadata.home.updatedLabel }}</p>
       <div class="home-focus-grid">
         <a
           v-for="(item, i) in featuredResearch"
