@@ -88,32 +88,23 @@ test('research deployment link lands on the FreshEye case study', async ({ page 
   await expect(page.locator('#project-fresheye')).toBeInViewport()
 })
 
-test('works uses unified icon cards without product images', async ({ page }) => {
+test('works uses typographic project dossiers without legacy icons', async ({ page }) => {
   await page.goto('/works.html')
   const lyric = page.locator('.hero-works-title')
-  await expect(lyric).toHaveAttribute('aria-label', '（因为我已明白，努力就能成功）')
+  await expect(lyric).toHaveAttribute('aria-label', '「因为我已慢慢懂，努力就能成功」')
   await expect(lyric).toHaveCSS('white-space', 'nowrap')
   await expect(lyric.locator('br')).toHaveCount(0)
   await expect(page.locator('.showcase')).toHaveCount(2)
   await expect(page.locator('.page-works img')).toHaveCount(0)
-  await expect(page.locator('.project-mark-eye')).toBeVisible()
-  await expect(page.locator('.project-mark-spotlight')).toBeVisible()
-  await expect(page.locator('.mark-fish-halo')).toBeVisible()
-  await expect(page.locator('.mark-spotlight-halo')).toBeVisible()
+  await expect(page.locator('[class*="project-mark"], [class*="mark-fish"], [class*="mark-spotlight"]')).toHaveCount(0)
+  await expect(page.locator('.sc-dossier-main')).toHaveCount(2)
+  await expect(page.locator('.sc-chapter')).toHaveCount(6)
+  await expect(page.locator('.sc-proof-links a')).toHaveCount(4)
+  await expect(page.locator('#project-fresheye .sc-identity h3')).toContainText('FreshEye')
+  await expect(page.locator('#project-encore .sc-identity h3')).toContainText('Encore')
 
-  const ratios = await page.locator('.sc-visual-panel').evaluateAll((panels) => panels.map((panel) => {
-    const rect = panel.getBoundingClientRect()
-    return rect.width / rect.height
-  }))
-  expect(Math.abs(ratios[0] - ratios[1])).toBeLessThan(0.03)
-
-  const supportsFineHover = await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)
-  if (supportsFineHover) {
-    await page.locator('#project-fresheye').hover()
-    await expect(page.locator('.mark-fish-eye')).toHaveCSS('animation-name', 'fish-blink')
-    await page.locator('#project-encore').hover()
-    await expect(page.locator('.mark-spotlight-cone')).toHaveCSS('animation-name', 'spotlight-breathe')
-  }
+  const bodyFont = await page.locator('body').evaluate((element) => getComputedStyle(element).fontFamily)
+  expect(bodyFont).toContain('Manrope Variable')
 
   await page.setViewportSize({ width: 390, height: 844 })
   await page.reload()

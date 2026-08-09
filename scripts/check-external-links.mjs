@@ -26,7 +26,6 @@ function normalizeUrl(url) {
 function shouldCheck(url) {
   const parsed = new URL(url)
   if (parsed.hostname === 'schema.org') return false
-  if (['fonts.googleapis.com', 'fonts.gstatic.com'].includes(parsed.hostname) && parsed.pathname === '/') return false
   return true
 }
 

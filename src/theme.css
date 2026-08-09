@@ -6,10 +6,10 @@
 /* ---------- 全局设计令牌（与主题无关） ---------- */
 :root {
   /* 字体族 */
-  --sans: "Manrope", "Noto Sans SC", system-ui, -apple-system, sans-serif;
-  --serif: "Noto Serif SC", "Songti SC", "STSong", serif;
-  --display: "Fraunces", "Noto Serif SC", Georgia, serif;
-  --mono: "JetBrains Mono", ui-monospace, "SF Mono", "Cascadia Code", monospace;
+  --sans: "Manrope Variable", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  --serif: "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", "STSong", "SimSun", serif;
+  --display: "Fraunces Variable", "Songti SC", "STSong", Georgia, serif;
+  --mono: "JetBrains Mono Variable", "SF Mono", "Cascadia Code", ui-monospace, monospace;
 
   /* 缓动函数（接近苹果 spring 的丝滑感） */
   --ease: cubic-bezier(.22, .61, .36, 1);
@@ -307,7 +307,7 @@ body, .site-shell, .site-nav, .stat-cell, .ap-row, .tl-tag, .concert-info,
 .site-footer, .carousel-controls, .lightbox, .lb-meta, .current-research,
 .ap-panel, .concert-list, .research-timeline, .honor-card, .section-head,
 .archive-hero, .foot-tag, .foot-links a, .portal, .showcase, .scroll-bar,
-.honor-filter, .tl-method, .sc-visual-panel, .project-mark, .concert-group, .metric-card,
+.honor-filter, .tl-method, .sc-dossier-head, .sc-body, .concert-group, .metric-card,
 .timeline-track, .status-badge, .media-ph, .now-active, .method-chip,
 .world-card, .education-row, .leadership-card, .activity-row, .tl-metrics {
   transition-property: background-color, border-color, color, box-shadow, fill;

@@ -44,10 +44,10 @@ const selectedActivities = computed(() => activities.filter((item) => item.featu
           :class="item.tone"
           v-reveal="{ delay: (i + featuredResearch.length) * 70 }"
         >
-          <a class="focus-card-main" :href="item.caseStudy ? `works.html#project-${item.id}` : item.href">
+          <a class="focus-card-main" :href="`works.html#project-${item.id}`">
             <span class="focus-label">PRODUCT / 0{{ i + 1 }}</span>
             <strong>{{ item.title }} <small>{{ item.en }}</small></strong>
-            <p class="focus-proof">{{ item.caseStudy ? 'RESEARCH → PRODUCT' : item.domain }}</p>
+            <p class="focus-proof">{{ item.story.label }}</p>
             <p>{{ item.value }}</p>
             <span class="focus-link">查看产品案例 <span aria-hidden="true">→</span></span>
           </a>

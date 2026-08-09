@@ -20,7 +20,7 @@ const coordsLabel = computed(() =>
 const geo = computed(() => (props.error ? '—' : heroGeo[props.page] || '—'))
 const lyricChars = computed(() => props.title.split(''))
 const accessibleTitle = computed(() =>
-  props.page === 'works' ? `（${props.title}）` : props.title
+  props.error ? props.title : `「${props.title}」`
 )
 </script>
 

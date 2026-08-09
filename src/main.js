@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import reveal from './directives/reveal'
 import magnetic from './directives/magnetic'
+import './fonts.css'
 import './styles.css'
 import './theme.css'
 

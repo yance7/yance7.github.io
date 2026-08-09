@@ -77,20 +77,23 @@ export interface ResearchMethodGroup {
   items: ResearchMethod[]
 }
 
-export interface ProjectCaseStudy {
-  problem: string
-  research: {
-    title: string
-    detail: string
-    href: string
-  }
-  product: string[]
-  engineering: string[]
-  proof: ProofLink[]
+export type ProjectTone = 'aqua' | 'gold' | 'violet'
+
+export interface ProjectStoryChapter {
+  label: string
+  title: string
+  detail: string
+  href?: string
 }
 
-export type ProjectTone = 'aqua' | 'gold' | 'violet'
-export type ProjectIcon = 'eye' | 'spotlight'
+export interface ProjectStory {
+  label: string
+  note: string
+  chapters: ProjectStoryChapter[]
+  sequenceLabel: string
+  sequence: string[]
+  proof: ProofLink[]
+}
 
 export interface Project {
   id: string
@@ -103,12 +106,12 @@ export interface Project {
   description: string
   href: string
   github?: string
-  icon: ProjectIcon
+  discipline: string
   tone: ProjectTone
   status?: Status
   statusLabel?: string
   updatedAt: string
-  caseStudy?: ProjectCaseStudy
+  story: ProjectStory
 }
 
 export interface Concert {

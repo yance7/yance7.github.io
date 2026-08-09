@@ -21,6 +21,8 @@ for (const page of pages) {
   assert(html.includes('<div id="app"></div>'), `${page}.html 缺少 Vue 挂载点`)
   assert(/assets\/vue\/main-[^"']+\.js/.test(html), `${page}.html 缺少 hash 入口资源`)
   assert(!html.includes('../src/main.js'), `${page}.html 仍引用源码入口`)
+  assert(!html.includes('fonts.googleapis.com'), `${page}.html 仍阻塞加载 Google Fonts`)
+  assert(!html.includes('fonts.gstatic.com'), `${page}.html 仍依赖 Google Fonts 字体文件`)
 }
 
 for (const asset of [
@@ -79,7 +81,9 @@ const researchSource = readFileSync(join(root, 'src/pages/ResearchPage.vue'), 'u
 const timelineSource = readFileSync(join(root, 'src/components/TimelineTrack.vue'), 'utf8')
 const mainSource = readFileSync(join(root, 'src/main.js'), 'utf8')
 assert(showcase.includes(':id="`project-${project.id}`"'), 'Project showcase anchor missing')
-assert(showcase.includes('ProjectMark'), 'Project mark component missing')
+assert(showcase.includes('project.story.chapters'), 'Works project story model missing')
+assert(showcase.includes('sc-dossier-main'), 'Works project dossier layout missing')
+assert(!showcase.includes('ProjectMark'), 'Works still imports the legacy project icon component')
 assert(!showcase.includes('<img'), 'Works cards must not render product images')
 assert(!showcase.includes('FreshEyePreview'), 'Works cards must not render product previews')
 assert(!showcase.includes('sc-live-evidence'), 'Works cards must not render live product screenshots')
@@ -97,6 +101,8 @@ assert(!mainSource.includes('legacy-sw-cleanup'), 'Legacy Service Worker cleanup
 assert(!/font-size:\s*(?:[0-9]|10)px/.test(styles), 'Tiny font token found')
 assert(!styles.includes('.lyric-eq') && !styles.includes('.coords-bar'), 'Hero decoration styles remain')
 assert(!styles.includes('hero-works-break'), 'Works lyric still contains the forced line break')
+assert(!styles.includes('mark-fish') && !styles.includes('mark-spotlight'), 'Works legacy fish or spotlight styles remain')
+assert(mainSource.includes("import './fonts.css'"), 'Local variable font bundle missing')
 assert(!showcase.includes('class="sc-frame" aria-hidden="true"'), 'Case Study 图片仍被 aria-hidden 父节点隐藏')
 assert(styles.includes('z-index: 3;'), 'Concert carousel controls 缺少层级保护')
 console.log(`smoke: ${pages.length} pages and static assets verified`)
