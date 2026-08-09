@@ -56,6 +56,7 @@ test('honors filtering and detail disclosure use stable ids', async ({ page }) =
   await page.goto('/honors.html')
   await page.locator('.filter-btn').filter({ hasText: '领航级' }).click()
   await expect(page.locator('.honor-card')).toHaveCount(4)
+  await expect(page.locator('.honor-card').first()).toHaveClass(/revealed/)
   const detailButton = page.locator('.honor-expand').first()
   await detailButton.click()
   await expect(detailButton).toHaveAttribute('aria-expanded', 'true')
@@ -106,7 +107,10 @@ test('works uses typographic project dossiers without legacy icons', async ({ pa
   await expect(page.locator('#project-encore .sc-identity h3')).toContainText('Encore')
 
   const bodyFont = await page.locator('body').evaluate((element) => getComputedStyle(element).fontFamily)
-  expect(bodyFont).toContain('Manrope Variable')
+  expect(bodyFont).toContain('IBM Plex Sans Variable')
+  await expect(page.locator('.sc-story-head')).toHaveCount(2)
+  await expect(page.locator('#project-fresheye .sc-story-head h4')).toHaveText('FROM RESEARCH TO PRODUCT')
+  await expect(page.locator('#project-encore .sc-story-head h4')).toHaveText('FROM LIVE TO MEMORY')
 
   for (const width of [1440, 1100, 1024, 901, 900, 768, 390, 320]) {
     await page.setViewportSize({ width, height: 844 })
@@ -125,6 +129,15 @@ test('works uses typographic project dossiers without legacy icons', async ({ pa
       { lines: 1, inside: true },
       { lines: 1, inside: true }
     ])
+
+    const storyTitlesFit = await page.locator('.sc-story-head h4').evaluateAll((elements) =>
+      elements.every((element) => {
+        const rect = element.getBoundingClientRect()
+        const parent = element.closest('.sc-story-head')?.getBoundingClientRect()
+        return !!parent && rect.left >= parent.left - 1 && rect.right <= parent.right + 1 && element.scrollWidth <= element.clientWidth + 1
+      })
+    )
+    expect(storyTitlesFit, `story titles at ${width}px`).toBe(true)
 
     const sequenceFits = await page.locator('.sc-sequence li span').evaluateAll((elements) =>
       elements.every((element) => element.scrollWidth <= element.clientWidth + 1)
@@ -151,6 +164,14 @@ test('works uses typographic project dossiers without legacy icons', async ({ pa
   }))
   expect(narrowLayout.documentWidth).toBeLessThanOrEqual(narrowLayout.viewportWidth)
   expect(narrowLayout.lyricWidth).toBeLessThanOrEqual(narrowLayout.lyricBox + 1)
+})
+
+test('reduced motion keeps project content immediately available', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/works.html')
+  const firstProject = page.locator('.showcase').first()
+  await expect(firstProject).toHaveClass(/revealed/)
+  await expect(firstProject).toHaveCSS('transform', 'none')
 })
 
 test('archive pages omit the visible last updated label', async ({ page }) => {
