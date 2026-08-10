@@ -1,8 +1,9 @@
-import { onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 export function useScrollProgress() {
   const progress = ref(0)
   const showTop = ref(false)
+  const percent = computed(() => Math.round(progress.value * 100))
   let frame = 0
 
   function update() {
@@ -34,5 +35,5 @@ export function useScrollProgress() {
     frame = 0
   })
 
-  return { progress, showTop }
+  return { progress, percent, showTop }
 }

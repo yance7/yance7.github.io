@@ -7,6 +7,7 @@ const THEME_KEY = 'yance-theme'
 const theme = ref<Theme>('light')
 let systemMedia: MediaQueryList | null = null
 let systemListenerAttached = false
+let activeRipple: HTMLElement | null = null
 
 function systemTheme(): Theme {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
@@ -32,6 +33,7 @@ function applyTheme(value: Theme, rippleEl: HTMLElement | null = null) {
     !window.matchMedia('(prefers-reduced-motion: reduce)').matches &&
     !window.matchMedia('(pointer: coarse)').matches
   ) {
+    activeRipple?.remove()
     const rect = rippleEl.getBoundingClientRect()
     const cx = rect.left + rect.width / 2
     const cy = rect.top + rect.height / 2
@@ -48,8 +50,12 @@ function applyTheme(value: Theme, rippleEl: HTMLElement | null = null) {
     ripple.style.width = `${maxDim * 2.4}px`
     ripple.style.height = `${maxDim * 2.4}px`
     document.body.appendChild(ripple)
+    activeRipple = ripple
     requestAnimationFrame(() => ripple.classList.add('active'))
-    window.setTimeout(() => ripple.remove(), 800)
+    window.setTimeout(() => {
+      ripple.remove()
+      if (activeRipple === ripple) activeRipple = null
+    }, 800)
   }
 }
 

@@ -3,7 +3,7 @@ import type { FeaturedResearch, ResearchItem, ResearchMethod, ResearchMethodGrou
 export const research = [
   {
     id: 'fresheye',
-    date: '2026.04 — 至今',
+    date: '2026.06 — 2026.08',
     updatedAt: '2026-08-08',
     tag: 'WEB TOOL',
     status: 'active',
@@ -31,10 +31,10 @@ export const research = [
   },
   {
     id: 'fishfreshnet-v2',
-    date: '2026.04 — 2026.06',
+    date: '2026.05 — 2026.08',
     updatedAt: '2026-06-30',
     tag: 'DEEP LEARNING',
-    status: 'published',
+    status: 'completed',
     title: 'FishFreshNet V2：轻量可解释鱼眼新鲜度评估',
     org: '个人研究 · FishFreshNet V2',
     text: '引入轻量环形区域注意力 LightCRA，配合 ECA 通道注意力，实现 99.29% 准确率，同时保持轻量化部署能力。',

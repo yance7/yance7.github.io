@@ -39,4 +39,13 @@ describe('content contracts', () => {
     expect(v1?.metrics?.[0]).toEqual({ value: '99.23%', label: '准确率', note: 'MFED · paper result' })
     expect(v1?.methodology?.result).toContain('99.23%')
   })
+
+  it('keeps current FishFreshNet project dates and publication status accurate', () => {
+    const freshEye = research.find((item) => item.id === 'fresheye')
+    const v2 = research.find((item) => item.id === 'fishfreshnet-v2')
+    expect(freshEye?.date).toBe('2026.06 — 2026.08')
+    expect(v2?.date).toBe('2026.05 — 2026.08')
+    expect(v2?.status).toBe('completed')
+    expect(v2?.paper).toBeUndefined()
+  })
 })

@@ -92,7 +92,9 @@ function moveLightbox(step: number) {
     <div class="ambient ambient-two"></div>
     <div class="grain"></div>
 
-    <ScrollProgress />
+    <aside class="page-tools" aria-label="页面阅读工具">
+      <ScrollProgress />
+    </aside>
 
     <SiteHeader :page="page" />
 

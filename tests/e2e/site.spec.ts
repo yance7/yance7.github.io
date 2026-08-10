@@ -14,6 +14,22 @@ test('all archive pages boot and expose the main landmark', async ({ page }) => 
   }
 })
 
+test('archive layouts avoid horizontal overflow on narrow screens', async ({ page }) => {
+  for (const width of [320, 390]) {
+    await page.setViewportSize({ width, height: 844 })
+    for (const route of ['index.html', 'academics.html', 'honors.html', 'research.html', 'works.html', 'concerts.html', '404.html']) {
+      await page.goto(`/${route}`)
+      const layout = await page.evaluate(() => ({
+        documentWidth: document.documentElement.scrollWidth,
+        bodyWidth: document.body.scrollWidth,
+        viewportWidth: window.innerWidth
+      }))
+      expect(layout.documentWidth, `${route} document at ${width}px`).toBeLessThanOrEqual(layout.viewportWidth)
+      expect(layout.bodyWidth, `${route} body at ${width}px`).toBeLessThanOrEqual(layout.viewportWidth)
+    }
+  }
+})
+
 test('mobile navigation opens, traps focus, and closes explicitly', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/index.html')
@@ -35,6 +51,19 @@ test('theme preference persists after reload', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
   await page.reload()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+})
+
+test('bundled typography and reading progress stay explicit', async ({ page }) => {
+  await page.goto('/works.html')
+  await page.evaluate(() => document.fonts.ready)
+  const bodyFont = await page.locator('body').evaluate((element) => getComputedStyle(element).fontFamily)
+  const displayFont = await page.locator('.hero-title').evaluate((element) => getComputedStyle(element).fontFamily)
+  expect(bodyFont).toContain('Noto Sans SC Variable')
+  expect(displayFont).toContain('Noto Serif SC Variable')
+  await expect(page.locator('.scroll-progress')).toHaveAttribute('role', 'progressbar')
+  await expect(page.locator('.scroll-progress')).toHaveAttribute('aria-valuenow', '0')
+  await page.evaluate(() => window.scrollTo({ top: 600, behavior: 'auto' }))
+  await expect.poll(() => page.locator('.scroll-progress').getAttribute('aria-valuenow')).not.toBe('0')
 })
 
 test('home focus cards keep the research-product link on keyboard focus', async ({ page }) => {
@@ -91,6 +120,15 @@ test('research deployment link lands on the FreshEye case study', async ({ page 
   await expect(page.locator('#project-fresheye')).toBeInViewport()
 })
 
+test('research project dates and statuses render the current records', async ({ page }) => {
+  await page.goto('/research.html')
+  await expect(page.locator('#fresheye .tl-date')).toHaveText('2026.06 — 2026.08')
+  await expect(page.locator('#fishfreshnet-v2 .tl-date')).toHaveText('2026.05 — 2026.08')
+  await expect(page.locator('#fishfreshnet-v2 .status-badge')).toContainText('已完成')
+  await expect(page.locator('#fishfreshnet-v2 .tl-tag')).not.toContainText('PUBLISHED')
+  await expect(page.locator('#fishfreshnet-v2 .tl-doi')).toHaveCount(0)
+})
+
 test('works uses typographic project dossiers without legacy icons', async ({ page }) => {
   await page.goto('/works.html')
   const lyric = page.locator('.hero-works-title')
@@ -106,8 +144,6 @@ test('works uses typographic project dossiers without legacy icons', async ({ pa
   await expect(page.locator('#project-fresheye .sc-identity h3')).toContainText('FreshEye')
   await expect(page.locator('#project-encore .sc-identity h3')).toContainText('Encore')
 
-  const bodyFont = await page.locator('body').evaluate((element) => getComputedStyle(element).fontFamily)
-  expect(bodyFont).toContain('Geist Variable')
   await expect(page.locator('.sc-story-head')).toHaveCount(2)
   await expect(page.locator('.sc-story-head h4')).toHaveCount(0)
   await expect(page.locator('.page-works')).not.toContainText('FROM RESEARCH TO PRODUCT')
@@ -236,6 +272,26 @@ test('interactive states remain accessible after opening', async ({ page }) => {
   await expect(page.locator('.lightbox')).toBeVisible()
   await expectAccessible(page)
   await page.keyboard.press('Escape')
+})
+
+test('rapid control clicks settle without duplicate or stale state', async ({ page }) => {
+  await page.goto('/honors.html')
+  const filter = page.locator('.filter-btn').filter({ hasText: '卓越级' })
+  for (let i = 0; i < 5; i += 1) await filter.click()
+  await expect(filter).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.locator('.honor-card')).toHaveCount(2)
+
+  await page.goto('/research.html')
+  const method = page.locator('.method-toggle').first()
+  for (let i = 0; i < 4; i += 1) await method.dispatchEvent('click')
+  await expect(method).toHaveAttribute('aria-expanded', 'false')
+  await expect(page.locator('.method-disclosure').first()).not.toHaveClass(/open/)
+
+  await page.goto('/concerts.html')
+  const carousel = page.locator('.concert-poster').filter({ has: page.locator('.carousel-controls') }).first()
+  const next = carousel.locator('button[aria-label="下一张"]')
+  for (let i = 0; i < 8; i += 1) await next.click()
+  await expect(carousel.locator('.carousel-controls span')).toHaveText(/\d+ \/ \d+/)
 })
 
 for (const route of ['index.html', 'academics.html', 'honors.html', 'research.html', 'works.html', 'concerts.html', '404.html']) {
