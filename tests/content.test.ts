@@ -4,21 +4,33 @@ import { albumCoverFallback, albumCoverSrcset, albumCoverWebp } from '../src/uti
 import { thumbnailUrl } from '../src/utils/concertMedia'
 
 describe('content contracts', () => {
-  it('keeps the album release set and artist grouping stable', () => {
-    expect(albums).toHaveLength(24)
-    expect([...new Set(albums.map((album) => album.artist))]).toEqual([
-      '周杰伦', '林俊杰', '薛之谦', '邓紫棋', '汪苏泷', '张杰', '王力宏', '陶喆'
+  it('keeps the exact ordered album release catalogue stable', () => {
+    expect(albums.map(({ id, artist, title, year, format }) => ({ id, artist, title, year, format }))).toEqual([
+      { id: 'jay-fantasy', artist: '周杰伦', title: '范特西', year: 2001, format: 'album' },
+      { id: 'jay-ye-hui-mei', artist: '周杰伦', title: '叶惠美', year: 2003, format: 'album' },
+      { id: 'jay-common-jasmine-orange', artist: '周杰伦', title: '七里香', year: 2004, format: 'album' },
+      { id: 'jj-second-heaven', artist: '林俊杰', title: '第二天堂', year: 2004, format: 'album' },
+      { id: 'jj-cao-cao', artist: '林俊杰', title: '曹操', year: 2006, format: 'album' },
+      { id: 'jj-she-says', artist: '林俊杰', title: '她说', year: 2010, format: 'album' },
+      { id: 'joker-accident', artist: '薛之谦', title: '意外', year: 2013, format: 'album' },
+      { id: 'joker-beginner', artist: '薛之谦', title: '初学者', year: 2016, format: 'album' },
+      { id: 'joker-extraterrestrial', artist: '薛之谦', title: '天外来物', year: 2020, format: 'album' },
+      { id: 'gem-xposed', artist: '邓紫棋', title: 'Xposed', year: 2012, format: 'album' },
+      { id: 'gem-heartbeat', artist: '邓紫棋', title: '新的心跳', year: 2015, format: 'album' },
+      { id: 'gem-city-zoo', artist: '邓紫棋', title: '摩天动物园', year: 2019, format: 'album' },
+      { id: 'silence-gravity', artist: '汪苏泷', title: '万有引力', year: 2012, format: 'album' },
+      { id: 'silence-legendary-movement', artist: '汪苏泷', title: '传世乐章', year: 2014, format: 'album' },
+      { id: 'silence-romance-21', artist: '汪苏泷', title: '21世纪罗曼史', year: 2022, format: 'album' },
+      { id: 'jason-most-beautiful-sun', artist: '张杰', title: '最美的太阳', year: 2007, format: 'ep' },
+      { id: 'jason-after-tomorrow', artist: '张杰', title: '明天过后', year: 2008, format: 'album' },
+      { id: 'jason-this-is-love', artist: '张杰', title: '这，就是爱', year: 2010, format: 'album' },
+      { id: 'leehom-the-one-and-only', artist: '王力宏', title: '唯一', year: 2001, format: 'album' },
+      { id: 'leehom-shangri-la', artist: '王力宏', title: '心中的日月', year: 2004, format: 'album' },
+      { id: 'leehom-change-me', artist: '王力宏', title: '改变自己', year: 2007, format: 'album' },
+      { id: 'david-tao-self-titled', artist: '陶喆', title: '陶喆同名专辑', year: 1997, format: 'album' },
+      { id: 'david-tao-im-ok', artist: '陶喆', title: 'I’m O.K.', year: 1999, format: 'album' },
+      { id: 'david-tao-black-tangerine', artist: '陶喆', title: '黑色柳丁', year: 2002, format: 'album' }
     ])
-    const releasesByArtist = albums.reduce<Record<string, number>>((counts, album) => {
-      counts[album.artist] = (counts[album.artist] ?? 0) + 1
-      return counts
-    }, {})
-    expect(Object.values(releasesByArtist).every((count) => count === 3)).toBe(true)
-  })
-
-  it('keeps album ordering and the single EP explicit', () => {
-    expect(albums[0]?.id).toBe('jay-fantasy')
-    expect(albums.filter((album) => album.format === 'ep').map((album) => album.id)).toEqual(['jason-most-beautiful-sun'])
   })
 
   it('keeps album media metadata valid and distinct', () => {
@@ -28,6 +40,7 @@ describe('content contracts', () => {
       album.cover === album.id
       && Number.isInteger(album.year)
       && album.appleMusicUrl.startsWith('https://music.apple.com/')
+      && album.palette.length === 2
       && album.palette.every((color) => /^#[0-9A-F]{6}$/i.test(color))
     ))).toBe(true)
   })

@@ -5,7 +5,10 @@ from __future__ import annotations
 
 import argparse
 import io
+import os
 from pathlib import Path
+import shutil
+import tempfile
 
 from PIL import Image, ImageCms
 
@@ -73,30 +76,104 @@ def write_webp(image: Image.Image, destination: Path, size: int) -> tuple[int, i
     )
 
 
-def main() -> None:
-    args = parse_args()
-    missing = [album_id for album_id in ALBUM_IDS if not (args.source_dir / f'{album_id}.jpg').is_file()]
+def artifact_paths() -> tuple[Path, ...]:
+    return tuple(
+        [Path(f'{album_id}.jpg') for album_id in ALBUM_IDS]
+        + [Path('thumbs') / f'{album_id}-{size}.webp' for album_id in ALBUM_IDS for size in (THUMB_SIZE, FULL_SIZE)]
+    )
+
+
+def validate_artifact(path: Path, expected_format: str, size: int, max_bytes: int | None = None) -> None:
+    if not path.is_file() or path.stat().st_size == 0:
+        raise ValueError(f'{path.name}: generated file is missing or empty')
+    if max_bytes is not None and path.stat().st_size > max_bytes:
+        raise ValueError(f'{path.name}: {path.stat().st_size / 1024:.1f} KB exceeds {max_bytes / 1024:.0f} KB')
+
+    with Image.open(path) as image:
+        image.verify()
+    with Image.open(path) as image:
+        if image.format != expected_format or image.mode != 'RGB' or image.size != (size, size):
+            raise ValueError(
+                f'{path.name}: expected {expected_format} RGB {size}x{size}, '
+                f'got {image.format} {image.mode} {image.width}x{image.height}'
+            )
+
+
+def validate_staged_artifacts(staging_dir: Path) -> None:
+    for album_id in ALBUM_IDS:
+        validate_artifact(staging_dir / f'{album_id}.jpg', 'JPEG', FULL_SIZE)
+        for size in (THUMB_SIZE, FULL_SIZE):
+            validate_artifact(
+                staging_dir / 'thumbs' / f'{album_id}-{size}.webp',
+                'WEBP',
+                size,
+                MAX_WEBP_BYTES[size],
+            )
+
+
+def replace_artifacts(staging_dir: Path, output_dir: Path) -> None:
+    backup_dir = staging_dir / 'backup'
+    replaced: list[Path] = []
+    backed_up: list[Path] = []
+
+    try:
+        for relative_path in artifact_paths():
+            destination = output_dir / relative_path
+            if destination.is_file():
+                backup_path = backup_dir / relative_path
+                backup_path.parent.mkdir(parents=True, exist_ok=True)
+                os.replace(destination, backup_path)
+                backed_up.append(relative_path)
+
+        for relative_path in artifact_paths():
+            destination = output_dir / relative_path
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            os.replace(staging_dir / relative_path, destination)
+            replaced.append(relative_path)
+    except BaseException:
+        for relative_path in reversed(replaced):
+            (output_dir / relative_path).unlink(missing_ok=True)
+        for relative_path in reversed(backed_up):
+            os.replace(backup_dir / relative_path, output_dir / relative_path)
+        raise
+
+
+def prepare_album_covers(source_dir: Path, output_dir: Path) -> list[str]:
+    missing = [album_id for album_id in ALBUM_IDS if not (source_dir / f'{album_id}.jpg').is_file()]
     if missing:
         raise FileNotFoundError(f'missing source covers: {", ".join(missing)}')
 
-    thumbs_dir = args.output_dir / 'thumbs'
-    args.output_dir.mkdir(parents=True, exist_ok=True)
-    thumbs_dir.mkdir(parents=True, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    staging_dir = Path(tempfile.mkdtemp(prefix='.prepare-album-covers-', dir=output_dir))
     summary: list[str] = []
 
-    for album_id in ALBUM_IDS:
-        normalized = normalize_to_srgb(args.source_dir / f'{album_id}.jpg')
-        cover = resized(normalized, FULL_SIZE)
-        jpg_path = args.output_dir / f'{album_id}.jpg'
-        cover.save(jpg_path, format='JPEG', quality=95, optimize=True, progressive=True)
+    try:
+        thumbs_dir = staging_dir / 'thumbs'
+        thumbs_dir.mkdir()
+        for album_id in ALBUM_IDS:
+            normalized = normalize_to_srgb(source_dir / f'{album_id}.jpg')
+            cover = resized(normalized, FULL_SIZE)
+            jpg_path = staging_dir / f'{album_id}.jpg'
+            cover.save(jpg_path, format='JPEG', quality=95, optimize=True, progressive=True)
 
-        thumb = resized(normalized, THUMB_SIZE)
-        thumb_bytes, thumb_quality = write_webp(thumb, thumbs_dir / f'{album_id}-{THUMB_SIZE}.webp', THUMB_SIZE)
-        full_bytes, full_quality = write_webp(cover, thumbs_dir / f'{album_id}-{FULL_SIZE}.webp', FULL_SIZE)
-        summary.append(
-            f'{album_id}: JPG 1200x1200; WEBP 640 {thumb_bytes / 1024:.1f} KB q{thumb_quality}; '
-            f'WEBP 1200 {full_bytes / 1024:.1f} KB q{full_quality}'
-        )
+            thumb = resized(normalized, THUMB_SIZE)
+            thumb_bytes, thumb_quality = write_webp(thumb, thumbs_dir / f'{album_id}-{THUMB_SIZE}.webp', THUMB_SIZE)
+            full_bytes, full_quality = write_webp(cover, thumbs_dir / f'{album_id}-{FULL_SIZE}.webp', FULL_SIZE)
+            summary.append(
+                f'{album_id}: JPG 1200x1200; WEBP 640 {thumb_bytes / 1024:.1f} KB q{thumb_quality}; '
+                f'WEBP 1200 {full_bytes / 1024:.1f} KB q{full_quality}'
+            )
+
+        validate_staged_artifacts(staging_dir)
+        replace_artifacts(staging_dir, output_dir)
+        return summary
+    finally:
+        shutil.rmtree(staging_dir)
+
+
+def main() -> None:
+    args = parse_args()
+    summary = prepare_album_covers(args.source_dir, args.output_dir)
 
     print(f'Prepared {len(ALBUM_IDS)} RGB/sRGB JPEG covers and {len(ALBUM_IDS) * 2} WebP variants.')
     print('\n'.join(summary))
