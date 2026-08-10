@@ -53,6 +53,16 @@ test('theme preference persists after reload', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
 })
 
+test('home leads with an archive thesis instead of a personal wordmark', async ({ page }) => {
+  await page.goto('/index.html')
+  await expect(page.locator('.hero-name, .wordmark')).toHaveCount(0)
+  await expect(page.locator('.home-statement')).toHaveText('把好奇心，做成可以打开的答案。')
+  await expect(page.locator('.archive-entry')).toContainText('PERSONAL ARCHIVE')
+  await expect(page.locator('.home-signal')).toHaveCount(3)
+  await expect(page.locator('.hero-action.primary')).toHaveAttribute('href', '#selected-work')
+  await expect(page.locator('.site-shell')).not.toContainText(/Yance\./i)
+})
+
 test('bundled typography and reading progress stay explicit', async ({ page }) => {
   await page.goto('/works.html')
   await page.evaluate(() => document.fonts.ready)
@@ -103,6 +113,40 @@ test('research methodology disclosure and proof links are reachable', async ({ p
   await expect(disclosure).toHaveClass(/open/)
   await expect(disclosure.locator('.method-grid')).toHaveCSS('max-height', 'none')
   await expect(page.locator('.tl-proof a').first()).toHaveAttribute('href', /https?:\/\//)
+})
+
+test('copy citation uses one explicit control system in both themes', async ({ page }) => {
+  await page.addInitScript(() => {
+    const state = window as Window & { __copyWrites?: number }
+    state.__copyWrites = 0
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: async () => { state.__copyWrites = (state.__copyWrites || 0) + 1 }
+      }
+    })
+  })
+
+  for (const theme of ['light', 'dark']) {
+    await page.goto('/research.html')
+    await page.evaluate((value) => localStorage.setItem('yance-theme', value), theme)
+    await page.reload()
+    const button = page.locator('.copy-citation').first()
+    await expect(button).toBeVisible()
+    const appearance = await button.evaluate((element) => {
+      const style = getComputedStyle(element)
+      return { background: style.backgroundColor, border: style.borderStyle, radius: style.borderRadius }
+    })
+    expect(appearance.background).not.toBe('rgba(0, 0, 0, 0)')
+    expect(appearance.border).toBe('solid')
+    expect(parseFloat(appearance.radius)).toBeGreaterThan(10)
+    await button.evaluate((element) => {
+      for (let i = 0; i < 8; i += 1) (element as HTMLButtonElement).click()
+    })
+    await expect(button).toHaveAttribute('data-state', 'success')
+    await expect(button.locator('.copy-label')).toHaveText('已复制')
+    expect(await page.evaluate(() => (window as Window & { __copyWrites?: number }).__copyWrites)).toBe(1)
+  }
 })
 
 test('research workbench groups tools without a trailing empty cell', async ({ page }) => {

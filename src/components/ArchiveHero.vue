@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { heroGeo } from '../data'
+import { heroGeo, homeSignals } from '../data'
 
 const props = defineProps({
   page: { type: String, required: true },
@@ -22,6 +22,10 @@ const lyricChars = computed(() => props.title.split(''))
 const accessibleTitle = computed(() =>
   props.error ? props.title : `「${props.title}」`
 )
+const homeTitleLines = computed(() => {
+  const [lead, ...rest] = props.title.split('，')
+  return rest.length ? [`${lead}，`, rest.join('，')] : [props.title]
+})
 </script>
 
 <template>
@@ -29,7 +33,11 @@ const accessibleTitle = computed(() =>
     <div class="hero-inner">
       <div class="hero-main">
         <p class="hero-kicker" v-reveal>{{ kicker }}</p>
-        <h1 v-if="isHome" class="hero-name" v-reveal="{ delay: 90 }">Yance<span>.</span></h1>
+        <h1 v-if="isHome" class="home-statement" :aria-label="title" v-reveal="{ delay: 90 }">
+          <span v-for="(line, i) in homeTitleLines" :key="line" :class="{ accent: i === homeTitleLines.length - 1 }">
+            {{ line }}
+          </span>
+        </h1>
         <h1
           v-else
           class="hero-title hero-lyric"
@@ -45,6 +53,10 @@ const accessibleTitle = computed(() =>
           </template>
         </h1>
         <p class="hero-copy" v-reveal="{ delay: 180 }">{{ copy }}</p>
+        <nav v-if="isHome" class="home-hero-actions" aria-label="首页快速入口">
+          <a class="hero-action primary" href="#selected-work">查看精选内容 <span aria-hidden="true">↓</span></a>
+          <a class="hero-action secondary" href="research.html">从研究开始 <span aria-hidden="true">↗</span></a>
+        </nav>
         <p v-if="credit && !isHome" class="lyric-credit" v-reveal="{ delay: 270 }">
           <b>{{ credit.artist }}</b>
           <i aria-hidden="true">/</i>
@@ -56,12 +68,21 @@ const accessibleTitle = computed(() =>
         <div class="hero-line" v-reveal="{ delay: 300 }"><span></span></div>
       </div>
 
-      <aside v-if="isHome" class="hero-side" aria-hidden="true">
+      <aside v-if="isHome" class="hero-side home-signal-board" aria-label="档案快速索引">
+        <div class="home-signal-head">
+          <span>LIVE INDEX</span>
+          <span class="home-signal-online"><i aria-hidden="true"></i> ONLINE</span>
+        </div>
+        <a v-for="signal in homeSignals" :key="signal.label" class="home-signal" :href="signal.href">
+          <span>{{ signal.label }}</span>
+          <strong>{{ signal.value }}</strong>
+          <small>{{ signal.meta }}</small>
+          <i aria-hidden="true">↗</i>
+        </a>
         <div class="archive-coords">
           <span class="coords-label">{{ coordsLabel }}</span>
           <span class="coords-geo">{{ geo }}</span>
         </div>
-        <div v-if="isHome" class="hero-scroll"><span></span>SCROLL</div>
       </aside>
     </div>
   </section>

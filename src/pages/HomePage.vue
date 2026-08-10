@@ -9,7 +9,7 @@ const selectedActivities = computed(() => activities.filter((item) => item.featu
 <template>
   <div class="page-home">
     <!-- 第一段：精选研究与产品 -->
-    <section class="content home-focus">
+    <section id="selected-work" class="content home-focus">
       <SectionHeading
         no="01"
         label="SELECTED WORK"

@@ -69,7 +69,13 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 
 <template>
   <header class="site-nav" :class="{ 'menu-open': menuOpen }">
-    <a class="wordmark" href="index.html">Yance<span>.</span></a>
+    <a class="archive-entry" href="index.html" aria-label="返回个人档案首页">
+      <span class="archive-entry-mark" aria-hidden="true"><i></i></span>
+      <span class="archive-entry-copy">
+        <strong><span class="archive-entry-personal">PERSONAL </span>ARCHIVE</strong>
+        <small>INDEX / 2026</small>
+      </span>
+    </a>
 
     <button
       ref="menuTrigger"

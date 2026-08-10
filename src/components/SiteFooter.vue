@@ -1,7 +1,7 @@
 <template>
   <footer class="site-footer">
     <div class="foot-brand">
-      <span class="foot-mark">© 2026 YANCE.</span>
+      <span class="foot-mark">© 2026 · PERSONAL ARCHIVE</span>
       <span class="foot-tag">RESEARCHER / BUILDER / MUSIC LISTENER</span>
     </div>
     <div class="foot-links">
