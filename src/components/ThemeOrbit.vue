@@ -17,7 +17,7 @@ function onToggle() {
     type="button"
     :aria-label="theme === 'light' ? '切换到暗色主题' : '切换到亮色主题'"
     :aria-pressed="theme === 'dark'"
-    title="切换主题"
+    :title="theme === 'light' ? '切换到暗色主题' : '切换到亮色主题'"
     @click="onToggle"
   >
     <span class="orbit-track" aria-hidden="true">

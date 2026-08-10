@@ -26,8 +26,16 @@ const closeButton = ref<HTMLButtonElement | null>(null)
 const isOpen = ref(true)
 let lastFocus: HTMLElement | null = null
 const neighborPreloaded = new Set()
+let closeTimer: number | undefined
 
 useBodyScrollLock(isOpen)
+
+function closeLightbox() {
+  if (!isOpen.value) return
+  isOpen.value = false
+  const delay = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 240
+  closeTimer = window.setTimeout(() => emit('close'), delay)
+}
 
 function preloadNeighbors(index: number) {
   if (props.images.length < 2) return
@@ -63,7 +71,7 @@ function retryImage() {
 function onKey(e: KeyboardEvent) {
   if (e.key === 'Escape') {
     e.preventDefault()
-    emit('close')
+    closeLightbox()
   }
   else if (e.key === 'ArrowLeft') emit('prev')
   else if (e.key === 'ArrowRight') emit('next')
@@ -89,6 +97,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (closeTimer) window.clearTimeout(closeTimer)
   isOpen.value = false
   window.removeEventListener('keydown', onKey)
   if (lastFocus && lastFocus.focus) lastFocus.focus()
@@ -103,15 +112,18 @@ watch(() => [props.index, props.images[props.index]], () => {
 
 <template>
   <Teleport to="body">
-    <div
-      ref="dialogRef"
-      class="lightbox"
-      role="dialog"
-      aria-modal="true"
-      aria-label="演唱会海报大图"
-      @click.self="emit('close')"
-    >
-      <button ref="closeButton" class="lb-close" type="button" aria-label="关闭灯箱" @click="emit('close')">×</button>
+    <Transition name="lightbox" appear>
+      <div
+        v-if="isOpen"
+        ref="dialogRef"
+        class="lightbox"
+        role="dialog"
+        aria-modal="true"
+        :aria-busy="loading"
+        aria-label="演唱会海报大图"
+        @click.self="closeLightbox"
+      >
+        <button ref="closeButton" class="lb-close" type="button" aria-label="关闭灯箱" @click="closeLightbox">×</button>
 
       <button v-if="images.length > 1" class="lb-nav lb-prev" type="button" aria-label="上一张" @click="emit('prev')">←</button>
 
@@ -144,6 +156,7 @@ watch(() => [props.index, props.images[props.index]], () => {
       </figure>
 
       <button v-if="images.length > 1" class="lb-nav lb-next" type="button" aria-label="下一张" @click="emit('next')">→</button>
-    </div>
+      </div>
+    </Transition>
   </Teleport>
 </template>

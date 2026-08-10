@@ -6,6 +6,7 @@ import { useMusicNotes } from './composables/useMusicNotes'
 
 import SiteHeader from './components/SiteHeader.vue'
 import ArchiveHero from './components/ArchiveHero.vue'
+import HomeHero from './components/HomeHero.vue'
 import SiteFooter from './components/SiteFooter.vue'
 import ImageLightbox from './components/ImageLightbox.vue'
 import ScrollProgress from './components/ScrollProgress.vue'
@@ -55,8 +56,6 @@ onUnmounted(() => hashObserver?.disconnect())
 useMusicNotes()
 
 const currentNav = computed(() => navItems.find((item) => item.key === page))
-const pageNo = computed(() => (currentNav.value ? navItems.indexOf(currentNav.value) + 1 : 0))
-const archiveNo = computed(() => String(pageNo.value).padStart(2, '0'))
 const isHome = page === 'home'
 const isError = !currentNav.value
 const meta = computed(() => pageMeta[currentNav.value?.key || 'home'])
@@ -99,12 +98,16 @@ function moveLightbox(step: number) {
     <SiteHeader :page="page" />
 
     <main id="main">
+      <HomeHero
+        v-if="isHome"
+        :kicker="kicker"
+        :copy="heroCopy"
+      />
+
       <ArchiveHero
+        v-else
         :page="page"
-        :no="archiveNo"
-        :total="6"
         :error="isError"
-        :is-home="isHome"
         :kicker="kicker"
         :title="heroTitle"
         :copy="heroCopy"

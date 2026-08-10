@@ -108,24 +108,26 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   </header>
 
   <Teleport to="body">
-    <div ref="menuOverlay" v-if="menuOpen" class="mobile-menu-overlay" role="dialog" aria-modal="true" aria-label="移动端导航" @click.self="closeMenu(true)">
-      <button ref="menuClose" class="mobile-menu-close" type="button" aria-label="关闭导航" @click="closeMenu(true)">×</button>
-      <nav id="mobile-navigation" class="mobile-menu" aria-label="移动端导航">
-        <a
-          v-for="(item, i) in navItems"
-          :key="item.key"
-          :href="item.href"
-          :class="{ active: page === item.key }"
-          :aria-current="page === item.key ? 'page' : undefined"
-          :style="{ '--di': i }"
-          @click="closeMenu(true)"
-        >
-          <small class="mm-num">0{{ i + 1 }}</small>
-          <span class="mm-label">{{ item.label }}</span>
-          <small class="mm-en">{{ item.en }}</small>
-          <span class="mm-desc">{{ item.desc }}</span>
-        </a>
-      </nav>
-    </div>
+    <Transition name="mobile-menu">
+      <div ref="menuOverlay" v-if="menuOpen" class="mobile-menu-overlay" role="dialog" aria-modal="true" aria-label="移动端导航" @click.self="closeMenu(true)">
+        <button ref="menuClose" class="mobile-menu-close" type="button" aria-label="关闭导航" @click="closeMenu(true)">×</button>
+        <nav id="mobile-navigation" class="mobile-menu" aria-label="移动端导航">
+          <a
+            v-for="(item, i) in navItems"
+            :key="item.key"
+            :href="item.href"
+            :class="{ active: page === item.key }"
+            :aria-current="page === item.key ? 'page' : undefined"
+            :style="{ '--di': i }"
+            @click="closeMenu(true)"
+          >
+            <small class="mm-num">0{{ i + 1 }}</small>
+            <span class="mm-label">{{ item.label }}</span>
+            <small class="mm-en">{{ item.en }}</small>
+            <span class="mm-desc">{{ item.desc }}</span>
+          </a>
+        </nav>
+      </div>
+    </Transition>
   </Teleport>
 </template>

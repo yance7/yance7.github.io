@@ -77,7 +77,7 @@ function toggleExpand(id: string) {
         @filter="setCategory"
       />
 
-      <div class="honor-timeline">
+      <TransitionGroup name="honor-list" tag="div" class="honor-timeline">
         <article
           v-for="(h, i) in filteredHonors"
           :key="h.id"
@@ -107,7 +107,7 @@ function toggleExpand(id: string) {
             </button>
           </div>
         </article>
-      </div>
+      </TransitionGroup>
     </section>
   </div>
 </template>

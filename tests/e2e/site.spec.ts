@@ -68,6 +68,81 @@ test('home keeps the Yance wordmark at both archive anchors', async ({ page }) =
   await expect(page.locator('.foot-mark')).toContainText('Yance.')
 })
 
+test('home renders a cinematic archive stage around the lyric carousel', async ({ page }) => {
+  await page.goto('/index.html')
+  await expect(page.locator('.home-hero')).toBeVisible()
+  await expect(page.locator('.home-stage')).toBeVisible()
+  await expect(page.locator('.home-stage-meta')).toContainText('PERSONAL ARCHIVE / BEIJING · 2026')
+  await expect(page.locator('.home-stage-main')).toBeVisible()
+  await expect(page.locator('.home-stage-rail')).toBeVisible()
+  await expect(page.locator('.home-stage-scroll')).toBeVisible()
+  await expect(page.locator('.home-hero .lyric-carousel')).toBeVisible()
+  await expect(page.locator('.home-hero .home-signal')).toHaveCount(3)
+  await expect(page.locator('.archive-hero.hero-home')).toHaveCount(0)
+})
+
+test('home stage keeps its visual hierarchy across desktop and narrow screens', async ({ page }) => {
+  for (const width of [1440, 390, 320]) {
+    await page.setViewportSize({ width, height: 844 })
+    await page.goto('/index.html')
+    const layout = await page.evaluate(() => {
+      const main = document.querySelector('.home-stage-main')!.getBoundingClientRect()
+      const rail = document.querySelector('.home-stage-rail')!.getBoundingClientRect()
+      return {
+        documentWidth: document.documentElement.scrollWidth,
+        viewportWidth: window.innerWidth,
+        mainLeft: main.left,
+        mainBottom: main.bottom,
+        railLeft: rail.left,
+        railTop: rail.top
+      }
+    })
+    expect(layout.documentWidth, `home document at ${width}px`).toBeLessThanOrEqual(layout.viewportWidth)
+    if (width >= 900) {
+      expect(layout.railLeft).toBeGreaterThan(layout.mainLeft)
+      expect(layout.railTop).toBeLessThan(layout.mainBottom)
+    } else {
+      expect(layout.railTop).toBeGreaterThanOrEqual(layout.mainBottom - 1)
+    }
+  }
+})
+
+test('home assigns distinct font roles to prose, display and technical metadata', async ({ page }) => {
+  await page.goto('/index.html')
+  await page.evaluate(() => document.fonts.ready)
+  const fonts = await page.evaluate(() => {
+    const read = (selector: string) => getComputedStyle(document.querySelector(selector)!).fontFamily
+    return {
+      body: read('body'),
+      display: read('.wordmark'),
+      serif: read('.lyric-quote'),
+      technical: read('.lyric-carousel-index'),
+      action: read('.hero-action'),
+      signal: read('.home-signal strong')
+    }
+  })
+  expect(fonts.body).toContain('Inter')
+  expect(fonts.display).toContain('Inter')
+  expect(fonts.serif).toContain('Noto Serif SC Variable')
+  expect(fonts.technical).toContain('IBM Plex Mono')
+  expect(fonts.action).toContain('Inter')
+  expect(fonts.signal).toContain('Inter')
+
+  await page.goto('/research.html')
+  await page.evaluate(() => document.fonts.ready)
+  const researchFonts = await page.evaluate(() => {
+    const read = (selector: string) => getComputedStyle(document.querySelector(selector)!).fontFamily
+    return {
+      title: read('.tl-body h3'),
+      tool: read('.tc-tool strong'),
+      toolMeta: read('.tc-tool small')
+    }
+  })
+  expect(researchFonts.title).toContain('Inter')
+  expect(researchFonts.tool).toContain('Inter')
+  expect(researchFonts.toolMeta).toContain('IBM Plex Mono')
+})
+
 test('home lyric carousel supports automatic and accessible manual navigation', async ({ page }) => {
   await page.goto('/index.html')
   const carousel = page.locator('.lyric-carousel')
@@ -112,7 +187,7 @@ test('bundled typography and reading progress stay explicit', async ({ page }) =
   await page.evaluate(() => document.fonts.ready)
   const bodyFont = await page.locator('body').evaluate((element) => getComputedStyle(element).fontFamily)
   const displayFont = await page.locator('.hero-title').evaluate((element) => getComputedStyle(element).fontFamily)
-  expect(bodyFont).toContain('Noto Sans SC Variable')
+  expect(bodyFont).toContain('Inter')
   expect(displayFont).toContain('Noto Serif SC Variable')
   await expect(page.locator('.scroll-progress')).toHaveAttribute('role', 'progressbar')
   await expect(page.locator('.scroll-progress')).toHaveAttribute('aria-valuenow', '0')

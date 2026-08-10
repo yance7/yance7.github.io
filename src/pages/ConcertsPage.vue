@@ -57,7 +57,10 @@ function preloadItem(item) {
 }
 
 function tiltPoster(e) {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  if (
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    || !window.matchMedia('(pointer: fine)').matches
+  ) return
   const el = e.currentTarget
   const rect = el.getBoundingClientRect()
   const px = (e.clientX - rect.left) / rect.width - 0.5
@@ -147,17 +150,19 @@ function resetPoster(e) {
               :aria-label="`打开 ${item.artist} ${item.tour} 海报档案`"
               @click="openLightbox(item, carouselIndexes[item.id] || 0)"
             >
-              <picture>
-                <source :srcset="thumbnailUrl(currentImageName(item))" type="image/webp">
-                <img
-                  :src="originalImageUrl(currentImageName(item))"
-                  :alt="`${item.artist} ${item.tour} 海报`"
-                  :width="item.land ? 640 : 480"
-                  :height="item.land ? 360 : 640"
-                  loading="lazy"
-                  decoding="async"
-                >
-              </picture>
+                <Transition name="poster-fade" mode="out-in">
+                  <picture :key="currentImageName(item)">
+                    <source :srcset="thumbnailUrl(currentImageName(item))" type="image/webp">
+                    <img
+                      :src="originalImageUrl(currentImageName(item))"
+                      :alt="`${item.artist} ${item.tour} 海报`"
+                      :width="item.land ? 640 : 480"
+                      :height="item.land ? 360 : 640"
+                      loading="lazy"
+                      decoding="async"
+                    >
+                  </picture>
+                </Transition>
               <span class="poster-hint" aria-hidden="true">
                 <span>打开档案</span><b>＋</b>
               </span>

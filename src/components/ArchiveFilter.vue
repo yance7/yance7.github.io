@@ -8,7 +8,7 @@ const emit = defineEmits(['filter'])
 </script>
 
 <template>
-  <div class="honor-filter" aria-label="荣誉分类筛选">
+  <div class="honor-filter" role="group" aria-label="荣誉分类筛选">
     <button
       v-for="cat in categories"
       :key="cat.key"

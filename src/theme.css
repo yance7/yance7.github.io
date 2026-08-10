@@ -6,10 +6,10 @@
 /* ---------- 全局设计令牌（与主题无关） ---------- */
 :root {
   /* 字体族 */
-  --sans: "Noto Sans SC Variable";
-  --serif: "Noto Serif SC Variable";
-  --display: "Noto Serif SC Variable";
-  --mono: "IBM Plex Mono", "Noto Sans SC Variable";
+  --sans: "Inter Variable", "Noto Sans SC Variable", sans-serif;
+  --serif: "Noto Serif SC Variable", serif;
+  --display: "Inter Variable", "Noto Serif SC Variable", serif;
+  --mono: "IBM Plex Mono", "Noto Sans SC Variable", monospace;
 
   /* 缓动函数（接近苹果 spring 的丝滑感） */
   --ease: cubic-bezier(.22, .61, .36, 1);

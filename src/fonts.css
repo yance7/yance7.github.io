@@ -6,6 +6,7 @@
  */
 @import '@fontsource-variable/noto-sans-sc/index.css';
 @import '@fontsource-variable/noto-serif-sc/index.css';
+@import '@fontsource-variable/inter/index.css';
 
 @font-face {
   font-family: 'IBM Plex Mono';
