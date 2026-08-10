@@ -1,4 +1,4 @@
-import type { PageKey, PageMeta, SiteNavItem, Status, World } from './types'
+import type { HomeLyric, PageKey, PageMeta, SiteNavItem, Status, World } from './types'
 
 export const navItems = [
   { key: 'home', label: '首页', en: 'Home', href: 'index.html', desc: '个人档案入口' },
@@ -23,13 +23,24 @@ export const statusLabels = {
 
 /* ---------- 首页页面元数据 ---------- */
 export const pageMeta = {
-  home: { kicker: 'PERSONAL ARCHIVE / BEIJING · 2026', title: '把好奇心，做成可以打开的答案。', copy: '这里收录研究、已上线的作品，以及被音乐和现场照亮的生活切片。先从一个真实问题开始，再沿着证据走到可以使用的结果。', credit: undefined },
+  home: { kicker: 'PERSONAL ARCHIVE / BEIJING · 2026', title: 'SONG NOTES', copy: '这里收录研究、已上线的作品，以及被音乐和现场照亮的生活切片。先从一个真实问题开始，再沿着证据走到可以使用的结果。', credit: undefined },
   academics: { kicker: 'ACADEMICS / 学业', title: '明日从此的坐标', copy: '绩点、标化与 AP 成绩，是努力留下的可读痕迹。', credit: { artist: '林俊杰', song: '明日坐标', album: '明日坐标' } },
   honors: { kicker: 'HONORS / 荣誉', title: '一步一步往上爬', copy: '奖项是坐标，不是终点；真正重要的是仍然保持向上的惯性。', credit: { artist: '周杰伦', song: '蜗牛', album: 'Fantasy Plus' } },
   research: { kicker: 'RESEARCH / 研究', title: '我不完美的梦，你陪着我想', copy: '从智慧农业到可解释 AI，把论文里的模型推向浏览器里能点开的产品。', credit: { artist: 'TFBOYS', song: '不完美小孩', album: '我们的时光' } },
   works: { kicker: 'WORKS / 作品', title: '因为我已慢慢懂，努力就能成功', copy: '两个已经上线的小世界，记录想法如何离开纸面，开始被真实使用。', credit: { artist: '汪苏泷', song: '慢慢懂', album: '慢慢懂' } },
   concerts: { kicker: 'CONCERTS / 演唱会', title: '缘分让我们相遇乱世以外', copy: '演唱会足迹与海报，记录那些被灯光和合唱重新定义的夜晚。', credit: { artist: '邓紫棋', song: '光年之外', album: '' } }
 } satisfies Record<PageKey, PageMeta>
+
+export const homeLyrics = [
+  { id: 'jay-chou-dao-xiang', artist: '周杰伦', song: '稻香', quote: '家是唯一的城堡', accent: 'gold' },
+  { id: 'jj-lin-ming-ri-zuo-biao', artist: '林俊杰', song: '明日坐标', quote: '明日从此的坐标', accent: 'aqua' },
+  { id: 'g-e-m-guang-nian-zhi-wai', artist: '邓紫棋', song: '光年之外', quote: '缘分让我们相遇乱世以外', accent: 'violet' },
+  { id: 'silence-wang-man-man-dong', artist: '汪苏泷', song: '慢慢懂', quote: '因为我已明白，努力就能成功', accent: 'gold' },
+  { id: 'joker-xue-tian-wai-lai-wu', artist: '薛之谦', song: '天外来物', quote: '你降落的太突然了', accent: 'aqua' },
+  { id: 'jason-zhang-zui-mei-de-tai-yang', artist: '张杰', song: '最美的太阳', quote: '你是最美的太阳', accent: 'violet' },
+  { id: 'wang-leehom-gai-bian-zi-ji', artist: '王力宏', song: '改变自己', quote: '我可以改变世界', accent: 'gold' },
+  { id: 'david-tao-jiu-shi-ai-ni', artist: '陶喆', song: '就是爱你', quote: '就是爱你爱着你', accent: 'aqua' }
+] satisfies HomeLyric[]
 
 export const homeSignals = [
   { label: 'SELECTED RESEARCH', value: 'FishFreshNet V2', meta: 'EXPLAINABLE VISION AI', href: 'research.html#fishfreshnet-v2' },

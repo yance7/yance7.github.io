@@ -301,7 +301,7 @@ body, .site-shell, .site-nav, .stat-cell, .ap-row, .tl-tag, .concert-info,
 .honor-filter, .tl-method, .sc-dossier-head, .sc-body, .concert-group, .metric-card,
 .timeline-track, .status-badge, .media-ph, .now-active, .method-chip,
 .world-card, .education-row, .leadership-card, .activity-row, .tl-metrics,
-.home-signal-board, .home-signal, .hero-action, .archive-entry-mark, .copy-citation {
+.home-signal-board, .home-signal, .hero-action, .wordmark, .foot-mark, .copy-citation {
   transition-property: background-color, border-color, color, box-shadow, fill;
   transition-duration: var(--dur-base);
   transition-timing-function: var(--ease-soft);

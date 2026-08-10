@@ -1,7 +1,10 @@
 <template>
   <footer class="site-footer">
     <div class="foot-brand">
-      <span class="foot-mark">© 2026 · PERSONAL ARCHIVE</span>
+      <a class="foot-mark" href="index.html" aria-label="返回个人档案首页">
+        <strong>Yance<span>.</span></strong>
+        <small>PERSONAL ARCHIVE / 2026</small>
+      </a>
       <span class="foot-tag">RESEARCHER / BUILDER / MUSIC LISTENER</span>
     </div>
     <div class="foot-links">

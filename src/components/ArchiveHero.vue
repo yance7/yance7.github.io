@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { heroGeo, homeSignals } from '../data'
+import LyricCarousel from './LyricCarousel.vue'
 
 const props = defineProps({
   page: { type: String, required: true },
@@ -22,10 +23,6 @@ const lyricChars = computed(() => props.title.split(''))
 const accessibleTitle = computed(() =>
   props.error ? props.title : `「${props.title}」`
 )
-const homeTitleLines = computed(() => {
-  const [lead, ...rest] = props.title.split('，')
-  return rest.length ? [`${lead}，`, rest.join('，')] : [props.title]
-})
 </script>
 
 <template>
@@ -33,11 +30,7 @@ const homeTitleLines = computed(() => {
     <div class="hero-inner">
       <div class="hero-main">
         <p class="hero-kicker" v-reveal>{{ kicker }}</p>
-        <h1 v-if="isHome" class="home-statement" :aria-label="title" v-reveal="{ delay: 90 }">
-          <span v-for="(line, i) in homeTitleLines" :key="line" :class="{ accent: i === homeTitleLines.length - 1 }">
-            {{ line }}
-          </span>
-        </h1>
+        <LyricCarousel v-if="isHome" />
         <h1
           v-else
           class="hero-title hero-lyric"
@@ -52,7 +45,8 @@ const homeTitleLines = computed(() => {
             >{{ ch }}</span>
           </template>
         </h1>
-        <p class="hero-copy" v-reveal="{ delay: 180 }">{{ copy }}</p>
+        <p v-if="isHome" class="hero-copy">{{ copy }}</p>
+        <p v-else class="hero-copy" v-reveal="{ delay: 180 }">{{ copy }}</p>
         <nav v-if="isHome" class="home-hero-actions" aria-label="首页快速入口">
           <a class="hero-action primary" href="#selected-work">查看精选内容 <span aria-hidden="true">↓</span></a>
           <a class="hero-action secondary" href="research.html">从研究开始 <span aria-hidden="true">↗</span></a>

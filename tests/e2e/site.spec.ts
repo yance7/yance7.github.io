@@ -53,14 +53,58 @@ test('theme preference persists after reload', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
 })
 
-test('home leads with an archive thesis instead of a personal wordmark', async ({ page }) => {
+test('home leads with a lyric carousel instead of the old thesis wordmark', async ({ page }) => {
   await page.goto('/index.html')
-  await expect(page.locator('.hero-name, .wordmark')).toHaveCount(0)
-  await expect(page.locator('.home-statement')).toHaveText('把好奇心，做成可以打开的答案。')
-  await expect(page.locator('.archive-entry')).toContainText('PERSONAL ARCHIVE')
+  await expect(page.locator('.hero-name, .home-statement')).toHaveCount(0)
+  await expect(page.locator('.lyric-carousel')).toBeVisible()
+  await expect(page.locator('.archive-entry')).toHaveCount(0)
   await expect(page.locator('.home-signal')).toHaveCount(3)
   await expect(page.locator('.hero-action.primary')).toHaveAttribute('href', '#selected-work')
-  await expect(page.locator('.site-shell')).not.toContainText(/Yance\./i)
+})
+
+test('home keeps the Yance wordmark at both archive anchors', async ({ page }) => {
+  await page.goto('/index.html')
+  await expect(page.locator('header .wordmark')).toHaveText('Yance.')
+  await expect(page.locator('.foot-mark')).toContainText('Yance.')
+})
+
+test('home lyric carousel supports automatic and accessible manual navigation', async ({ page }) => {
+  await page.goto('/index.html')
+  const carousel = page.locator('.lyric-carousel')
+  await expect(carousel).toBeVisible()
+  await expect(carousel).toHaveAttribute('data-index', '0')
+  await expect(carousel.locator('.lyric-artist')).toHaveText('周杰伦')
+
+  await carousel.locator('[aria-label="下一句"]').click()
+  await expect(carousel).toHaveAttribute('data-index', '1')
+  await expect(carousel.locator('.lyric-artist')).toHaveText('林俊杰')
+
+  await carousel.locator('[aria-label="暂停轮播"]').click()
+  await expect(carousel.locator('[aria-label="继续轮播"]')).toBeVisible()
+  await carousel.focus()
+  await page.keyboard.press('ArrowRight')
+  await expect(carousel).toHaveAttribute('data-index', '2')
+  await page.keyboard.press('Home')
+  await expect(carousel).toHaveAttribute('data-index', '0')
+
+  await carousel.locator('[aria-label="继续轮播"]').click()
+  await expect(carousel.locator('[aria-label="暂停轮播"]')).toBeVisible()
+})
+
+test('home lyric carousel advances automatically while idle', async ({ page }) => {
+  await page.goto('/index.html')
+  const carousel = page.locator('.lyric-carousel')
+  await expect.poll(() => carousel.getAttribute('data-index'), { timeout: 7500 }).toBe('1')
+})
+
+test('home lyric carousel stops automatic motion when reduced motion is requested', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/index.html')
+  const carousel = page.locator('.lyric-carousel')
+  await expect(carousel).toHaveAttribute('data-index', '0')
+  await page.waitForTimeout(6200)
+  await expect(carousel).toHaveAttribute('data-index', '0')
+  await expect(carousel.locator('[aria-label="播放轮播"]')).toBeVisible()
 })
 
 test('bundled typography and reading progress stay explicit', async ({ page }) => {

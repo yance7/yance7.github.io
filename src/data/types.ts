@@ -187,6 +187,14 @@ export interface PageMeta {
   credit?: HeroCredit
 }
 
+export interface HomeLyric {
+  id: string
+  artist: string
+  song: string
+  quote: string
+  accent: 'gold' | 'aqua' | 'violet'
+}
+
 export type PageKey = 'home' | 'academics' | 'honors' | 'research' | 'works' | 'concerts'
 
 export interface World {
