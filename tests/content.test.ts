@@ -1,8 +1,44 @@
 import { describe, expect, it } from 'vitest'
-import { activities, concerts, concertGroups, formatUpdatedLabel, getConcertState, pageMetadata, projects, research } from '../src/data'
+import { activities, albums, concerts, concertGroups, formatUpdatedLabel, getConcertState, pageMetadata, projects, research } from '../src/data'
+import { albumCoverFallback, albumCoverSrcset, albumCoverWebp } from '../src/utils/albumMedia'
 import { thumbnailUrl } from '../src/utils/concertMedia'
 
 describe('content contracts', () => {
+  it('keeps the album release set and artist grouping stable', () => {
+    expect(albums).toHaveLength(24)
+    expect([...new Set(albums.map((album) => album.artist))]).toEqual([
+      '周杰伦', '林俊杰', '薛之谦', '邓紫棋', '汪苏泷', '张杰', '王力宏', '陶喆'
+    ])
+    const releasesByArtist = albums.reduce<Record<string, number>>((counts, album) => {
+      counts[album.artist] = (counts[album.artist] ?? 0) + 1
+      return counts
+    }, {})
+    expect(Object.values(releasesByArtist).every((count) => count === 3)).toBe(true)
+  })
+
+  it('keeps album ordering and the single EP explicit', () => {
+    expect(albums[0]?.id).toBe('jay-fantasy')
+    expect(albums.filter((album) => album.format === 'ep').map((album) => album.id)).toEqual(['jason-most-beautiful-sun'])
+  })
+
+  it('keeps album media metadata valid and distinct', () => {
+    expect(new Set(albums.map((album) => album.id)).size).toBe(24)
+    expect(new Set(albums.map((album) => album.cover)).size).toBe(24)
+    expect(albums.every((album) => (
+      album.cover === album.id
+      && Number.isInteger(album.year)
+      && album.appleMusicUrl.startsWith('https://music.apple.com/')
+      && album.palette.every((color) => /^#[0-9A-F]{6}$/i.test(color))
+    ))).toBe(true)
+  })
+
+  it('derives rooted responsive album media URLs', () => {
+    expect(albumCoverFallback('jay-fantasy')).toBe('/assets/albums/jay-fantasy.jpg')
+    expect(albumCoverWebp('jay-fantasy', 640)).toBe('/assets/albums/thumbs/jay-fantasy-640.webp')
+    expect(albumCoverWebp('jay-fantasy', 1200)).toBe('/assets/albums/thumbs/jay-fantasy-1200.webp')
+    expect(albumCoverSrcset('jay-fantasy')).toBe('/assets/albums/thumbs/jay-fantasy-640.webp 640w, /assets/albums/thumbs/jay-fantasy-1200.webp 1200w')
+  })
+
   it('keeps concert media URLs rooted and thumbnail-safe', () => {
     expect(thumbnailUrl('concert-202511-kpl-01.jpg')).toBe('/assets/concerts/thumbs/concert-202511-kpl-01.webp')
     expect(concerts.every((concert) => concert.id && concert.images.length > 0)).toBe(true)

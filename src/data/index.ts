@@ -12,6 +12,7 @@ export * from './research'
 export * from './community'
 export * from './projects'
 export * from './concerts'
+export * from './albums'
 
 const monthLabels = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
 

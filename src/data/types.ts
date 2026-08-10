@@ -125,6 +125,17 @@ export interface Concert {
   note?: string
 }
 
+export interface Album {
+  id: string
+  artist: string
+  title: string
+  year: number
+  format: 'album' | 'ep'
+  cover: string
+  appleMusicUrl: string
+  palette: readonly [string, string]
+}
+
 export interface Honor {
   id: string
   date: string
