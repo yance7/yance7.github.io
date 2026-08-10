@@ -19,6 +19,7 @@ test-results/
 
 # Trae spec / 临时工作目录
 .trae/
+.superpowers/
 
 # Vue build
 node_modules/
