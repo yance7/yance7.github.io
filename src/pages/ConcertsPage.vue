@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { concerts, concertGroups, concertMoods, concertStats, upcomingConcerts, isConcertUpcoming } from '../data'
 import SectionHeading from '../components/SectionHeading.vue'
 import MetricStrip from '../components/MetricStrip.vue'
+import AlbumWall from '../components/AlbumWall.vue'
 import { originalImageUrl, thumbnailUrl } from '../utils/concertMedia'
 
 const emit = defineEmits(['open-lightbox'])
@@ -111,6 +112,8 @@ function resetPoster(e) {
         </div>
       </div>
     </section>
+
+    <AlbumWall />
 
     <!-- 按年份分组 -->
     <section

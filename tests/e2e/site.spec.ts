@@ -390,6 +390,165 @@ test('academics pending scores use a compact badge', async ({ page }) => {
   expect(content).toBe('"?"')
 })
 
+test('concert album wall exposes 24 local releases and the default spotlight', async ({ page }) => {
+  await page.goto('/concerts.html')
+  const wall = page.locator('.album-wall-section')
+  await expect(wall).toHaveCount(1)
+  await expect(wall.locator('.album-tile')).toHaveCount(24)
+  await expect(wall.locator('.album-spotlight')).toContainText('周杰伦')
+  await expect(wall.locator('.album-spotlight')).toContainText('范特西')
+  await expect(wall.locator('.album-spotlight')).toContainText('2001')
+  await expect(wall.locator('.album-index')).toHaveText('01 / 24')
+
+  const selected = wall.locator('.album-tile[aria-selected="true"]')
+  await expect(selected).toHaveCount(1)
+  await expect(selected).toHaveAttribute('data-album-id', 'jay-fantasy')
+
+  const appleMusicLink = wall.locator('.album-link')
+  await expect(appleMusicLink).toHaveAttribute('href', /^https:\/\/music\.apple\.com\/.+\/album\//)
+  await expect(appleMusicLink).toHaveAttribute('target', '_blank')
+  await expect(appleMusicLink).toHaveAttribute('rel', /noopener/)
+
+  const firstCover = wall.locator('.album-tile img').first()
+  await expect(firstCover).toBeVisible()
+  const cover = await firstCover.evaluate((image: HTMLImageElement) => ({
+    src: image.currentSrc,
+    width: image.naturalWidth,
+    height: image.naturalHeight
+  }))
+  expect(new URL(cover.src).pathname).toMatch(/^\/assets\/albums\//)
+  expect((await page.request.get(cover.src)).status()).toBe(200)
+  expect(cover.width).toBeGreaterThanOrEqual(640)
+  expect(cover.height).toBeGreaterThanOrEqual(640)
+})
+
+test('concert album wall selection and looping controls stay synchronized', async ({ page }) => {
+  await page.goto('/concerts.html')
+  const wall = page.locator('.album-wall-section')
+  const selected = wall.locator('.album-tile[aria-selected="true"]')
+
+  await wall.locator('[data-album-id="jay-ye-hui-mei"]').click()
+  await expect(wall.locator('.album-title')).toHaveText('叶惠美')
+  await expect(wall.locator('.album-index')).toHaveText('02 / 24')
+  await expect(selected).toHaveCount(1)
+  await expect(selected).toHaveAttribute('data-album-id', 'jay-ye-hui-mei')
+
+  await wall.locator('[data-album-id="jay-fantasy"]').click()
+  await wall.locator('[aria-label="上一张专辑"]').click()
+  await expect(selected).toHaveAttribute('data-album-id', 'david-tao-black-tangerine')
+  await expect(wall.locator('.album-index')).toHaveText('24 / 24')
+  await wall.locator('[aria-label="下一张专辑"]').click()
+  await expect(selected).toHaveAttribute('data-album-id', 'jay-fantasy')
+  await expect(wall.locator('.album-index')).toHaveText('01 / 24')
+
+  await wall.locator('[aria-label="下一张专辑"]').evaluate((button: HTMLButtonElement) => {
+    for (let index = 0; index < 8; index += 1) button.click()
+  })
+  await expect(selected).toHaveCount(1)
+  await expect(wall.locator('.album-index')).toHaveText(/^\d{2} \/ 24$/)
+})
+
+test('concert album wall supports roving keyboard selection', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('/concerts.html')
+  const wall = page.locator('.album-wall-section')
+  const tiles = wall.locator('.album-tile')
+  const selected = wall.locator('.album-tile[aria-selected="true"]')
+
+  await selected.focus()
+  await expect(selected).toBeFocused()
+  await page.keyboard.press('ArrowRight')
+  await expect(tiles.nth(1)).toBeFocused()
+  await expect(tiles.nth(1)).toHaveAttribute('aria-selected', 'true')
+  await page.keyboard.press('ArrowDown')
+  await expect(tiles.nth(7)).toBeFocused()
+  await expect(tiles.nth(7)).toHaveAttribute('aria-selected', 'true')
+
+  await page.keyboard.press('Home')
+  await expect(tiles.first()).toBeFocused()
+  await expect(tiles.first()).toHaveAttribute('aria-selected', 'true')
+  await page.keyboard.press('End')
+  await expect(tiles.last()).toBeFocused()
+  await expect(tiles.last()).toHaveAttribute('aria-selected', 'true')
+
+  await tiles.nth(2).focus()
+  const beforeEnter = await page.evaluate(() => window.scrollY)
+  await page.keyboard.press('Enter')
+  await expect(tiles.nth(2)).toHaveAttribute('aria-selected', 'true')
+  expect(await page.evaluate(() => window.scrollY)).toBe(beforeEnter)
+
+  await tiles.nth(3).focus()
+  const beforeSpace = await page.evaluate(() => window.scrollY)
+  await page.keyboard.press('Space')
+  await expect(tiles.nth(3)).toHaveAttribute('aria-selected', 'true')
+  expect(await page.evaluate(() => window.scrollY)).toBe(beforeSpace)
+  await expect(selected).toHaveCount(1)
+})
+
+test('concert album wall adapts at 1440 1024 768 390 and 320 pixels', async ({ page }) => {
+  for (const width of [1440, 1024, 768, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto('/concerts.html')
+    const layout = await page.evaluate(() => {
+      const spotlight = document.querySelector('.album-spotlight')!.getBoundingClientRect()
+      const grid = document.querySelector('.album-grid')!.getBoundingClientRect()
+      const firstTile = document.querySelector('.album-tile')!.getBoundingClientRect()
+      const columns = getComputedStyle(document.querySelector('.album-grid')!).gridTemplateColumns.split(' ').length
+      return {
+        documentWidth: document.documentElement.scrollWidth,
+        bodyWidth: document.body.scrollWidth,
+        viewportWidth: window.innerWidth,
+        spotlightRight: spotlight.right,
+        spotlightBottom: spotlight.bottom,
+        gridLeft: grid.left,
+        gridTop: grid.top,
+        columns,
+        tileWidth: firstTile.width,
+        tileHeight: firstTile.height
+      }
+    })
+
+    expect(layout.documentWidth, `document at ${width}px`).toBeLessThanOrEqual(layout.viewportWidth)
+    expect(layout.bodyWidth, `body at ${width}px`).toBeLessThanOrEqual(layout.viewportWidth)
+    if (width === 1440) {
+      expect(layout.gridLeft).toBeGreaterThanOrEqual(layout.spotlightRight - 1)
+      expect(layout.gridTop).toBeLessThan(layout.spotlightBottom)
+    } else {
+      expect(layout.gridTop).toBeGreaterThanOrEqual(layout.spotlightBottom - 1)
+    }
+    if (width <= 390) {
+      expect(layout.columns).toBe(3)
+      expect(Math.abs(layout.tileWidth - layout.tileHeight)).toBeLessThanOrEqual(1)
+    }
+  }
+})
+
+test('concert album wall preserves theme and reduced-motion accessibility', async ({ page }) => {
+  await page.goto('/concerts.html')
+  const wall = page.locator('.album-wall')
+  const tiles = page.locator('.album-tile')
+  await expectAccessible(page)
+
+  await tiles.nth(1).focus()
+  await page.keyboard.press('Enter')
+  await expect(tiles.nth(1)).toHaveAttribute('aria-selected', 'true')
+  await expectAccessible(page)
+
+  const surfaceBefore = await wall.evaluate((element) => getComputedStyle(element).background)
+  await page.locator('.theme-orbit').click()
+  await expect.poll(() => wall.evaluate((element) => getComputedStyle(element).background)).not.toBe(surfaceBefore)
+  await expect(tiles.nth(1)).toHaveAttribute('aria-selected', 'true')
+
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await tiles.nth(2).click()
+  await expect(tiles.nth(2)).toHaveAttribute('aria-selected', 'true')
+  await expect(page.locator('.album-sleeve')).toHaveCSS('transform', 'none')
+  await expect(page.locator('.album-sleeve')).toHaveCSS('transition-duration', '0s')
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  await expectAccessible(page)
+})
+
 test('concert thumbnails respond and carousel/lightbox controls work', async ({ page }) => {
   await page.goto('/concerts.html')
   await expect(page.locator('.metric-strip .metric-card')).toHaveCount(4)
