@@ -277,7 +277,7 @@ onUnmounted(() => {
   pointer-events: none;
 }
 
-:global([data-theme='light']) .album-wall {
+:global([data-theme='light'] .album-wall) {
   --stage-surface: #f5f3ee;
   --stage-panel: rgba(255, 255, 255, .72);
   --stage-text: #17191d;
@@ -291,7 +291,7 @@ onUnmounted(() => {
   box-shadow: 0 28px 70px rgba(68, 53, 33, .12);
 }
 
-:global([data-theme='dark']) .album-wall {
+:global([data-theme='dark'] .album-wall) {
   --stage-surface: #0b1016;
   --stage-panel: rgba(13, 17, 24, .82);
   --stage-text: #f5f3ee;
@@ -341,7 +341,7 @@ onUnmounted(() => {
   font-weight: 700;
 }
 
-:global([data-theme='light']) .album-kicker {
+:global([data-theme='light'] .album-kicker) {
   color: #256d69;
 }
 

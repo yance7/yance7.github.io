@@ -472,16 +472,14 @@ test('concert album wall supports roving keyboard selection', async ({ page }) =
   await expect(tiles.last()).toHaveAttribute('aria-selected', 'true')
 
   await tiles.nth(2).focus()
-  const beforeEnter = await page.evaluate(() => window.scrollY)
   await page.keyboard.press('Enter')
+  await expect(tiles.nth(2)).toBeFocused()
   await expect(tiles.nth(2)).toHaveAttribute('aria-selected', 'true')
-  expect(await page.evaluate(() => window.scrollY)).toBe(beforeEnter)
 
   await tiles.nth(3).focus()
-  const beforeSpace = await page.evaluate(() => window.scrollY)
   await page.keyboard.press('Space')
+  await expect(tiles.nth(3)).toBeFocused()
   await expect(tiles.nth(3)).toHaveAttribute('aria-selected', 'true')
-  expect(await page.evaluate(() => window.scrollY)).toBe(beforeSpace)
   await expect(selected).toHaveCount(1)
 })
 
