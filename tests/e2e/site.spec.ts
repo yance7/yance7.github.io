@@ -409,9 +409,9 @@ test('concert album wall exposes 24 local releases and the default spotlight', a
   await expect(appleMusicLink).toHaveAttribute('target', '_blank')
   await expect(appleMusicLink).toHaveAttribute('rel', /noopener/)
 
-  const firstCover = wall.locator('.album-tile img').first()
-  await expect(firstCover).toBeVisible()
-  const cover = await firstCover.evaluate((image: HTMLImageElement) => ({
+  const spotlightCover = wall.locator('.album-spotlight img')
+  await expect(spotlightCover).toBeVisible()
+  const cover = await spotlightCover.evaluate((image: HTMLImageElement) => ({
     src: image.currentSrc,
     width: image.naturalWidth,
     height: image.naturalHeight
@@ -487,6 +487,7 @@ test('concert album wall adapts at 1440 1024 768 390 and 320 pixels', async ({ p
   for (const width of [1440, 1024, 768, 390, 320]) {
     await page.setViewportSize({ width, height: 900 })
     await page.goto('/concerts.html')
+    await expect(page.locator('.album-spotlight')).toBeVisible()
     const layout = await page.evaluate(() => {
       const spotlight = document.querySelector('.album-spotlight')!.getBoundingClientRect()
       const grid = document.querySelector('.album-grid')!.getBoundingClientRect()
