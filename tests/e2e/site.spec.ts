@@ -410,16 +410,21 @@ test('concert album wall exposes 24 local releases and the default spotlight', a
   await expect(appleMusicLink).toHaveAttribute('rel', /noopener/)
 
   const spotlightCover = wall.locator('.album-spotlight img')
+  const spotlightSource = wall.locator('.album-spotlight picture source[type="image/webp"]')
   await expect(spotlightCover).toBeVisible()
+  await expect(spotlightSource).toHaveAttribute('srcset', /640w/)
+  await expect(spotlightSource).toHaveAttribute('srcset', /1200w/)
   const cover = await spotlightCover.evaluate((image: HTMLImageElement) => ({
     src: image.currentSrc,
+    complete: image.complete,
     width: image.naturalWidth,
     height: image.naturalHeight
   }))
   expect(new URL(cover.src).pathname).toMatch(/^\/assets\/albums\//)
   expect((await page.request.get(cover.src)).status()).toBe(200)
-  expect(cover.width).toBeGreaterThanOrEqual(640)
-  expect(cover.height).toBeGreaterThanOrEqual(640)
+  expect(cover.complete).toBe(true)
+  expect(cover.width).toBeGreaterThan(0)
+  expect(cover.height).toBeGreaterThan(0)
 })
 
 test('concert album wall selection and looping controls stay synchronized', async ({ page }) => {
