@@ -131,66 +131,69 @@ onUnmounted(() => {
             <span class="album-index">{{ selectedPosition }}</span>
           </div>
 
-          <Transition name="album-switch" mode="out-in">
-            <div :key="selectedAlbum.id" class="album-spotlight-body">
-              <div
-                class="album-sleeve"
-                @pointermove="tiltSleeve"
-                @pointerleave="resetSleeve"
-                @pointercancel="resetSleeve"
-              >
-                <div class="album-vinyl" aria-hidden="true">
-                  <span></span>
-                </div>
-                <picture class="album-cover-frame">
-                  <source
-                    :srcset="albumCoverSrcset(selectedAlbum.cover)"
-                    sizes="(min-width: 1180px) 36vw, (min-width: 768px) 42vw, 82vw"
-                    type="image/webp"
-                  >
-                  <img
-                    :src="albumCoverFallback(selectedAlbum.cover)"
-                    :alt="`${selectedAlbum.artist}《${selectedAlbum.title}》专辑封面`"
-                    width="1200"
-                    height="1200"
-                    loading="eager"
-                    :fetchpriority="selectedIndex === 0 ? 'high' : 'auto'"
-                    decoding="async"
-                  >
-                </picture>
-              </div>
-
-              <div class="album-details">
-                <p class="album-artist">{{ selectedAlbum.artist }}</p>
-                <h3 class="album-title">{{ selectedAlbum.title }}</h3>
-                <p class="album-meta">
-                  <span>{{ selectedAlbum.year }}</span>
-                  <span aria-hidden="true">·</span>
-                  <span>{{ formatLabel(selectedAlbum) }}</span>
-                </p>
-
-                <div class="album-actions">
-                  <div class="album-nav" aria-label="专辑切换控制">
-                    <button type="button" aria-label="上一张专辑" @click="moveAlbum(-1)">
-                      <span aria-hidden="true">←</span>
-                    </button>
-                    <button type="button" aria-label="下一张专辑" @click="moveAlbum(1)">
-                      <span aria-hidden="true">→</span>
-                    </button>
+          <div class="album-spotlight-body">
+            <div class="album-visual-slot">
+              <Transition name="album-switch" mode="out-in">
+                <div
+                  :key="selectedAlbum.id"
+                  class="album-sleeve"
+                  @pointermove="tiltSleeve"
+                  @pointerleave="resetSleeve"
+                  @pointercancel="resetSleeve"
+                >
+                  <div class="album-vinyl" aria-hidden="true">
+                    <span></span>
                   </div>
-                  <a
-                    class="album-link"
-                    :href="selectedAlbum.appleMusicUrl"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <span>Apple Music</span>
-                    <span aria-hidden="true">↗</span>
-                  </a>
+                  <picture class="album-cover-frame">
+                    <source
+                      :srcset="albumCoverSrcset(selectedAlbum.cover)"
+                      sizes="(min-width: 1180px) 36vw, (min-width: 768px) 42vw, 82vw"
+                      type="image/webp"
+                    >
+                    <img
+                      :src="albumCoverFallback(selectedAlbum.cover)"
+                      :alt="`${selectedAlbum.artist}《${selectedAlbum.title}》专辑封面`"
+                      width="1200"
+                      height="1200"
+                      loading="eager"
+                      :fetchpriority="selectedIndex === 0 ? 'high' : 'auto'"
+                      decoding="async"
+                    >
+                  </picture>
                 </div>
+              </Transition>
+            </div>
+
+            <div class="album-details">
+              <p class="album-artist">{{ selectedAlbum.artist }}</p>
+              <h3 class="album-title">{{ selectedAlbum.title }}</h3>
+              <p class="album-meta">
+                <span>{{ selectedAlbum.year }}</span>
+                <span aria-hidden="true">·</span>
+                <span>{{ formatLabel(selectedAlbum) }}</span>
+              </p>
+
+              <div class="album-actions">
+                <div class="album-nav" aria-label="专辑切换控制">
+                  <button type="button" aria-label="上一张专辑" @click="moveAlbum(-1)">
+                    <span aria-hidden="true">←</span>
+                  </button>
+                  <button type="button" aria-label="下一张专辑" @click="moveAlbum(1)">
+                    <span aria-hidden="true">→</span>
+                  </button>
+                </div>
+                <a
+                  class="album-link"
+                  :href="selectedAlbum.appleMusicUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <span>Apple Music</span>
+                  <span aria-hidden="true">↗</span>
+                </a>
               </div>
             </div>
-          </Transition>
+          </div>
         </div>
 
         <div
@@ -277,7 +280,7 @@ onUnmounted(() => {
   pointer-events: none;
 }
 
-:global([data-theme='light'] .album-wall) {
+html[data-theme='light'] .album-wall {
   --stage-surface: #f5f3ee;
   --stage-panel: rgba(255, 255, 255, .72);
   --stage-text: #17191d;
@@ -291,7 +294,7 @@ onUnmounted(() => {
   box-shadow: 0 28px 70px rgba(68, 53, 33, .12);
 }
 
-:global([data-theme='dark'] .album-wall) {
+html[data-theme='dark'] .album-wall {
   --stage-surface: #0b1016;
   --stage-panel: rgba(13, 17, 24, .82);
   --stage-text: #f5f3ee;
@@ -309,6 +312,7 @@ onUnmounted(() => {
 .album-spotlight,
 .album-grid,
 .album-spotlight-body,
+.album-visual-slot,
 .album-details {
   min-width: 0;
 }
@@ -341,7 +345,7 @@ onUnmounted(() => {
   font-weight: 700;
 }
 
-:global([data-theme='light'] .album-kicker) {
+html[data-theme='light'] .album-kicker {
   color: #256d69;
 }
 
@@ -356,13 +360,18 @@ onUnmounted(() => {
   gap: clamp(24px, 3vw, 38px);
 }
 
-.album-sleeve {
-  --tilt-x: 0deg;
-  --tilt-y: 0deg;
+.album-visual-slot {
   position: relative;
   width: calc(100% - 20px);
   max-width: 420px;
   aspect-ratio: 1;
+}
+
+.album-sleeve {
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
+  position: absolute;
+  inset: 0;
   transform: perspective(900px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
   transform-style: preserve-3d;
   transition: transform 180ms ease-out;
@@ -689,7 +698,7 @@ onUnmounted(() => {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .album-sleeve {
+  .album-visual-slot {
     justify-self: center;
   }
 }

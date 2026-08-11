@@ -431,12 +431,23 @@ test('concert album wall selection and looping controls stay synchronized', asyn
   await page.goto('/concerts.html')
   const wall = page.locator('.album-wall-section')
   const selected = wall.locator('.album-tile[aria-selected="true"]')
+  const spotlightState = () => wall.evaluate((element) => ({
+    title: element.querySelector('.album-title')?.textContent?.trim(),
+    index: element.querySelector('.album-index')?.textContent?.trim(),
+    selectedId: element.querySelector('.album-tile[aria-selected="true"]')?.getAttribute('data-album-id'),
+    appleHref: element.querySelector('.album-link')?.getAttribute('href')
+  }))
 
   await wall.locator('[data-album-id="jay-ye-hui-mei"]').click()
-  await expect(wall.locator('.album-title')).toHaveText('叶惠美')
   await expect(wall.locator('.album-index')).toHaveText('02 / 24')
   await expect(selected).toHaveCount(1)
   await expect(selected).toHaveAttribute('data-album-id', 'jay-ye-hui-mei')
+  expect(await spotlightState()).toEqual({
+    title: '叶惠美',
+    index: '02 / 24',
+    selectedId: 'jay-ye-hui-mei',
+    appleHref: 'https://music.apple.com/cn/album/%E8%91%89%E6%83%A0%E7%BE%8E/535824731'
+  })
 
   await wall.locator('[data-album-id="jay-fantasy"]').click()
   await wall.locator('[aria-label="上一张专辑"]').click()
@@ -445,12 +456,19 @@ test('concert album wall selection and looping controls stay synchronized', asyn
   await wall.locator('[aria-label="下一张专辑"]').click()
   await expect(selected).toHaveAttribute('data-album-id', 'jay-fantasy')
   await expect(wall.locator('.album-index')).toHaveText('01 / 24')
+  await expect(wall.locator('.album-title')).toHaveText('范特西')
 
   await wall.locator('[aria-label="下一张专辑"]').evaluate((button: HTMLButtonElement) => {
     for (let index = 0; index < 8; index += 1) button.click()
   })
   await expect(selected).toHaveCount(1)
-  await expect(wall.locator('.album-index')).toHaveText(/^\d{2} \/ 24$/)
+  await expect(wall.locator('.album-index')).toHaveText('09 / 24')
+  expect(await spotlightState()).toEqual({
+    title: '天外来物',
+    index: '09 / 24',
+    selectedId: 'joker-extraterrestrial',
+    appleHref: 'https://music.apple.com/cn/album/%E5%A4%A9%E5%A4%96%E6%9D%A5%E7%89%A9/1787447447'
+  })
 })
 
 test('concert album wall supports roving keyboard selection', async ({ page }) => {
@@ -488,8 +506,15 @@ test('concert album wall supports roving keyboard selection', async ({ page }) =
   await expect(selected).toHaveCount(1)
 })
 
-test('concert album wall adapts at 1440 1024 768 390 and 320 pixels', async ({ page }) => {
-  for (const width of [1440, 1024, 768, 390, 320]) {
+test('concert album wall uses 6 4 and 3 responsive columns', async ({ page }) => {
+  const responsiveColumns = [
+    { width: 1440, columns: 6 },
+    { width: 768, columns: 4 },
+    { width: 390, columns: 3 },
+    { width: 320, columns: 3 }
+  ]
+
+  for (const { width, columns } of responsiveColumns) {
     await page.setViewportSize({ width, height: 900 })
     await page.goto('/concerts.html')
     await expect(page.locator('.album-spotlight')).toBeVisible()
@@ -514,6 +539,7 @@ test('concert album wall adapts at 1440 1024 768 390 and 320 pixels', async ({ p
 
     expect(layout.documentWidth, `document at ${width}px`).toBeLessThanOrEqual(layout.viewportWidth)
     expect(layout.bodyWidth, `body at ${width}px`).toBeLessThanOrEqual(layout.viewportWidth)
+    expect(layout.columns, `album columns at ${width}px`).toBe(columns)
     if (width === 1440) {
       expect(layout.gridLeft).toBeGreaterThanOrEqual(layout.spotlightRight - 1)
       expect(layout.gridTop).toBeLessThan(layout.spotlightBottom)
@@ -521,7 +547,6 @@ test('concert album wall adapts at 1440 1024 768 390 and 320 pixels', async ({ p
       expect(layout.gridTop).toBeGreaterThanOrEqual(layout.spotlightBottom - 1)
     }
     if (width <= 390) {
-      expect(layout.columns).toBe(3)
       expect(Math.abs(layout.tileWidth - layout.tileHeight)).toBeLessThanOrEqual(1)
     }
   }
@@ -532,6 +557,21 @@ test('concert album wall preserves theme and reduced-motion accessibility', asyn
   const wall = page.locator('.album-wall')
   const tiles = page.locator('.album-tile')
   await expectAccessible(page)
+
+  const albumThemeSelectors = await page.evaluate(() => {
+    const collectSelectors = (rules: CSSRuleList): string[] => Array.from(rules).flatMap((rule) => {
+      if (rule instanceof CSSStyleRule) return [rule.selectorText]
+      return 'cssRules' in rule ? collectSelectors((rule as CSSGroupingRule).cssRules) : []
+    })
+    return Array.from(document.styleSheets)
+      .flatMap((sheet) => collectSelectors(sheet.cssRules))
+      .filter((selector) => selector.includes('data-theme') && (selector.includes('.album-wall') || selector.includes('.album-kicker')))
+  })
+  expect(albumThemeSelectors).toEqual(expect.arrayContaining([
+    expect.stringMatching(/^html\[data-theme=(?:"light"|light)\] \.album-wall\[data-v-[^\]]+\]$/),
+    expect.stringMatching(/^html\[data-theme=(?:"dark"|dark)\] \.album-wall\[data-v-[^\]]+\]$/),
+    expect.stringMatching(/^html\[data-theme=(?:"light"|light)\] \.album-kicker\[data-v-[^\]]+\]$/)
+  ]))
 
   await tiles.nth(1).focus()
   await page.keyboard.press('Enter')
@@ -556,10 +596,12 @@ test('concert album wall preserves theme and reduced-motion accessibility', asyn
 test('concert thumbnails respond and carousel/lightbox controls work', async ({ page }) => {
   await page.goto('/concerts.html')
   await expect(page.locator('.metric-strip .metric-card')).toHaveCount(4)
-  const thumbnail = await page.locator('picture source').first().getAttribute('srcset')
-  expect(thumbnail).toBeTruthy()
-  const response = await page.request.get(new URL(thumbnail!, 'http://127.0.0.1:4173').toString())
+  const thumbnailSrcset = await page.locator('.concert-poster picture source').first().getAttribute('srcset')
+  expect(thumbnailSrcset).toBeTruthy()
+  const thumbnail = thumbnailSrcset!.split(',')[0]!.trim().split(/\s+/)[0]!
+  const response = await page.request.get(new URL(thumbnail, 'http://127.0.0.1:4173').toString())
   expect(response.status()).toBe(200)
+  expect(response.headers()['content-type']).toMatch(/^image\//)
 
   const carousel = page.locator('.concert-poster').filter({ has: page.locator('.carousel-controls') }).first()
   const counter = carousel.locator('.carousel-controls span')
