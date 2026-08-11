@@ -198,18 +198,6 @@ export interface PageMeta {
   credit?: HeroCredit
 }
 
-export type HomeArchiveRouteId = 'research' | 'build' | 'live'
-
-export interface HomeArchiveRoute {
-  id: HomeArchiveRouteId
-  section: string
-  label: string
-  value: string
-  meta: string
-  href: string
-  accent: 'gold' | 'aqua' | 'violet'
-}
-
 export type PageKey = 'home' | 'academics' | 'honors' | 'research' | 'works' | 'concerts'
 
 export interface World {

@@ -118,8 +118,8 @@ onUnmounted(() => {
     <SectionHeading
       no="02"
       label="ALBUM FREQUENCIES"
-      title="二十四张唱片，"
-      accent="八种声音坐标。"
+      :title="`${total} 张唱片`"
+      accent="八种声音坐标"
       copy="把熟悉的封面排进同一面墙，在一次次选择里重访华语流行的不同年代。"
     />
 
@@ -213,6 +213,8 @@ onUnmounted(() => {
             role="option"
             :aria-label="`${album.artist}《${album.title}》，${album.year} 年，${formatLabel(album)}`"
             :aria-selected="selectedIndex === index"
+            :aria-setsize="total"
+            :aria-posinset="index + 1"
             :data-album-id="album.id"
             :tabindex="selectedIndex === index ? 0 : -1"
             @click="selectAlbum(index)"
@@ -549,6 +551,11 @@ html[data-theme='light'] .album-kicker {
   .album-nav button,
   .album-link { transition: none !important; }
   .album-sleeve { transform: none !important; }
+  .album-vinyl { animation: none !important; transform: translateX(14px) rotate(3deg); }
+  .album-switch-enter-active,
+  .album-switch-leave-active { transition: none !important; }
+  .album-switch-enter-from,
+  .album-switch-leave-to { opacity: 1; transform: none; }
   .album-nav button:hover,
   .album-nav button:focus-visible,
   .album-link:hover,

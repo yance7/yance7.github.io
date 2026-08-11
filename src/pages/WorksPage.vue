@@ -11,7 +11,7 @@ import ProjectShowcase from '../components/ProjectShowcase.vue'
         no="01"
         label="RELEASED WORLDS"
         title="让想法"
-        accent="可以被打开。"
+        accent="可以被打开"
         :copy="`${projects.length} 个已经上线的小世界，记录想法如何离开纸面，开始被真实使用。`"
       />
 

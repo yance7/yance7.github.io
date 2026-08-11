@@ -53,13 +53,15 @@ test('theme preference persists after reload', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
 })
 
-test('home leads with the A1 archive stage', async ({ page }) => {
+test('home leads with the quiet editorial stage', async ({ page }) => {
   await page.goto('/index.html')
   await expect(page.locator('.hero-name, .home-statement')).toHaveCount(0)
-  await expect(page.locator('.home-stage-title')).toContainText('研究、构建')
+  await expect(page.locator('.home-stage-title')).toHaveText(/研究、构建，\s*与现场相遇/)
+  await expect(page.locator('.home-stage-title')).not.toContainText('。')
   await expect(page.locator('.archive-entry')).toHaveCount(0)
-  await expect(page.locator('.home-archive-route')).toHaveCount(3)
-  await expect(page.locator('.home-archive-route[aria-selected="true"]')).toHaveAttribute('data-route', 'research')
+  await expect(page.locator('.home-archive-index, .home-hero-glow')).toHaveCount(0)
+  await expect(page.locator('body')).not.toContainText('OPEN ARCHIVE')
+  await expect(page.locator('.home-stage-actions')).toBeVisible()
 })
 
 test('home keeps the Yance wordmark at both archive anchors', async ({ page }) => {
@@ -68,15 +70,17 @@ test('home keeps the Yance wordmark at both archive anchors', async ({ page }) =
   await expect(page.locator('.foot-mark')).toContainText('Yance.')
 })
 
-test('home renders a full-width archive stage around the A1 route rail', async ({ page }) => {
+test('home renders a focused stage with explicit entry actions', async ({ page }) => {
   await page.goto('/index.html')
   await expect(page.locator('.home-hero')).toBeVisible()
   await expect(page.locator('.home-stage')).toBeVisible()
   await expect(page.locator('.home-stage-meta')).toContainText('PERSONAL ARCHIVE / BEIJING · 2026')
   await expect(page.locator('.home-stage-main')).toBeVisible()
-  await expect(page.locator('.home-archive-index')).toBeVisible()
+  await expect(page.locator('.home-stage-actions a[href="#selected-work"]')).toContainText('查看精选作品')
+  await expect(page.locator('.home-stage-actions a[href="#home-worlds"]')).toContainText('浏览五个小世界')
   await expect(page.locator('.home-stage-scroll')).toBeVisible()
-  await expect(page.locator('.home-archive-preview')).toBeVisible()
+  await expect(page.locator('.home-stage-scroll')).toHaveAttribute('href', '#home-worlds')
+  await expect(page.locator('#home-worlds')).toHaveCount(1)
   await expect(page.locator('.archive-hero.hero-home')).toHaveCount(0)
 })
 
@@ -86,19 +90,20 @@ test('home stage keeps its visual hierarchy across desktop and narrow screens', 
     await page.goto('/index.html')
     const layout = await page.evaluate(() => {
       const stage = document.querySelector('.home-stage')!.getBoundingClientRect()
-      const archive = document.querySelector('.home-archive-index')!.getBoundingClientRect()
+      const title = document.querySelector('.home-stage-title')!.getBoundingClientRect()
+      const actions = document.querySelector('.home-stage-actions')!.getBoundingClientRect()
       return {
         documentWidth: document.documentElement.scrollWidth,
         viewportWidth: window.innerWidth,
         stageLeft: stage.left,
         stageRight: stage.right,
-        archiveLeft: archive.left,
-        archiveRight: archive.right
+        titleWidth: title.width,
+        actionsBottom: actions.bottom
       }
     })
     expect(layout.documentWidth, `home document at ${width}px`).toBeLessThanOrEqual(layout.viewportWidth)
-    expect(layout.archiveLeft).toBeGreaterThanOrEqual(layout.stageLeft)
-    expect(layout.archiveRight).toBeLessThanOrEqual(layout.stageRight)
+    expect(layout.titleWidth).toBeLessThanOrEqual(layout.stageRight - layout.stageLeft)
+    expect(layout.actionsBottom).toBeGreaterThan(0)
   }
 })
 
@@ -111,9 +116,8 @@ test('home assigns distinct font roles to prose, display and technical metadata'
       body: read('body'),
       display: read('.wordmark'),
       serif: read('.home-stage-title'),
-      technical: read('.home-archive-route-index'),
-      action: read('.home-archive-action'),
-      archive: read('.home-archive-route-copy strong')
+      technical: read('.home-stage-mark'),
+      action: read('.home-stage-actions a')
     }
   })
   expect(fonts.body).toContain('Inter')
@@ -121,7 +125,6 @@ test('home assigns distinct font roles to prose, display and technical metadata'
   expect(fonts.serif).toContain('Noto Serif SC Variable')
   expect(fonts.technical).toContain('IBM Plex Mono')
   expect(fonts.action).toContain('Inter')
-  expect(fonts.archive).toContain('Inter')
 
   await page.goto('/research.html')
   await page.evaluate(() => document.fonts.ready)
@@ -138,21 +141,17 @@ test('home assigns distinct font roles to prose, display and technical metadata'
   expect(researchFonts.toolMeta).toContain('IBM Plex Mono')
 })
 
-test('home archive rail supports accessible keyboard navigation', async ({ page }) => {
+test('home entry actions preserve keyboard navigation and fragment targets', async ({ page }) => {
   await page.goto('/index.html')
-  const archive = page.locator('.home-archive-index')
-  const routes = archive.locator('.home-archive-route')
-  await routes.nth(0).focus()
-  await expect(routes.nth(0)).toBeFocused()
-  await page.keyboard.press('ArrowRight')
-  await expect(routes.nth(1)).toBeFocused()
-  await expect(routes.nth(1)).toHaveAttribute('aria-selected', 'true')
-  await page.keyboard.press('ArrowLeft')
-  await expect(routes.nth(0)).toBeFocused()
-  await page.keyboard.press('End')
-  await expect(routes.nth(2)).toBeFocused()
-  await page.keyboard.press('Space')
-  await expect(archive.locator('.home-archive-preview')).toContainText('Music & live moments')
+  const primary = page.locator('.home-stage-actions a[href="#selected-work"]')
+  const secondary = page.locator('.home-stage-actions a[href="#home-worlds"]')
+  await primary.focus()
+  await expect(primary).toBeFocused()
+  await expect(primary).toHaveAttribute('href', '#selected-work')
+  await secondary.focus()
+  await expect(secondary).toBeFocused()
+  await secondary.click()
+  await expect(page).toHaveURL(/index\.html#home-worlds$/)
 })
 
 test('bundled typography and reading progress stay explicit', async ({ page }) => {
@@ -363,19 +362,20 @@ test('academics pending scores use a compact badge', async ({ page }) => {
   expect(content).toBe('"?"')
 })
 
-test('concert album wall exposes 24 local releases and the default spotlight', async ({ page }) => {
+test('concert album wall exposes 42 local releases and the default spotlight', async ({ page }) => {
   await page.goto('/concerts.html')
   const wall = page.locator('.album-wall-section')
   await expect(wall).toHaveCount(1)
-  await expect(wall.locator('.album-tile')).toHaveCount(24)
+  await expect(wall.locator('.album-tile')).toHaveCount(42)
   await expect(wall.locator('.album-spotlight')).toContainText('周杰伦')
   await expect(wall.locator('.album-spotlight')).toContainText('范特西')
   await expect(wall.locator('.album-spotlight')).toContainText('2001')
-  await expect(wall.locator('.album-index')).toHaveText('01 / 24')
-
+  await expect(wall.locator('.album-index')).toHaveText('01 / 42')
   const selected = wall.locator('.album-tile[aria-selected="true"]')
   await expect(selected).toHaveCount(1)
   await expect(selected).toHaveAttribute('data-album-id', 'jay-fantasy')
+  await expect(selected).toHaveAttribute('aria-setsize', '42')
+  await expect(selected).toHaveAttribute('aria-posinset', '1')
 
   const appleMusicLink = wall.locator('.album-link')
   await expect(appleMusicLink).toHaveAttribute('href', /^https:\/\/music\.apple\.com\/.+\/album\//)
@@ -412,33 +412,33 @@ test('concert album wall selection and looping controls stay synchronized', asyn
   }))
 
   await wall.locator('[data-album-id="jay-ye-hui-mei"]').click()
-  await expect(wall.locator('.album-index')).toHaveText('02 / 24')
+  await expect(wall.locator('.album-index')).toHaveText('02 / 42')
   await expect(selected).toHaveCount(1)
   await expect(selected).toHaveAttribute('data-album-id', 'jay-ye-hui-mei')
   expect(await spotlightState()).toEqual({
     title: '叶惠美',
-    index: '02 / 24',
+    index: '02 / 42',
     selectedId: 'jay-ye-hui-mei',
     appleHref: 'https://music.apple.com/cn/album/%E8%91%89%E6%83%A0%E7%BE%8E/535824731'
   })
 
   await wall.locator('[data-album-id="jay-fantasy"]').click()
   await wall.locator('[aria-label="上一张专辑"]').click()
-  await expect(selected).toHaveAttribute('data-album-id', 'david-tao-black-tangerine')
-  await expect(wall.locator('.album-index')).toHaveText('24 / 24')
+  await expect(selected).toHaveAttribute('data-album-id', 'david-tao-goodbye-how-are-you')
+  await expect(wall.locator('.album-index')).toHaveText('42 / 42')
   await wall.locator('[aria-label="下一张专辑"]').click()
   await expect(selected).toHaveAttribute('data-album-id', 'jay-fantasy')
-  await expect(wall.locator('.album-index')).toHaveText('01 / 24')
+  await expect(wall.locator('.album-index')).toHaveText('01 / 42')
   await expect(wall.locator('.album-title')).toHaveText('范特西')
 
   await wall.locator('[aria-label="下一张专辑"]').evaluate((button: HTMLButtonElement) => {
     for (let index = 0; index < 8; index += 1) button.click()
   })
   await expect(selected).toHaveCount(1)
-  await expect(wall.locator('.album-index')).toHaveText('09 / 24')
+  await expect(wall.locator('.album-index')).toHaveText('09 / 42')
   expect(await spotlightState()).toEqual({
     title: '天外来物',
-    index: '09 / 24',
+    index: '09 / 42',
     selectedId: 'joker-extraterrestrial',
     appleHref: 'https://music.apple.com/cn/album/%E5%A4%A9%E5%A4%96%E6%9D%A5%E7%89%A9/1787447447'
   })
@@ -635,40 +635,27 @@ test('rapid control clicks settle without duplicate or stale state', async ({ pa
   await expect(carousel.locator('.carousel-controls span')).toHaveText(/\d+ \/ \d+/)
 })
 
-test('home archive index opens an interactive archive index instead of the lyric carousel', async ({ page }) => {
+test('home removes duplicate archive navigation and keeps the five worlds as the only index', async ({ page }) => {
   await page.goto('/index.html')
   await expect(page.locator('.lyric-carousel, .home-signal, .home-signal-board')).toHaveCount(0)
-  const archive = page.locator('.home-archive-index')
-  await expect(archive).toBeVisible()
-  await expect(archive.locator('.home-archive-route')).toHaveCount(3)
-  await expect(archive.locator('.home-archive-route[aria-selected="true"]')).toHaveAttribute('data-route', 'research')
-  await expect(archive.locator('.home-archive-preview')).toContainText('FishFreshNet V2')
+  await expect(page.locator('.home-archive-index')).toHaveCount(0)
+  await expect(page.locator('body')).not.toContainText('OPEN ARCHIVE')
+  await expect(page.locator('#home-worlds .world-card')).toHaveCount(5)
 })
 
-test('home archive index routes synchronize selection, preview, and keyboard focus', async ({ page }) => {
+test('home entry actions route to selected work and the five worlds', async ({ page }) => {
   await page.goto('/index.html')
-  const archive = page.locator('.home-archive-index')
-  const routes = archive.locator('.home-archive-route')
-  const preview = archive.locator('.home-archive-preview')
-  const action = archive.locator('.home-archive-action')
+  const primary = page.locator('.home-stage-actions a[href="#selected-work"]')
+  const secondary = page.locator('.home-stage-actions a[href="#home-worlds"]')
+  await expect(primary).toContainText('查看精选作品')
+  await expect(secondary).toContainText('浏览五个小世界')
 
-  await routes.nth(1).click()
-  await expect(routes.nth(1)).toHaveAttribute('aria-selected', 'true')
-  await expect(preview).toContainText('FreshEye')
-  await expect(action).toHaveAttribute('href', 'works.html')
-
-  await routes.nth(1).focus()
-  await page.keyboard.press('ArrowDown')
-  await expect(routes.nth(2)).toHaveAttribute('aria-selected', 'true')
-  await page.keyboard.press('Home')
-  await expect(routes.nth(0)).toHaveAttribute('aria-selected', 'true')
-  await page.keyboard.press('End')
-  await expect(routes.nth(2)).toHaveAttribute('aria-selected', 'true')
+  await secondary.focus()
   await page.keyboard.press('Enter')
-  await page.keyboard.press('Space')
+  await expect.poll(() => new URL(page.url()).hash).toBe('#home-worlds')
 })
 
-test('home archive stays usable across themes, widths, and reduced motion', async ({ page }) => {
+test('home quiet stage stays usable across themes, widths, and reduced motion', async ({ page }) => {
   for (const width of [1440, 1024, 768, 390, 320]) {
     await page.setViewportSize({ width, height: 844 })
     await page.goto('/index.html')
@@ -677,7 +664,8 @@ test('home archive stays usable across themes, widths, and reduced motion', asyn
       viewportWidth: window.innerWidth
     }))
     expect(layout.documentWidth, `index document at ${width}px`).toBeLessThanOrEqual(layout.viewportWidth)
-    await expect(page.locator('.home-archive-index')).toBeVisible()
+    await expect(page.locator('.home-stage-actions')).toBeVisible()
+    await expect(page.locator('.home-archive-index, .home-hero-glow')).toHaveCount(0)
   }
 
   await page.goto('/index.html')
@@ -685,18 +673,15 @@ test('home archive stays usable across themes, widths, and reduced motion', asyn
   if (await themeToggle.count()) {
     await themeToggle.click()
   }
-  await expect(page.locator('.home-archive-index')).toBeVisible()
+  await expect(page.locator('.home-stage-actions')).toBeVisible()
 
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/index.html')
-  const archive = page.locator('.home-archive-index')
-  const routes = archive.locator('.home-archive-route')
-  await expect(archive).toBeVisible()
-  await expect(routes).toHaveCount(3)
-  for (let index = 0; index < 3; index += 1) {
-    await expect(routes.nth(index)).toBeVisible()
-  }
-  await expect(archive.locator('.home-archive-preview')).toHaveCSS('transform', 'none')
+  await expect(page.locator('.home-stage-actions')).toBeVisible()
+  const revealTransforms = await page.locator('.reveal').evaluateAll((elements) =>
+    elements.map((element) => getComputedStyle(element).transform)
+  )
+  expect(revealTransforms.every((transform) => transform === 'none')).toBe(true)
 })
 
 test('Works wordmarks keep typography on hover', async ({ page }) => {

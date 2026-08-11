@@ -19,7 +19,7 @@ import SectionDots from '../components/SectionDots.vue'
         no="01"
         label="RESEARCH"
         title="研究"
-        accent="时间轴。"
+        accent="时间轴"
         :copy="`${research.length} 个研究项目，按时间倒序呈现结果、论文、代码与产品证据。点击展开方法论，可以继续阅读完整的思考路径。`"
       />
       <TimelineTrack :items="research" />
@@ -30,7 +30,7 @@ import SectionDots from '../components/SectionDots.vue'
         no="02"
         label="METHODS / WORKBENCH"
         title="方法与"
-        accent="技术栈。"
+        accent="技术栈"
         copy="我把研究拆成一条可复用的工作链：先定义问题，再用模型验证，最后把结果交付为可以打开的工具。"
       />
       <div class="toolchain-panel" v-reveal>

@@ -9,7 +9,7 @@ import SectionHeading from '../components/SectionHeading.vue'
         no="!"
         label="SIGNAL LOST"
         title="这一页，"
-        accent="走丢了。"
+        accent="走丢了"
         copy="你访问的页面不存在，或者已经被移走。回到主页，重新选一间屋子走进去。"
       />
       <div class="error-actions">

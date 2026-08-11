@@ -1,4 +1,4 @@
-import type { HomeArchiveRoute, PageKey, PageMeta, SiteNavItem, Status, World } from './types'
+import type { PageKey, PageMeta, SiteNavItem, Status, World } from './types'
 
 export const navItems = [
   { key: 'home', label: '首页', en: 'Home', href: 'index.html', desc: '个人档案入口' },
@@ -30,12 +30,6 @@ export const pageMeta = {
   works: { kicker: 'WORKS / 作品', title: '因为我已慢慢懂，努力就能成功', copy: '两个已经上线的小世界，记录想法如何离开纸面，开始被真实使用。', credit: { artist: '汪苏泷', song: '慢慢懂', album: '慢慢懂' } },
   concerts: { kicker: 'CONCERTS / 演唱会', title: '缘分让我们相遇乱世以外', copy: '演唱会足迹与海报，记录那些被灯光和合唱重新定义的夜晚。', credit: { artist: '邓紫棋', song: '光年之外', album: '' } }
 } satisfies Record<PageKey, PageMeta>
-
-export const homeArchiveRoutes = [
-  { id: 'research', section: 'SELECTED RESEARCH', label: 'RESEARCH', value: 'FishFreshNet V2', meta: 'EXPLAINABLE VISION AI', href: 'research.html#fishfreshnet-v2', accent: 'aqua' },
-  { id: 'build', section: 'LIVE PRODUCTS', label: 'BUILD', value: 'FreshEye · Encore', meta: '02 SHIPPED WORLDS', href: 'works.html', accent: 'gold' },
-  { id: 'live', section: 'FIELD NOTES', label: 'LIVE', value: 'Music & live moments', meta: 'BEIJING / CN', href: 'concerts.html', accent: 'violet' }
-] satisfies HomeArchiveRoute[]
 
 export const heroGeo = {
   home: 'BEIJING / CN',

@@ -84,7 +84,7 @@ function resetPoster(e) {
         no="01"
         label="LIVE ARCHIVE"
         title="现场是"
-        accent="另一种记忆。"
+        accent="另一种记忆"
         copy="点击海报进入全屏档案。每张图都保留原始比例，轮播记录同一场演出的不同视觉。"
       />
 

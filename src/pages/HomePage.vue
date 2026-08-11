@@ -14,7 +14,7 @@ const selectedActivities = computed(() => activities.filter((item) => item.featu
         no="01"
         label="SELECTED WORK"
         title="研究如何"
-        accent="离开纸面。"
+        accent="离开纸面"
         copy="先看正在被继续推进的研究，再看已经可以打开使用的产品。"
       />
       <div class="home-focus-grid">
@@ -59,7 +59,7 @@ const selectedActivities = computed(() => activities.filter((item) => item.featu
     </section>
 
     <!-- 第二段：五个小世界 -->
-    <section class="content home-worlds">
+    <section id="home-worlds" class="content home-worlds">
       <SectionHeading
         no="02"
         label="EXPLORE"
@@ -98,7 +98,7 @@ const selectedActivities = computed(() => activities.filter((item) => item.featu
         no="03"
         label="BEYOND THE LAB"
         title="在集体中"
-        accent="继续生长。"
+        accent="继续生长"
         copy="精选领导力与活动经历，保留那些最能说明组织、协作与行动力的片段。"
       />
       <div class="home-beyond-grid">

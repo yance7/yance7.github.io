@@ -64,11 +64,16 @@
   --bg: #F7F8F6;
   --bg-deep: #EDF1F0;
   --bg-tint: #F1F4F1;
+  --hero-surface: #F5F7F4;
+  --hero-grid: rgba(31, 45, 41, .08);
 
   /* 表面层 */
   --surface: rgba(255, 255, 255, .88);
   --surface-strong: rgba(255, 255, 255, .97);
   --surface-tint: rgba(255, 255, 255, .72);
+  --surface-raised: rgba(255, 255, 255, .92);
+  --surface-pressed: #E8EFEC;
+  --accent-wash: rgba(165, 104, 30, .08);
 
   /* 文字 */
   --ink: #1B2523;
@@ -151,11 +156,16 @@
   --bg: #0A1014;
   --bg-deep: #121B20;
   --bg-tint: #0E151A;
+  --hero-surface: #0B1217;
+  --hero-grid: rgba(235, 242, 245, .08);
 
   /* 表面层 */
   --surface: rgba(18, 28, 34, .72);
   --surface-strong: rgba(24, 35, 42, .94);
   --surface-tint: rgba(17, 27, 33, .58);
+  --surface-raised: rgba(24, 35, 42, .82);
+  --surface-pressed: rgba(109, 222, 208, .11);
+  --accent-wash: rgba(232, 185, 98, .08);
 
   /* 文字 */
   --ink: #F3F0E9;
@@ -313,9 +323,9 @@ body, .site-shell, .site-nav, .stat-cell, .ap-row, .tl-tag, .concert-info,
 .honor-filter, .tl-method, .sc-dossier-head, .sc-body, .concert-group, .metric-card,
 .timeline-track, .status-badge, .media-ph, .now-active, .method-chip,
 .world-card, .education-row, .leadership-card, .activity-row, .tl-metrics,
-  .home-archive-index, .home-archive-route, .home-archive-preview, .home-archive-action,
+  .home-hero, .home-focus, .home-worlds, .home-beyond, .album-wall,
   .hero-action, .wordmark, .foot-mark, .copy-citation {
-  transition-property: background-color, border-color, color, box-shadow, fill;
+  transition-property: background, background-color, border-color, color, box-shadow, fill;
   transition-duration: var(--dur-base);
   transition-timing-function: var(--ease-soft);
 }

@@ -22,6 +22,14 @@ ALBUM_IDS = (
     'jason-most-beautiful-sun', 'jason-after-tomorrow', 'jason-this-is-love',
     'leehom-the-one-and-only', 'leehom-shangri-la', 'leehom-change-me',
     'david-tao-self-titled', 'david-tao-im-ok', 'david-tao-black-tangerine',
+    'jay-ba-du-kong-jian', 'jay-yi-ran-fan-te-xi', 'jay-wo-hen-mang',
+    'jj-89757', 'jj-new-planet',
+    'joker-dust', 'joker-crossing',
+    'gem-18', 'gem-apocalypse',
+    'silence-restraint-ferocious', 'silence-big-entertainer',
+    'jason-love-no-explanation', 'jason-we-live',
+    'leehom-heroes-of-earth', 'leehom-eighteen-weapons',
+    'david-tao-peaceful-world', 'david-tao-too-beautiful', 'david-tao-goodbye-how-are-you',
 )
 FULL_SIZE = 1200
 THUMB_SIZE = 640

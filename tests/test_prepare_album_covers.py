@@ -66,6 +66,7 @@ class PrepareAlbumCoversTests(unittest.TestCase):
         self.temp_dir.cleanup()
 
     def test_prepares_all_expected_validated_cover_variants(self) -> None:
+        self.assertEqual(len(self.module.ALBUM_IDS), 42)
         write_sources(self.source_dir, self.module.ALBUM_IDS)
 
         self.module.prepare_album_covers(self.source_dir, self.output_dir)

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { heroGeo } from '../data'
-import HomeArchiveIndex from './HomeArchiveIndex.vue'
 
 const props = defineProps<{
   kicker: string
@@ -14,8 +13,6 @@ const geo = computed(() => heroGeo.home)
 <template>
   <section class="home-hero">
     <div class="home-hero-grid" aria-hidden="true"></div>
-    <div class="home-hero-glow home-hero-glow-one" aria-hidden="true"></div>
-    <div class="home-hero-glow home-hero-glow-two" aria-hidden="true"></div>
 
     <div class="home-stage">
       <div class="home-stage-meta" v-reveal>
@@ -30,22 +27,30 @@ const geo = computed(() => heroGeo.home)
         <div class="home-stage-main">
           <div class="home-stage-heading" v-reveal="{ delay: 100 }">
             <span class="home-stage-heading-line"></span>
-            <span>OPEN ARCHIVE / {{ geo }}</span>
+            <span>PERSONAL ARCHIVE / {{ geo }}</span>
           </div>
 
           <h1 class="home-stage-title" v-reveal="{ delay: 140 }">
-            研究、构建，<br><em>与现场相遇。</em>
+            研究、构建，<br><em>与现场相遇</em>
           </h1>
 
           <div class="home-stage-copy-block" v-reveal="{ delay: 180 }">
             <p class="home-stage-copy">{{ props.copy }}</p>
+            <div class="home-stage-actions">
+              <a class="hero-action primary" href="#selected-work">
+                <span>查看精选作品</span>
+                <span aria-hidden="true">↗</span>
+              </a>
+              <a class="hero-action secondary" href="#home-worlds">
+                <span>浏览五个小世界</span>
+                <span aria-hidden="true">↓</span>
+              </a>
+            </div>
           </div>
-
-          <HomeArchiveIndex />
         </div>
       </div>
 
-      <a class="home-stage-scroll" href="#selected-work" v-reveal="{ delay: 420 }">
+      <a class="home-stage-scroll" href="#home-worlds" v-reveal="{ delay: 420 }">
         <span class="home-stage-scroll-line" aria-hidden="true"></span>
         <span>SCROLL TO EXPLORE</span>
         <span class="home-stage-scroll-arrow" aria-hidden="true">↓</span>

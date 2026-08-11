@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { activities, albums, concerts, concertGroups, formatUpdatedLabel, getConcertState, homeArchiveRoutes, pageMetadata, projects, research } from '../src/data'
+import { existsSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { activities, albums, concerts, concertGroups, formatUpdatedLabel, getConcertState, pageMetadata, projects, research } from '../src/data'
 import { albumCoverFallback, albumCoverSrcset, albumCoverWebp } from '../src/utils/albumMedia'
 import { thumbnailUrl } from '../src/utils/concertMedia'
 
 describe('content contracts', () => {
   it('keeps the exact ordered album release catalogue stable', () => {
-    expect(albums.map(({ id, artist, title, year, format, appleMusicUrl }) => ({ id, artist, title, year, format, appleMusicUrl }))).toEqual([
+    expect(albums.slice(0, 24).map(({ id, artist, title, year, format, appleMusicUrl }) => ({ id, artist, title, year, format, appleMusicUrl }))).toEqual([
       { id: 'jay-fantasy', artist: '周杰伦', title: '范特西', year: 2001, format: 'album', appleMusicUrl: 'https://music.apple.com/cn/album/%E8%8C%83%E7%89%B9%E8%A5%BF/535739206' },
       { id: 'jay-ye-hui-mei', artist: '周杰伦', title: '叶惠美', year: 2003, format: 'album', appleMusicUrl: 'https://music.apple.com/cn/album/%E8%91%89%E6%83%A0%E7%BE%8E/535824731' },
       { id: 'jay-common-jasmine-orange', artist: '周杰伦', title: '七里香', year: 2004, format: 'album', appleMusicUrl: 'https://music.apple.com/cn/album/%E4%B8%83%E9%87%8C%E9%A6%99/536114662' },
@@ -33,15 +35,47 @@ describe('content contracts', () => {
     ])
   })
 
+  it('adds the planned 18 releases to reach a 42-album wall', () => {
+    expect(albums.slice(24).map(({ id, artist, title, year, format }) => ({ id, artist, title, year, format }))).toEqual([
+      { id: 'jay-ba-du-kong-jian', artist: '周杰伦', title: '八度空间', year: 2002, format: 'album' },
+      { id: 'jay-yi-ran-fan-te-xi', artist: '周杰伦', title: '依然范特西', year: 2006, format: 'album' },
+      { id: 'jay-wo-hen-mang', artist: '周杰伦', title: '我很忙', year: 2007, format: 'album' },
+      { id: 'jj-89757', artist: '林俊杰', title: '编号89757', year: 2005, format: 'album' },
+      { id: 'jj-new-planet', artist: '林俊杰', title: '新地球', year: 2014, format: 'album' },
+      { id: 'joker-dust', artist: '薛之谦', title: '尘', year: 2019, format: 'album' },
+      { id: 'joker-crossing', artist: '薛之谦', title: '渡 The Crossing', year: 2017, format: 'album' },
+      { id: 'gem-18', artist: '邓紫棋', title: '18...', year: 2009, format: 'album' },
+      { id: 'gem-apocalypse', artist: '邓紫棋', title: '启示录', year: 2022, format: 'album' },
+      { id: 'silence-restraint-ferocious', artist: '汪苏泷', title: '克制凶猛', year: 2018, format: 'album' },
+      { id: 'silence-big-entertainer', artist: '汪苏泷', title: '大娱乐家', year: 2020, format: 'album' },
+      { id: 'jason-love-no-explanation', artist: '张杰', title: '爱，不解释', year: 2013, format: 'album' },
+      { id: 'jason-we-live', artist: '张杰', title: '未·LIVE', year: 2018, format: 'album' },
+      { id: 'leehom-heroes-of-earth', artist: '王力宏', title: '盖世英雄', year: 2005, format: 'album' },
+      { id: 'leehom-eighteen-weapons', artist: '王力宏', title: '十八般武艺', year: 2010, format: 'album' },
+      { id: 'david-tao-peaceful-world', artist: '陶喆', title: '太平盛世', year: 2005, format: 'album' },
+      { id: 'david-tao-too-beautiful', artist: '陶喆', title: '太美丽', year: 2006, format: 'album' },
+      { id: 'david-tao-goodbye-how-are-you', artist: '陶喆', title: '再见你好吗', year: 2013, format: 'album' }
+    ])
+  })
+
   it('keeps album media metadata valid and distinct', () => {
-    expect(new Set(albums.map((album) => album.id)).size).toBe(24)
-    expect(new Set(albums.map((album) => album.cover)).size).toBe(24)
+    expect(albums).toHaveLength(42)
+    expect(new Set(albums.map((album) => album.id)).size).toBe(42)
+    expect(new Set(albums.map((album) => album.cover)).size).toBe(42)
     expect(albums.every((album) => (
       album.cover === album.id
       && Number.isInteger(album.year)
       && album.appleMusicUrl.startsWith('https://music.apple.com/')
       && album.palette.length === 2
       && album.palette.every((color) => /^#[0-9A-F]{6}$/i.test(color))
+    ))).toBe(true)
+  })
+
+  it('keeps every album cover local in both responsive formats', () => {
+    expect(albums.every((album) => (
+      existsSync(resolve(process.cwd(), 'public/assets/albums', `${album.cover}.jpg`))
+      && existsSync(resolve(process.cwd(), 'public/assets/albums/thumbs', `${album.cover}-640.webp`))
+      && existsSync(resolve(process.cwd(), 'public/assets/albums/thumbs', `${album.cover}-1200.webp`))
     ))).toBe(true)
   })
 
@@ -72,15 +106,6 @@ describe('content contracts', () => {
       'pioneer-research-institute',
       'ap-calculus-assistant'
     ])
-  })
-
-  it('keeps the home archive routes explicit and navigable', () => {
-    expect(homeArchiveRoutes.map(({ id, label, value, href }) => ({ id, label, value, href }))).toEqual([
-      { id: 'research', label: 'RESEARCH', value: 'FishFreshNet V2', href: 'research.html#fishfreshnet-v2' },
-      { id: 'build', label: 'BUILD', value: 'FreshEye · Encore', href: 'works.html' },
-      { id: 'live', label: 'LIVE', value: 'Music & live moments', href: 'concerts.html' }
-    ])
-    expect(homeArchiveRoutes.every((route) => route.section && route.meta && route.accent)).toBe(true)
   })
 
   it('keeps content metadata and project/research contracts populated', () => {
