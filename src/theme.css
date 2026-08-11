@@ -98,6 +98,10 @@
   --control-border: rgba(31, 45, 41, .18);
   --control-shadow: 0 1px 2px rgba(35, 45, 42, .04), 0 5px 18px rgba(52, 63, 59, .06);
   --card-hover: rgba(255, 255, 255, .99);
+  --surface-hover: rgba(255, 255, 255, .98);
+  --interactive-border: color-mix(in srgb, var(--gold) 48%, var(--line));
+  --interactive-shadow: var(--shadow-2);
+  --focus-ring: 0 0 0 3px var(--bg), 0 0 0 5px var(--focus);
   --danger: #A54A3C;
 
   --text-primary: var(--ink);
@@ -181,6 +185,10 @@
   --control-border: rgba(235, 242, 245, .2);
   --control-shadow: 0 1px 2px rgba(0, 0, 0, .2), 0 7px 22px rgba(0, 0, 0, .22);
   --card-hover: rgba(25, 38, 46, .98);
+  --surface-hover: rgba(25, 38, 46, .98);
+  --interactive-border: color-mix(in srgb, var(--gold) 58%, var(--line));
+  --interactive-shadow: 0 8px 28px rgba(0, 0, 0, .34), 0 0 24px color-mix(in srgb, var(--gold) 12%, transparent);
+  --focus-ring: 0 0 0 3px var(--bg), 0 0 0 5px var(--focus);
   --danger: #F08B7E;
 
   --text-primary: var(--ink);
@@ -282,6 +290,10 @@
   .theme-ripple { display: none; }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .theme-ripple { display: none; }
+}
+
 @keyframes theme-ripple-expand {
   0% {
     transform: translate(-50%, -50%) scale(0);
@@ -301,7 +313,8 @@ body, .site-shell, .site-nav, .stat-cell, .ap-row, .tl-tag, .concert-info,
 .honor-filter, .tl-method, .sc-dossier-head, .sc-body, .concert-group, .metric-card,
 .timeline-track, .status-badge, .media-ph, .now-active, .method-chip,
 .world-card, .education-row, .leadership-card, .activity-row, .tl-metrics,
-.home-signal-board, .home-signal, .hero-action, .wordmark, .foot-mark, .copy-citation {
+  .home-archive-index, .home-archive-route, .home-archive-preview, .home-archive-action,
+  .hero-action, .wordmark, .foot-mark, .copy-citation {
   transition-property: background-color, border-color, color, box-shadow, fill;
   transition-duration: var(--dur-base);
   transition-timing-function: var(--ease-soft);

@@ -2,7 +2,6 @@
 import { computed, ref, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
 import { navItems, pageMeta } from './data'
 import { useTheme } from './composables/useTheme'
-import { useMusicNotes } from './composables/useMusicNotes'
 
 import SiteHeader from './components/SiteHeader.vue'
 import ArchiveHero from './components/ArchiveHero.vue'
@@ -53,7 +52,6 @@ onMounted(() => {
   scrollToHashTarget()
 })
 onUnmounted(() => hashObserver?.disconnect())
-useMusicNotes()
 
 const currentNav = computed(() => navItems.find((item) => item.key === page))
 const isHome = page === 'home'

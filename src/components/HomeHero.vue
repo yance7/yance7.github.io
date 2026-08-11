@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { heroGeo, homeSignals } from '../data'
-import LyricCarousel from './LyricCarousel.vue'
+import { heroGeo } from '../data'
+import HomeArchiveIndex from './HomeArchiveIndex.vue'
 
 const props = defineProps<{
   kicker: string
@@ -30,42 +30,19 @@ const geo = computed(() => heroGeo.home)
         <div class="home-stage-main">
           <div class="home-stage-heading" v-reveal="{ delay: 100 }">
             <span class="home-stage-heading-line"></span>
-            <span>AN OPEN ARCHIVE OF CURIOSITY</span>
+            <span>OPEN ARCHIVE / {{ geo }}</span>
           </div>
 
-          <LyricCarousel />
+          <h1 class="home-stage-title" v-reveal="{ delay: 140 }">
+            研究、构建，<br><em>与现场相遇。</em>
+          </h1>
 
-          <div class="home-stage-copy-block" v-reveal="{ delay: 260 }">
+          <div class="home-stage-copy-block" v-reveal="{ delay: 180 }">
             <p class="home-stage-copy">{{ props.copy }}</p>
-            <nav class="home-stage-actions" aria-label="首页快速入口">
-              <a class="hero-action primary" href="#selected-work">
-                查看精选内容
-                <span aria-hidden="true">↓</span>
-              </a>
-              <a class="hero-action secondary" href="research.html">
-                从研究开始
-                <span aria-hidden="true">↗</span>
-              </a>
-            </nav>
           </div>
-        </div>
 
-        <aside class="home-stage-rail home-signal-board" aria-label="档案快速索引" v-reveal="{ delay: 180, variant: 'fade-left' }">
-          <div class="home-signal-head">
-            <span>LIVE INDEX</span>
-            <span class="home-signal-online"><i aria-hidden="true"></i> ONLINE</span>
-          </div>
-          <a v-for="signal in homeSignals" :key="signal.label" class="home-signal" :href="signal.href">
-            <span>{{ signal.label }}</span>
-            <strong>{{ signal.value }}</strong>
-            <small>{{ signal.meta }}</small>
-            <i aria-hidden="true">↗</i>
-          </a>
-          <div class="archive-coords">
-            <span class="coords-label">ARCHIVE 01 / 06</span>
-            <span class="coords-geo">{{ geo }}</span>
-          </div>
-        </aside>
+          <HomeArchiveIndex />
+        </div>
       </div>
 
       <a class="home-stage-scroll" href="#selected-work" v-reveal="{ delay: 420 }">

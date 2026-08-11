@@ -198,11 +198,15 @@ export interface PageMeta {
   credit?: HeroCredit
 }
 
-export interface HomeLyric {
-  id: string
-  artist: string
-  song: string
-  quote: string
+export type HomeArchiveRouteId = 'research' | 'build' | 'live'
+
+export interface HomeArchiveRoute {
+  id: HomeArchiveRouteId
+  section: string
+  label: string
+  value: string
+  meta: string
+  href: string
   accent: 'gold' | 'aqua' | 'violet'
 }
 

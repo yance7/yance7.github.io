@@ -53,13 +53,13 @@ test('theme preference persists after reload', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
 })
 
-test('home leads with a lyric carousel instead of the old thesis wordmark', async ({ page }) => {
+test('home leads with the A1 archive stage', async ({ page }) => {
   await page.goto('/index.html')
   await expect(page.locator('.hero-name, .home-statement')).toHaveCount(0)
-  await expect(page.locator('.lyric-carousel')).toBeVisible()
+  await expect(page.locator('.home-stage-title')).toContainText('研究、构建')
   await expect(page.locator('.archive-entry')).toHaveCount(0)
-  await expect(page.locator('.home-signal')).toHaveCount(3)
-  await expect(page.locator('.hero-action.primary')).toHaveAttribute('href', '#selected-work')
+  await expect(page.locator('.home-archive-route')).toHaveCount(3)
+  await expect(page.locator('.home-archive-route[aria-selected="true"]')).toHaveAttribute('data-route', 'research')
 })
 
 test('home keeps the Yance wordmark at both archive anchors', async ({ page }) => {
@@ -68,16 +68,15 @@ test('home keeps the Yance wordmark at both archive anchors', async ({ page }) =
   await expect(page.locator('.foot-mark')).toContainText('Yance.')
 })
 
-test('home renders a cinematic archive stage around the lyric carousel', async ({ page }) => {
+test('home renders a full-width archive stage around the A1 route rail', async ({ page }) => {
   await page.goto('/index.html')
   await expect(page.locator('.home-hero')).toBeVisible()
   await expect(page.locator('.home-stage')).toBeVisible()
   await expect(page.locator('.home-stage-meta')).toContainText('PERSONAL ARCHIVE / BEIJING · 2026')
   await expect(page.locator('.home-stage-main')).toBeVisible()
-  await expect(page.locator('.home-stage-rail')).toBeVisible()
+  await expect(page.locator('.home-archive-index')).toBeVisible()
   await expect(page.locator('.home-stage-scroll')).toBeVisible()
-  await expect(page.locator('.home-hero .lyric-carousel')).toBeVisible()
-  await expect(page.locator('.home-hero .home-signal')).toHaveCount(3)
+  await expect(page.locator('.home-archive-preview')).toBeVisible()
   await expect(page.locator('.archive-hero.hero-home')).toHaveCount(0)
 })
 
@@ -86,24 +85,20 @@ test('home stage keeps its visual hierarchy across desktop and narrow screens', 
     await page.setViewportSize({ width, height: 844 })
     await page.goto('/index.html')
     const layout = await page.evaluate(() => {
-      const main = document.querySelector('.home-stage-main')!.getBoundingClientRect()
-      const rail = document.querySelector('.home-stage-rail')!.getBoundingClientRect()
+      const stage = document.querySelector('.home-stage')!.getBoundingClientRect()
+      const archive = document.querySelector('.home-archive-index')!.getBoundingClientRect()
       return {
         documentWidth: document.documentElement.scrollWidth,
         viewportWidth: window.innerWidth,
-        mainLeft: main.left,
-        mainBottom: main.bottom,
-        railLeft: rail.left,
-        railTop: rail.top
+        stageLeft: stage.left,
+        stageRight: stage.right,
+        archiveLeft: archive.left,
+        archiveRight: archive.right
       }
     })
     expect(layout.documentWidth, `home document at ${width}px`).toBeLessThanOrEqual(layout.viewportWidth)
-    if (width >= 900) {
-      expect(layout.railLeft).toBeGreaterThan(layout.mainLeft)
-      expect(layout.railTop).toBeLessThan(layout.mainBottom)
-    } else {
-      expect(layout.railTop).toBeGreaterThanOrEqual(layout.mainBottom - 1)
-    }
+    expect(layout.archiveLeft).toBeGreaterThanOrEqual(layout.stageLeft)
+    expect(layout.archiveRight).toBeLessThanOrEqual(layout.stageRight)
   }
 })
 
@@ -115,10 +110,10 @@ test('home assigns distinct font roles to prose, display and technical metadata'
     return {
       body: read('body'),
       display: read('.wordmark'),
-      serif: read('.lyric-quote'),
-      technical: read('.lyric-carousel-index'),
-      action: read('.hero-action'),
-      signal: read('.home-signal strong')
+      serif: read('.home-stage-title'),
+      technical: read('.home-archive-route-index'),
+      action: read('.home-archive-action'),
+      archive: read('.home-archive-route-copy strong')
     }
   })
   expect(fonts.body).toContain('Inter')
@@ -126,7 +121,7 @@ test('home assigns distinct font roles to prose, display and technical metadata'
   expect(fonts.serif).toContain('Noto Serif SC Variable')
   expect(fonts.technical).toContain('IBM Plex Mono')
   expect(fonts.action).toContain('Inter')
-  expect(fonts.signal).toContain('Inter')
+  expect(fonts.archive).toContain('Inter')
 
   await page.goto('/research.html')
   await page.evaluate(() => document.fonts.ready)
@@ -143,43 +138,21 @@ test('home assigns distinct font roles to prose, display and technical metadata'
   expect(researchFonts.toolMeta).toContain('IBM Plex Mono')
 })
 
-test('home lyric carousel supports automatic and accessible manual navigation', async ({ page }) => {
+test('home archive rail supports accessible keyboard navigation', async ({ page }) => {
   await page.goto('/index.html')
-  const carousel = page.locator('.lyric-carousel')
-  await expect(carousel).toBeVisible()
-  await expect(carousel).toHaveAttribute('data-index', '0')
-  await expect(carousel.locator('.lyric-artist')).toHaveText('周杰伦')
-
-  await carousel.locator('[aria-label="下一句"]').click()
-  await expect(carousel).toHaveAttribute('data-index', '1')
-  await expect(carousel.locator('.lyric-artist')).toHaveText('林俊杰')
-
-  await carousel.locator('[aria-label="暂停轮播"]').click()
-  await expect(carousel.locator('[aria-label="继续轮播"]')).toBeVisible()
-  await carousel.focus()
+  const archive = page.locator('.home-archive-index')
+  const routes = archive.locator('.home-archive-route')
+  await routes.nth(0).focus()
+  await expect(routes.nth(0)).toBeFocused()
   await page.keyboard.press('ArrowRight')
-  await expect(carousel).toHaveAttribute('data-index', '2')
-  await page.keyboard.press('Home')
-  await expect(carousel).toHaveAttribute('data-index', '0')
-
-  await carousel.locator('[aria-label="继续轮播"]').click()
-  await expect(carousel.locator('[aria-label="暂停轮播"]')).toBeVisible()
-})
-
-test('home lyric carousel advances automatically while idle', async ({ page }) => {
-  await page.goto('/index.html')
-  const carousel = page.locator('.lyric-carousel')
-  await expect.poll(() => carousel.getAttribute('data-index'), { timeout: 7500 }).toBe('1')
-})
-
-test('home lyric carousel stops automatic motion when reduced motion is requested', async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto('/index.html')
-  const carousel = page.locator('.lyric-carousel')
-  await expect(carousel).toHaveAttribute('data-index', '0')
-  await page.waitForTimeout(6200)
-  await expect(carousel).toHaveAttribute('data-index', '0')
-  await expect(carousel.locator('[aria-label="播放轮播"]')).toBeVisible()
+  await expect(routes.nth(1)).toBeFocused()
+  await expect(routes.nth(1)).toHaveAttribute('aria-selected', 'true')
+  await page.keyboard.press('ArrowLeft')
+  await expect(routes.nth(0)).toBeFocused()
+  await page.keyboard.press('End')
+  await expect(routes.nth(2)).toBeFocused()
+  await page.keyboard.press('Space')
+  await expect(archive.locator('.home-archive-preview')).toContainText('Music & live moments')
 })
 
 test('bundled typography and reading progress stay explicit', async ({ page }) => {
@@ -660,6 +633,102 @@ test('rapid control clicks settle without duplicate or stale state', async ({ pa
   const next = carousel.locator('button[aria-label="下一张"]')
   for (let i = 0; i < 8; i += 1) await next.click()
   await expect(carousel.locator('.carousel-controls span')).toHaveText(/\d+ \/ \d+/)
+})
+
+test('home archive index opens an interactive archive index instead of the lyric carousel', async ({ page }) => {
+  await page.goto('/index.html')
+  await expect(page.locator('.lyric-carousel, .home-signal, .home-signal-board')).toHaveCount(0)
+  const archive = page.locator('.home-archive-index')
+  await expect(archive).toBeVisible()
+  await expect(archive.locator('.home-archive-route')).toHaveCount(3)
+  await expect(archive.locator('.home-archive-route[aria-selected="true"]')).toHaveAttribute('data-route', 'research')
+  await expect(archive.locator('.home-archive-preview')).toContainText('FishFreshNet V2')
+})
+
+test('home archive index routes synchronize selection, preview, and keyboard focus', async ({ page }) => {
+  await page.goto('/index.html')
+  const archive = page.locator('.home-archive-index')
+  const routes = archive.locator('.home-archive-route')
+  const preview = archive.locator('.home-archive-preview')
+  const action = archive.locator('.home-archive-action')
+
+  await routes.nth(1).click()
+  await expect(routes.nth(1)).toHaveAttribute('aria-selected', 'true')
+  await expect(preview).toContainText('FreshEye')
+  await expect(action).toHaveAttribute('href', 'works.html')
+
+  await routes.nth(1).focus()
+  await page.keyboard.press('ArrowDown')
+  await expect(routes.nth(2)).toHaveAttribute('aria-selected', 'true')
+  await page.keyboard.press('Home')
+  await expect(routes.nth(0)).toHaveAttribute('aria-selected', 'true')
+  await page.keyboard.press('End')
+  await expect(routes.nth(2)).toHaveAttribute('aria-selected', 'true')
+  await page.keyboard.press('Enter')
+  await page.keyboard.press('Space')
+})
+
+test('home archive stays usable across themes, widths, and reduced motion', async ({ page }) => {
+  for (const width of [1440, 1024, 768, 390, 320]) {
+    await page.setViewportSize({ width, height: 844 })
+    await page.goto('/index.html')
+    const layout = await page.evaluate(() => ({
+      documentWidth: document.documentElement.scrollWidth,
+      viewportWidth: window.innerWidth
+    }))
+    expect(layout.documentWidth, `index document at ${width}px`).toBeLessThanOrEqual(layout.viewportWidth)
+    await expect(page.locator('.home-archive-index')).toBeVisible()
+  }
+
+  await page.goto('/index.html')
+  const themeToggle = page.locator('.theme-toggle, .theme-orbit').first()
+  if (await themeToggle.count()) {
+    await themeToggle.click()
+  }
+  await expect(page.locator('.home-archive-index')).toBeVisible()
+
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/index.html')
+  const archive = page.locator('.home-archive-index')
+  const routes = archive.locator('.home-archive-route')
+  await expect(archive).toBeVisible()
+  await expect(routes).toHaveCount(3)
+  for (let index = 0; index < 3; index += 1) {
+    await expect(routes.nth(index)).toBeVisible()
+  }
+  await expect(archive.locator('.home-archive-preview')).toHaveCSS('transform', 'none')
+})
+
+test('Works wordmarks keep typography on hover', async ({ page }) => {
+  await page.goto('/works.html')
+  const showcases = page.locator('.showcase')
+  await expect(showcases).toHaveCount(2)
+
+  for (let index = 0; index < 2; index += 1) {
+    const before = await page.locator('.sc-wordmark').evaluateAll((elements) =>
+      elements.map((element) => {
+        const style = getComputedStyle(element)
+        return {
+          fontWeight: style.fontWeight,
+          letterSpacing: style.letterSpacing
+        }
+      })
+    )
+    const box = await showcases.nth(index).boundingBox()
+    expect(box).not.toBeNull()
+    await page.mouse.move((box?.x ?? 0) + (box?.width ?? 0) / 2, (box?.y ?? 0) + (box?.height ?? 0) / 2)
+    await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())))
+    const after = await page.locator('.sc-wordmark').evaluateAll((elements) =>
+      elements.map((element) => {
+        const style = getComputedStyle(element)
+        return {
+          fontWeight: style.fontWeight,
+          letterSpacing: style.letterSpacing
+        }
+      })
+    )
+    expect(after).toEqual(before)
+  }
 })
 
 for (const route of ['index.html', 'academics.html', 'honors.html', 'research.html', 'works.html', 'concerts.html', '404.html']) {

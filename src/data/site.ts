@@ -1,4 +1,4 @@
-import type { HomeLyric, PageKey, PageMeta, SiteNavItem, Status, World } from './types'
+import type { HomeArchiveRoute, PageKey, PageMeta, SiteNavItem, Status, World } from './types'
 
 export const navItems = [
   { key: 'home', label: '首页', en: 'Home', href: 'index.html', desc: '个人档案入口' },
@@ -31,22 +31,11 @@ export const pageMeta = {
   concerts: { kicker: 'CONCERTS / 演唱会', title: '缘分让我们相遇乱世以外', copy: '演唱会足迹与海报，记录那些被灯光和合唱重新定义的夜晚。', credit: { artist: '邓紫棋', song: '光年之外', album: '' } }
 } satisfies Record<PageKey, PageMeta>
 
-export const homeLyrics = [
-  { id: 'jay-chou-dao-xiang', artist: '周杰伦', song: '稻香', quote: '家是唯一的城堡', accent: 'gold' },
-  { id: 'jj-lin-ming-ri-zuo-biao', artist: '林俊杰', song: '明日坐标', quote: '明日从此的坐标', accent: 'aqua' },
-  { id: 'g-e-m-guang-nian-zhi-wai', artist: '邓紫棋', song: '光年之外', quote: '缘分让我们相遇乱世以外', accent: 'violet' },
-  { id: 'silence-wang-man-man-dong', artist: '汪苏泷', song: '慢慢懂', quote: '因为我已明白，努力就能成功', accent: 'gold' },
-  { id: 'joker-xue-tian-wai-lai-wu', artist: '薛之谦', song: '天外来物', quote: '你降落的太突然了', accent: 'aqua' },
-  { id: 'jason-zhang-zui-mei-de-tai-yang', artist: '张杰', song: '最美的太阳', quote: '你是最美的太阳', accent: 'violet' },
-  { id: 'wang-leehom-gai-bian-zi-ji', artist: '王力宏', song: '改变自己', quote: '我可以改变世界', accent: 'gold' },
-  { id: 'david-tao-jiu-shi-ai-ni', artist: '陶喆', song: '就是爱你', quote: '就是爱你爱着你', accent: 'aqua' }
-] satisfies HomeLyric[]
-
-export const homeSignals = [
-  { label: 'SELECTED RESEARCH', value: 'FishFreshNet V2', meta: 'EXPLAINABLE VISION AI', href: 'research.html#fishfreshnet-v2' },
-  { label: 'LIVE PRODUCTS', value: 'FreshEye · Encore', meta: '02 SHIPPED WORLDS', href: 'works.html' },
-  { label: 'FIELD NOTES', value: 'Music & live moments', meta: 'BEIJING / CN', href: 'concerts.html' }
-]
+export const homeArchiveRoutes = [
+  { id: 'research', section: 'SELECTED RESEARCH', label: 'RESEARCH', value: 'FishFreshNet V2', meta: 'EXPLAINABLE VISION AI', href: 'research.html#fishfreshnet-v2', accent: 'aqua' },
+  { id: 'build', section: 'LIVE PRODUCTS', label: 'BUILD', value: 'FreshEye · Encore', meta: '02 SHIPPED WORLDS', href: 'works.html', accent: 'gold' },
+  { id: 'live', section: 'FIELD NOTES', label: 'LIVE', value: 'Music & live moments', meta: 'BEIJING / CN', href: 'concerts.html', accent: 'violet' }
+] satisfies HomeArchiveRoute[]
 
 export const heroGeo = {
   home: 'BEIJING / CN',

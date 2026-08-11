@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { activities, albums, concerts, concertGroups, formatUpdatedLabel, getConcertState, pageMetadata, projects, research } from '../src/data'
+import { activities, albums, concerts, concertGroups, formatUpdatedLabel, getConcertState, homeArchiveRoutes, pageMetadata, projects, research } from '../src/data'
 import { albumCoverFallback, albumCoverSrcset, albumCoverWebp } from '../src/utils/albumMedia'
 import { thumbnailUrl } from '../src/utils/concertMedia'
 
@@ -72,6 +72,15 @@ describe('content contracts', () => {
       'pioneer-research-institute',
       'ap-calculus-assistant'
     ])
+  })
+
+  it('keeps the home archive routes explicit and navigable', () => {
+    expect(homeArchiveRoutes.map(({ id, label, value, href }) => ({ id, label, value, href }))).toEqual([
+      { id: 'research', label: 'RESEARCH', value: 'FishFreshNet V2', href: 'research.html#fishfreshnet-v2' },
+      { id: 'build', label: 'BUILD', value: 'FreshEye · Encore', href: 'works.html' },
+      { id: 'live', label: 'LIVE', value: 'Music & live moments', href: 'concerts.html' }
+    ])
+    expect(homeArchiveRoutes.every((route) => route.section && route.meta && route.accent)).toBe(true)
   })
 
   it('keeps content metadata and project/research contracts populated', () => {
