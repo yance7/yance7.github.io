@@ -154,6 +154,26 @@ test('home entry actions preserve keyboard navigation and fragment targets', asy
   await expect(page).toHaveURL(/index\.html#home-worlds$/)
 })
 
+test('home uses the shared page surface in both themes', async ({ page }) => {
+  for (const theme of ['light', 'dark']) {
+    await page.goto('/index.html')
+    await page.evaluate((value) => localStorage.setItem('yance-theme', value), theme)
+    await page.reload()
+    const surfaces = await page.evaluate(() => {
+      const hero = getComputedStyle(document.querySelector('.home-hero')!)
+      const body = getComputedStyle(document.body)
+      const title = getComputedStyle(document.querySelector('.home-stage-title')!)
+      return {
+        heroBackground: hero.backgroundColor,
+        bodyBackground: body.backgroundColor,
+        titleSize: parseFloat(title.fontSize)
+      }
+    })
+    expect(surfaces.heroBackground).toBe(surfaces.bodyBackground)
+    expect(surfaces.titleSize).toBeLessThanOrEqual(76)
+  }
+})
+
 test('bundled typography and reading progress stay explicit', async ({ page }) => {
   await page.goto('/works.html')
   await page.evaluate(() => document.fonts.ready)
@@ -182,16 +202,20 @@ test('section dots preserve native fragment navigation', async ({ page }) => {
   await expect(archiveDot).toHaveAttribute('aria-current', 'location')
 })
 
-test('honors filtering and detail disclosure use stable ids', async ({ page }) => {
+test('honors filtering renders compact cards without detail controls', async ({ page }) => {
   await page.goto('/honors.html')
   await page.locator('.filter-btn').filter({ hasText: '领航级' }).click()
   await expect(page.locator('.honor-card')).toHaveCount(4)
   await expect(page.locator('.honor-card').first()).toHaveClass(/revealed/)
-  const detailButton = page.locator('.honor-expand').first()
-  await detailButton.click()
-  await expect(detailButton).toHaveAttribute('aria-expanded', 'true')
-  await expect(detailButton.locator('.disclosure-mark')).toHaveText('−')
-  await expect(page.locator(`#${await detailButton.getAttribute('aria-controls')}`)).toBeVisible()
+  await expect(page.locator('.honor-expand, .honor-detail')).toHaveCount(0)
+})
+
+test('honor cards use a quiet reveal animation', async ({ page }) => {
+  await page.goto('/honors.html')
+  const card = page.locator('.honor-card').first()
+  await card.scrollIntoViewIfNeeded()
+  await expect(card).toHaveClass(/revealed/)
+  await expect.poll(() => card.evaluate((element) => getComputedStyle(element).animationName)).toBe('honor-card-in')
 })
 
 test('research methodology disclosure and proof links are reachable', async ({ page }) => {
@@ -598,7 +622,7 @@ test('interactive states remain accessible after opening', async ({ page }) => {
   await page.locator('.mobile-menu-close').click()
 
   await page.goto('/honors.html')
-  await page.locator('.honor-expand').first().click()
+  await expect(page.locator('.honor-card').first()).toBeVisible()
   await expectAccessible(page)
 
   await page.goto('/research.html')
@@ -694,11 +718,14 @@ test('Works wordmarks keep typography on hover', async ({ page }) => {
       elements.map((element) => {
         const style = getComputedStyle(element)
         return {
+          fontSize: style.fontSize,
           fontWeight: style.fontWeight,
           letterSpacing: style.letterSpacing
         }
       })
     )
+    const chineseSize = await showcases.nth(index).locator('.sc-identity h3 > span').evaluate((element) => getComputedStyle(element).fontSize)
+    expect(before[index]?.fontSize).toBe(chineseSize)
     const box = await showcases.nth(index).boundingBox()
     expect(box).not.toBeNull()
     await page.mouse.move((box?.x ?? 0) + (box?.width ?? 0) / 2, (box?.y ?? 0) + (box?.height ?? 0) / 2)
@@ -707,6 +734,7 @@ test('Works wordmarks keep typography on hover', async ({ page }) => {
       elements.map((element) => {
         const style = getComputedStyle(element)
         return {
+          fontSize: style.fontSize,
           fontWeight: style.fontWeight,
           letterSpacing: style.letterSpacing
         }

@@ -133,18 +133,17 @@ onUnmounted(() => {
 
           <div class="album-spotlight-body">
             <div class="album-visual-slot">
-              <Transition name="album-switch" mode="out-in">
-                <div
-                  :key="selectedAlbum.id"
-                  class="album-sleeve"
-                  @pointermove="tiltSleeve"
-                  @pointerleave="resetSleeve"
-                  @pointercancel="resetSleeve"
-                >
-                  <div class="album-vinyl" aria-hidden="true">
-                    <span></span>
-                  </div>
-                  <picture class="album-cover-frame">
+              <div
+                class="album-sleeve"
+                @pointermove="tiltSleeve"
+                @pointerleave="resetSleeve"
+                @pointercancel="resetSleeve"
+              >
+                <div class="album-vinyl" aria-hidden="true">
+                  <span></span>
+                </div>
+                <Transition name="album-switch">
+                  <picture :key="selectedAlbum.id" class="album-cover-frame">
                     <source
                       :srcset="albumCoverSrcset(selectedAlbum.cover)"
                       sizes="(min-width: 1180px) 36vw, (min-width: 768px) 42vw, 82vw"
@@ -160,8 +159,8 @@ onUnmounted(() => {
                       decoding="async"
                     >
                   </picture>
-                </div>
-              </Transition>
+                </Transition>
+              </div>
             </div>
 
             <div class="album-details">
@@ -386,7 +385,7 @@ html[data-theme='light'] .album-kicker {
   z-index: 2;
   display: block;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, .22);
+  border: 1px solid color-mix(in srgb, var(--stage-text) 20%, transparent);
   border-radius: 4px;
   background: #17191d;
   box-shadow: 0 24px 42px rgba(0, 0, 0, .32), 0 3px 9px rgba(0, 0, 0, .2);
@@ -412,7 +411,6 @@ html[data-theme='light'] .album-kicker {
     repeating-radial-gradient(circle, #22252a 0 1px, #0b0c10 2px 4px);
   box-shadow: 12px 16px 30px rgba(0, 0, 0, .38);
   transform: translateX(14px) rotate(3deg);
-  animation: vinyl-cue 420ms ease-out both;
 }
 
 .album-vinyl::after {
@@ -430,12 +428,6 @@ html[data-theme='light'] .album-kicker {
   border-radius: 50%;
   background: #0b0c10;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, .16);
-}
-
-@keyframes vinyl-cue {
-  0% { transform: translateX(0) rotate(-3deg); }
-  64% { transform: translateX(18px) rotate(5deg); }
-  100% { transform: translateX(14px) rotate(3deg); }
 }
 
 .album-details {
@@ -602,7 +594,7 @@ html[data-theme='light'] .album-kicker {
 
 .album-tile img {
   object-fit: cover;
-  transition: filter 180ms ease;
+  transition: filter 180ms ease, transform 180ms ease;
 }
 
 .album-tile-meta {
@@ -678,17 +670,15 @@ html[data-theme='light'] .album-kicker {
 
 .album-switch-enter-active,
 .album-switch-leave-active {
-  transition: opacity 240ms ease, transform 240ms ease;
+  transition: opacity 170ms ease;
 }
 
 .album-switch-enter-from {
   opacity: 0;
-  transform: translateY(10px) scale(.985);
 }
 
 .album-switch-leave-to {
   opacity: 0;
-  transform: translateY(-8px) scale(.99);
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -698,10 +688,22 @@ html[data-theme='light'] .album-kicker {
     transform: translateY(-3px);
   }
 
+  .album-tile:hover img { transform: scale(1.03); }
+
   .album-tile:hover .album-tile-meta {
     opacity: 1;
     transform: none;
   }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .album-tile:hover {
+    border-color: var(--stage-line);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, .16);
+    transform: none;
+  }
+
+  .album-tile:hover img { transform: none; }
 }
 
 @media (min-width: 1180px) {

@@ -8,7 +8,6 @@ import ArchiveFilter from '../components/ArchiveFilter.vue'
 import SectionDots from '../components/SectionDots.vue'
 
 const activeCategory = ref<'all' | HonorLevel>('all')
-const expandedId = ref<string | null>(null)
 
 const levelLabel: Record<string, string> = {
   peak: '领航级',
@@ -31,11 +30,6 @@ const filteredHonors = computed(() => {
 
 function setCategory(category: string) {
   activeCategory.value = category as 'all' | HonorLevel
-  expandedId.value = null
-}
-
-function toggleExpand(id: string) {
-  expandedId.value = expandedId.value === id ? null : id
 }
 </script>
 
@@ -82,7 +76,7 @@ function toggleExpand(id: string) {
           v-for="(h, i) in filteredHonors"
           :key="h.id"
           class="honor-card"
-          :class="[h.level, { expanded: expandedId === h.id }]"
+          :class="h.level"
           :id="`honor-${h.id}`"
           v-reveal="{ delay: i * 60 }"
         >
@@ -94,17 +88,6 @@ function toggleExpand(id: string) {
             <span class="honor-level-tag">{{ levelLabel[h.level] }}</span>
             <h3>{{ h.title }}</h3>
             <span class="honor-org">{{ h.org }}</span>
-            <p v-if="expandedId === h.id" :id="`honor-detail-${h.id}`" class="honor-detail">{{ h.detail }}</p>
-            <button
-              class="honor-expand"
-              type="button"
-              :aria-expanded="expandedId === h.id"
-              :aria-controls="`honor-detail-${h.id}`"
-              @click="toggleExpand(h.id)"
-            >
-              <span class="disclosure-mark" aria-hidden="true">{{ expandedId === h.id ? '−' : '+' }}</span>
-              {{ expandedId === h.id ? '收起' : '详情' }}
-            </button>
           </div>
         </article>
       </TransitionGroup>

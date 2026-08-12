@@ -64,8 +64,6 @@
   --bg: #F7F8F6;
   --bg-deep: #EDF1F0;
   --bg-tint: #F1F4F1;
-  --hero-surface: #F5F7F4;
-  --hero-grid: rgba(31, 45, 41, .08);
 
   /* 表面层 */
   --surface: rgba(255, 255, 255, .88);
@@ -156,8 +154,6 @@
   --bg: #0A1014;
   --bg-deep: #121B20;
   --bg-tint: #0E151A;
-  --hero-surface: #0B1217;
-  --hero-grid: rgba(235, 242, 245, .08);
 
   /* 表面层 */
   --surface: rgba(18, 28, 34, .72);

@@ -140,7 +140,6 @@ export interface Honor {
   id: string
   date: string
   title: string
-  detail: string
   org: string
   level: HonorLevel
 }

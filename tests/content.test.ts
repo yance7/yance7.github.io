@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { activities, albums, concerts, concertGroups, formatUpdatedLabel, getConcertState, pageMetadata, projects, research } from '../src/data'
+import { activities, albums, concerts, concertGroups, formatUpdatedLabel, getConcertState, honors, pageMetadata, projects, research } from '../src/data'
 import { albumCoverFallback, albumCoverSrcset, albumCoverWebp } from '../src/utils/albumMedia'
 import { thumbnailUrl } from '../src/utils/concertMedia'
 
@@ -30,7 +30,7 @@ describe('content contracts', () => {
       { id: 'leehom-shangri-la', artist: '王力宏', title: '心中的日月', year: 2004, format: 'album', appleMusicUrl: 'https://music.apple.com/cn/album/%E5%BF%83%E4%B8%AD%E7%9A%84%E6%97%A5%E6%9C%88/1134344345' },
       { id: 'leehom-change-me', artist: '王力宏', title: '改变自己', year: 2007, format: 'album', appleMusicUrl: 'https://music.apple.com/cn/album/%E6%94%B9%E8%AE%8A%E8%87%AA%E5%B7%B1/1691044816' },
       { id: 'david-tao-self-titled', artist: '陶喆', title: '陶喆同名专辑', year: 1997, format: 'album', appleMusicUrl: 'https://music.apple.com/cn/album/%E9%99%B6%E5%96%86%E5%90%8C%E5%90%8D%E5%B0%88%E8%BC%AF/1416149926' },
-      { id: 'david-tao-im-ok', artist: '陶喆', title: 'I’m O.K.', year: 1999, format: 'album', appleMusicUrl: 'https://music.apple.com/cn/album/im-o-k/905206471' },
+      { id: 'david-tao-im-ok', artist: '陶喆', title: "I'm O.K.", year: 1999, format: 'album', appleMusicUrl: 'https://music.apple.com/cn/album/im-o-k/905206471' },
       { id: 'david-tao-black-tangerine', artist: '陶喆', title: '黑色柳丁', year: 2002, format: 'album', appleMusicUrl: 'https://music.apple.com/cn/album/%E9%BB%91%E8%89%B2%E6%9F%B3%E4%B8%81/914664926' }
     ])
   })
@@ -69,6 +69,10 @@ describe('content contracts', () => {
       && album.palette.length === 2
       && album.palette.every((color) => /^#[0-9A-F]{6}$/i.test(color))
     ))).toBe(true)
+  })
+
+  it('keeps honors limited to the compact archive fields', () => {
+    expect(honors.every((honor) => !Object.prototype.hasOwnProperty.call(honor, 'detail'))).toBe(true)
   })
 
   it('keeps every album cover local in both responsive formats', () => {
