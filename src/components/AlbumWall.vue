@@ -7,11 +7,15 @@ import SectionHeading from './SectionHeading.vue'
 
 const total = albums.length
 const selectedIndex = ref(0)
+const spotlightIndex = ref(0)
+const spotlightSizes = '(min-width: 1180px) 36vw, (min-width: 768px) 42vw, 82vw'
 const gridElement = ref<HTMLElement | null>(null)
 const tileElements = ref<Array<HTMLButtonElement | null>>([])
 let tiltFrame: number | null = null
+let spotlightRequestId = 0
 
 const selectedAlbum = computed<Album>(() => albums[selectedIndex.value]!)
+const spotlightAlbum = computed<Album>(() => albums[spotlightIndex.value]!)
 const wallStyle = computed(() => ({
   '--album-primary': selectedAlbum.value.palette[0],
   '--album-secondary': selectedAlbum.value.palette[1]
@@ -33,17 +37,61 @@ function setTileRef(element: unknown, index: number) {
   tileElements.value[index] = element as HTMLButtonElement | null
 }
 
-function preloadSpotlight(album: Album) {
-  const image = new Image()
-  image.decoding = 'async'
-  image.src = albumCoverWebp(album.cover, 1200)
+function preloadImage(options: { src: string; srcset?: string; sizes?: string }) {
+  return new Promise<boolean>((resolve) => {
+    const image = new Image()
+    let settled = false
+    let fallbackAttempted = false
+    const finish = (loaded: boolean) => {
+      if (settled) return
+      settled = true
+      resolve(loaded)
+    }
+    image.decoding = 'async'
+    if (options.srcset) image.srcset = options.srcset
+    if (options.sizes) image.sizes = options.sizes
+    image.onload = () => {
+      if (typeof image.decode !== 'function') {
+        finish(true)
+        return
+      }
+      image.decode().then(() => finish(true)).catch(() => finish(true))
+    }
+    image.onerror = () => {
+      if (options.srcset && !fallbackAttempted) {
+        fallbackAttempted = true
+        image.removeAttribute('srcset')
+        image.removeAttribute('sizes')
+        image.src = options.src
+        return
+      }
+      finish(false)
+    }
+    image.src = options.src
+  })
+}
+
+async function preloadSpotlight(album: Album) {
+  return preloadImage({
+    src: albumCoverFallback(album.cover),
+    srcset: albumCoverSrcset(album.cover),
+    sizes: spotlightSizes
+  })
+}
+
+async function requestSpotlight(index: number) {
+  const requestId = ++spotlightRequestId
+  const album = albums[index]!
+  if (!await preloadSpotlight(album)) return
+  if (requestId !== spotlightRequestId) return
+  spotlightIndex.value = index
 }
 
 function selectAlbum(index: number, moveFocus = false) {
   const nextIndex = Math.min(Math.max(index, 0), total - 1)
   if (nextIndex !== selectedIndex.value) {
     selectedIndex.value = nextIndex
-    preloadSpotlight(albums[nextIndex]!)
+    void requestSpotlight(nextIndex)
   }
   if (moveFocus) nextTick(() => tileElements.value[nextIndex]?.focus())
 }
@@ -132,7 +180,7 @@ onUnmounted(() => {
           </div>
 
           <div class="album-spotlight-body">
-            <div class="album-visual-slot">
+            <div class="album-visual-slot" :aria-busy="spotlightIndex !== selectedIndex">
               <div
                 class="album-sleeve"
                 @pointermove="tiltSleeve"
@@ -143,19 +191,19 @@ onUnmounted(() => {
                   <span></span>
                 </div>
                 <Transition name="album-switch">
-                  <picture :key="selectedAlbum.id" class="album-cover-frame">
+                  <picture :key="spotlightAlbum.id" class="album-cover-frame">
                     <source
-                      :srcset="albumCoverSrcset(selectedAlbum.cover)"
-                      sizes="(min-width: 1180px) 36vw, (min-width: 768px) 42vw, 82vw"
+                      :srcset="albumCoverSrcset(spotlightAlbum.cover)"
+                      :sizes="spotlightSizes"
                       type="image/webp"
                     >
                     <img
-                      :src="albumCoverFallback(selectedAlbum.cover)"
-                      :alt="`${selectedAlbum.artist}《${selectedAlbum.title}》专辑封面`"
+                      :src="albumCoverFallback(spotlightAlbum.cover)"
+                      :alt="`${spotlightAlbum.artist}《${spotlightAlbum.title}》专辑封面`"
                       width="1200"
                       height="1200"
                       loading="eager"
-                      :fetchpriority="selectedIndex === 0 ? 'high' : 'auto'"
+                      :fetchpriority="spotlightIndex === 0 ? 'high' : 'auto'"
                       decoding="async"
                     >
                   </picture>

@@ -468,6 +468,64 @@ test('concert album wall selection and looping controls stay synchronized', asyn
   })
 })
 
+test('concert album spotlight keeps a decoded cover during delayed rapid switching', async ({ page }) => {
+  await page.route('**/assets/albums/thumbs/*.webp', async (route) => {
+    if (route.request().url().includes('jay-ye-hui-mei-') || route.request().url().includes('/albums/jay-ye-hui-mei.jpg')) {
+      await new Promise((resolve) => setTimeout(resolve, 1200))
+    }
+    await route.continue()
+  })
+  await page.goto('/concerts.html')
+  const wall = page.locator('.album-wall-section')
+
+  await wall.locator('[data-album-id="jay-ye-hui-mei"]').click()
+  await page.waitForTimeout(240)
+
+  await expect(wall.locator('.album-visual-slot')).toHaveAttribute('aria-busy', 'true')
+  await expect(wall.locator('.album-cover-frame img')).toHaveAttribute('src', /jay-fantasy\.jpg$/)
+
+  const visibleCover = await wall.locator('.album-cover-frame').evaluateAll((frames) => frames
+    .map((frame) => {
+      const image = frame.querySelector('img')
+      return {
+        opacity: Number.parseFloat(getComputedStyle(frame).opacity),
+        decoded: !!image?.complete && image.naturalWidth > 0
+      }
+    })
+    .sort((left, right) => right.opacity - left.opacity)[0]?.decoded)
+  expect(visibleCover).toBe(true)
+
+  await expect.poll(() => wall.locator('.album-cover-frame img').evaluateAll((images) => (
+    images as HTMLImageElement[]
+  ).map((image) => image.currentSrc))).toEqual(
+    expect.arrayContaining([expect.stringMatching(/jay-ye-hui-mei-(640|1200)\.webp$/)])
+  )
+  await expect(wall.locator('.album-visual-slot')).toHaveAttribute('aria-busy', 'false')
+})
+
+test('concert album spotlight commits the latest rapid selection only', async ({ page }) => {
+  await page.route('**/assets/albums/thumbs/*.webp', async (route) => {
+    const url = route.request().url()
+    if (url.includes('jay-ye-hui-mei-')) await new Promise((resolve) => setTimeout(resolve, 550))
+    if (url.includes('jay-common-jasmine-orange-')) await new Promise((resolve) => setTimeout(resolve, 100))
+    await route.continue()
+  })
+  await page.goto('/concerts.html')
+  const wall = page.locator('.album-wall-section')
+
+  await wall.locator('[data-album-id="jay-ye-hui-mei"]').click()
+  await wall.locator('[data-album-id="jay-common-jasmine-orange"]').click()
+  await expect(wall.locator('[data-album-id="jay-common-jasmine-orange"]')).toHaveAttribute('aria-selected', 'true')
+  await expect.poll(() => wall.locator('.album-cover-frame img').evaluateAll((images) => (
+    images as HTMLImageElement[]
+  ).map((image) => image.currentSrc))).toEqual(
+    expect.arrayContaining([expect.stringMatching(/jay-common-jasmine-orange-(640|1200)\.webp$/)])
+  )
+  await page.waitForTimeout(600)
+  await expect(wall.locator('.album-cover-frame img')).toHaveCount(1)
+  await expect(wall.locator('.album-cover-frame img')).toHaveAttribute('src', /jay-common-jasmine-orange\.jpg$/)
+})
+
 test('concert album wall supports roving keyboard selection', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto('/concerts.html')
