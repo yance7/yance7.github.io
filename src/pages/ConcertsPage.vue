@@ -1,49 +1,45 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { concerts, concertGroups, concertMoods, concertStats, upcomingConcerts, isConcertUpcoming } from '../data'
-import type { Concert } from '../data/types'
+import { ref } from 'vue'
+import { concerts, concertGroups, getConcertState, isConcertUpcoming } from '../data'
+import type { Concert, LightboxPayload } from '../data/types'
 import SectionHeading from '../components/SectionHeading.vue'
 import MetricStrip from '../components/MetricStrip.vue'
 import AlbumWall from '../components/AlbumWall.vue'
 import { originalImageUrl, thumbnailUrl } from '../utils/concertMedia'
-import { preloadImageOnce } from '../utils/imagePreload'
-
-interface ConcertLightboxPayload {
-  images: string[]
-  index: number
-  meta: { artist: string; tour: string }
-}
+import { sharedImagePreloader } from '../utils/imagePreload'
 
 const emit = defineEmits<{
-  'open-lightbox': [payload: ConcertLightboxPayload]
+  'open-lightbox': [payload: LightboxPayload]
 }>()
 
 const carouselIndexes = ref<Record<string, number>>({})
-const preloaded = new Set<string>()
-const preloading = new Set<string>()
+const imagePreloader = sharedImagePreloader
 
-const venueCount = computed(() => new Set(concerts.map((c) => c.venue)).size)
-const artistCount = computed(() => concertStats.artistCount)
-const posterCount = computed(() => concertStats.posterCount)
+const concertState = getConcertState(new Date())
+const venueCount = new Set(concerts.map((c) => c.venue)).size
+const artistCount = concertState.stats.artistCount
+const posterCount = concertState.stats.posterCount
 
 const concertMetrics = [
-  { value: String(concertStats.attended), label: '已赴约', note: `${concertStats.upcoming} 待相见` },
-  { value: String(venueCount.value), label: '场馆', note: concertStats.venues },
-  { value: `${artistCount.value}+`, label: '艺人', note: `${posterCount.value} 张海报` },
-  { value: String(concertStats.total), label: '总现场', note: '已记录的演出' }
+  { value: String(concertState.stats.attended), label: '已赴约', note: `${concertState.stats.upcoming} 待相见` },
+  { value: String(venueCount), label: '场馆', note: concertState.stats.venues },
+  { value: `${artistCount}+`, label: '艺人', note: `${posterCount} 张海报` },
+  { value: String(concertState.stats.total), label: '总现场', note: '已记录的演出' }
 ]
 
-const sortedYears = computed(() => Object.keys(concertGroups).sort())
+const sortedYears = Object.keys(concertGroups).sort()
+const upcomingConcerts = concertState.upcoming
+const concertMoods = concertState.moods
 
 function formatConcertDate(date: string) { return date.replaceAll('-', '.') }
 function formatNextDate(date: string) {
   const [, month, day] = date.split('-')
-  const monthLabel = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'][Number(month) - 1]
+  const monthLabel = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'][Number(month) - 1] ?? '---'
   return `${monthLabel} ${day}`
 }
 function currentImageName(item: Concert, fallbackIndex = 0) {
   const index = carouselIndexes.value[item.id] ?? fallbackIndex
-  return item.images[index]
+  return item.images[index] ?? item.images[0]
 }
 function moveCarousel(item: Concert, step: number) {
   const current = carouselIndexes.value[item.id] || 0
@@ -51,8 +47,10 @@ function moveCarousel(item: Concert, step: number) {
   carouselIndexes.value = { ...carouselIndexes.value, [item.id]: next }
 }
 function openLightbox(item: Concert, index = 0) {
+  const [first, ...rest] = item.images.map(originalImageUrl)
+  if (!first) return
   emit('open-lightbox', {
-    images: item.images.map(originalImageUrl),
+    images: [first, ...rest],
     index,
     meta: { artist: item.artist, tour: item.tour }
   })
@@ -61,7 +59,7 @@ function openLightbox(item: Concert, index = 0) {
 /* 悬停时预载海报，点击打开灯箱时无需等待网络 */
 function preloadItem(item: Concert) {
   const src = originalImageUrl(currentImageName(item))
-  preloadImageOnce(src, preloaded, preloading)
+  imagePreloader.preload(src)
 }
 
 </script>
@@ -114,16 +112,16 @@ function preloadItem(item: Concert) {
       <div class="group-header" v-reveal>
         <span class="group-year">{{ year }}</span>
         <p class="group-mood">{{ concertMoods[year as keyof typeof concertMoods] || '' }}</p>
-        <span class="group-count">{{ concertGroups[year].length }} 场</span>
+        <span class="group-count">{{ concertGroups[year]?.length ?? 0 }} 场</span>
       </div>
 
       <div class="concert-list">
         <article
-          v-for="item in concertGroups[year]"
+          v-for="item in concertGroups[year] ?? []"
           :key="item.id"
           :id="`concert-${item.id}`"
           class="concert-row"
-          :class="{ upcoming: isConcertUpcoming(item) }"
+          :class="{ upcoming: isConcertUpcoming(item, concertState.now) }"
           v-reveal
           @mouseenter="preloadItem(item)"
           @focusin="preloadItem(item)"
@@ -166,8 +164,8 @@ function preloadItem(item: Concert) {
             </div>
           </div>
           <div class="concert-info">
-            <span class="concert-status" :class="{ upcoming: isConcertUpcoming(item) }">
-              {{ isConcertUpcoming(item) ? 'UPCOMING · 待相见' : 'ATTENDED · 已赴约' }}
+            <span class="concert-status" :class="{ upcoming: isConcertUpcoming(item, concertState.now) }">
+              {{ isConcertUpcoming(item, concertState.now) ? 'UPCOMING · 待相见' : 'ATTENDED · 已赴约' }}
             </span>
             <span class="concert-venue">{{ item.venue }}</span>
             <h3>{{ item.artist }}</h3>

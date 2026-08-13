@@ -3,25 +3,22 @@ import { computed, nextTick, onUnmounted, ref } from 'vue'
 import { albums } from '../data'
 import type { Album } from '../data/types'
 import { albumCoverFallback, albumCoverSrcset, albumCoverWebp } from '../utils/albumMedia'
+import { useAlbumSpotlight } from '../composables/useAlbumSpotlight'
 import SectionHeading from './SectionHeading.vue'
 
 const total = albums.length
-const selectedIndex = ref(0)
-const spotlightIndex = ref(0)
 const spotlightSizes = '(min-width: 1180px) 36vw, (min-width: 768px) 42vw, 82vw'
 const gridElement = ref<HTMLElement | null>(null)
 const tileElements = ref<Array<HTMLButtonElement | null>>([])
 let tiltFrame: number | null = null
-let spotlightRequestId = 0
-const spotlightState = ref<'ready' | 'loading' | 'error'>('ready')
 
-const selectedAlbum = computed<Album>(() => albums[selectedIndex.value]!)
-const spotlightAlbum = computed<Album>(() => albums[spotlightIndex.value]!)
+const selectedAlbum = computed<Album>(() => albums[spotlight.state.value.selected]!)
+const spotlightAlbum = computed<Album>(() => albums[spotlight.state.value.displayed]!)
 const wallStyle = computed(() => ({
   '--album-primary': selectedAlbum.value.palette[0],
   '--album-secondary': selectedAlbum.value.palette[1]
 }))
-const selectedPosition = computed(() => `${formatIndex(selectedIndex.value)} / ${String(total).padStart(2, '0')}`)
+const selectedPosition = computed(() => `${formatIndex(spotlight.state.value.selected)} / ${String(total).padStart(2, '0')}`)
 const liveAnnouncement = computed(() => (
   `已选择 ${selectedAlbum.value.artist}，《${selectedAlbum.value.title}》，${selectedAlbum.value.year} 年，${formatLabel(selectedAlbum.value)}`
 ))
@@ -80,27 +77,17 @@ async function preloadSpotlight(album: Album) {
   })
 }
 
-async function requestSpotlight(index: number) {
-  const requestId = ++spotlightRequestId
-  const album = albums[index]!
-  spotlightState.value = 'loading'
-  const loaded = await preloadSpotlight(album)
-  if (requestId !== spotlightRequestId) return
-  spotlightIndex.value = index
-  spotlightState.value = loaded ? 'ready' : 'error'
-}
+const spotlight = useAlbumSpotlight(total, (index) => preloadSpotlight(albums[index]!))
+const spotlightState = spotlight.state
 
 function selectAlbum(index: number, moveFocus = false) {
   const nextIndex = Math.min(Math.max(index, 0), total - 1)
-  if (nextIndex !== selectedIndex.value) {
-    selectedIndex.value = nextIndex
-    void requestSpotlight(nextIndex)
-  }
+  void spotlight.select(nextIndex)
   if (moveFocus) nextTick(() => tileElements.value[nextIndex]?.focus())
 }
 
 function moveAlbum(step: number) {
-  const nextIndex = (selectedIndex.value + step + total) % total
+  const nextIndex = (spotlight.state.value.selected + step + total) % total
   selectAlbum(nextIndex)
 }
 
@@ -185,8 +172,8 @@ onUnmounted(() => {
           <div class="album-spotlight-body">
             <div
               class="album-visual-slot"
-              :aria-busy="spotlightState === 'loading'"
-              :data-spotlight-state="spotlightState"
+              :aria-busy="spotlightState.status === 'loading'"
+              :data-spotlight-state="spotlightState.status"
             >
               <div
                 class="album-sleeve"
@@ -210,7 +197,7 @@ onUnmounted(() => {
                       width="1200"
                       height="1200"
                       loading="eager"
-                      :fetchpriority="spotlightIndex === 0 ? 'high' : 'auto'"
+                      :fetchpriority="spotlightState.displayed === 0 ? 'high' : 'auto'"
                       decoding="async"
                     >
                   </picture>
@@ -262,15 +249,15 @@ onUnmounted(() => {
             :key="album.id"
             :ref="(element) => setTileRef(element, index)"
             class="album-tile"
-            :class="{ selected: selectedIndex === index }"
+            :class="{ selected: spotlightState.selected === index }"
             type="button"
             role="option"
             :aria-label="`${album.artist}《${album.title}》，${album.year} 年，${formatLabel(album)}`"
-            :aria-selected="selectedIndex === index"
+            :aria-selected="spotlightState.selected === index"
             :aria-setsize="total"
             :aria-posinset="index + 1"
             :data-album-id="album.id"
-            :tabindex="selectedIndex === index ? 0 : -1"
+            :tabindex="spotlightState.selected === index ? 0 : -1"
             @click="selectAlbum(index)"
             @keydown="onTileKeydown($event, index)"
           >
@@ -289,7 +276,7 @@ onUnmounted(() => {
               <strong>{{ album.title }}</strong>
               <small>{{ album.artist }} · {{ album.year }}</small>
             </span>
-            <span v-if="selectedIndex === index" class="album-tile-selected" aria-hidden="true">NOW</span>
+            <span v-if="spotlightState.selected === index" class="album-tile-selected" aria-hidden="true">NOW</span>
           </button>
         </div>
       </div>

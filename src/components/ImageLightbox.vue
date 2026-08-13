@@ -1,14 +1,11 @@
 <script setup lang="ts">
-import { ref, nextTick, onMounted, onUnmounted, watch } from 'vue'
-import { useBodyScrollLock } from '../composables/useBodyScrollLock'
-
-interface LightboxMeta {
-  artist: string
-  tour: string
-}
+import { ref, onMounted, onUnmounted, watch } from 'vue'
+import type { LightboxMeta, NonEmptyArray } from '../data/types'
+import { useModalDialog } from '../composables/useModalDialog'
+import { sharedImagePreloader } from '../utils/imagePreload'
 
 const props = defineProps<{
-  images: string[]
+  images: NonEmptyArray<string>
   index: number
   meta?: LightboxMeta | null
 }>()
@@ -24,11 +21,8 @@ const retryKey = ref(0)
 const dialogRef = ref<HTMLElement | null>(null)
 const closeButton = ref<HTMLButtonElement | null>(null)
 const isOpen = ref(true)
-let lastFocus: HTMLElement | null = null
-const neighborPreloaded = new Set()
+const imagePreloader = sharedImagePreloader
 let closeTimer: number | undefined
-
-useBodyScrollLock(isOpen)
 
 function closeLightbox() {
   if (!isOpen.value) return
@@ -37,17 +31,20 @@ function closeLightbox() {
   closeTimer = window.setTimeout(() => emit('close'), delay)
 }
 
+useModalDialog(isOpen, {
+  dialogRef,
+  initialFocus: closeButton,
+  inertSelectors: ['#main', '.site-footer'],
+  onClose: closeLightbox,
+})
+
 function preloadNeighbors(index: number) {
   if (props.images.length < 2) return
   const total = props.images.length
   const neighborIndexes = [(index - 1 + total) % total, (index + 1) % total]
   neighborIndexes.forEach((neighborIndex) => {
     const src = props.images[neighborIndex]
-    if (neighborPreloaded.has(src)) return
-    const image = new Image()
-    image.decoding = 'async'
-    image.src = src
-    neighborPreloaded.add(src)
+    if (src) imagePreloader.preload(src)
   })
 }
 
@@ -69,38 +66,18 @@ function retryImage() {
 }
 
 function onKey(e: KeyboardEvent) {
-  if (e.key === 'Escape') {
-    e.preventDefault()
-    closeLightbox()
-  }
-  else if (e.key === 'ArrowLeft') emit('prev')
+  if (e.key === 'ArrowLeft') emit('prev')
   else if (e.key === 'ArrowRight') emit('next')
-  else if (e.key === 'Tab') {
-    const focusable = [...dialogRef.value?.querySelectorAll<HTMLButtonElement>('button:not([disabled])') || []]
-    if (!focusable.length) return
-    const first = focusable[0]
-    const last = focusable[focusable.length - 1]
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault()
-      last.focus()
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault()
-      first.focus()
-    }
-  }
 }
 
 onMounted(() => {
-  lastFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
   window.addEventListener('keydown', onKey)
-  nextTick(() => closeButton.value?.focus())
 })
 
 onUnmounted(() => {
   if (closeTimer) window.clearTimeout(closeTimer)
   isOpen.value = false
   window.removeEventListener('keydown', onKey)
-  if (lastFocus && lastFocus.focus) lastFocus.focus()
 })
 
 watch(() => [props.index, props.images[props.index]], () => {

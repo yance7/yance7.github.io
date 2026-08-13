@@ -23,7 +23,7 @@ const chapterCount = computed(() => String(props.project.story.chapters.length).
         <span>{{ project.discipline }}</span>
       </div>
       <div class="sc-head-status">
-        <StatusBadge v-if="project.status" :status="project.status" :label="project.statusLabel" />
+        <StatusBadge :status="project.status" :label="project.statusLabel" />
         <a
           :href="project.href"
           target="_blank"

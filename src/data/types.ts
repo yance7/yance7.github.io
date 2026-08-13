@@ -7,10 +7,13 @@ export type Status =
   | 'planned'
   | 'archived'
 
-export type ProofType = 'paper' | 'source' | 'demo' | 'dataset' | 'experiment' | 'deployment'
+type ProofType = 'paper' | 'source' | 'demo' | 'dataset' | 'experiment' | 'deployment'
 export type HonorLevel = 'peak' | 'excellent' | 'emerging'
+export type NonEmptyArray<T> = [T, ...T[]]
+export type { PageKey } from './pageRegistry'
+import type { PageKey } from './pageRegistry'
 
-export interface ProofLink {
+interface ProofLink {
   type: ProofType
   label: string
   value: string
@@ -24,7 +27,7 @@ export interface Metric {
   note?: string
 }
 
-export interface Methodology {
+interface Methodology {
   question: string
   hypothesis: string
   method: string
@@ -33,7 +36,7 @@ export interface Methodology {
   next: string
 }
 
-export interface ResearchPaper {
+interface ResearchPaper {
   doi: string
   tag: string
   href: string
@@ -77,16 +80,16 @@ export interface ResearchMethodGroup {
   items: ResearchMethod[]
 }
 
-export type ProjectTone = 'aqua' | 'gold' | 'violet'
+type ProjectTone = 'aqua' | 'gold' | 'violet'
 
-export interface ProjectStoryChapter {
+interface ProjectStoryChapter {
   label: string
   title: string
   detail: string
   href?: string
 }
 
-export interface ProjectStory {
+interface ProjectStory {
   label: string
   note: string
   chapters: ProjectStoryChapter[]
@@ -108,8 +111,8 @@ export interface Project {
   github?: string
   discipline: string
   tone: ProjectTone
-  status?: Status
-  statusLabel?: string
+  status: Status
+  statusLabel: string
   updatedAt: string
   story: ProjectStory
 }
@@ -120,7 +123,7 @@ export interface Concert {
   artist: string
   tour: string
   venue: string
-  images: [string, ...string[]]
+  images: NonEmptyArray<string>
   land?: boolean
   note?: string
 }
@@ -152,13 +155,15 @@ export interface Education {
   en: string
 }
 
-export interface ApScore {
+interface ApScoreBase {
   name: string
   en: string
   year: string
-  score: number | null
-  status: 'done' | 'pending'
 }
+
+export type ApScore =
+  | (ApScoreBase & { score: number; status: 'done' })
+  | (ApScoreBase & { score: null; status: 'pending' })
 
 export interface Leadership {
   role: string
@@ -190,14 +195,29 @@ export interface HeroCredit {
   album: string
 }
 
+export interface LightboxMeta {
+  artist: string
+  tour: string
+}
+
+export interface LightboxPayload {
+  images: NonEmptyArray<string>
+  index: number
+  meta?: LightboxMeta | null
+}
+
+export interface PageCompassSection {
+  readonly id: string
+  readonly label: string
+  shortLabel?: string
+}
+
 export interface PageMeta {
   kicker: string
   title: string
   copy: string
   credit?: HeroCredit
 }
-
-export type PageKey = 'home' | 'academics' | 'honors' | 'research' | 'works' | 'concerts'
 
 export interface World {
   key: PageKey

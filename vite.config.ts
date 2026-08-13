@@ -2,11 +2,12 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
-import { THEME_COLORS } from './src/themeColors.js'
+import { THEME_COLORS } from './src/themeColors.ts'
+import { htmlPageEntries } from './src/data/pageRegistry.ts'
 
 const rootDir = dirname(fileURLToPath(import.meta.url))
 const htmlRoot = resolve(rootDir, 'html-src')
-const pageNames = ['index', 'academics', 'honors', 'research', 'works', 'concerts', '404']
+const pageNames = htmlPageEntries.map(({ htmlName }) => htmlName)
 
 const htmlInputs = Object.fromEntries(
   pageNames.map((name) => [name, resolve(rootDir, 'html-src', `${name}.html`)])

@@ -8,19 +8,14 @@ import ArchiveFilter from '../components/ArchiveFilter.vue'
 
 const activeCategory = ref<'all' | HonorLevel>('all')
 
-const levelLabel: Record<string, string> = {
+const levelLabel: Record<HonorLevel, string> = {
   peak: '领航级',
   excellent: '卓越级',
   emerging: '新锐级'
 }
 
-const categoryCounts = computed(() => {
-  const counts: Record<'all' | HonorLevel, number> = { all: honors.length, peak: 0, excellent: 0, emerging: 0 }
-  for (const h of honors) {
-    counts[h.level] = (counts[h.level] || 0) + 1
-  }
-  return counts
-})
+const categoryCounts: Record<'all' | HonorLevel, number> = { all: honors.length, peak: 0, excellent: 0, emerging: 0 }
+for (const honor of honors) categoryCounts[honor.level] += 1
 
 const filteredHonors = computed(() => {
   if (activeCategory.value === 'all') return honors

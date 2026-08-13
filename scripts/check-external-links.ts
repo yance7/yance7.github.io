@@ -6,9 +6,20 @@ const root = resolve(fileURLToPath(new URL('..', import.meta.url)))
 const scanRoots = ['src', 'html-src']
 const extensions = new Set(['.html', '.js', '.mjs', '.ts', '.vue'])
 const urlPattern = /https?:\/\/[^\s"'`<>)}\]]+/g
-const timeoutMs = 15000
+const headTimeoutMs = 10000
+const getTimeoutMs = 20000
 
-async function listFiles(directory) {
+async function fetchWithTimeout(url: string, init: RequestInit, timeout = getTimeoutMs) {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeout)
+  try {
+    return await fetch(url, { ...init, signal: controller.signal })
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+async function listFiles(directory: string): Promise<string[]> {
   const entries = await readdir(join(root, directory), { withFileTypes: true })
   const files = []
   for (const entry of entries) {
@@ -19,11 +30,11 @@ async function listFiles(directory) {
   return files
 }
 
-function normalizeUrl(url) {
+function normalizeUrl(url: string) {
   return url.replace(/[.,;:!?]+$/g, '')
 }
 
-function shouldCheck(url) {
+function shouldCheck(url: string) {
   const parsed = new URL(url)
   if (parsed.hostname === 'schema.org') return false
   return true
@@ -42,18 +53,12 @@ for (const { path, text } of sources) {
   }
 }
 
-async function checkUrl(url) {
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), timeoutMs)
-  try {
-    let response = await fetch(url, { method: 'HEAD', redirect: 'follow', signal: controller.signal })
-    if (response.status === 405 || response.status === 403) {
-      response = await fetch(url, { method: 'GET', redirect: 'follow', signal: controller.signal })
-    }
-    return response
-  } finally {
-    clearTimeout(timeout)
+async function checkUrl(url: string) {
+  let response = await fetchWithTimeout(url, { method: 'HEAD', redirect: 'follow' }, headTimeoutMs)
+  if ([403, 405, 501].includes(response.status)) {
+    response = await fetchWithTimeout(url, { method: 'GET', redirect: 'follow' }, getTimeoutMs)
   }
+  return response
 }
 
 const failures = []

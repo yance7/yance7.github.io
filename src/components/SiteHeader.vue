@@ -1,70 +1,24 @@
 <script setup lang="ts">
-import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { ref } from 'vue'
 import { navItems } from '../data'
 import ThemeOrbit from './ThemeOrbit.vue'
-import { useBodyScrollLock } from '../composables/useBodyScrollLock'
+import { useModalDialog } from '../composables/useModalDialog'
 
 defineProps<{ page?: string }>()
 const menuOpen = ref(false)
-const menuTrigger = ref<HTMLButtonElement | null>(null)
 const menuClose = ref<HTMLButtonElement | null>(null)
 const menuOverlay = ref<HTMLElement | null>(null)
 
-function closeMenu(restoreFocus = false) {
+function closeMenu() {
   menuOpen.value = false
-  if (restoreFocus) requestAnimationFrame(() => menuTrigger.value?.focus())
 }
 
-function getMenuFocusable(): HTMLElement[] {
-  if (!menuOverlay.value) return []
-  return [...menuOverlay.value.querySelectorAll<HTMLElement>('button:not([disabled]), a[href]')]
-}
-
-function onKeydown(event: KeyboardEvent) {
-  if (!menuOpen.value) return
-  if (event.key === 'Escape') {
-    event.preventDefault()
-    closeMenu(true)
-    return
-  }
-  if (event.key !== 'Tab') return
-
-  const focusable = getMenuFocusable()
-  if (!focusable.length) return
-  const first = focusable[0]
-  const last = focusable[focusable.length - 1]
-  const currentIndex = focusable.indexOf(document.activeElement as HTMLElement)
-  if (currentIndex >= 0) {
-    event.preventDefault()
-    const nextIndex = (currentIndex + (event.shiftKey ? -1 : 1) + focusable.length) % focusable.length
-    focusable[nextIndex].focus()
-  } else if (event.shiftKey) {
-    event.preventDefault()
-    last.focus()
-  } else {
-    event.preventDefault()
-    first.focus()
-  }
-}
-
-useBodyScrollLock(menuOpen)
-
-watch(menuOpen, async (open) => {
-  document.querySelector('#main')?.toggleAttribute('inert', open)
-  document.querySelector('.site-footer')?.toggleAttribute('inert', open)
-  if (open) {
-    await nextTick()
-    menuClose.value?.focus()
-  }
+useModalDialog(menuOpen, {
+  dialogRef: menuOverlay,
+  initialFocus: menuClose,
+  inertSelectors: ['#main', '.site-footer'],
+  onClose: closeMenu,
 })
-
-onUnmounted(() => {
-  document.querySelector('#main')?.removeAttribute('inert')
-  document.querySelector('.site-footer')?.removeAttribute('inert')
-})
-
-onMounted(() => window.addEventListener('keydown', onKeydown))
-onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 </script>
 
 <template>
@@ -72,7 +26,6 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
     <a class="wordmark" href="index.html" aria-label="返回首页">Yance<span>.</span></a>
 
     <button
-      ref="menuTrigger"
       class="menu-trigger"
       type="button"
       :aria-expanded="menuOpen"
@@ -109,8 +62,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 
   <Teleport to="body">
     <Transition name="mobile-menu">
-      <div ref="menuOverlay" v-if="menuOpen" class="mobile-menu-overlay" role="dialog" aria-modal="true" aria-label="移动端导航" @click.self="closeMenu(true)">
-        <button ref="menuClose" class="mobile-menu-close" type="button" aria-label="关闭导航" @click="closeMenu(true)">×</button>
+      <div ref="menuOverlay" v-if="menuOpen" class="mobile-menu-overlay" role="dialog" aria-modal="true" aria-label="移动端导航" @click.self="closeMenu">
+        <button ref="menuClose" class="mobile-menu-close" type="button" aria-label="关闭导航" @click="closeMenu">×</button>
         <nav id="mobile-navigation" class="mobile-menu" aria-label="移动端导航">
           <a
             v-for="(item, i) in navItems"
@@ -119,7 +72,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
             :class="{ active: page === item.key }"
             :aria-current="page === item.key ? 'page' : undefined"
             :style="{ '--di': i }"
-            @click="closeMenu(true)"
+            @click="closeMenu"
           >
             <small class="mm-num">0{{ i + 1 }}</small>
             <span class="mm-label">{{ item.label }}</span>

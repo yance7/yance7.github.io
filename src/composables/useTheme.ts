@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import { THEME_COLORS } from '../themeColors'
 
-export type Theme = 'light' | 'dark'
+type Theme = 'light' | 'dark'
 
 const THEME_KEY = 'yance-theme'
 const theme = ref<Theme>('light')

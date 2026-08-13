@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { heroGeo } from '../data'
+const geo = 'BEIJING / CN'
 
 const props = defineProps<{
   kicker: string
   copy: string
 }>()
 
-const geo = computed(() => heroGeo.home)
 </script>
 
 <template>

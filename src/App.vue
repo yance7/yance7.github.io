@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
-import { navItems, pageMeta } from './data'
+import { computed, ref, onMounted, onUnmounted, type Component } from 'vue'
+import { isPageKey, navItems, pageMeta, pageRegistry } from './data'
 import { useTheme } from './composables/useTheme'
+import { createAsyncPage, decodeHashTarget } from './utils/navigation'
 
 import SiteHeader from './components/SiteHeader.vue'
 import ArchiveHero from './components/ArchiveHero.vue'
@@ -12,27 +13,21 @@ import PageCompass from './components/PageCompass.vue'
 
 import NotFoundPage from './pages/NotFoundPage.vue'
 
-interface LightboxMeta {
-  artist: string
-  tour: string
-}
+import type { LightboxPayload } from './data/types'
 
-interface LightboxPayload {
-  images: string[]
-  index: number
-  meta?: LightboxMeta | null
-}
-
-const page = document.body.dataset.page || 'home'
+const rawPage = document.body.dataset.page
+const page = isPageKey(rawPage) ? rawPage : undefined
 const { theme, initTheme } = useTheme()
 
 const lightbox = ref<LightboxPayload | null>(null)
 let hashScrolled = false
 let hashObserver: MutationObserver | null = null
+let hashTimeout: number | undefined
 
 function scrollToHashTarget() {
   if (hashScrolled || !window.location.hash) return
-  const id = decodeURIComponent(window.location.hash.slice(1))
+  const id = decodeHashTarget(window.location.hash)
+  if (!id) return
   const scroll = () => {
     const target = document.getElementById(id)
     if (!target) return false
@@ -45,15 +40,22 @@ function scrollToHashTarget() {
   if (scroll()) return
   hashObserver = new MutationObserver(scroll)
   hashObserver.observe(document.querySelector('#main') || document.body, { childList: true, subtree: true })
+  hashTimeout = window.setTimeout(() => {
+    hashObserver?.disconnect()
+    hashObserver = null
+  }, 5000)
 }
 
 onMounted(() => {
   initTheme()
   scrollToHashTarget()
 })
-onUnmounted(() => hashObserver?.disconnect())
+onUnmounted(() => {
+  hashObserver?.disconnect()
+  if (hashTimeout) window.clearTimeout(hashTimeout)
+})
 
-const currentNav = computed(() => navItems.find((item) => item.key === page))
+const currentNav = computed(() => page ? navItems.find((item) => item.key === page) : undefined)
 const isHome = page === 'home'
 const isError = !currentNav.value
 const meta = computed(() => pageMeta[currentNav.value?.key || 'home'])
@@ -63,53 +65,13 @@ const heroTitle = computed(() => (isError ? '这一页走丢了' : meta.value.ti
 const heroCopy = computed(() => (isError ? '返回首页，重新选择一个方向。' : meta.value.copy))
 const heroCredit = computed(() => (isError ? null : meta.value.credit || null))
 
-const pageMap = {
-  home: defineAsyncComponent(() => import('./pages/HomePage.vue')),
-  academics: defineAsyncComponent(() => import('./pages/AcademicsPage.vue')),
-  honors: defineAsyncComponent(() => import('./pages/HonorsPage.vue')),
-  research: defineAsyncComponent(() => import('./pages/ResearchPage.vue')),
-  works: defineAsyncComponent(() => import('./pages/WorksPage.vue')),
-  concerts: defineAsyncComponent(() => import('./pages/ConcertsPage.vue'))
-}
-const currentPage = computed(() => (isError ? NotFoundPage : pageMap[page as keyof typeof pageMap] || NotFoundPage))
-
-const pageSectionMap: Record<string, PageCompassSection[]> = {
-  home: [
-    { id: 'selected-work', label: 'SELECTED WORK', shortLabel: 'WORK' },
-    { id: 'home-worlds', label: 'FIVE WORLDS', shortLabel: 'WORLDS' },
-    { id: 'home-beyond', label: 'BEYOND THE LAB', shortLabel: 'BEYOND' }
-  ],
-  academics: [
-    { id: 'sec-education', label: 'EDUCATION' },
-    { id: 'sec-scoreboard', label: 'SCOREBOARD' },
-    { id: 'sec-ap-archive', label: 'AP ARCHIVE' }
-  ],
-  honors: [
-    { id: 'sec-milestones', label: 'MILESTONES' },
-    { id: 'sec-honors-archive', label: 'ARCHIVE' }
-  ],
-  research: [
-    { id: 'sec-research-timeline', label: 'RESEARCH' },
-    { id: 'sec-toolchain', label: 'METHODS' }
-  ],
-  works: [
-    { id: 'works-overview', label: 'RELEASED WORLDS', shortLabel: 'OVERVIEW' },
-    { id: 'project-fresheye', label: 'FRESHEYE' },
-    { id: 'project-encore', label: 'ENCORE' }
-  ],
-  concerts: [
-    { id: 'concerts-overview', label: 'LIVE ARCHIVE', shortLabel: 'OVERVIEW' },
-    { id: 'album-frequencies', label: 'ALBUM WALL', shortLabel: 'ALBUMS' },
-    { id: 'concert-archive', label: 'CONCERT ARCHIVE', shortLabel: 'POSTERS' }
-  ]
-}
-
-interface PageCompassSection {
-  id: string
-  label: string
-  shortLabel?: string
-}
-const pageSections = computed(() => pageSectionMap[page] ?? [])
+const pageModules = import.meta.glob<{ default: Component }>('./pages/*Page.vue')
+const currentPage = computed(() => {
+  if (isError || !page) return NotFoundPage
+  const loader = pageModules[pageRegistry[page].module]
+  return loader ? createAsyncPage(loader) : NotFoundPage
+})
+const pageSections = computed(() => page ? pageRegistry[page].sections : [])
 
 function handleLightbox(data: LightboxPayload) { lightbox.value = data }
 function closeLightbox() { lightbox.value = null }
@@ -131,7 +93,7 @@ function moveLightbox(step: number) {
       <PageCompass v-if="pageSections.length" :sections="pageSections" />
     </aside>
 
-    <SiteHeader :page="page" />
+    <SiteHeader :page="page ?? rawPage" />
 
     <main id="main">
       <HomeHero
@@ -142,7 +104,7 @@ function moveLightbox(step: number) {
 
       <ArchiveHero
         v-else
-        :page="page"
+        :page="page ?? rawPage ?? '404'"
         :error="isError"
         :kicker="kicker"
         :title="heroTitle"

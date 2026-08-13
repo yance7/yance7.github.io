@@ -1,14 +1,9 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useScrollProgress } from '../composables/useScrollProgress'
+import type { PageCompassSection } from '../data/types'
 
-interface PageCompassSection {
-  id: string
-  label: string
-  shortLabel?: string
-}
-
-const props = defineProps<{ sections: PageCompassSection[] }>()
+const props = defineProps<{ sections: readonly PageCompassSection[] }>()
 const { progress, percent } = useScrollProgress()
 const activeId = ref(props.sections[0]?.id ?? '')
 let observer: IntersectionObserver | null = null

@@ -17,14 +17,16 @@ function parseValue(value: string) {
   const match = String(value).match(/^(-?\d+(?:\.\d+)?)(.*)$/)
   if (!match) return null
   return {
-    num: parseFloat(match[1]),
-    suffix: match[2],
-    decimals: (match[1].split('.')[1] || '').length
+    num: parseFloat(match[1] ?? '0'),
+    suffix: match[2] ?? '',
+    decimals: (match[1]?.split('.')[1] || '').length
   }
 }
 
 function animateIndex(i: number) {
-  const parsed = parseValue(props.metrics[i].value)
+  const metric = props.metrics[i]
+  if (!metric) return
+  const parsed = parseValue(metric.value)
   if (!parsed) return
   const start = performance.now()
   const duration = 900

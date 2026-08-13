@@ -1,11 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-
-interface HeroCredit {
-  artist: string
-  song: string
-  album?: string
-}
+import type { HeroCredit } from '../data/types'
 
 const props = withDefaults(defineProps<{
   page: string

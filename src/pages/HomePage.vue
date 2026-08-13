@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { worlds, featuredResearch, featuredProjects, leadership, activities } from '../data'
 import SectionHeading from '../components/SectionHeading.vue'
 
-const selectedActivities = computed(() => activities.filter((item) => item.featured))
+const selectedActivities = activities.filter((item) => item.featured)
 </script>
 
 <template>

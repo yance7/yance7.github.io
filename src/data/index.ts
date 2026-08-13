@@ -13,6 +13,7 @@ export * from './community'
 export * from './projects'
 export * from './concerts'
 export * from './albums'
+export * from './pageRegistry'
 
 const monthLabels = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
 
@@ -47,5 +48,3 @@ export const pageMetadata = {
   works: { updatedAt: contentUpdatedAt.works, updatedLabel: formatUpdatedLabel(contentUpdatedAt.works) },
   concerts: { updatedAt: contentUpdatedAt.concerts, updatedLabel: formatUpdatedLabel(contentUpdatedAt.concerts) }
 } satisfies Record<PageKey, PageMetadata>
-
-export { concertsUpdatedAt, honorsUpdatedAt }

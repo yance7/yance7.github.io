@@ -31,6 +31,8 @@ jobs:
         run: npm run lint
       - name: Typecheck Vue app
         run: npm run typecheck
+      - name: Dead-code check
+        run: npm run deadcode
       - name: Unit tests
         run: npm run unit
       - name: Generate sitemap
@@ -39,6 +41,8 @@ jobs:
         run: npm run build
       - name: Smoke test artifact
         run: npm run smoke
+      - name: Lighthouse quality budget
+        run: npx --yes @lhci/cli@0.15.1 autorun --config=.lighthouserc.json
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium webkit
       - name: Browser and axe tests

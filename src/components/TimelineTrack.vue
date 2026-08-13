@@ -36,7 +36,7 @@ function toggleMethod(id: string) {
     >
       <div class="tl-side">
         <span class="tl-date">{{ item.date }}</span>
-        <StatusBadge v-if="item.status" :status="item.status" :label="statusLabelMap[item.status]" />
+        <StatusBadge v-if="item.status" :status="item.status" :label="statusLabelMap[item.status] ?? item.status" />
       </div>
       <span class="tl-node" aria-hidden="true"><i></i></span>
       <div class="tl-body">

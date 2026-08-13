@@ -9,10 +9,35 @@ export interface ImagePreloader {
   createImage: () => PreloadImage
 }
 
+export interface ImagePreloadController {
+  preload: (src: string) => boolean
+  isLoaded: (src: string) => boolean
+  isPending: (src: string) => boolean
+}
+
+export function createImagePreloader(
+  preloader: ImagePreloader = { createImage: () => new Image() }
+): ImagePreloadController {
+  const loaded = new Set<string>()
+  const pending = new Set<string>()
+
+  return {
+    preload(src) {
+      return preloadImageOnce(src, loaded, pending, preloader)
+    },
+    isLoaded(src) {
+      return loaded.has(src)
+    },
+    isPending(src) {
+      return pending.has(src)
+    }
+  }
+}
+
 export function preloadImageOnce(
   src: string,
   preloaded: Set<string>,
-  pending: Set<string> = new Set<string>(),
+  pending: Set<string>,
   preloader: ImagePreloader = { createImage: () => new Image() }
 ) {
   if (preloaded.has(src) || pending.has(src)) return false
@@ -27,3 +52,5 @@ export function preloadImageOnce(
   image.src = src
   return true
 }
+
+export const sharedImagePreloader = createImagePreloader()

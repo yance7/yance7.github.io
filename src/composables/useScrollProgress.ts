@@ -3,7 +3,6 @@ import { clampScrollProgress } from '../utils/scrollProgress'
 
 export function useScrollProgress() {
   const progress = ref(0)
-  const showTop = ref(false)
   const percent = computed(() => Math.round(progress.value * 100))
   let frame = 0
 
@@ -12,7 +11,6 @@ export function useScrollProgress() {
     const scrollRange = root.scrollHeight - root.clientHeight
     const scrollTop = window.scrollY || root.scrollTop
     progress.value = scrollRange > 0 ? clampScrollProgress(scrollTop / scrollRange) : 0
-    showTop.value = scrollTop > 480
   }
 
   function scheduleUpdate() {
@@ -36,5 +34,5 @@ export function useScrollProgress() {
     frame = 0
   })
 
-  return { progress, percent, showTop }
+  return { progress, percent }
 }

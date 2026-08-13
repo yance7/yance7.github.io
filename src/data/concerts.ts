@@ -26,8 +26,9 @@ export function isConcertUpcoming(concert: Concert, now = new Date()) {
 
 export const concertGroups = concerts.reduce<Record<string, Concert[]>>((groups, item) => {
   const year = item.date.split('-')[0]
-  if (!groups[year]) groups[year] = []
-  groups[year].push(item)
+  if (!year) return groups
+  const group = groups[year] ?? (groups[year] = [])
+  group.push(item)
   return groups
 }, {})
 
@@ -49,6 +50,7 @@ export function getConcertState(now = new Date()) {
   const upcoming2026 = upcoming.filter((concert) => concert.date.startsWith('2026-')).length
 
   return {
+    now,
     upcoming,
     attended,
     moods: {
@@ -67,9 +69,3 @@ export function getConcertState(now = new Date()) {
     }
   }
 }
-
-const concertState = getConcertState()
-export const upcomingConcerts = concertState.upcoming
-export const attendedConcerts = concertState.attended
-export const concertMoods = concertState.moods
-export const concertStats = concertState.stats

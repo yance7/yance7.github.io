@@ -20,4 +20,4 @@ jobs:
         with:
           node-version: 22
       - name: Check external links
-        run: node scripts/check-external-links.mjs
+        run: npx tsx scripts/check-external-links.ts

@@ -1,16 +1,17 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { htmlPageEntries } from '../src/data/pageRegistry'
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)))
 const dist = join(root, 'dist')
-const pages = ['index', 'academics', 'honors', 'research', 'works', 'concerts', '404']
+const pages = htmlPageEntries.map(({ htmlName }) => htmlName)
 
-function read(path) {
+function read(path: string) {
   return readFileSync(join(dist, path), 'utf8')
 }
 
-function assert(condition, message) {
+function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message)
 }
 

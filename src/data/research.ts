@@ -211,7 +211,7 @@ function toFeaturedResearch(item: ResearchItem): FeaturedResearch {
     id: item.id,
     title: item.title,
     text: item.text,
-    summaryMetrics: [metrics[0], metrics[1]]
+    summaryMetrics: [metrics[0]!, metrics[1]!]
   }
 }
 
