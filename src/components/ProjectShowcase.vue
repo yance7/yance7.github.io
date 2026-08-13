@@ -15,6 +15,7 @@ const chapterCount = computed(() => String(props.project.story.chapters.length).
     :class="project.tone"
     :data-project="project.id"
     v-reveal
+    v-pointer-sheen
   >
     <header class="sc-dossier-head">
       <div class="sc-file-code">

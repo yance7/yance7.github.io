@@ -5,7 +5,6 @@ import type { HonorLevel } from '../data/types'
 import SectionHeading from '../components/SectionHeading.vue'
 import MetricStrip from '../components/MetricStrip.vue'
 import ArchiveFilter from '../components/ArchiveFilter.vue'
-import SectionDots from '../components/SectionDots.vue'
 
 const activeCategory = ref<'all' | HonorLevel>('all')
 
@@ -35,13 +34,6 @@ function setCategory(category: string) {
 
 <template>
   <div class="page-honors">
-    <SectionDots
-      :sections="[
-        { id: 'sec-milestones', label: 'MILESTONES' },
-        { id: 'sec-honors-archive', label: 'ARCHIVE' }
-      ]"
-    />
-
     <!-- 01 · 统计条 -->
     <section id="sec-milestones" class="content">
       <SectionHeading

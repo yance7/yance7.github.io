@@ -8,7 +8,7 @@ import ArchiveHero from './components/ArchiveHero.vue'
 import HomeHero from './components/HomeHero.vue'
 import SiteFooter from './components/SiteFooter.vue'
 import ImageLightbox from './components/ImageLightbox.vue'
-import ScrollProgress from './components/ScrollProgress.vue'
+import PageCompass from './components/PageCompass.vue'
 
 import NotFoundPage from './pages/NotFoundPage.vue'
 
@@ -73,6 +73,44 @@ const pageMap = {
 }
 const currentPage = computed(() => (isError ? NotFoundPage : pageMap[page as keyof typeof pageMap] || NotFoundPage))
 
+const pageSectionMap: Record<string, PageCompassSection[]> = {
+  home: [
+    { id: 'selected-work', label: 'SELECTED WORK', shortLabel: 'WORK' },
+    { id: 'home-worlds', label: 'FIVE WORLDS', shortLabel: 'WORLDS' },
+    { id: 'home-beyond', label: 'BEYOND THE LAB', shortLabel: 'BEYOND' }
+  ],
+  academics: [
+    { id: 'sec-education', label: 'EDUCATION' },
+    { id: 'sec-scoreboard', label: 'SCOREBOARD' },
+    { id: 'sec-ap-archive', label: 'AP ARCHIVE' }
+  ],
+  honors: [
+    { id: 'sec-milestones', label: 'MILESTONES' },
+    { id: 'sec-honors-archive', label: 'ARCHIVE' }
+  ],
+  research: [
+    { id: 'sec-research-timeline', label: 'RESEARCH' },
+    { id: 'sec-toolchain', label: 'METHODS' }
+  ],
+  works: [
+    { id: 'works-overview', label: 'RELEASED WORLDS', shortLabel: 'OVERVIEW' },
+    { id: 'project-fresheye', label: 'FRESHEYE' },
+    { id: 'project-encore', label: 'ENCORE' }
+  ],
+  concerts: [
+    { id: 'concerts-overview', label: 'LIVE ARCHIVE', shortLabel: 'OVERVIEW' },
+    { id: 'album-frequencies', label: 'ALBUM WALL', shortLabel: 'ALBUMS' },
+    { id: 'concert-archive', label: 'CONCERT ARCHIVE', shortLabel: 'POSTERS' }
+  ]
+}
+
+interface PageCompassSection {
+  id: string
+  label: string
+  shortLabel?: string
+}
+const pageSections = computed(() => pageSectionMap[page] ?? [])
+
 function handleLightbox(data: LightboxPayload) { lightbox.value = data }
 function closeLightbox() { lightbox.value = null }
 function moveLightbox(step: number) {
@@ -83,14 +121,14 @@ function moveLightbox(step: number) {
 </script>
 
 <template>
-  <div class="site-shell" :class="`theme-${theme}`">
+  <div class="site-shell" :class="[`theme-${theme}`, { 'has-page-compass': pageSections.length }]">
     <a class="skip-link" href="#main">跳到主要内容</a>
     <div class="ambient ambient-one"></div>
     <div class="ambient ambient-two"></div>
     <div class="grain"></div>
 
     <aside class="page-tools" aria-label="页面阅读工具">
-      <ScrollProgress />
+      <PageCompass v-if="pageSections.length" :sections="pageSections" />
     </aside>
 
     <SiteHeader :page="page" />

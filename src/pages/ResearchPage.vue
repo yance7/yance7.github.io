@@ -2,18 +2,10 @@
 import { research, researchMethodGroups, researchMethods } from '../data'
 import SectionHeading from '../components/SectionHeading.vue'
 import TimelineTrack from '../components/TimelineTrack.vue'
-import SectionDots from '../components/SectionDots.vue'
 </script>
 
 <template>
   <div class="page-research">
-    <SectionDots
-      :sections="[
-        { id: 'sec-research-timeline', label: 'RESEARCH' },
-        { id: 'sec-toolchain', label: 'METHODS' }
-      ]"
-    />
-
     <section id="sec-research-timeline" class="content">
       <SectionHeading
         no="01"

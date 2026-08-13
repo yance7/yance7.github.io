@@ -193,13 +193,96 @@ test('home focus cards keep the research-product link on keyboard focus', async 
   await expect(page.locator('.home-focus-connector')).toHaveCSS('opacity', '1')
 })
 
-test('section dots preserve native fragment navigation', async ({ page }) => {
+test('page compass unifies section navigation, reading progress, and return to top', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 900 })
   await page.goto('/honors.html')
-  const archiveDot = page.locator('.section-dot[href="#sec-honors-archive"]')
-  await archiveDot.click()
+  const compass = page.locator('.page-compass')
+  const archiveLink = compass.locator('.page-compass-link[href="#sec-honors-archive"]')
+
+  await expect(compass).toBeVisible()
+  await expect(compass.locator('.page-compass-link')).toHaveCount(2)
+  await archiveLink.click()
   await expect(page).toHaveURL(/honors\.html#sec-honors-archive/)
-  await expect(archiveDot).toHaveAttribute('aria-current', 'location')
+  await expect(archiveLink).toHaveAttribute('aria-current', 'location')
+  await expect.poll(() => compass.locator('.page-compass-progress').getAttribute('aria-label')).toMatch(/\d+%/)
+
+  await compass.locator('.page-compass-top').click()
+  await expect.poll(() => page.evaluate(() => Math.round(window.scrollY))).toBeLessThan(8)
+  await expect(compass.locator('.page-compass-link').first()).toHaveAttribute('aria-current', 'location')
+  await expect(page.locator('.section-dots, .scroll-to-top')).toHaveCount(0)
+})
+
+test('signature surfaces track fine-pointer sheen without changing typography', { tag: '@fine-pointer' }, async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium', 'Fine-pointer interaction is intentionally disabled on touch projects')
+  const targets = [
+    ['index.html', '.world-card'],
+    ['works.html', '.showcase'],
+    ['concerts.html', '.concert-poster']
+  ] as const
+
+  for (const [route, selector] of targets) {
+    await page.goto(`/${route}`)
+    const surface = page.locator(selector).first()
+    await surface.scrollIntoViewIfNeeded()
+    await expect(surface).toHaveAttribute('data-pointer-sheen', '')
+    const before = await surface.evaluate((element) => {
+      const style = getComputedStyle(element)
+      return {
+        x: style.getPropertyValue('--pointer-x').trim(),
+        weight: style.fontWeight,
+        spacing: style.letterSpacing
+      }
+    })
+    const box = await surface.boundingBox()
+    expect(box).not.toBeNull()
+    await page.mouse.move((box?.x ?? 0) + (box?.width ?? 0) * .8, (box?.y ?? 0) + (box?.height ?? 0) * .25)
+    await expect.poll(() => surface.evaluate((element) => getComputedStyle(element).getPropertyValue('--pointer-x').trim())).not.toBe(before.x)
+    const after = await surface.evaluate((element) => {
+      const style = getComputedStyle(element)
+      return { weight: style.fontWeight, spacing: style.letterSpacing }
+    })
+    expect(after).toEqual({ weight: before.weight, spacing: before.spacing })
+  }
+})
+
+test('signature pointer sheen stays static with reduced motion', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/index.html')
+  const surface = page.locator('.world-card').first()
+  await surface.scrollIntoViewIfNeeded()
+  const box = await surface.boundingBox()
+  await page.mouse.move((box?.x ?? 0) + (box?.width ?? 0) * .8, (box?.y ?? 0) + (box?.height ?? 0) * .2)
+  await expect(surface).toHaveCSS('--pointer-x', '50%')
+  await expect(surface).toHaveCSS('--pointer-y', '50%')
+})
+
+test('page compass exposes page-specific sections without covering narrow layouts', async ({ page }) => {
+  const expectations = [
+    ['index.html', 3],
+    ['academics.html', 3],
+    ['honors.html', 2],
+    ['research.html', 2],
+    ['works.html', 3],
+    ['concerts.html', 3]
+  ] as const
+
+  for (const [route, sectionCount] of expectations) {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto(`/${route}`)
+    await expect(page.locator('.page-compass-link')).toHaveCount(sectionCount)
+    const layout = await page.evaluate(() => ({
+      viewport: window.innerWidth,
+      document: document.documentElement.scrollWidth,
+      compassBottom: document.querySelector('.page-compass')!.getBoundingClientRect().bottom,
+      footerPaddingBottom: parseFloat(getComputedStyle(document.querySelector('.site-footer')!).paddingBottom)
+    }))
+    expect(layout.document).toBeLessThanOrEqual(layout.viewport)
+    expect(layout.compassBottom).toBeLessThanOrEqual(844)
+    expect(layout.footerPaddingBottom).toBeGreaterThanOrEqual(76)
+  }
+
+  await page.goto('/404.html')
+  await expect(page.locator('.page-compass')).toHaveCount(0)
 })
 
 test('honors filtering renders compact cards without detail controls', async ({ page }) => {

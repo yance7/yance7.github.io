@@ -77,6 +77,7 @@ const selectedActivities = computed(() => activities.filter((item) => item.featu
           :href="w.href"
           :style="{ '--wi': i }"
           v-reveal="{ delay: i * 80 }"
+          v-pointer-sheen
         >
           <div class="world-left">
             <span class="world-no">{{ w.no }}</span>
@@ -93,7 +94,7 @@ const selectedActivities = computed(() => activities.filter((item) => item.featu
     </section>
 
     <!-- 第三段：在实验室之外的组织与行动 -->
-    <section class="content home-beyond">
+    <section id="home-beyond" class="content home-beyond">
       <SectionHeading
         no="03"
         label="BEYOND THE LAB"

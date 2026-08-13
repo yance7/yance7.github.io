@@ -7,7 +7,7 @@ import MetricStrip from '../components/MetricStrip.vue'
 <template>
   <div class="page-academics">
     <!-- 00 · 教育履历 -->
-    <section class="content">
+    <section id="sec-education" class="content">
       <SectionHeading
         no="00"
         label="EDUCATION"
@@ -30,7 +30,7 @@ import MetricStrip from '../components/MetricStrip.vue'
     </section>
 
     <!-- 01 · SCOREBOARD -->
-    <section class="content">
+    <section id="sec-scoreboard" class="content">
       <SectionHeading
         no="01"
         label="SCOREBOARD"
@@ -43,7 +43,7 @@ import MetricStrip from '../components/MetricStrip.vue'
     </section>
 
     <!-- 02 · AP 档案表 -->
-    <section class="content">
+    <section id="sec-ap-archive" class="content">
       <SectionHeading
         no="02"
         label="AP ARCHIVE"

@@ -6,7 +6,7 @@ import ProjectShowcase from '../components/ProjectShowcase.vue'
 
 <template>
   <div class="page-works">
-    <section class="content">
+    <section id="works-overview" class="content">
       <SectionHeading
         no="01"
         label="RELEASED WORLDS"

@@ -162,7 +162,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section class="album-wall-section content" aria-label="专辑收藏墙">
+  <section id="album-frequencies" class="album-wall-section content" aria-label="专辑收藏墙">
     <SectionHeading
       no="02"
       label="ALBUM FREQUENCIES"

@@ -79,7 +79,7 @@ function resetPoster(e) {
 
 <template>
   <div class="page-concerts">
-    <section class="content">
+    <section id="concerts-overview" class="content">
       <SectionHeading
         no="01"
         label="LIVE ARCHIVE"
@@ -117,8 +117,9 @@ function resetPoster(e) {
 
     <!-- 按年份分组 -->
     <section
-      v-for="year in sortedYears"
+      v-for="(year, yearIndex) in sortedYears"
       :key="year"
+      :id="yearIndex === 0 ? 'concert-archive' : undefined"
       class="content concert-group"
     >
       <div class="group-header" v-reveal>
@@ -144,6 +145,7 @@ function resetPoster(e) {
           <div
             class="concert-poster"
             :class="{ land: item.land }"
+            v-pointer-sheen
             @mousemove="tiltPoster"
             @mouseleave="resetPoster"
           >
