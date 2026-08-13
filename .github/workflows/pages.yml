@@ -42,7 +42,7 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium webkit
       - name: Browser and axe tests
-        run: npm run test:e2e
+        run: npm run test:e2e -- --workers=2
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:

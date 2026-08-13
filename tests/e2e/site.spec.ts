@@ -214,6 +214,7 @@ test('page compass unifies section navigation, reading progress, and return to t
 
 test('site navigation stays pinned and every compass destination clears it', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 900 })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
   const destinations = [
     ['index.html', '#home-beyond'],
     ['academics.html', '#sec-ap-archive'],
