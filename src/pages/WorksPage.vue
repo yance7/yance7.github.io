@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { projects } from '../data'
 import SectionHeading from '../components/SectionHeading.vue'
 import ProjectShowcase from '../components/ProjectShowcase.vue'

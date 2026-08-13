@@ -676,6 +676,27 @@ test('concert album spotlight keeps a decoded cover during delayed rapid switchi
   await expect(wall.locator('.album-visual-slot')).toHaveAttribute('aria-busy', 'false')
 })
 
+test('concert album spotlight settles on the selected album when both cover sources fail', async ({ page }) => {
+  await page.route('**/assets/albums/**', async (route) => {
+    const url = route.request().url()
+    if (url.includes('jay-ye-hui-mei-') || url.includes('jay-ye-hui-mei.jpg')) {
+      await route.abort('failed')
+      return
+    }
+    await route.continue()
+  })
+  await page.goto('/concerts.html')
+  const wall = page.locator('.album-wall-section')
+
+  await wall.locator('[data-album-id="jay-ye-hui-mei"]').click()
+
+  await expect(wall.locator('[data-album-id="jay-ye-hui-mei"]')).toHaveAttribute('aria-selected', 'true')
+  await expect(wall.locator('.album-title')).toHaveText('叶惠美')
+  await expect(wall.locator('.album-cover-frame img[src$="jay-ye-hui-mei.jpg"]')).toHaveCount(1)
+  await expect(wall.locator('.album-visual-slot')).toHaveAttribute('aria-busy', 'false')
+  await expect(wall.locator('.album-visual-slot')).toHaveAttribute('data-spotlight-state', 'error')
+})
+
 test('concert album spotlight commits the latest rapid selection only', async ({ page }) => {
   await page.route('**/assets/albums/thumbs/*.webp', async (route) => {
     const url = route.request().url()
@@ -778,6 +799,19 @@ test('concert album wall uses 6 4 and 3 responsive columns', async ({ page }) =>
       expect(Math.abs(layout.tileWidth - layout.tileHeight)).toBeLessThanOrEqual(1)
     }
   }
+})
+
+test('copy citation cleans up its textarea when the legacy copy command throws', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, get: () => undefined })
+    Object.defineProperty(document, 'execCommand', { configurable: true, value: () => { throw new Error('copy unavailable') } })
+  })
+  await page.goto('/research.html')
+
+  await page.locator('.copy-citation').first().click()
+
+  await expect(page.locator('.copy-citation').first()).toHaveAttribute('data-state', 'error')
+  await expect(page.locator('textarea')).toHaveCount(0)
 })
 
 test('concert album wall preserves theme and reduced-motion accessibility', async ({ page }) => {

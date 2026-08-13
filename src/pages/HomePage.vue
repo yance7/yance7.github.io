@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
 import { worlds, featuredResearch, featuredProjects, leadership, activities } from '../data'
 import SectionHeading from '../components/SectionHeading.vue'

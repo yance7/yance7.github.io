@@ -1,15 +1,26 @@
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue'
 import { concerts, concertGroups, concertMoods, concertStats, upcomingConcerts, isConcertUpcoming } from '../data'
+import type { Concert } from '../data/types'
 import SectionHeading from '../components/SectionHeading.vue'
 import MetricStrip from '../components/MetricStrip.vue'
 import AlbumWall from '../components/AlbumWall.vue'
 import { originalImageUrl, thumbnailUrl } from '../utils/concertMedia'
+import { preloadImageOnce } from '../utils/imagePreload'
 
-const emit = defineEmits(['open-lightbox'])
+interface ConcertLightboxPayload {
+  images: string[]
+  index: number
+  meta: { artist: string; tour: string }
+}
 
-const carouselIndexes = ref({})
-const preloaded = new Set()
+const emit = defineEmits<{
+  'open-lightbox': [payload: ConcertLightboxPayload]
+}>()
+
+const carouselIndexes = ref<Record<string, number>>({})
+const preloaded = new Set<string>()
+const preloading = new Set<string>()
 
 const venueCount = computed(() => new Set(concerts.map((c) => c.venue)).size)
 const artistCount = computed(() => concertStats.artistCount)
@@ -24,22 +35,22 @@ const concertMetrics = [
 
 const sortedYears = computed(() => Object.keys(concertGroups).sort())
 
-function formatConcertDate(date) { return date.replaceAll('-', '.') }
-function formatNextDate(date) {
+function formatConcertDate(date: string) { return date.replaceAll('-', '.') }
+function formatNextDate(date: string) {
   const [, month, day] = date.split('-')
   const monthLabel = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'][Number(month) - 1]
   return `${monthLabel} ${day}`
 }
-function currentImageName(item, fallbackIndex = 0) {
+function currentImageName(item: Concert, fallbackIndex = 0) {
   const index = carouselIndexes.value[item.id] ?? fallbackIndex
   return item.images[index]
 }
-function moveCarousel(item, step) {
+function moveCarousel(item: Concert, step: number) {
   const current = carouselIndexes.value[item.id] || 0
   const next = (current + step + item.images.length) % item.images.length
   carouselIndexes.value = { ...carouselIndexes.value, [item.id]: next }
 }
-function openLightbox(item, index = 0) {
+function openLightbox(item: Concert, index = 0) {
   emit('open-lightbox', {
     images: item.images.map(originalImageUrl),
     index,
@@ -48,13 +59,9 @@ function openLightbox(item, index = 0) {
 }
 
 /* 悬停时预载海报，点击打开灯箱时无需等待网络 */
-function preloadItem(item) {
+function preloadItem(item: Concert) {
   const src = originalImageUrl(currentImageName(item))
-  if (preloaded.has(src)) return
-  preloaded.add(src)
-  const img = new Image()
-  img.src = src
-  img.decoding = 'async'
+  preloadImageOnce(src, preloaded, preloading)
 }
 
 </script>
@@ -106,7 +113,7 @@ function preloadItem(item) {
     >
       <div class="group-header" v-reveal>
         <span class="group-year">{{ year }}</span>
-        <p class="group-mood">{{ concertMoods[year] || '' }}</p>
+        <p class="group-mood">{{ concertMoods[year as keyof typeof concertMoods] || '' }}</p>
         <span class="group-count">{{ concertGroups[year].length }} 场</span>
       </div>
 

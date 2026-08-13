@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onUnmounted } from 'vue'
+import { legacyCopyText, type LegacyCopyDocument } from '../utils/clipboard'
 
 const props = defineProps({
   citation: { type: String, required: true }
@@ -20,14 +21,13 @@ async function copy() {
     if (navigator.clipboard && window.isSecureContext) {
       await navigator.clipboard.writeText(text)
     } else {
-      const ta = document.createElement('textarea')
-      ta.value = text
-      ta.style.position = 'fixed'
-      ta.style.opacity = '0'
-      document.body.appendChild(ta)
-      ta.select()
-      document.execCommand('copy')
-      ta.remove()
+      const legacyDocument: LegacyCopyDocument<HTMLTextAreaElement> = {
+        createTextarea: () => document.createElement('textarea'),
+        appendTextarea: (textarea) => document.body.appendChild(textarea),
+        execCopy: () => document.execCommand('copy')
+      }
+      const copied = legacyCopyText(text, legacyDocument)
+      if (!copied) throw new Error('Legacy copy command was rejected')
     }
     state.value = 'success'
     clearTimeout(timer)

@@ -1,13 +1,25 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
 
-const props = defineProps({
-  page: { type: String, required: true },
-  error: { type: Boolean, default: false },
-  kicker: { type: String, default: '' },
-  title: { type: String, default: '' },
-  copy: { type: String, default: '' },
-  credit: { type: Object, default: null }
+interface HeroCredit {
+  artist: string
+  song: string
+  album?: string
+}
+
+const props = withDefaults(defineProps<{
+  page: string
+  error?: boolean
+  kicker?: string
+  title?: string
+  copy?: string
+  credit?: HeroCredit | null
+}>(), {
+  error: false,
+  kicker: '',
+  title: '',
+  copy: '',
+  credit: null
 })
 const lyricChars = computed(() => props.title.split(''))
 const accessibleTitle = computed(() =>

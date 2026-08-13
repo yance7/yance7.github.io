@@ -120,7 +120,7 @@ export interface Concert {
   artist: string
   tour: string
   venue: string
-  images: string[]
+  images: [string, ...string[]]
   land?: boolean
   note?: string
 }

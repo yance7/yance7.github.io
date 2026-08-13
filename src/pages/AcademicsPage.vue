@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { stats, education, apScores } from '../data'
 import SectionHeading from '../components/SectionHeading.vue'
 import MetricStrip from '../components/MetricStrip.vue'

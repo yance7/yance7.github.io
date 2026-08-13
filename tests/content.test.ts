@@ -95,6 +95,14 @@ describe('content contracts', () => {
     expect(concerts.every((concert) => concert.id && concert.images.length > 0)).toBe(true)
   })
 
+  it('keeps every concert poster available in original and thumbnail formats', () => {
+    expect(concerts.every((concert) => concert.images.every((image) => {
+      const thumbnail = image.replace(/\.[^.]+$/, '.webp')
+      return existsSync(resolve(process.cwd(), 'public/assets/concerts', image))
+        && existsSync(resolve(process.cwd(), 'public/assets/concerts/thumbs', thumbnail))
+    }))).toBe(true)
+  })
+
   it('derives concert state from a supplied Beijing date', () => {
     const state = getConcertState(new Date('2026-08-07T12:00:00+08:00'))
     expect(state.upcoming.map((concert) => concert.id)).toEqual([

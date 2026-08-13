@@ -1,24 +1,35 @@
-<script setup>
-defineProps({
-  categories: { type: Array, required: true },
-  counts: { type: Object, default: () => ({}) },
-  active: { type: String, default: 'all' }
+<script setup lang="ts">
+interface ArchiveCategory {
+  key: 'all' | import('../data/types').HonorLevel
+  label: string
+}
+
+const props = withDefaults(defineProps<{
+  categories: ArchiveCategory[]
+  counts?: Partial<Record<ArchiveCategory['key'], number>>
+  active?: ArchiveCategory['key']
+}>(), {
+  counts: () => ({}),
+  active: 'all'
 })
-const emit = defineEmits(['filter'])
+
+const emit = defineEmits<{
+  filter: [category: ArchiveCategory['key']]
+}>()
 </script>
 
 <template>
   <div class="honor-filter" role="group" aria-label="荣誉分类筛选">
     <button
-      v-for="cat in categories"
+      v-for="cat in props.categories"
       :key="cat.key"
       class="filter-btn"
       type="button"
-      :class="{ active: active === cat.key, [cat.key]: true }"
-      :aria-pressed="active === cat.key"
+      :class="{ active: props.active === cat.key, [cat.key]: true }"
+      :aria-pressed="props.active === cat.key"
       @click="emit('filter', cat.key)"
     >
-      {{ cat.label }}<span v-if="counts[cat.key]" class="filter-count">{{ counts[cat.key] }}</span>
+      {{ cat.label }}<span v-if="props.counts[cat.key]" class="filter-count">{{ props.counts[cat.key] }}</span>
     </button>
   </div>
 </template>

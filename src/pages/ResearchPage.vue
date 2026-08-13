@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { research, researchMethodGroups, researchMethods } from '../data'
 import SectionHeading from '../components/SectionHeading.vue'
 import TimelineTrack from '../components/TimelineTrack.vue'

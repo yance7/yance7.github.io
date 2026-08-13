@@ -27,8 +27,8 @@ const filteredHonors = computed(() => {
   return honors.filter((h) => h.level === activeCategory.value)
 })
 
-function setCategory(category: string) {
-  activeCategory.value = category as 'all' | HonorLevel
+function setCategory(category: 'all' | HonorLevel) {
+  activeCategory.value = category
 }
 </script>
 

@@ -1,4 +1,5 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { clampScrollProgress } from '../utils/scrollProgress'
 
 export function useScrollProgress() {
   const progress = ref(0)
@@ -10,7 +11,7 @@ export function useScrollProgress() {
     const root = document.documentElement
     const scrollRange = root.scrollHeight - root.clientHeight
     const scrollTop = window.scrollY || root.scrollTop
-    progress.value = scrollRange > 0 ? Math.min(scrollTop / scrollRange, 1) : 0
+    progress.value = scrollRange > 0 ? clampScrollProgress(scrollTop / scrollRange) : 0
     showTop.value = scrollTop > 480
   }
 

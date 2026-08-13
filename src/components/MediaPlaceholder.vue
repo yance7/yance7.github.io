@@ -1,9 +1,7 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 
-defineProps({
-  alt: { type: String, default: '' }
-})
+withDefaults(defineProps<{ alt?: string }>(), { alt: '' })
 const loaded = ref(false)
 </script>
 

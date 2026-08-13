@@ -13,6 +13,7 @@ const gridElement = ref<HTMLElement | null>(null)
 const tileElements = ref<Array<HTMLButtonElement | null>>([])
 let tiltFrame: number | null = null
 let spotlightRequestId = 0
+const spotlightState = ref<'ready' | 'loading' | 'error'>('ready')
 
 const selectedAlbum = computed<Album>(() => albums[selectedIndex.value]!)
 const spotlightAlbum = computed<Album>(() => albums[spotlightIndex.value]!)
@@ -82,9 +83,11 @@ async function preloadSpotlight(album: Album) {
 async function requestSpotlight(index: number) {
   const requestId = ++spotlightRequestId
   const album = albums[index]!
-  if (!await preloadSpotlight(album)) return
+  spotlightState.value = 'loading'
+  const loaded = await preloadSpotlight(album)
   if (requestId !== spotlightRequestId) return
   spotlightIndex.value = index
+  spotlightState.value = loaded ? 'ready' : 'error'
 }
 
 function selectAlbum(index: number, moveFocus = false) {
@@ -180,7 +183,11 @@ onUnmounted(() => {
           </div>
 
           <div class="album-spotlight-body">
-            <div class="album-visual-slot" :aria-busy="spotlightIndex !== selectedIndex">
+            <div
+              class="album-visual-slot"
+              :aria-busy="spotlightState === 'loading'"
+              :data-spotlight-state="spotlightState"
+            >
               <div
                 class="album-sleeve"
                 @pointermove="tiltSleeve"
