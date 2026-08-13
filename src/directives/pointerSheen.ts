@@ -1,15 +1,21 @@
 import type { Directive } from 'vue'
 
+interface PointerSheenOptions {
+  tilt?: number
+}
+
 const cleanups = new WeakMap<HTMLElement, () => void>()
 
 function reset(element: HTMLElement) {
   element.style.setProperty('--pointer-x', '50%')
   element.style.setProperty('--pointer-y', '50%')
   element.style.removeProperty('--pointer-active')
+  element.style.removeProperty('--rx')
+  element.style.removeProperty('--ry')
 }
 
-const pointerSheen: Directive<HTMLElement> = {
-  mounted(element) {
+const pointerSheen: Directive<HTMLElement, PointerSheenOptions | undefined> = {
+  mounted(element, binding) {
     element.dataset.pointerSheen = ''
     reset(element)
 
@@ -18,6 +24,7 @@ const pointerSheen: Directive<HTMLElement> = {
       || !window.matchMedia('(hover: hover) and (pointer: fine)').matches
     ) return
 
+    const tilt = Math.min(Math.max(binding.value?.tilt ?? 0, 0), 6)
     let frame = 0
     const move = (event: PointerEvent) => {
       cancelAnimationFrame(frame)
@@ -28,6 +35,12 @@ const pointerSheen: Directive<HTMLElement> = {
         element.style.setProperty('--pointer-x', `${x.toFixed(1)}%`)
         element.style.setProperty('--pointer-y', `${y.toFixed(1)}%`)
         element.style.setProperty('--pointer-active', '1')
+        if (tilt > 0) {
+          const horizontal = x / 100 - .5
+          const vertical = y / 100 - .5
+          element.style.setProperty('--rx', `${(-vertical * tilt).toFixed(2)}deg`)
+          element.style.setProperty('--ry', `${(horizontal * tilt).toFixed(2)}deg`)
+        }
       })
     }
     const leave = () => {

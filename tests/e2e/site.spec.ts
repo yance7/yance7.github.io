@@ -281,6 +281,35 @@ test('signature surfaces track fine-pointer sheen without changing typography', 
   }
 })
 
+test('concert poster coalesces sheen and tilt into one layout read per frame', { tag: '@fine-pointer' }, async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium', 'Fine-pointer interaction is intentionally disabled on touch projects')
+  await page.goto('/concerts.html')
+  const poster = page.locator('.concert-poster').first()
+  await poster.scrollIntoViewIfNeeded()
+
+  const layoutReads = await poster.evaluate(async (element) => {
+    let reads = 0
+    const original = element.getBoundingClientRect.bind(element)
+    element.getBoundingClientRect = () => {
+      reads += 1
+      return original()
+    }
+    const bounds = original()
+    for (let index = 0; index < 24; index += 1) {
+      const clientX = bounds.left + bounds.width * (0.25 + index / 60)
+      const clientY = bounds.top + bounds.height * 0.35
+      element.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientX, clientY, pointerType: 'mouse' }))
+      element.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX, clientY }))
+    }
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+    return reads
+  })
+
+  expect(layoutReads).toBeLessThanOrEqual(2)
+  await expect(poster).not.toHaveCSS('--rx', '')
+  await expect(poster).not.toHaveCSS('--ry', '')
+})
+
 test('signature pointer sheen stays static with reduced motion', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/index.html')
