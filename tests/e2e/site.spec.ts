@@ -212,6 +212,42 @@ test('page compass unifies section navigation, reading progress, and return to t
   await expect(page.locator('.section-dots, .scroll-to-top')).toHaveCount(0)
 })
 
+test('site navigation stays pinned and every compass destination clears it', async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 900 })
+  const destinations = [
+    ['index.html', '#home-beyond'],
+    ['academics.html', '#sec-ap-archive'],
+    ['honors.html', '#sec-honors-archive'],
+    ['research.html', '#sec-toolchain'],
+    ['works.html', '#project-encore'],
+    ['concerts.html', '#concert-archive']
+  ] as const
+
+  for (const [route, destination] of destinations) {
+    await page.goto(`/${route}`)
+    const navigation = page.locator('.site-nav')
+    await page.evaluate(() => window.scrollTo({ top: 900, behavior: 'auto' }))
+    await expect.poll(() => navigation.evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBe(0)
+
+    await page.locator(`.page-compass-link[href="${destination}"]`).click()
+    const navBottom = await navigation.evaluate((element) => element.getBoundingClientRect().bottom)
+    await expect.poll(
+      () => page.locator(destination).evaluate((element) => element.getBoundingClientRect().top),
+      { message: `${route}${destination}` }
+    ).toBeGreaterThanOrEqual(navBottom + 12)
+  }
+})
+
+test('direct deep links settle below the pinned navigation', async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 900 })
+  await page.goto('/works.html#project-encore')
+
+  const navigation = page.locator('.site-nav')
+  const navBottom = await navigation.evaluate((element) => element.getBoundingClientRect().bottom)
+  await expect.poll(() => page.locator('#project-encore').evaluate((element) => element.getBoundingClientRect().top)).toBeGreaterThanOrEqual(navBottom + 12)
+  await expect(page.locator('.page-compass-link[href="#project-encore"]')).toHaveAttribute('aria-current', 'location')
+})
+
 test('signature surfaces track fine-pointer sheen without changing typography', { tag: '@fine-pointer' }, async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium', 'Fine-pointer interaction is intentionally disabled on touch projects')
   const targets = [
@@ -279,10 +315,34 @@ test('page compass exposes page-specific sections without covering narrow layout
     expect(layout.document).toBeLessThanOrEqual(layout.viewport)
     expect(layout.compassBottom).toBeLessThanOrEqual(844)
     expect(layout.footerPaddingBottom).toBeGreaterThanOrEqual(76)
+
+    const compactTargets = await page.locator('.page-compass button, .page-compass a').evaluateAll((elements) => elements.map((element) => {
+      const bounds = element.getBoundingClientRect()
+      return { width: bounds.width, height: bounds.height }
+    }))
+    compactTargets.forEach(({ width, height }) => {
+      expect(width).toBeGreaterThanOrEqual(44)
+      expect(height).toBeGreaterThanOrEqual(44)
+    })
   }
 
   await page.goto('/404.html')
   await expect(page.locator('.page-compass')).toHaveCount(0)
+})
+
+test('concert carousel controls keep touch-sized targets', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/concerts.html')
+
+  const controls = await page.locator('.carousel-controls button').evaluateAll((elements) => elements.map((element) => {
+    const bounds = element.getBoundingClientRect()
+    return { width: bounds.width, height: bounds.height }
+  }))
+  expect(controls.length).toBeGreaterThan(0)
+  controls.forEach(({ width, height }) => {
+    expect(width).toBeGreaterThanOrEqual(44)
+    expect(height).toBeGreaterThanOrEqual(44)
+  })
 })
 
 test('honors filtering renders compact cards without detail controls', async ({ page }) => {

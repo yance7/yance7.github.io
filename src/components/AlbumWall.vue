@@ -572,7 +572,7 @@ html[data-theme='light'] .album-kicker {
 }
 
 .album-nav button:active,
-.album-link:active { transform: translateY(1px) scale(.985); }
+.album-link:active { transform: translateY(1px) scale(var(--motion-press-scale)); }
 
 @media (hover: none), (pointer: coarse) {
   .album-nav button:hover,
@@ -606,8 +606,9 @@ html[data-theme='light'] .album-kicker {
 .album-nav button:focus-visible,
 .album-link:focus-visible,
 .album-tile:focus-visible {
-  outline: 3px solid #4ed7d1;
+  outline: 2px solid var(--focus);
   outline-offset: 3px;
+  box-shadow: 0 0 0 4px var(--stage-surface);
 }
 
 .album-grid {
