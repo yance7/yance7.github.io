@@ -360,7 +360,8 @@
   .page-compass-link span,
   .page-compass-link strong { display: none; }
   .page-compass-step { align-self: center; gap: 0; }
-  .page-compass-step a { width: 44px; height: 44px; }
+  .page-compass-step a,
+  .page-compass-step-disabled { width: 44px; height: 44px; }
 }
 
 @media (max-width: 340px) {

@@ -8,6 +8,7 @@ const { progress, percent } = useScrollProgress()
 const activeId = ref(props.sections[0]?.id ?? '')
 let observer: IntersectionObserver | null = null
 let targetObserver: MutationObserver | null = null
+let targetObserverTimeout: number | undefined
 
 const activeIndex = computed(() => Math.max(0, props.sections.findIndex((section) => section.id === activeId.value)))
 const activeSection = computed(() => props.sections[activeIndex.value] ?? props.sections[0])
@@ -15,11 +16,19 @@ const previousSection = computed(() => props.sections[activeIndex.value - 1])
 const nextSection = computed(() => props.sections[activeIndex.value + 1])
 const progressStyle = computed(() => ({ '--page-progress': `${percent.value * 3.6}deg` }))
 
+function stopTargetObserver() {
+  targetObserver?.disconnect()
+  targetObserver = null
+  if (targetObserverTimeout !== undefined) {
+    window.clearTimeout(targetObserverTimeout)
+    targetObserverTimeout = undefined
+  }
+}
+
 function disconnectTargets() {
   observer?.disconnect()
   observer = null
-  targetObserver?.disconnect()
-  targetObserver = null
+  stopTargetObserver()
 }
 
 function observeTargets() {
@@ -44,9 +53,10 @@ function setupTargets() {
   void nextTick(() => {
     if (observeTargets()) return
     targetObserver = new MutationObserver(() => {
-      if (observeTargets()) targetObserver?.disconnect()
+      if (observeTargets()) stopTargetObserver()
     })
     targetObserver.observe(document.querySelector('#main') ?? document.body, { childList: true, subtree: true })
+    targetObserverTimeout = window.setTimeout(stopTargetObserver, 5000)
   })
 }
 
@@ -116,22 +126,22 @@ onUnmounted(disconnectTargets)
     </div>
 
     <div class="page-compass-step">
-      <a
-        :class="{ disabled: !previousSection }"
-        :href="previousSection ? `#${previousSection.id}` : undefined"
-        :aria-disabled="!previousSection"
-        :tabindex="previousSection ? 0 : -1"
-        aria-label="上一章节"
-        @click="previousSection && selectSection(previousSection.id)"
-      >←</a>
-      <a
-        :class="{ disabled: !nextSection }"
-        :href="nextSection ? `#${nextSection.id}` : undefined"
-        :aria-disabled="!nextSection"
-        :tabindex="nextSection ? 0 : -1"
-        aria-label="下一章节"
-        @click="nextSection && selectSection(nextSection.id)"
-      >→</a>
+      <template v-if="previousSection">
+        <a
+          :href="`#${previousSection.id}`"
+          aria-label="上一章节"
+          @click="selectSection(previousSection.id)"
+        >←</a>
+      </template>
+      <span v-else class="page-compass-step-disabled" aria-hidden="true">←</span>
+      <template v-if="nextSection">
+        <a
+          :href="`#${nextSection.id}`"
+          aria-label="下一章节"
+          @click="selectSection(nextSection.id)"
+        >→</a>
+      </template>
+      <span v-else class="page-compass-step-disabled" aria-hidden="true">→</span>
     </div>
   </nav>
 </template>

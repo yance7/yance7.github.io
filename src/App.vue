@@ -66,11 +66,17 @@ const heroCopy = computed(() => (isError ? '返回首页，重新选择一个方
 const heroCredit = computed(() => (isError ? null : meta.value.credit || null))
 
 const pageModules = import.meta.glob<{ default: Component }>('./pages/*Page.vue')
-const currentPage = computed(() => {
-  if (isError || !page) return NotFoundPage
-  const loader = pageModules[pageRegistry[page].module]
-  return loader ? createAsyncPage(loader) : NotFoundPage
-})
+const pageLoader = page && !isError ? pageModules[pageRegistry[page].module] : undefined
+const pageReady = ref(!pageLoader)
+const currentPage = pageLoader
+  ? createAsyncPage(async () => {
+      try {
+        return await pageLoader()
+      } finally {
+        pageReady.value = true
+      }
+    })
+  : NotFoundPage
 const pageSections = computed(() => page ? pageRegistry[page].sections : [])
 
 function handleLightbox(data: LightboxPayload) { lightbox.value = data }
@@ -115,7 +121,7 @@ function moveLightbox(step: number) {
       <component :is="currentPage" @open-lightbox="handleLightbox" />
     </main>
 
-    <SiteFooter />
+    <SiteFooter v-if="pageReady" />
 
     <ImageLightbox
       v-if="lightbox"
