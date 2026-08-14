@@ -21,7 +21,6 @@ export default [
   {
     files: ['**/*.{js,mjs,ts,vue}'],
     languageOptions: {
-      globals: { ...globals.browser, ...globals.node },
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
@@ -32,15 +31,27 @@ export default [
       'no-unused-vars': 'off',
       '@typescript-eslint/no-unused-vars': ['error', { args: 'none' }],
       '@typescript-eslint/no-empty-object-type': 'off',
-      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-explicit-any': 'error',
       'vue/multi-word-component-names': 'off',
       'vue/require-default-prop': 'off',
-      'vue/no-v-html': 'off',
+      'vue/no-v-html': 'error',
       'vue/max-attributes-per-line': 'off',
       'vue/html-self-closing': 'off',
       'vue/attributes-order': 'off',
       'vue/singleline-html-element-content-newline': 'off',
       'vue/html-indent': 'off'
     }
+  },
+  {
+    files: ['src/**/*.{ts,vue}'],
+    languageOptions: { globals: globals.browser }
+  },
+  {
+    files: ['scripts/**/*.ts', 'vite.config.ts', 'vitest.config.ts', 'playwright.config.ts'],
+    languageOptions: { globals: globals.node }
+  },
+  {
+    files: ['tests/**/*.ts'],
+    languageOptions: { globals: { ...globals.node, ...globals.browser } }
   }
 ]

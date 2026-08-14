@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { statusLabels } from '../data'
 import type { Status } from '../data/types'
 
-defineProps<{ status: Status; label: string }>()
+const props = defineProps<{ status: Status; labelOverride?: string }>()
+const label = computed(() => props.labelOverride ?? statusLabels[props.status])
 </script>
 
 <template>

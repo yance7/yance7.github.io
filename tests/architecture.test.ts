@@ -14,7 +14,6 @@ describe('page registry', () => {
       'index', 'academics', 'honors', 'research', 'works', 'concerts', '404'
     ])
     expect(pageRegistry.concerts.sections.map((section) => section.id)).toContain('album-frequencies')
-    expect(pageRegistry.works.module).toBe('./pages/WorksPage.vue')
     expect(pageRegistry.research.nav.en).toBe('Research')
     expect(isPageKey('research')).toBe(true)
     expect(isPageKey('missing')).toBe(false)
@@ -55,7 +54,7 @@ describe('album spotlight state machine', () => {
 })
 
 describe('image preloader', () => {
-  it('owns pending and loaded state so callers cannot omit deduplication state', () => {
+  it('owns pending and loaded state so callers cannot omit deduplication state', async () => {
     const images: PreloadImage[] = []
     const preloader = createImagePreloader({
       createImage: () => {
@@ -68,10 +67,34 @@ describe('image preloader', () => {
     expect(preloader.preload('/poster.jpg')).toBe(true)
     expect(preloader.preload('/poster.jpg')).toBe(false)
     images[0]?.onerror?.(new Event('error'))
+    await Promise.resolve()
     expect(preloader.preload('/poster.jpg')).toBe(true)
     images[1]?.onload?.(new Event('load'))
+    await Promise.resolve()
     expect(preloader.isLoaded('/poster.jpg')).toBe(true)
     expect(preloader.preload('/poster.jpg')).toBe(false)
+  })
+
+  it('settles an image timeout and clears the pending request', async () => {
+    vi.useFakeTimers()
+    try {
+      const image: PreloadImage = { src: '', decoding: 'auto', onload: null, onerror: null }
+      const controller = createImagePreloader(
+        { createImage: () => image },
+        { timeoutMs: 20 }
+      )
+
+      expect(controller.preload('/slow-poster.jpg')).toBe(true)
+      expect(controller.isPending('/slow-poster.jpg')).toBe(true)
+      await vi.runAllTimersAsync()
+
+      expect(controller.isPending('/slow-poster.jpg')).toBe(false)
+      expect(controller.isLoaded('/slow-poster.jpg')).toBe(false)
+      expect(image.onload).toBeNull()
+      expect(image.onerror).toBeNull()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })
 

@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { htmlPageEntries } from '../src/data/pageRegistry'
+import { htmlPageEntries, pageEntries } from '../src/data/pageRegistry'
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)))
 const dist = join(root, 'dist')
@@ -18,6 +18,8 @@ function assert(condition: unknown, message: string): asserts condition {
 assert(existsSync(dist), 'dist/ 不存在，请先运行 npm run build')
 for (const page of pages) {
   const html = read(`${page}.html`)
+  assert(/Content-Security-Policy/.test(html), `${page}.html 缂哄皯 CSP`)
+  assert(/script-src 'self' 'sha256-[^']+'/.test(html), `${page}.html CSP 鍖呭惈 theme bootstrap hash`)
   assert(html.includes('<div id="app"></div>'), `${page}.html 缺少 Vue 挂载点`)
   assert(/assets\/vue\/main-[^"']+\.js/.test(html), `${page}.html 缺少 hash 入口资源`)
   assert(!html.includes('../src/'), `${page}.html 仍引用源码资源`)
@@ -46,21 +48,11 @@ for (const asset of [
 }
 
 const index = read('index.html')
-assert(index.includes('assets/og-home.png'), '首页未使用专属 OG image')
 assert(!index.includes('og-card.svg'), 'OG image 仍引用 SVG')
-for (const [page, slug] of Object.entries({ index: 'home', academics: 'academics', honors: 'honors', research: 'research', works: 'works', concerts: 'concerts' })) {
-  assert(read(`${page}.html`).includes(`assets/og-${slug}.png`), `${page}.html 未使用专属 OG image`)
-}
-const ogAlts = {
-  index: 'Yance · Research and product archive',
-  academics: 'Yance academic archive',
-  honors: 'Yance honors and competition archive',
-  research: 'Yance research archive',
-  works: 'FreshEye and Encore product portfolio',
-  concerts: 'Yance live music archive'
-}
-for (const [page, alt] of Object.entries(ogAlts)) {
-  assert(read(`${page}.html`).includes(`og:image:alt" content="${alt}"`), `${page}.html 未使用页面专属 OG image alt`)
+for (const { htmlName, ogImage, ogImageAlt } of pageEntries) {
+  const html = read(`${htmlName}.html`)
+  assert(html.includes(ogImage), `${htmlName}.html 未使用专属 OG image`)
+  assert(html.includes(`og:image:alt" content="${ogImageAlt}"`), `${htmlName}.html 未使用页面专属 OG image alt`)
 }
 
 const concertOriginals = readdirSync(join(dist, 'assets/concerts')).filter((file) => /\.(?:jpe?g|png|webp)$/i.test(file))

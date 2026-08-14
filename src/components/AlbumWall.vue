@@ -3,6 +3,7 @@ import { computed, nextTick, onUnmounted, ref } from 'vue'
 import { albums } from '../data'
 import type { Album } from '../data/types'
 import { albumCoverFallback, albumCoverSrcset, albumCoverWebp } from '../utils/albumMedia'
+import { loadImage } from '../utils/imagePreload'
 import { useAlbumSpotlight } from '../composables/useAlbumSpotlight'
 import SectionHeading from './SectionHeading.vue'
 
@@ -32,41 +33,11 @@ function formatLabel(album: Album) {
 }
 
 function setTileRef(element: unknown, index: number) {
-  tileElements.value[index] = element as HTMLButtonElement | null
+  tileElements.value[index] = element instanceof HTMLButtonElement ? element : null
 }
 
 function preloadImage(options: { src: string; srcset?: string; sizes?: string }) {
-  return new Promise<boolean>((resolve) => {
-    const image = new Image()
-    let settled = false
-    let fallbackAttempted = false
-    const finish = (loaded: boolean) => {
-      if (settled) return
-      settled = true
-      resolve(loaded)
-    }
-    image.decoding = 'async'
-    if (options.srcset) image.srcset = options.srcset
-    if (options.sizes) image.sizes = options.sizes
-    image.onload = () => {
-      if (typeof image.decode !== 'function') {
-        finish(true)
-        return
-      }
-      image.decode().then(() => finish(true)).catch(() => finish(true))
-    }
-    image.onerror = () => {
-      if (options.srcset && !fallbackAttempted) {
-        fallbackAttempted = true
-        image.removeAttribute('srcset')
-        image.removeAttribute('sizes')
-        image.src = options.src
-        return
-      }
-      finish(false)
-    }
-    image.src = options.src
-  })
+  return loadImage(options)
 }
 
 async function preloadSpotlight(album: Album) {

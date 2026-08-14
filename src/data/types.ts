@@ -10,6 +10,7 @@ export type Status =
 type ProofType = 'paper' | 'source' | 'demo' | 'dataset' | 'experiment' | 'deployment'
 export type HonorLevel = 'peak' | 'excellent' | 'emerging'
 export type NonEmptyArray<T> = [T, ...T[]]
+export type ReadonlyNonEmptyArray<T> = readonly [T, ...T[]]
 export type { PageKey } from './pageRegistry'
 import type { PageKey } from './pageRegistry'
 
@@ -112,7 +113,6 @@ export interface Project {
   discipline: string
   tone: ProjectTone
   status: Status
-  statusLabel: string
   updatedAt: string
   story: ProjectStory
 }
@@ -232,5 +232,4 @@ export interface World {
 
 export interface PageMetadata {
   updatedAt: string
-  updatedLabel: string
 }

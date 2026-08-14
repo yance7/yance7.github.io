@@ -14,10 +14,12 @@
     "preview": "vite preview",
     "smoke": "tsx scripts/smoke-test.ts",
     "sitemap": "tsx scripts/generate-sitemap.ts",
+    "lighthouse": "lhci autorun --config=.lighthouserc.json",
+    "links": "tsx scripts/check-external-links.ts",
     "images:concerts": "python scripts/generate-concert-thumbnails.py",
-    "typecheck": "vue-tsc --noEmit",
-    "deadcode": "knip --include files,dependencies,unlisted,unresolved --no-progress",
-    "check": "npm run lint && npm run typecheck && npm run deadcode && npm run unit && npm run build && npm run smoke",
+    "typecheck": "vue-tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.test.json",
+    "deadcode": "knip --include files,dependencies,unlisted,unresolved,exports,types --no-progress",
+    "check": "npm run lint && npm run typecheck && npm run deadcode && npm run unit && npm run sitemap && npm run build && npm run smoke",
     "lint": "eslint . --max-warnings=0",
     "unit": "vitest run",
     "test:e2e": "playwright test"
@@ -32,6 +34,7 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",
     "@eslint/js": "^10.0.1",
+    "@lhci/cli": "0.15.1",
     "@playwright/test": "^1.62.1",
     "@types/node": "^26.2.0",
     "@vitejs/plugin-vue": "^6.0.8",

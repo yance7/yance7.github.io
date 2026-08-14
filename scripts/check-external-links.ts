@@ -8,6 +8,12 @@ const extensions = new Set(['.html', '.js', '.mjs', '.ts', '.vue'])
 const urlPattern = /https?:\/\/[^\s"'`<>)}\]]+/g
 const headTimeoutMs = 10000
 const getTimeoutMs = 20000
+const maxAttempts = 3
+const retryDelayMs = 500
+const manualReviewUrls = new Set([
+  // IEEE Xplore returns 418 to both HEAD and GET probes from CI-style clients.
+  'https://ieeexplore.ieee.org/abstract/document/11605650'
+])
 
 async function fetchWithTimeout(url: string, init: RequestInit, timeout = getTimeoutMs) {
   const controller = new AbortController()
@@ -54,15 +60,33 @@ for (const { path, text } of sources) {
 }
 
 async function checkUrl(url: string) {
-  let response = await fetchWithTimeout(url, { method: 'HEAD', redirect: 'follow' }, headTimeoutMs)
-  if ([403, 405, 501].includes(response.status)) {
-    response = await fetchWithTimeout(url, { method: 'GET', redirect: 'follow' }, getTimeoutMs)
+  let lastResponse: Response | undefined
+  let lastError: unknown
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    try {
+      let response = await fetchWithTimeout(url, { method: 'HEAD', redirect: 'follow' }, headTimeoutMs)
+      if ([403, 405, 501].includes(response.status)) {
+        response = await fetchWithTimeout(url, { method: 'GET', redirect: 'follow' }, getTimeoutMs)
+      }
+      if (response.ok || response.status < 500) return response
+      lastResponse = response
+    } catch (error) {
+      lastError = error
+    }
+    if (attempt < maxAttempts - 1) {
+      await new Promise((resolve) => setTimeout(resolve, retryDelayMs * (attempt + 1)))
+    }
   }
-  return response
+  if (lastResponse) return lastResponse
+  throw lastError instanceof Error ? lastError : new Error(String(lastError))
 }
 
 const failures = []
 for (const [url, source] of references) {
+  if (manualReviewUrls.has(url)) {
+    console.warn(`::notice file=${relative(root, source)}::Skipped automated probe for a documented anti-bot URL: ${url}`)
+    continue
+  }
   try {
     const response = await checkUrl(url)
     if (!response.ok && ![301, 302, 303, 307, 308].includes(response.status)) {

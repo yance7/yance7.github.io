@@ -1,6 +1,6 @@
-import type { Album } from './types'
+import type { Album, ReadonlyNonEmptyArray } from './types'
 
-export const albums: readonly Album[] = [
+export const albums = [
   { id: 'jay-fantasy', artist: '周杰伦', title: '范特西', year: 2001, format: 'album', cover: 'jay-fantasy', appleMusicUrl: 'https://music.apple.com/cn/album/%E8%8C%83%E7%89%B9%E8%A5%BF/535739206', palette: ['#C1191D', '#060707'] },
   { id: 'jay-ye-hui-mei', artist: '周杰伦', title: '叶惠美', year: 2003, format: 'album', cover: 'jay-ye-hui-mei', appleMusicUrl: 'https://music.apple.com/cn/album/%E8%91%89%E6%83%A0%E7%BE%8E/535824731', palette: ['#030D0F', '#796A41'] },
   { id: 'jay-common-jasmine-orange', artist: '周杰伦', title: '七里香', year: 2004, format: 'album', cover: 'jay-common-jasmine-orange', appleMusicUrl: 'https://music.apple.com/cn/album/%E4%B8%83%E9%87%8C%E9%A6%99/536114662', palette: ['#191514', '#A18563'] },
@@ -43,4 +43,4 @@ export const albums: readonly Album[] = [
   { id: 'david-tao-peaceful-world', artist: '陶喆', title: '太平盛世', year: 2005, format: 'album', cover: 'david-tao-peaceful-world', appleMusicUrl: 'https://music.apple.com/cn/album/%E5%A4%AA%E5%B9%B3%E7%9B%9B%E4%B8%96/905206649', palette: ['#E8D4C0', '#8C3A33'] },
   { id: 'david-tao-too-beautiful', artist: '陶喆', title: '太美丽', year: 2006, format: 'album', cover: 'david-tao-too-beautiful', appleMusicUrl: 'https://music.apple.com/cn/album/%E5%A4%AA%E7%BE%8E%E9%BA%97/905198155', palette: ['#E9C7BE', '#5A5E80'] },
   { id: 'david-tao-goodbye-how-are-you', artist: '陶喆', title: '再见你好吗', year: 2013, format: 'album', cover: 'david-tao-goodbye-how-are-you', appleMusicUrl: 'https://music.apple.com/cn/album/%E5%86%8D%E8%A6%8B%E4%BD%A0%E5%A5%BD%E5%97%8E/1305657580', palette: ['#1F4A57', '#D2A46C'] }
-]
+] satisfies ReadonlyNonEmptyArray<Album>

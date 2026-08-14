@@ -59,10 +59,6 @@ export function useModalDialog(
 
   onMounted(() => {
     window.addEventListener('keydown', onKeydown)
-    if (unref(open)) {
-      lastFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
-      nextTick(() => initialFocus?.value?.focus())
-    }
   })
 
   onUnmounted(() => {

@@ -23,11 +23,11 @@ const chapterCount = computed(() => String(props.project.story.chapters.length).
         <span>{{ project.discipline }}</span>
       </div>
       <div class="sc-head-status">
-        <StatusBadge :status="project.status" :label="project.statusLabel" />
+        <StatusBadge :status="project.status" />
         <a
           :href="project.href"
           target="_blank"
-          rel="noopener"
+          rel="noopener noreferrer"
           :aria-label="`打开 ${project.en} 网站`"
         >{{ project.domain }} <span aria-hidden="true">↗</span></a>
       </div>
@@ -50,10 +50,10 @@ const chapterCount = computed(() => String(props.project.story.chapters.length).
         <span class="sc-meta-label">PROJECT NOTE</span>
         <p class="sc-desc">{{ project.description }}</p>
         <div class="sc-actions">
-          <a class="btn-primary" :href="project.href" target="_blank" rel="noopener" v-magnetic="{ strength: 3.5 }">
+          <a class="btn-primary" :href="project.href" target="_blank" rel="noopener noreferrer" v-magnetic="{ strength: 3.5 }">
             ENTER PROJECT <span aria-hidden="true">→</span>
           </a>
-          <a v-if="project.github" class="btn-ghost" :href="project.github" target="_blank" rel="noopener" v-magnetic="{ strength: 3.5 }">
+          <a v-if="project.github" class="btn-ghost" :href="project.github" target="_blank" rel="noopener noreferrer" v-magnetic="{ strength: 3.5 }">
             SOURCE CODE <span aria-hidden="true">→</span>
           </a>
         </div>
@@ -103,7 +103,7 @@ const chapterCount = computed(() => String(props.project.story.chapters.length).
               :key="proof.label"
               :href="proof.href"
               :target="proof.external ? '_blank' : undefined"
-              :rel="proof.external ? 'noopener' : undefined"
+              :rel="proof.external ? 'noopener noreferrer' : undefined"
             >
               <span>{{ proof.label }}</span>
               <strong>{{ proof.value }}</strong>

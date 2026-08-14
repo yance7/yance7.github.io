@@ -6,15 +6,13 @@ interface AlbumSpotlightState {
   selected: number
   displayed: number
   status: AlbumSpotlightStatus
-  requestToken: number
 }
 
 export function useAlbumSpotlight(total: number, preload: (index: number) => Promise<boolean>) {
   const state: Ref<AlbumSpotlightState> = ref({
     selected: 0,
     displayed: 0,
-    status: 'ready',
-    requestToken: 0
+    status: 'ready'
   })
   let requestToken = 0
 
@@ -26,8 +24,7 @@ export function useAlbumSpotlight(total: number, preload: (index: number) => Pro
     state.value = {
       ...state.value,
       selected: nextIndex,
-      status: 'loading',
-      requestToken: token
+      status: 'loading'
     }
 
     let loaded: boolean

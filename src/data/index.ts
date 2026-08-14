@@ -15,13 +15,6 @@ export * from './concerts'
 export * from './albums'
 export * from './pageRegistry'
 
-const monthLabels = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
-
-export function formatUpdatedLabel(date: string) {
-  const [year, month, day] = date.split('-')
-  return `${monthLabels[Number(month) - 1]} ${day}, ${year}`
-}
-
 function latestUpdatedAt(items: Array<{ updatedAt: string }>, fallback: string) {
   return items.reduce((latest, item) => item.updatedAt > latest ? item.updatedAt : latest, fallback)
 }
@@ -41,10 +34,10 @@ const homeUpdatedAt = latestUpdatedAt(
 )
 
 export const pageMetadata = {
-  home: { updatedAt: homeUpdatedAt, updatedLabel: formatUpdatedLabel(homeUpdatedAt) },
-  academics: { updatedAt: contentUpdatedAt.academics, updatedLabel: formatUpdatedLabel(contentUpdatedAt.academics) },
-  honors: { updatedAt: contentUpdatedAt.honors, updatedLabel: formatUpdatedLabel(contentUpdatedAt.honors) },
-  research: { updatedAt: contentUpdatedAt.research, updatedLabel: formatUpdatedLabel(contentUpdatedAt.research) },
-  works: { updatedAt: contentUpdatedAt.works, updatedLabel: formatUpdatedLabel(contentUpdatedAt.works) },
-  concerts: { updatedAt: contentUpdatedAt.concerts, updatedLabel: formatUpdatedLabel(contentUpdatedAt.concerts) }
+  home: { updatedAt: homeUpdatedAt },
+  academics: { updatedAt: contentUpdatedAt.academics },
+  honors: { updatedAt: contentUpdatedAt.honors },
+  research: { updatedAt: contentUpdatedAt.research },
+  works: { updatedAt: contentUpdatedAt.works },
+  concerts: { updatedAt: contentUpdatedAt.concerts }
 } satisfies Record<PageKey, PageMetadata>

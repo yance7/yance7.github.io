@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { activities, albums, concerts, concertGroups, formatUpdatedLabel, getConcertState, honors, pageMetadata, projects, research } from '../src/data'
+import { activities, albums, concerts, concertGroups, getConcertState, honors, pageMetadata, projects, research } from '../src/data'
 import { albumCoverFallback, albumCoverSrcset, albumCoverWebp } from '../src/utils/albumMedia'
 import { thumbnailUrl } from '../src/utils/concertMedia'
 
@@ -126,7 +126,7 @@ describe('content contracts', () => {
     expect(pageMetadata.concerts.updatedAt).toBe('2026-08-08')
     expect(pageMetadata.home.updatedAt).toBe('2026-08-08')
     expect(pageMetadata.academics.updatedAt).toBe('2026-08-08')
-    expect(formatUpdatedLabel(pageMetadata.research.updatedAt)).toMatch(/^[A-Z]{3} \d{2}, \d{4}$/)
+    expect(pageMetadata.research).toEqual({ updatedAt: '2026-08-08' })
   })
 
   it('keeps published FishFreshNet V1 metrics aligned with the paper result', () => {

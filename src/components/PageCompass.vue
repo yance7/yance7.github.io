@@ -2,13 +2,12 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useScrollProgress } from '../composables/useScrollProgress'
 import type { PageCompassSection } from '../data/types'
+import { decodeHashTarget } from '../utils/navigation'
 
 const props = defineProps<{ sections: readonly PageCompassSection[] }>()
 const { progress, percent } = useScrollProgress()
 const activeId = ref(props.sections[0]?.id ?? '')
 let observer: IntersectionObserver | null = null
-let targetObserver: MutationObserver | null = null
-let targetObserverTimeout: number | undefined
 
 const activeIndex = computed(() => Math.max(0, props.sections.findIndex((section) => section.id === activeId.value)))
 const activeSection = computed(() => props.sections[activeIndex.value] ?? props.sections[0])
@@ -16,19 +15,9 @@ const previousSection = computed(() => props.sections[activeIndex.value - 1])
 const nextSection = computed(() => props.sections[activeIndex.value + 1])
 const progressStyle = computed(() => ({ '--page-progress': `${percent.value * 3.6}deg` }))
 
-function stopTargetObserver() {
-  targetObserver?.disconnect()
-  targetObserver = null
-  if (targetObserverTimeout !== undefined) {
-    window.clearTimeout(targetObserverTimeout)
-    targetObserverTimeout = undefined
-  }
-}
-
 function disconnectTargets() {
   observer?.disconnect()
   observer = null
-  stopTargetObserver()
 }
 
 function observeTargets() {
@@ -37,7 +26,7 @@ function observeTargets() {
     .map((section) => document.getElementById(section.id))
     .filter((target): target is HTMLElement => Boolean(target))
 
-  if (!targets.length || !('IntersectionObserver' in window)) return false
+  if (!targets.length || !('IntersectionObserver' in window)) return
   observer = new IntersectionObserver((entries) => {
     const visible = entries
       .filter((entry) => entry.isIntersecting)
@@ -45,19 +34,15 @@ function observeTargets() {
     if (visible) activeId.value = visible.target.id
   }, { rootMargin: '-24% 0px -64% 0px', threshold: 0 })
   targets.forEach((target) => observer?.observe(target))
-  return targets.length === props.sections.length
 }
 
 function setupTargets() {
   disconnectTargets()
-  void nextTick(() => {
-    if (observeTargets()) return
-    targetObserver = new MutationObserver(() => {
-      if (observeTargets()) stopTargetObserver()
-    })
-    targetObserver.observe(document.querySelector('#main') ?? document.body, { childList: true, subtree: true })
-    targetObserverTimeout = window.setTimeout(stopTargetObserver, 5000)
-  })
+  const hashTarget = decodeHashTarget(window.location.hash)
+  if (hashTarget && props.sections.some((section) => section.id === hashTarget)) {
+    activeId.value = hashTarget
+  }
+  void nextTick(observeTargets)
 }
 
 function selectSection(id: string) {

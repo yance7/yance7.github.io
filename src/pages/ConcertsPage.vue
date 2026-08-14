@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { concerts, concertGroups, getConcertState, isConcertUpcoming } from '../data'
+import { reactive } from 'vue'
+import { concertGroups, getConcertState, isConcertUpcoming } from '../data'
 import type { Concert, LightboxPayload } from '../data/types'
 import SectionHeading from '../components/SectionHeading.vue'
 import MetricStrip from '../components/MetricStrip.vue'
@@ -12,11 +12,11 @@ const emit = defineEmits<{
   'open-lightbox': [payload: LightboxPayload]
 }>()
 
-const carouselIndexes = ref<Record<string, number>>({})
+const carouselIndexes = reactive<Record<string, number>>({})
 const imagePreloader = sharedImagePreloader
 
 const concertState = getConcertState(new Date())
-const venueCount = new Set(concerts.map((c) => c.venue)).size
+const venueCount = concertState.venueCount
 const artistCount = concertState.stats.artistCount
 const posterCount = concertState.stats.posterCount
 
@@ -38,15 +38,16 @@ function formatNextDate(date: string) {
   return `${monthLabel} ${day}`
 }
 function currentImageName(item: Concert, fallbackIndex = 0) {
-  const index = carouselIndexes.value[item.id] ?? fallbackIndex
+  const index = carouselIndexes[item.id] ?? fallbackIndex
   return item.images[index] ?? item.images[0]
 }
 function moveCarousel(item: Concert, step: number) {
-  const current = carouselIndexes.value[item.id] || 0
+  const current = carouselIndexes[item.id] || 0
   const next = (current + step + item.images.length) % item.images.length
-  carouselIndexes.value = { ...carouselIndexes.value, [item.id]: next }
+  carouselIndexes[item.id] = next
 }
-function openLightbox(item: Concert, index = 0) {
+function openLightbox(item: Concert, index = 0, event?: MouseEvent) {
+  if (event?.currentTarget instanceof HTMLElement) event.currentTarget.focus()
   const [first, ...rest] = item.images.map(originalImageUrl)
   if (!first) return
   emit('open-lightbox', {
@@ -138,7 +139,7 @@ function preloadItem(item: Concert) {
               class="poster-open"
               type="button"
               :aria-label="`打开 ${item.artist} ${item.tour} 海报档案`"
-              @click="openLightbox(item, carouselIndexes[item.id] || 0)"
+              @click="openLightbox(item, carouselIndexes[item.id] || 0, $event)"
             >
                 <Transition name="poster-fade" mode="out-in">
                   <picture :key="currentImageName(item)">

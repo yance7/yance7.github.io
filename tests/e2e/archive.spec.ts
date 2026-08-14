@@ -1,4 +1,7 @@
 import { expect, test } from '@playwright/test'
+import { pageEntries } from '../../src/data/pageRegistry'
+
+const contentRoutes = pageEntries.map(({ htmlName }) => `${htmlName}.html`)
 
 test('honors filtering renders compact cards without detail controls', async ({ page }) => {
   await page.goto('/honors.html')
@@ -160,7 +163,7 @@ test('reduced motion keeps project content immediately available', async ({ page
 })
 
 test('fast page jumps do not leave passed reveal content hidden', async ({ page }) => {
-  for (const route of ['index.html', 'academics.html', 'honors.html', 'research.html', 'works.html', 'concerts.html']) {
+  for (const route of contentRoutes) {
     await page.goto(`/${route}`)
     await expect(page.locator('.content').first()).toBeVisible()
     await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
@@ -171,7 +174,7 @@ test('fast page jumps do not leave passed reveal content hidden', async ({ page 
 })
 
 test('archive pages omit the visible last updated label', async ({ page }) => {
-  for (const route of ['index.html', 'academics.html', 'honors.html', 'research.html', 'works.html', 'concerts.html']) {
+  for (const route of contentRoutes) {
     await page.goto(`/${route}`)
     await expect(page.locator('.content-updated')).toHaveCount(0)
     await expect(page.locator('body')).not.toContainText('LAST UPDATED')

@@ -52,7 +52,6 @@ export function getConcertState(now = new Date()) {
   return {
     now,
     upcoming,
-    attended,
     moods: {
       ...baseConcertMoods,
       '2026': `${attended2026} 场已赴约，${upcoming2026} 场待相见。`
@@ -62,10 +61,9 @@ export function getConcertState(now = new Date()) {
       attended: attended.length,
       upcoming: upcoming.length,
       venues: concertVenues.join(' / '),
-      artists: concertArtists.join(' · '),
       artistCount: concertArtists.length,
-      posterCount: concertPosters.size,
-      yearRange: '2024 — 2026'
-    }
+      posterCount: concertPosters.size
+    },
+    venueCount: concertVenues.length
   }
 }

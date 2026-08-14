@@ -20,21 +20,24 @@ const loadError = ref(false)
 const retryKey = ref(0)
 const dialogRef = ref<HTMLElement | null>(null)
 const closeButton = ref<HTMLButtonElement | null>(null)
-const isOpen = ref(true)
+const isVisible = ref(true)
+const dialogActive = ref(true)
 const imagePreloader = sharedImagePreloader
-let closeTimer: number | undefined
 
 function closeLightbox() {
-  if (!isOpen.value) return
-  isOpen.value = false
-  const delay = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 240
-  closeTimer = window.setTimeout(() => emit('close'), delay)
+  if (!isVisible.value) return
+  isVisible.value = false
 }
 
-useModalDialog(isOpen, {
+function afterLeave() {
+  dialogActive.value = false
+  emit('close')
+}
+
+useModalDialog(dialogActive, {
   dialogRef,
   initialFocus: closeButton,
-  inertSelectors: ['#main', '.site-footer'],
+  inertSelectors: ['.site-shell'],
   onClose: closeLightbox,
 })
 
@@ -66,6 +69,7 @@ function retryImage() {
 }
 
 function onKey(e: KeyboardEvent) {
+  if (!isVisible.value) return
   if (e.key === 'ArrowLeft') emit('prev')
   else if (e.key === 'ArrowRight') emit('next')
 }
@@ -75,8 +79,6 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  if (closeTimer) window.clearTimeout(closeTimer)
-  isOpen.value = false
   window.removeEventListener('keydown', onKey)
 })
 
@@ -89,9 +91,9 @@ watch(() => [props.index, props.images[props.index]], () => {
 
 <template>
   <Teleport to="body">
-    <Transition name="lightbox" appear>
+    <Transition name="lightbox" appear @after-leave="afterLeave">
       <div
-        v-if="isOpen"
+        v-if="isVisible"
         ref="dialogRef"
         class="lightbox"
         role="dialog"

@@ -1,5 +1,3 @@
-import { defineAsyncComponent, type Component } from 'vue'
-
 export function decodeHashTarget(hash: string): string | null {
   const encoded = hash.startsWith('#') ? hash.slice(1) : hash
   if (!encoded) return null
@@ -29,8 +27,4 @@ export async function retryAsync<T>(
   }
 
   throw lastError instanceof Error ? lastError : new Error(String(lastError))
-}
-
-export function createAsyncPage(loader: () => Promise<{ default: Component }>) {
-  return defineAsyncComponent(() => retryAsync(loader, { retries: 2, delayMs: 160 }))
 }

@@ -11,8 +11,10 @@ export default defineConfig({
     trace: 'retain-on-failure'
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    { name: 'webkit-mobile', use: { ...devices['iPhone 13'] } }
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] }, testIgnore: /compatibility\.spec\.ts/ },
+    { name: 'webkit-mobile', use: { ...devices['iPhone 13'] }, testIgnore: /compatibility\.spec\.ts/ },
+    { name: 'firefox-desktop-smoke', use: { ...devices['Desktop Firefox'] }, testMatch: /compatibility\.spec\.ts/ },
+    { name: 'chromium-android-smoke', use: { ...devices['Pixel 5'] }, testMatch: /compatibility\.spec\.ts/ }
   ],
   webServer: {
     command: process.env.CI

@@ -6,7 +6,8 @@ const registry = {
     changefreq: 'weekly',
     priority: '1.0',
     nav: { label: '首页', en: 'Home', desc: '个人档案入口' },
-    module: './pages/HomePage.vue',
+    ogImage: 'assets/og-home.png',
+    ogImageAlt: 'Yance · Research and product archive',
     sections: [
       { id: 'selected-work', label: 'SELECTED WORK', shortLabel: 'WORK' },
       { id: 'home-worlds', label: 'FIVE WORLDS', shortLabel: 'WORLDS' },
@@ -20,7 +21,8 @@ const registry = {
     changefreq: 'monthly',
     priority: '0.8',
     nav: { label: '学业', en: 'Academics', desc: '绩点、标化与 AP 成绩' },
-    module: './pages/AcademicsPage.vue',
+    ogImage: 'assets/og-academics.png',
+    ogImageAlt: 'Yance academic archive',
     sections: [
       { id: 'sec-education', label: 'EDUCATION' },
       { id: 'sec-scoreboard', label: 'SCOREBOARD' },
@@ -34,7 +36,8 @@ const registry = {
     changefreq: 'monthly',
     priority: '0.8',
     nav: { label: '荣誉', en: 'Honors', desc: '奖项与竞赛记录' },
-    module: './pages/HonorsPage.vue',
+    ogImage: 'assets/og-honors.png',
+    ogImageAlt: 'Yance honors and competition archive',
     sections: [
       { id: 'sec-milestones', label: 'MILESTONES' },
       { id: 'sec-honors-archive', label: 'ARCHIVE' }
@@ -47,7 +50,8 @@ const registry = {
     changefreq: 'monthly',
     priority: '0.9',
     nav: { label: '研究', en: 'Research', desc: '从论文到产品' },
-    module: './pages/ResearchPage.vue',
+    ogImage: 'assets/og-research.png',
+    ogImageAlt: 'Yance research archive',
     sections: [
       { id: 'sec-research-timeline', label: 'RESEARCH' },
       { id: 'sec-toolchain', label: 'METHODS' }
@@ -60,7 +64,8 @@ const registry = {
     changefreq: 'monthly',
     priority: '0.9',
     nav: { label: '作品', en: 'Works', desc: '已上线的项目' },
-    module: './pages/WorksPage.vue',
+    ogImage: 'assets/og-works.png',
+    ogImageAlt: 'FreshEye and Encore product portfolio',
     sections: [
       { id: 'works-overview', label: 'RELEASED WORLDS', shortLabel: 'OVERVIEW' },
       { id: 'project-fresheye', label: 'FRESHEYE' },
@@ -74,7 +79,8 @@ const registry = {
     changefreq: 'monthly',
     priority: '0.7',
     nav: { label: '演唱会', en: 'Concerts', desc: '现场记忆档案' },
-    module: './pages/ConcertsPage.vue',
+    ogImage: 'assets/og-concerts.png',
+    ogImageAlt: 'Yance live music archive',
     sections: [
       { id: 'concerts-overview', label: 'LIVE ARCHIVE', shortLabel: 'OVERVIEW' },
       { id: 'album-frequencies', label: 'ALBUM WALL', shortLabel: 'ALBUMS' },

@@ -50,7 +50,7 @@ const selectedActivities = activities.filter((item) => item.featured)
             <p>{{ item.value }}</p>
             <span class="focus-link">查看产品案例 <span aria-hidden="true">→</span></span>
           </a>
-          <a class="focus-live-link" :href="item.href" target="_blank" rel="noopener">
+            <a class="focus-live-link" :href="item.href" target="_blank" rel="noopener noreferrer">
             LIVE PRODUCT <span aria-hidden="true">↗</span>
           </a>
         </article>

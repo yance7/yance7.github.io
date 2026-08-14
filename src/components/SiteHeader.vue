@@ -5,38 +5,52 @@ import ThemeOrbit from './ThemeOrbit.vue'
 import { useModalDialog } from '../composables/useModalDialog'
 
 defineProps<{ page?: string }>()
-const menuOpen = ref(false)
+const menuVisible = ref(false)
+const menuActive = ref(false)
 const menuClose = ref<HTMLButtonElement | null>(null)
 const menuOverlay = ref<HTMLElement | null>(null)
 
 function closeMenu() {
-  menuOpen.value = false
+  menuVisible.value = false
 }
 
-useModalDialog(menuOpen, {
+function toggleMenu() {
+  if (menuVisible.value) {
+    closeMenu()
+    return
+  }
+  menuActive.value = true
+  menuVisible.value = true
+}
+
+function finishMenuLeave() {
+  menuActive.value = false
+}
+
+useModalDialog(menuActive, {
   dialogRef: menuOverlay,
   initialFocus: menuClose,
-  inertSelectors: ['#main', '.site-footer'],
+  inertSelectors: ['.site-shell'],
   onClose: closeMenu,
 })
 </script>
 
 <template>
-  <header class="site-nav" :class="{ 'menu-open': menuOpen }">
+  <header class="site-nav" :class="{ 'menu-open': menuVisible }">
     <a class="wordmark" href="index.html" aria-label="返回首页">Yance<span>.</span></a>
 
     <button
       class="menu-trigger"
       type="button"
-      :aria-expanded="menuOpen"
+      :aria-expanded="menuVisible"
       aria-controls="mobile-navigation"
-      :aria-label="menuOpen ? '关闭导航' : '打开导航'"
-      @click="menuOpen = !menuOpen"
+      :aria-label="menuVisible ? '关闭导航' : '打开导航'"
+      @click="toggleMenu"
     >
       <i></i><i></i><i></i>
     </button>
 
-    <nav class="nav-rail" :class="{ open: menuOpen }" aria-label="主导航">
+    <nav class="nav-rail" :class="{ open: menuVisible }" aria-label="主导航">
       <a
         v-for="(item, i) in navItems"
         :key="item.key"
@@ -61,8 +75,8 @@ useModalDialog(menuOpen, {
   </header>
 
   <Teleport to="body">
-    <Transition name="mobile-menu">
-      <div ref="menuOverlay" v-if="menuOpen" class="mobile-menu-overlay" role="dialog" aria-modal="true" aria-label="移动端导航" @click.self="closeMenu">
+    <Transition name="mobile-menu" @after-leave="finishMenuLeave">
+      <div ref="menuOverlay" v-if="menuVisible" class="mobile-menu-overlay" role="dialog" aria-modal="true" aria-label="移动端导航" @click.self="closeMenu">
         <button ref="menuClose" class="mobile-menu-close" type="button" aria-label="关闭导航" @click="closeMenu">×</button>
         <nav id="mobile-navigation" class="mobile-menu" aria-label="移动端导航">
           <a

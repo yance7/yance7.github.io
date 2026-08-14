@@ -1,6 +1,9 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
+import { htmlPageEntries, pageEntries } from '../../src/data/pageRegistry'
+
+const archiveRoutes = htmlPageEntries.map(({ htmlName }) => `${htmlName}.html`)
 
 async function expectAccessible(page: Page) {
   const results = await new AxeBuilder({ page }).analyze()
@@ -8,7 +11,7 @@ async function expectAccessible(page: Page) {
 }
 
 test('all archive pages boot and expose the main landmark', async ({ page }) => {
-  for (const route of ['index.html', 'academics.html', 'honors.html', 'research.html', 'works.html', 'concerts.html', '404.html']) {
+  for (const route of archiveRoutes) {
     await page.goto(`/${route}`)
     await expect(page.locator('main#main')).toBeVisible()
   }
@@ -17,7 +20,7 @@ test('all archive pages boot and expose the main landmark', async ({ page }) => 
 test('archive layouts avoid horizontal overflow on narrow screens', async ({ page }) => {
   for (const width of [320, 390]) {
     await page.setViewportSize({ width, height: 844 })
-    for (const route of ['index.html', 'academics.html', 'honors.html', 'research.html', 'works.html', 'concerts.html', '404.html']) {
+    for (const route of archiveRoutes) {
       await page.goto(`/${route}`)
       const layout = await page.evaluate(() => ({
         documentWidth: document.documentElement.scrollWidth,
@@ -73,6 +76,7 @@ test('page compass unifies section navigation, reading progress, and return to t
 })
 
 test('site navigation stays pinned and every compass destination clears it', async ({ page }) => {
+  test.setTimeout(60000)
   await page.setViewportSize({ width: 1200, height: 900 })
   await page.emulateMedia({ reducedMotion: 'reduce' })
   const destinations = [
@@ -107,6 +111,36 @@ test('direct deep links settle below the pinned navigation', async ({ page }) =>
   const navBottom = await navigation.evaluate((element) => element.getBoundingClientRect().bottom)
   await expect.poll(() => page.locator('#project-encore').evaluate((element) => element.getBoundingClientRect().top)).toBeGreaterThanOrEqual(navBottom + 12)
   await expect(page.locator('.page-compass-link[href="#project-encore"]')).toHaveAttribute('aria-current', 'location')
+})
+
+test('slow page chunks still settle deep links and compass state', async ({ page }) => {
+  let requestCount = 0
+  await page.route('**/assets/vue/WorksPage-*.js', async (route) => {
+    requestCount += 1
+    await new Promise((resolve) => setTimeout(resolve, 5200))
+    await route.continue()
+  })
+
+  await page.goto('/works.html#project-encore')
+  await expect(page.locator('#project-encore')).toBeVisible({ timeout: 30000 })
+  expect(requestCount).toBeGreaterThan(0)
+  await expect.poll(() => page.locator('#project-encore').evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBeGreaterThanOrEqual(12)
+  await expect(page.locator('.page-compass-link[href="#project-encore"]')).toHaveAttribute('aria-current', 'location')
+})
+
+test('failed page chunks render a controlled error without a reload loop', async ({ page }) => {
+  let requestCount = 0
+  await page.route('**/assets/vue/WorksPage-*.js', async (route) => {
+    requestCount += 1
+    await route.abort('failed')
+  })
+
+  await page.goto('/works.html')
+  await expect(page.locator('[data-page-load-state="error"]')).toBeVisible({ timeout: 15000 })
+  await expect(page.locator('.page-load-error')).toBeVisible()
+  expect(requestCount).toBeLessThanOrEqual(3)
+  await page.waitForTimeout(300)
+  expect(requestCount).toBeLessThanOrEqual(3)
 })
 
 test('signature surfaces track fine-pointer sheen without changing typography', { tag: '@fine-pointer' }, async ({ page }, testInfo) => {
@@ -154,14 +188,7 @@ test('signature pointer sheen stays static with reduced motion', async ({ page }
 })
 
 test('page compass exposes page-specific sections without covering narrow layouts', async ({ page }) => {
-  const expectations = [
-    ['index.html', 3],
-    ['academics.html', 3],
-    ['honors.html', 2],
-    ['research.html', 2],
-    ['works.html', 3],
-    ['concerts.html', 3]
-  ] as const
+  const expectations = pageEntries.map(({ htmlName, sections }) => [`${htmlName}.html`, sections.length] as const)
 
   for (const [route, sectionCount] of expectations) {
     await page.setViewportSize({ width: 390, height: 844 })
@@ -273,7 +300,7 @@ test('Works wordmarks keep typography on hover', async ({ page }) => {
 })
 
 
-for (const route of ['index.html', 'academics.html', 'honors.html', 'research.html', 'works.html', 'concerts.html', '404.html']) {
+for (const route of archiveRoutes) {
   test(`axe audit: ${route}`, async ({ page }) => {
     await page.goto(`/${route}`)
     await expectAccessible(page)

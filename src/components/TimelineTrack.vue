@@ -2,11 +2,9 @@
 import { reactive } from 'vue'
 import StatusBadge from './StatusBadge.vue'
 import CopyCitation from './CopyCitation.vue'
-import { statusLabels } from '../data'
 import type { ResearchItem } from '../data/types'
 
 defineProps<{ items: ResearchItem[] }>()
-const statusLabelMap: Record<string, string> = statusLabels
 
 const openMethod = reactive<Record<string, boolean>>({})
 
@@ -36,7 +34,7 @@ function toggleMethod(id: string) {
     >
       <div class="tl-side">
         <span class="tl-date">{{ item.date }}</span>
-        <StatusBadge v-if="item.status" :status="item.status" :label="statusLabelMap[item.status] ?? item.status" />
+        <StatusBadge v-if="item.status" :status="item.status" />
       </div>
       <span class="tl-node" aria-hidden="true"><i></i></span>
       <div class="tl-body">
@@ -112,13 +110,13 @@ function toggleMethod(id: string) {
               v-if="item.paper"
               :href="item.paper.href"
               target="_blank"
-              rel="noopener"
+              rel="noopener noreferrer"
               class="tl-link"
             >
               READ PAPER <span class="tl-paper-tag">{{ item.paper.tag }}</span>
               <span aria-hidden="true">↗</span>
             </a>
-            <a v-if="item.link" :href="item.link" target="_blank" rel="noopener" class="tl-link">
+            <a v-if="item.link" :href="item.link" target="_blank" rel="noopener noreferrer" class="tl-link">
               OPEN PROJECT <span aria-hidden="true">↗</span>
             </a>
           </div>
@@ -131,7 +129,7 @@ function toggleMethod(id: string) {
               :key="proof.label"
               :href="proof.href"
               :target="proof.external ? '_blank' : undefined"
-              :rel="proof.external ? 'noopener' : undefined"
+              :rel="proof.external ? 'noopener noreferrer' : undefined"
             >
               <span>{{ proof.label }}</span>
               <strong>{{ proof.value }}</strong>

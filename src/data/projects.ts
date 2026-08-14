@@ -1,9 +1,8 @@
-import { statusLabels } from './site'
 import type { Project } from './types'
 
 export const projects = [
   {
-    id: 'fresheye', status: 'deployed', statusLabel: statusLabels.deployed, updatedAt: '2026-08-08',
+    id: 'fresheye', status: 'deployed', updatedAt: '2026-08-08',
     title: '鲜眸', en: 'FreshEye', domain: 'fresheye.yance777.com', tone: 'aqua',
     discipline: 'COMPUTER VISION / WEB PRODUCT',
     description: '上传鱼眼照片，AI 评估水产品新鲜度，输出等级、置信度与 Grad-CAM 热力图。',
@@ -42,7 +41,7 @@ export const projects = [
     }
   },
   {
-    id: 'encore', status: 'deployed', statusLabel: statusLabels.deployed, updatedAt: '2026-08-08',
+    id: 'encore', status: 'deployed', updatedAt: '2026-08-08',
     title: '余响', en: 'Encore', domain: 'encore.yance777.com', tone: 'gold',
     discipline: 'LIVE MUSIC / PERSONAL ARCHIVE',
     description: '记录演唱会足迹，把每一站灯光与合唱收进属于音乐的屋子。',

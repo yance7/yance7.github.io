@@ -357,3 +357,22 @@ test('concert thumbnails respond and carousel/lightbox controls work', async ({ 
   await page.keyboard.press('Escape')
   await expect(page.locator('.lightbox')).toHaveCount(0)
 })
+
+test('lightbox keeps the background inert and locked until leave finishes', async ({ page }) => {
+  await page.goto('/concerts.html')
+  const trigger = page.locator('.concert-poster .poster-open').first()
+  await trigger.focus()
+  await trigger.click()
+  await expect(page.locator('.lightbox')).toBeVisible()
+  await expect(page.locator('.lb-close')).toBeFocused()
+
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.lightbox')).toBeVisible()
+  await expect(page.locator('.site-shell')).toHaveAttribute('inert', '')
+  expect(await page.evaluate(() => document.body.style.overflow)).toBe('hidden')
+
+  await expect(page.locator('.lightbox')).toHaveCount(0)
+  await expect(page.locator('.site-shell')).not.toHaveAttribute('inert', '')
+  expect(await page.evaluate(() => document.body.style.overflow)).not.toBe('hidden')
+  await expect(trigger).toBeFocused()
+})
