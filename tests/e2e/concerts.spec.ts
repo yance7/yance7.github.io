@@ -148,6 +148,7 @@ test('concert album spotlight keeps a decoded cover during delayed rapid switchi
 
   await expect(wall.locator('.album-visual-slot')).toHaveAttribute('aria-busy', 'true')
   await expect(wall.locator('.album-cover-frame img')).toHaveAttribute('src', /jay-fantasy\.jpg$/)
+  await expect.poll(() => wall.locator('.album-visual-slot').evaluate((element) => getComputedStyle(element, '::after').backgroundImage)).toMatch(/gradient/)
 
   const visibleCover = await wall.locator('.album-cover-frame').evaluateAll((frames) => frames
     .map((frame) => {
@@ -221,6 +222,7 @@ test('concert album wall supports roving keyboard selection', async ({ page }) =
 
   await selected.focus()
   await expect(selected).toBeFocused()
+  await expect.poll(() => selected.evaluate((element) => getComputedStyle(element).boxShadow)).toMatch(/5px/)
   await page.keyboard.press('ArrowRight')
   await expect(tiles.nth(1)).toBeFocused()
   await expect(tiles.nth(1)).toHaveAttribute('aria-selected', 'true')

@@ -26,6 +26,25 @@ test('compatibility hash navigation and PageCompass settle together', async ({ p
   await expect(page.locator('.page-compass-link[href="#project-encore"]')).toHaveAttribute('aria-current', 'location')
 })
 
+test('mobile PageCompass stays quiet until reading begins', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/index.html')
+
+  const compass = page.locator('.page-compass')
+  await expect(compass).toHaveAttribute('data-mobile-state', 'quiet')
+  await expect(compass).toHaveAttribute('aria-hidden', 'true')
+  await expect(compass).toHaveAttribute('inert', '')
+  await expect(compass).toHaveCSS('visibility', 'hidden')
+  await expect(compass).toHaveCSS('pointer-events', 'none')
+
+  await page.mouse.wheel(0, 320)
+  await expect(compass).toHaveAttribute('data-mobile-state', 'visible')
+  await expect(compass).not.toHaveAttribute('aria-hidden', 'true')
+  await expect(compass).not.toHaveAttribute('inert', '')
+  await expect(compass).toHaveCSS('visibility', 'visible')
+  await expect(compass).toHaveCSS('pointer-events', 'auto')
+})
+
 test('compatibility menu, carousel, modal, and axe smoke remain usable', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/index.html')

@@ -7,7 +7,10 @@ import { decodeHashTarget } from '../utils/navigation'
 const props = defineProps<{ sections: readonly PageCompassSection[] }>()
 const { progress, percent } = useScrollProgress()
 const activeId = ref(props.sections[0]?.id ?? '')
+const mobileViewport = ref(typeof window !== 'undefined' && window.matchMedia('(max-width: 760px)').matches)
+const mobileCompassVisible = computed(() => !mobileViewport.value || progress.value >= 0.025)
 let observer: IntersectionObserver | null = null
+let mobileQuery: MediaQueryList | null = null
 
 const activeIndex = computed(() => Math.max(0, props.sections.findIndex((section) => section.id === activeId.value)))
 const activeSection = computed(() => props.sections[activeIndex.value] ?? props.sections[0])
@@ -55,12 +58,24 @@ function goTop() {
   window.scrollTo({ top: 0, behavior })
 }
 
-onMounted(setupTargets)
+function syncMobileViewport(event?: MediaQueryListEvent) {
+  mobileViewport.value = event?.matches ?? mobileQuery?.matches ?? window.innerWidth <= 760
+}
+
+onMounted(() => {
+  mobileQuery = window.matchMedia('(max-width: 760px)')
+  syncMobileViewport()
+  mobileQuery.addEventListener('change', syncMobileViewport)
+  setupTargets()
+})
 watch(() => props.sections, () => {
   activeId.value = props.sections[0]?.id ?? ''
   setupTargets()
 }, { deep: true })
-onUnmounted(disconnectTargets)
+onUnmounted(() => {
+  disconnectTargets()
+  mobileQuery?.removeEventListener('change', syncMobileViewport)
+})
 </script>
 
 <template>
@@ -75,7 +90,14 @@ onUnmounted(disconnectTargets)
     <div class="scroll-bar" :style="{ transform: `scaleX(${progress})` }"></div>
   </div>
 
-  <nav class="page-compass" aria-label="页面章节罗盘">
+  <nav
+    class="page-compass"
+    :class="{ 'page-compass-quiet': !mobileCompassVisible }"
+    :data-mobile-state="mobileCompassVisible ? 'visible' : 'quiet'"
+    :aria-hidden="mobileCompassVisible ? undefined : 'true'"
+    :inert="!mobileCompassVisible"
+    aria-label="页面章节罗盘"
+  >
     <button
       class="page-compass-top page-compass-progress"
       type="button"

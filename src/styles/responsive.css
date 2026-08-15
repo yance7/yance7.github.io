@@ -337,6 +337,10 @@
     border-radius: var(--radius-full);
     transform: translateX(50%);
   }
+  .page-compass.page-compass-quiet {
+    transform: translateX(50%) translateY(10px);
+    transition-delay: 0s, 0s, 0s, 0s, 0s, var(--dur-base);
+  }
   .page-compass-top { width: 44px; height: 44px; }
   .page-compass-top span { display: none; }
   .page-compass-current {
@@ -367,4 +371,12 @@
 @media (max-width: 340px) {
   .page-compass { grid-template-columns: 44px minmax(0, 1fr) 88px; }
   .page-compass-current { display: none; }
+}
+
+@media (max-width: 760px) and (prefers-reduced-motion: reduce) {
+  .page-compass,
+  .page-compass.page-compass-quiet {
+    transition-duration: .01ms;
+    transition-delay: 0s;
+  }
 }

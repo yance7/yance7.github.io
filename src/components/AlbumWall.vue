@@ -381,6 +381,39 @@ html[data-theme='light'] .album-kicker {
   aspect-ratio: 1;
 }
 
+.album-visual-slot::after {
+  position: absolute;
+  inset: 3%;
+  z-index: 4;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  content: '';
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-fast), border-color var(--dur-fast), box-shadow var(--dur-base);
+}
+
+.album-visual-slot[data-spotlight-state='loading']::after {
+  border-color: color-mix(in srgb, var(--aqua) 38%, transparent);
+  background:
+    linear-gradient(90deg, transparent, color-mix(in srgb, var(--aqua) 78%, transparent), transparent) top / 100% 1px no-repeat,
+    linear-gradient(90deg, transparent, color-mix(in srgb, var(--gold) 68%, transparent), transparent) bottom / 100% 1px no-repeat;
+  animation: album-loading-pulse 1.2s ease-in-out infinite;
+  opacity: 1;
+}
+
+.album-visual-slot[data-spotlight-state='error']::after {
+  border-color: color-mix(in srgb, var(--danger) 72%, transparent);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--danger) 22%, transparent);
+  opacity: .9;
+}
+
+@keyframes album-loading-pulse {
+  0%, 100% { box-shadow: 0 0 0 color-mix(in srgb, var(--aqua) 0%, transparent); }
+  50% { box-shadow: 0 0 18px color-mix(in srgb, var(--aqua) 22%, transparent); }
+}
+
 .album-sleeve {
   --tilt-x: 0deg;
   --tilt-y: 0deg;
@@ -557,6 +590,7 @@ html[data-theme='light'] .album-kicker {
   .album-link { transition: none !important; }
   .album-sleeve { transform: none !important; }
   .album-vinyl { animation: none !important; transform: translateX(14px) rotate(3deg); }
+  .album-visual-slot::after { animation: none !important; }
   .album-switch-enter-active,
   .album-switch-leave-active { transition: none !important; }
   .album-switch-enter-from,
@@ -662,6 +696,10 @@ html[data-theme='light'] .album-kicker {
 .album-tile.selected {
   border-color: #d4a54e;
   box-shadow: 0 0 0 2px #d4a54e, 0 12px 24px rgba(0, 0, 0, .28);
+}
+
+.album-tile.selected:focus-visible {
+  box-shadow: var(--focus-ring), 0 0 0 2px #d4a54e, 0 12px 24px rgba(0, 0, 0, .28);
 }
 
 .album-tile.selected .album-tile-meta {
@@ -831,5 +869,6 @@ html[data-theme='light'] .album-kicker {
   .album-vinyl {
     transform: translateX(14px) rotate(3deg);
   }
+  .album-visual-slot::after { animation: none !important; }
 }
 </style>
