@@ -1,12 +1,16 @@
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue'
 import StatusBadge from './StatusBadge.vue'
 import CopyCitation from './CopyCitation.vue'
 import type { ResearchItem } from '../data/types'
 
-defineProps<{ items: ResearchItem[] }>()
+const props = defineProps<{ items: ResearchItem[] }>()
 
 const openMethod = reactive<Record<string, boolean>>({})
+const timelineRoot = ref<HTMLElement | null>(null)
+const currentId = ref(props.items[0]?.id ?? '')
+let currentObserver: IntersectionObserver | null = null
+const readingTargets = new Set<Element>()
 
 function tagClass(tag: string) {
   if (tag.includes('WEB TOOL')) return 'aqua'
@@ -19,17 +23,61 @@ function tagClass(tag: string) {
 function toggleMethod(id: string) {
   openMethod[id] = !openMethod[id]
 }
+
+function updateCurrentItem() {
+  if (!readingTargets.size) return
+  const readingLine = window.innerHeight * .38
+  const closest = [...readingTargets]
+    .map((target) => ({
+      target,
+      distance: Math.abs(target.getBoundingClientRect().top - readingLine)
+    }))
+    .sort((left, right) => left.distance - right.distance)[0]
+  const id = closest?.target instanceof HTMLElement ? closest.target.id : ''
+  if (id) currentId.value = id
+}
+
+function observeReadingTargets() {
+  currentObserver?.disconnect()
+  currentObserver = null
+  readingTargets.clear()
+  const targets = [...(timelineRoot.value?.querySelectorAll<HTMLElement>('.tl-item') ?? [])]
+  if (!targets.length || !('IntersectionObserver' in window)) return
+
+  currentObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) readingTargets.add(entry.target)
+      else readingTargets.delete(entry.target)
+    })
+    updateCurrentItem()
+  }, {
+    rootMargin: '-20% 0px -55% 0px',
+    threshold: [0, .2, .5, .8, 1]
+  })
+  targets.forEach((target) => currentObserver?.observe(target))
+}
+
+onMounted(() => {
+  void nextTick(observeReadingTargets)
+})
+
+onUnmounted(() => {
+  currentObserver?.disconnect()
+  currentObserver = null
+  readingTargets.clear()
+})
 </script>
 
 <template>
-  <div class="timeline-track">
+  <div ref="timelineRoot" class="timeline-track">
     <div class="tl-rail" aria-hidden="true"></div>
     <article
       v-for="item in items"
       :key="item.id"
       :id="item.id"
       class="tl-item"
-      :class="{ active: item.status === 'active' }"
+      :class="{ active: item.status === 'active', 'is-current': currentId === item.id }"
+      :data-reading-state="currentId === item.id ? 'current' : 'idle'"
       v-reveal
     >
       <div class="tl-side">

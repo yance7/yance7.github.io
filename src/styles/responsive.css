@@ -296,6 +296,7 @@
   .honor-card.revealed .honor-date,
   .honor-card.revealed .honor-level-dot,
   .honor-card.revealed .honor-level-tag,
+  .tl-item.active .tl-node i,
   .method-disclosure-inner { animation: none !important; transform: none !important; }
   .home-stage-scroll:hover,
   .home-stage-scroll:focus-visible,
@@ -337,7 +338,8 @@
     border-radius: var(--radius-full);
     transform: translateX(50%);
   }
-  .page-compass.page-compass-quiet {
+  .page-compass.page-compass-quiet,
+  .page-compass.page-compass-reading {
     transform: translateX(50%) translateY(10px);
     transition-delay: 0s, 0s, 0s, 0s, 0s, var(--dur-base);
   }
@@ -375,7 +377,8 @@
 
 @media (max-width: 760px) and (prefers-reduced-motion: reduce) {
   .page-compass,
-  .page-compass.page-compass-quiet {
+  .page-compass.page-compass-quiet,
+  .page-compass.page-compass-reading {
     transition-duration: .01ms;
     transition-delay: 0s;
   }

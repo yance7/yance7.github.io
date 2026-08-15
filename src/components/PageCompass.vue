@@ -8,9 +8,19 @@ const props = defineProps<{ sections: readonly PageCompassSection[] }>()
 const { progress, percent } = useScrollProgress()
 const activeId = ref(props.sections[0]?.id ?? '')
 const mobileViewport = ref(typeof window !== 'undefined' && window.matchMedia('(max-width: 760px)').matches)
-const mobileCompassVisible = computed(() => !mobileViewport.value || progress.value >= 0.025)
+type MobileCompassState = 'quiet' | 'reading' | 'visible'
+
+const MOBILE_TOP_THRESHOLD = 16
+const MOBILE_SCROLL_DELTA = 4
+const MOBILE_IDLE_DELAY = 420
+const mobileCompassState = ref<MobileCompassState>(mobileViewport.value ? 'quiet' : 'visible')
+const mobileFocusWithin = ref(false)
+const mobileCompassVisible = computed(() => !mobileViewport.value || mobileFocusWithin.value || mobileCompassState.value === 'visible')
+const mobileCompassDataState = computed(() => mobileCompassVisible.value ? 'visible' : mobileCompassState.value)
 let observer: IntersectionObserver | null = null
 let mobileQuery: MediaQueryList | null = null
+let mobileIdleTimer: number | null = null
+let lastScrollY = 0
 
 const activeIndex = computed(() => Math.max(0, props.sections.findIndex((section) => section.id === activeId.value)))
 const activeSection = computed(() => props.sections[activeIndex.value] ?? props.sections[0])
@@ -48,6 +58,51 @@ function setupTargets() {
   void nextTick(observeTargets)
 }
 
+function clearMobileIdleTimer() {
+  if (mobileIdleTimer === null) return
+  window.clearTimeout(mobileIdleTimer)
+  mobileIdleTimer = null
+}
+
+function currentScrollY() {
+  return Math.max(0, window.scrollY || document.documentElement.scrollTop)
+}
+
+function scheduleMobileIdleReveal() {
+  clearMobileIdleTimer()
+  mobileIdleTimer = window.setTimeout(() => {
+    mobileIdleTimer = null
+    mobileCompassState.value = currentScrollY() <= MOBILE_TOP_THRESHOLD ? 'quiet' : 'visible'
+  }, MOBILE_IDLE_DELAY)
+}
+
+function handleMobileScroll() {
+  const scrollY = currentScrollY()
+  const delta = scrollY - lastScrollY
+  lastScrollY = scrollY
+  if (!mobileViewport.value) return
+
+  if (scrollY <= MOBILE_TOP_THRESHOLD) {
+    clearMobileIdleTimer()
+    mobileCompassState.value = 'quiet'
+    return
+  }
+
+  if (mobileCompassState.value === 'quiet' || delta > MOBILE_SCROLL_DELTA) {
+    mobileCompassState.value = 'reading'
+  } else if (delta < -MOBILE_SCROLL_DELTA) {
+    mobileCompassState.value = 'visible'
+  }
+  scheduleMobileIdleReveal()
+}
+
+function handleCompassFocusOut(event: FocusEvent) {
+  const currentTarget = event.currentTarget
+  const relatedTarget = event.relatedTarget
+  if (currentTarget instanceof HTMLElement && relatedTarget instanceof Node && currentTarget.contains(relatedTarget)) return
+  mobileFocusWithin.value = false
+}
+
 function selectSection(id: string) {
   activeId.value = id
 }
@@ -60,12 +115,16 @@ function goTop() {
 
 function syncMobileViewport(event?: MediaQueryListEvent) {
   mobileViewport.value = event?.matches ?? mobileQuery?.matches ?? window.innerWidth <= 760
+  lastScrollY = currentScrollY()
+  clearMobileIdleTimer()
+  mobileCompassState.value = !mobileViewport.value || lastScrollY > MOBILE_TOP_THRESHOLD ? 'visible' : 'quiet'
 }
 
 onMounted(() => {
   mobileQuery = window.matchMedia('(max-width: 760px)')
   syncMobileViewport()
   mobileQuery.addEventListener('change', syncMobileViewport)
+  window.addEventListener('scroll', handleMobileScroll, { passive: true })
   setupTargets()
 })
 watch(() => props.sections, () => {
@@ -75,6 +134,8 @@ watch(() => props.sections, () => {
 onUnmounted(() => {
   disconnectTargets()
   mobileQuery?.removeEventListener('change', syncMobileViewport)
+  window.removeEventListener('scroll', handleMobileScroll)
+  clearMobileIdleTimer()
 })
 </script>
 
@@ -92,11 +153,16 @@ onUnmounted(() => {
 
   <nav
     class="page-compass"
-    :class="{ 'page-compass-quiet': !mobileCompassVisible }"
-    :data-mobile-state="mobileCompassVisible ? 'visible' : 'quiet'"
+    :class="{
+      'page-compass-quiet': !mobileCompassVisible && mobileCompassState === 'quiet',
+      'page-compass-reading': !mobileCompassVisible && mobileCompassState === 'reading'
+    }"
+    :data-mobile-state="mobileCompassDataState"
     :aria-hidden="mobileCompassVisible ? undefined : 'true'"
     :inert="!mobileCompassVisible"
     aria-label="页面章节罗盘"
+    @focusin="mobileFocusWithin = true"
+    @focusout="handleCompassFocusOut"
   >
     <button
       class="page-compass-top page-compass-progress"

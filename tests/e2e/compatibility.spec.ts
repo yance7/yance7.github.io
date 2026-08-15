@@ -26,7 +26,7 @@ test('compatibility hash navigation and PageCompass settle together', async ({ p
   await expect(page.locator('.page-compass-link[href="#project-encore"]')).toHaveAttribute('aria-current', 'location')
 })
 
-test('mobile PageCompass stays quiet until reading begins', async ({ page }) => {
+test('mobile PageCompass follows reading direction without trapping focus', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/index.html')
 
@@ -37,12 +37,36 @@ test('mobile PageCompass stays quiet until reading begins', async ({ page }) => 
   await expect(compass).toHaveCSS('visibility', 'hidden')
   await expect(compass).toHaveCSS('pointer-events', 'none')
 
-  await page.mouse.wheel(0, 320)
+  await page.evaluate(() => {
+    window.scrollTo({ top: 320, behavior: 'auto' })
+    window.dispatchEvent(new Event('scroll'))
+  })
+  await expect.poll(() => compass.getAttribute('data-mobile-state'), { timeout: 300 }).toBe('reading')
+  await expect(compass).toHaveAttribute('aria-hidden', 'true')
+  await expect(compass).toHaveAttribute('inert', '')
+  await expect(compass).toHaveCSS('visibility', 'hidden')
+  await expect(compass).toHaveCSS('pointer-events', 'none')
+
+  await expect.poll(() => compass.getAttribute('data-mobile-state'), { timeout: 1200 }).toBe('visible')
   await expect(compass).toHaveAttribute('data-mobile-state', 'visible')
   await expect(compass).not.toHaveAttribute('aria-hidden', 'true')
   await expect(compass).not.toHaveAttribute('inert', '')
   await expect(compass).toHaveCSS('visibility', 'visible')
   await expect(compass).toHaveCSS('pointer-events', 'auto')
+
+  const firstLink = compass.locator('.page-compass-link').first()
+  await firstLink.focus()
+  await expect(firstLink).toBeFocused()
+  await page.evaluate(() => {
+    window.scrollTo({ top: 620, behavior: 'auto' })
+    window.dispatchEvent(new Event('scroll'))
+  })
+  await expect(compass).toHaveAttribute('data-mobile-state', 'visible')
+  await expect(compass).not.toHaveAttribute('aria-hidden', 'true')
+
+  await page.locator('.menu-trigger').focus()
+  await expect(page.locator('.menu-trigger')).toBeFocused()
+  await expect.poll(() => compass.getAttribute('data-mobile-state'), { timeout: 300 }).toBe('reading')
 })
 
 test('compatibility menu, carousel, modal, and axe smoke remain usable', async ({ page }) => {

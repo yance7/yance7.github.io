@@ -61,3 +61,12 @@
 - 仅在所有验证通过后提交一个简洁中文 commit，直接提交当前 `main`。
 - 使用已认证的 GitHub HTTPS 远端推送 `origin/main`，不创建分支、不创建 PR。
 - 推送后核对远端 main SHA 与 GitHub Pages / Actions 部署状态。
+
+## 本轮追加任务：阅读流与时间轴当前位置
+
+**范围：** 只修改 `PageCompass`、研究 `TimelineTrack` 及对应样式和回归测试。
+
+- 先在 `tests/e2e/compatibility.spec.ts` 与 `tests/e2e/site.spec.ts` 固化下滑收起、停止/上滑恢复、焦点保护和时间轴当前位置断言。
+- 在 `src/components/PageCompass.vue` 增加移动滚动方向、滚动空闲和焦点内状态管理；桌面行为保持不变。
+- 在 `src/components/TimelineTrack.vue` 增加基于 `IntersectionObserver` 的阅读区状态，并在 `src/styles/content.css` 增加克制的节点/边界状态过渡。
+- 运行相关回归后，再运行全部质量门禁与视觉回归；确认没有内容数据、文案、URL、root HTML 或 `dist/` 变更。

@@ -599,17 +599,31 @@
 .tl-item::after {
   content: ''; position: absolute; left: 162px; right: 0; bottom: 0; height: 1px;
   background: linear-gradient(90deg, var(--line), transparent);
+  transition: background var(--dur-base) var(--ease-soft);
 }
 .tl-item:last-child::after { display: none; }
 .tl-item.active .tl-node i { animation: breathe 2.4s ease-in-out infinite; }
 @keyframes breathe { 0%, 100% { opacity: 1; box-shadow: 0 0 0 0 var(--glow-aqua) } 50% { opacity: .6; box-shadow: 0 0 0 6px transparent } }
 .tl-side { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; padding-right: 18px; }
-.tl-date { font-family: var(--mono); font-size: var(--text-micro); letter-spacing: .06em; color: var(--dim); text-align: right; line-height: 1.5; white-space: nowrap; }
+.tl-date {
+  font-family: var(--mono); font-size: var(--text-micro); letter-spacing: .06em; color: var(--dim);
+  text-align: right; line-height: 1.5; white-space: nowrap;
+  transition: color var(--dur-base) var(--ease-soft);
+}
 .tl-node {
   position: relative; justify-self: center; width: 16px; height: 16px; margin-top: 26px;
   border-radius: 50%; border: 2px solid var(--gold); background: var(--bg);
+  transition: border-color var(--dur-base) var(--ease-soft), box-shadow var(--dur-base) var(--ease-soft);
 }
-.tl-node i { position: absolute; inset: 3px; border-radius: 50%; background: var(--gold); }
+.tl-node i {
+  position: absolute; inset: 3px; border-radius: 50%; background: var(--gold);
+  transition: background-color var(--dur-base) var(--ease-soft), opacity var(--dur-base) var(--ease-soft);
+}
+.tl-item.is-current::after { background: linear-gradient(90deg, var(--aqua), transparent); }
+.tl-item.is-current .tl-date { color: var(--ink); }
+.tl-item.is-current .tl-node { border-color: var(--aqua); box-shadow: 0 0 0 4px var(--glow-aqua); }
+.tl-item.is-current .tl-node i { background: var(--aqua); }
+.tl-item.is-current .tl-tag { border-color: var(--aqua); }
 .tl-body { padding-left: 26px; }
 .tl-tag {
   display: inline-block; font-family: var(--mono); font-size: var(--text-xs); letter-spacing: .2em;

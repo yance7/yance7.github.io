@@ -277,7 +277,8 @@
     opacity var(--dur-base) var(--ease-out),
     visibility 0s linear 0s;
 }
-.page-compass-quiet { opacity: 0; visibility: hidden; pointer-events: none; }
+.page-compass-quiet,
+.page-compass-reading { opacity: 0; visibility: hidden; pointer-events: none; }
 .page-compass:hover,
 .page-compass:focus-within { border-color: var(--interactive-border); box-shadow: var(--interactive-shadow); }
 .page-compass-top {

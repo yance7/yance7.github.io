@@ -75,6 +75,31 @@ test('page compass unifies section navigation, reading progress, and return to t
   await expect(page.locator('.section-dots, .scroll-to-top')).toHaveCount(0)
 })
 
+test('research timeline highlights the item in the reading zone', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/research.html')
+
+  const items = page.locator('.tl-item')
+  expect(await items.count()).toBeGreaterThanOrEqual(2)
+
+  for (let index = 0; index < 2; index += 1) {
+    await items.nth(index).evaluate((element) => element.scrollIntoView({ block: 'center', behavior: 'auto' }))
+    await expect(items.nth(index)).toHaveAttribute('data-reading-state', 'current')
+    if (index > 0) await expect(items.nth(index - 1)).toHaveAttribute('data-reading-state', 'idle')
+  }
+})
+
+test('research timeline removes breathing motion when reduced motion is enabled', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/research.html')
+
+  const firstItem = page.locator('.tl-item').first()
+  await firstItem.evaluate((element) => element.scrollIntoView({ block: 'center', behavior: 'auto' }))
+  await expect(firstItem).toHaveAttribute('data-reading-state', 'current')
+  await expect(firstItem.locator('.tl-node i')).toHaveCSS('animation-name', 'none')
+})
+
 test('site navigation stays pinned and every compass destination clears it', async ({ page }) => {
   test.setTimeout(60000)
   await page.setViewportSize({ width: 1200, height: 900 })
