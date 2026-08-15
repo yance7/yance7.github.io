@@ -90,3 +90,65 @@ test('compatibility menu, carousel, modal, and axe smoke remain usable', async (
   await page.keyboard.press('Escape')
   await expect(page.locator('.lightbox')).toHaveCount(0)
 })
+
+test('mobile menu typography follows the light-theme semantic text tokens', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/index.html')
+  await page.locator('.menu-trigger').click()
+
+  const colors = await page.evaluate(() => {
+    const resolveColor = (variable: string) => {
+      const probe = document.createElement('span')
+      probe.style.color = `var(${variable})`
+      document.body.append(probe)
+      const value = getComputedStyle(probe).color
+      probe.remove()
+      return value
+    }
+
+    return {
+      number: getComputedStyle(document.querySelector('.mobile-menu .mm-num')!).color,
+      english: getComputedStyle(document.querySelector('.mobile-menu .mm-en')!).color,
+      description: getComputedStyle(document.querySelector('.mobile-menu .mm-desc')!).color,
+      goldText: resolveColor('--gold-text'),
+      dim: resolveColor('--dim'),
+      muted: resolveColor('--muted')
+    }
+  })
+
+  expect(colors.number).toBe(colors.goldText)
+  expect(colors.english).toBe(colors.dim)
+  expect(colors.description).toBe(colors.muted)
+})
+
+test('touch carousel hover suppression follows the active theme control tokens', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/concerts.html')
+  await page.locator('.theme-orbit').click()
+  await page.waitForTimeout(420)
+
+  const colors = await page.evaluate(() => {
+    const root = getComputedStyle(document.documentElement)
+    const button = document.querySelector<HTMLElement>('.carousel-controls button')!
+    const resolveColor = (variable: string, property: 'backgroundColor' | 'borderColor') => {
+      const probe = document.createElement('span')
+      probe.style[property] = `var(${variable})`
+      document.body.append(probe)
+      const value = getComputedStyle(probe)[property]
+      probe.remove()
+      return value
+    }
+
+    return {
+      background: getComputedStyle(button).backgroundColor,
+      border: getComputedStyle(button).borderColor,
+      expectedBackground: resolveColor('--media-control-bg', 'backgroundColor'),
+      expectedBorder: resolveColor('--media-control-border', 'borderColor'),
+      theme: root.getPropertyValue('--media-control-bg').trim()
+    }
+  })
+
+  expect(colors.theme).not.toBe('')
+  expect(colors.background).toBe(colors.expectedBackground)
+  expect(colors.border).toBe(colors.expectedBorder)
+})

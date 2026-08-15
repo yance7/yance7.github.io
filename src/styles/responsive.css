@@ -259,7 +259,7 @@
   .concert-poster:hover:not(:focus-visible) { --ty: 0px; border-color: var(--line); box-shadow: var(--shadow-1); }
   .concert-poster:hover:not(:focus-visible) img { transform: none; }
   .concert-poster:hover:not(:focus-visible) .poster-hint { opacity: 0; transform: translateY(8px); }
-  .carousel-controls button:hover:not(:focus-visible) { border-color: rgba(255, 255, 255, .14); background: rgba(255, 255, 255, .06); color: inherit; transform: none; }
+  .carousel-controls button:hover:not(:focus-visible) { border-color: var(--media-control-border); background: var(--media-control-bg); color: inherit; transform: none; }
   .foot-mark:hover:not(:focus-visible) { color: var(--ink); transform: none; }
   .foot-mark:hover:not(:focus-visible) strong span { transform: none; }
   .foot-links a:hover:not(:focus-visible) { color: var(--gold); transform: none; }

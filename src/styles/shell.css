@@ -131,14 +131,11 @@
   animation-delay: calc(var(--di) * 60ms + 100ms);
 }
 @keyframes menu-item-in { to { transform: none } }
-.mobile-menu a .mm-num { font-family: var(--mono); font-size: var(--text-micro); color: var(--gold); }
+.mobile-menu a .mm-num { font-family: var(--mono); font-size: var(--text-micro); color: var(--gold-text); }
 .mobile-menu a .mm-label { font-family: var(--serif); font-size: 1.6rem; font-weight: 400; }
 .mobile-menu a .mm-en { font-family: var(--sans); font-size: var(--text-micro); font-weight: 560; letter-spacing: .14em; color: var(--dim); }
 .mobile-menu a .mm-desc { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--muted); margin-top: -8px; }
 .mobile-menu a.active .mm-label { color: var(--gold); }
-[data-theme='light'] .mobile-menu a .mm-num { color: #704800; }
-[data-theme='light'] .mobile-menu a .mm-en,
-[data-theme='light'] .mobile-menu a .mm-desc { color: #4E5660; }
 
 /* ===== 主题轨道按钮 ===== */
 .theme-orbit {

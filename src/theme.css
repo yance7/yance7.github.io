@@ -54,6 +54,17 @@
   --motion-press-scale: .985;
   --anchor-offset: 138px;
 
+  /* 图像媒材：封面与照片上的深色信息层保持稳定可读 */
+  --album-cover-surface: #17191D;
+  --album-cover-deep: #0B0C10;
+  --album-cover-groove: #22252A;
+  --album-cover-accent: #D4A54E;
+  --album-cover-ink: #F5F3EE;
+  --album-cover-muted: rgba(245, 243, 238, .72);
+  --album-cover-meta: rgba(4, 6, 10, .92);
+  --album-cover-sheen: rgba(255, 255, 255, .09);
+  --album-cover-line: rgba(255, 255, 255, .16);
+
   /* 内容宽度 */
   --w-max: 1240px;
   --w-wide: 1440px;
@@ -123,6 +134,31 @@
   --text-accent: var(--gold-text);
   --text-technical: var(--aqua);
   --text-decorative: var(--dim-soft);
+
+  /* 专辑墙与媒体控件 */
+  --album-stage-surface: var(--bg-tint);
+  --album-stage-panel: var(--surface-raised);
+  --album-stage-text: var(--ink);
+  --album-stage-muted: var(--muted);
+  --album-stage-line: color-mix(in srgb, var(--line) 88%, var(--gold) 12%);
+  --album-stage-grid: var(--grid-line);
+  --album-stage-shadow: 0 28px 70px rgba(68, 53, 33, .12);
+  --album-stage-inset: rgba(255, 255, 255, .42);
+  --album-kicker: var(--aqua);
+  --album-selected-fill: var(--gold);
+  --album-selected-ink: var(--accent-contrast);
+  --album-action-hover: var(--button-hover);
+  --album-hover-border: color-mix(in srgb, var(--aqua) 72%, var(--line));
+  --album-hover-surface: color-mix(in srgb, var(--aqua) 12%, transparent);
+  --album-cover-shadow: 0 24px 42px rgba(68, 53, 33, .18), 0 3px 9px rgba(68, 53, 33, .1);
+
+  --media-overlay-bg: rgba(10, 13, 18, .62);
+  --media-overlay-bg-strong: rgba(10, 13, 18, .66);
+  --media-overlay-ink: #F1EEE7;
+  --media-control-border: rgba(255, 255, 255, .14);
+  --media-control-bg: rgba(255, 255, 255, .06);
+  --media-control-hover: rgba(255, 255, 255, .13);
+  --media-control-hover-border: rgba(255, 255, 255, .34);
 
   /* 阴影（分层、柔和） */
   --shadow-1: 0 1px 2px rgba(69, 57, 40, .03), 0 4px 16px rgba(69, 57, 40, .05);
@@ -216,6 +252,31 @@
   --text-accent: var(--gold-text);
   --text-technical: var(--aqua);
   --text-decorative: var(--dim-soft);
+
+  /* 专辑墙与媒体控件 */
+  --album-stage-surface: var(--bg-tint);
+  --album-stage-panel: var(--surface-raised);
+  --album-stage-text: var(--ink);
+  --album-stage-muted: var(--muted);
+  --album-stage-line: color-mix(in srgb, var(--line) 72%, var(--gold) 28%);
+  --album-stage-grid: var(--grid-line);
+  --album-stage-shadow: 0 30px 80px rgba(2, 6, 12, .32);
+  --album-stage-inset: rgba(255, 255, 255, .08);
+  --album-kicker: var(--aqua);
+  --album-selected-fill: var(--gold);
+  --album-selected-ink: var(--accent-contrast);
+  --album-action-hover: var(--button-hover);
+  --album-hover-border: color-mix(in srgb, var(--aqua) 72%, var(--line));
+  --album-hover-surface: color-mix(in srgb, var(--aqua) 12%, transparent);
+  --album-cover-shadow: 0 24px 42px rgba(0, 0, 0, .32), 0 3px 9px rgba(0, 0, 0, .2);
+
+  --media-overlay-bg: rgba(5, 9, 14, .68);
+  --media-overlay-bg-strong: rgba(5, 9, 14, .74);
+  --media-overlay-ink: #F3F0E9;
+  --media-control-border: rgba(235, 242, 245, .18);
+  --media-control-bg: rgba(235, 242, 245, .06);
+  --media-control-hover: rgba(235, 242, 245, .14);
+  --media-control-hover-border: rgba(235, 242, 245, .34);
 
   /* 阴影（分层、深邃） */
   --shadow-1: 0 1px 2px rgba(0, 0, 0, .15), 0 4px 16px rgba(0, 0, 0, .3);

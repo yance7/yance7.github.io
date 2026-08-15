@@ -98,8 +98,8 @@
   display: flex; align-items: center; justify-content: space-between;
   pointer-events: none;
   padding: 9px 12px; border-radius: var(--radius-sm);
-  background: rgba(10, 13, 18, .66); backdrop-filter: blur(8px);
-  color: #F1EEE7;
+  background: var(--media-overlay-bg-strong); backdrop-filter: blur(8px);
+  color: var(--media-overlay-ink);
   font-family: var(--mono); font-size: var(--text-micro); letter-spacing: .16em;
   opacity: 0; transform: translateY(8px);
   transition: opacity var(--dur-base), transform var(--dur-base) var(--ease-apple);
@@ -111,16 +111,16 @@
   z-index: 3;
   display: flex; align-items: center; justify-content: space-between;
   padding: 6px 8px; border-radius: var(--radius-sm);
-  background: rgba(10, 13, 18, .62); backdrop-filter: blur(8px);
-  font-family: var(--mono); font-size: var(--text-micro); color: #F1EEE7;
+  background: var(--media-overlay-bg); backdrop-filter: blur(8px);
+  font-family: var(--mono); font-size: var(--text-micro); color: var(--media-overlay-ink);
 }
 .carousel-controls button {
   display: grid; place-items: center; width: 44px; height: 44px; padding: 0;
-  border: 1px solid rgba(255, 255, 255, .14); border-radius: 50%;
-  background: rgba(255, 255, 255, .06); color: inherit; font-size: 14px;
+  border: 1px solid var(--media-control-border); border-radius: 50%;
+  background: var(--media-control-bg); color: inherit; font-size: 14px;
   transition: color var(--dur-fast), border-color var(--dur-fast), background-color var(--dur-fast), transform var(--dur-fast) var(--ease-spring);
 }
-.carousel-controls button:hover { border-color: rgba(255, 255, 255, .34); background: rgba(255, 255, 255, .13); color: var(--gold); transform: translateY(-2px); }
+.carousel-controls button:hover { border-color: var(--media-control-hover-border); background: var(--media-control-hover); color: var(--gold); transform: translateY(-2px); }
 .carousel-controls button:active { color: var(--gold); transform: translateY(1px) scale(var(--motion-press-scale)); }
 .concert-info > span { display: block; font-family: var(--mono); font-size: var(--text-micro); letter-spacing: .18em; color: var(--aqua); text-transform: uppercase; }
 .concert-info .concert-status.upcoming { color: var(--gold); }

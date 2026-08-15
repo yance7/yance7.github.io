@@ -378,3 +378,52 @@ test('lightbox keeps the background inert and locked until leave finishes', asyn
   expect(await page.evaluate(() => document.body.style.overflow)).not.toBe('hidden')
   await expect(trigger).toBeFocused()
 })
+
+test('concert visual surfaces use theme semantics and shared motion cadence', async ({ page }) => {
+  await page.goto('/concerts.html')
+
+  const readVisualContract = () => page.evaluate(() => {
+    const root = getComputedStyle(document.documentElement)
+    const wall = document.querySelector<HTMLElement>('.album-wall')!
+    const tile = document.querySelector<HTMLElement>('.album-tile')!
+    const controls = document.querySelector<HTMLElement>('.carousel-controls')!
+    const resolveColor = (variable: string) => {
+      const probe = document.createElement('span')
+      probe.style.color = `var(${variable})`
+      document.body.append(probe)
+      const value = getComputedStyle(probe).color
+      probe.remove()
+      return value
+    }
+
+    return {
+      theme: document.documentElement.dataset.theme,
+      stageSurface: getComputedStyle(wall).getPropertyValue('--stage-surface').trim(),
+      bgTint: root.getPropertyValue('--bg-tint').trim(),
+      stageDuration: getComputedStyle(wall).transitionDuration,
+      tileDuration: getComputedStyle(tile).transitionDuration,
+      mediaOverlay: root.getPropertyValue('--media-overlay-bg').trim(),
+      mediaOverlayInk: root.getPropertyValue('--media-overlay-ink').trim(),
+      controlsBackground: getComputedStyle(controls).backgroundColor,
+      expectedBgTint: resolveColor('--bg-tint')
+    }
+  })
+
+  const light = await readVisualContract()
+  expect(light.theme).toBe('light')
+  expect(light.stageSurface).toBe(light.bgTint)
+  expect(light.stageDuration).toContain('0.6s')
+  expect(light.tileDuration).toContain('0.2s')
+  expect(light.mediaOverlay).not.toBe('')
+  expect(light.mediaOverlayInk).not.toBe('')
+  expect(light.controlsBackground).not.toBe(light.expectedBgTint)
+
+  await page.locator('.theme-orbit').click()
+  const dark = await readVisualContract()
+  expect(dark.theme).toBe('dark')
+  expect(dark.stageSurface).toBe(dark.bgTint)
+  expect(dark.stageDuration).toContain('0.6s')
+  expect(dark.tileDuration).toContain('0.2s')
+  expect(dark.mediaOverlay).not.toBe('')
+  expect(dark.mediaOverlayInk).not.toBe('')
+})

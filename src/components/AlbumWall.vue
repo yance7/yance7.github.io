@@ -263,11 +263,11 @@ onUnmounted(() => {
 }
 
 .album-wall {
-  --stage-surface: #0b0c10;
-  --stage-panel: rgba(19, 22, 29, .88);
-  --stage-text: #f5f3ee;
-  --stage-muted: rgba(245, 243, 238, .68);
-  --stage-line: rgba(245, 243, 238, .18);
+  --stage-surface: var(--album-stage-surface);
+  --stage-panel: var(--album-stage-panel);
+  --stage-text: var(--album-stage-text);
+  --stage-muted: var(--album-stage-muted);
+  --stage-line: var(--album-stage-line);
   position: relative;
   isolation: isolate;
   overflow: hidden;
@@ -278,8 +278,8 @@ onUnmounted(() => {
     radial-gradient(circle at 17% 18%, color-mix(in srgb, var(--album-primary) 34%, transparent), transparent 34%),
     radial-gradient(circle at 82% 76%, color-mix(in srgb, var(--album-secondary) 24%, transparent), transparent 32%),
     var(--stage-surface);
-  box-shadow: 0 30px 80px rgba(2, 6, 12, .18);
-  transition: background-color 520ms ease, border-color 520ms ease, color 520ms ease;
+  box-shadow: var(--album-stage-shadow);
+  transition: background-color var(--dur-slow) var(--ease-soft), border-color var(--dur-slow) var(--ease-soft), color var(--dur-slow) var(--ease-soft);
 }
 
 .album-wall::before {
@@ -287,33 +287,33 @@ onUnmounted(() => {
   inset: 0;
   z-index: -1;
   background-image:
-    linear-gradient(rgba(255, 255, 255, .025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, .025) 1px, transparent 1px);
+    linear-gradient(var(--album-stage-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--album-stage-grid) 1px, transparent 1px);
   background-size: 42px 42px;
   content: '';
   pointer-events: none;
 }
 
 html[data-theme='light'] .album-wall {
-  --stage-surface: #f5f3ee;
-  --stage-panel: rgba(255, 255, 255, .72);
-  --stage-text: #17191d;
-  --stage-muted: #5d6067;
-  --stage-line: rgba(34, 31, 27, .18);
+  --stage-surface: var(--album-stage-surface);
+  --stage-panel: var(--album-stage-panel);
+  --stage-text: var(--album-stage-text);
+  --stage-muted: var(--album-stage-muted);
+  --stage-line: var(--album-stage-line);
   background:
     radial-gradient(circle at 17% 18%, color-mix(in srgb, var(--album-primary) 13%, transparent), transparent 36%),
     radial-gradient(circle at 82% 76%, color-mix(in srgb, var(--album-secondary) 11%, transparent), transparent 34%),
     linear-gradient(135deg, rgba(255, 255, 255, .7), transparent 56%),
     var(--stage-surface);
-  box-shadow: 0 28px 70px rgba(68, 53, 33, .12);
+  box-shadow: var(--album-stage-shadow);
 }
 
 html[data-theme='dark'] .album-wall {
-  --stage-surface: #0b1016;
-  --stage-panel: rgba(13, 17, 24, .82);
-  --stage-text: #f5f3ee;
-  --stage-muted: rgba(245, 243, 238, .68);
-  --stage-line: rgba(212, 165, 78, .22);
+  --stage-surface: var(--album-stage-surface);
+  --stage-panel: var(--album-stage-panel);
+  --stage-text: var(--album-stage-text);
+  --stage-muted: var(--album-stage-muted);
+  --stage-line: var(--album-stage-line);
 }
 
 .album-stage-layout {
@@ -338,7 +338,7 @@ html[data-theme='dark'] .album-wall {
   border: 1px solid var(--stage-line);
   border-radius: 22px;
   background: var(--stage-panel);
-  box-shadow: inset 0 1px rgba(255, 255, 255, .08);
+  box-shadow: inset 0 1px var(--album-stage-inset);
 }
 
 .album-spotlight-head {
@@ -355,12 +355,12 @@ html[data-theme='dark'] .album-wall {
 }
 
 .album-kicker {
-  color: #4ed7d1;
+  color: var(--album-kicker);
   font-weight: 700;
 }
 
 html[data-theme='light'] .album-kicker {
-  color: #256d69;
+  color: var(--album-kicker);
 }
 
 .album-index {
@@ -421,7 +421,7 @@ html[data-theme='light'] .album-kicker {
   inset: 0;
   transform: perspective(900px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
   transform-style: preserve-3d;
-  transition: transform 180ms ease-out;
+  transition: transform var(--dur-fast) var(--ease-out);
   will-change: transform;
 }
 
@@ -431,10 +431,10 @@ html[data-theme='light'] .album-kicker {
   z-index: 2;
   display: block;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--stage-text) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--album-cover-ink) 20%, transparent);
   border-radius: 4px;
-  background: #17191d;
-  box-shadow: 0 24px 42px rgba(0, 0, 0, .32), 0 3px 9px rgba(0, 0, 0, .2);
+  background: var(--album-cover-surface);
+  box-shadow: var(--album-cover-shadow);
   transform: translateZ(10px);
 }
 
@@ -450,12 +450,12 @@ html[data-theme='light'] .album-kicker {
   inset: 5% -8% 5% 14%;
   z-index: 1;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, .16);
+  border: 1px solid var(--album-cover-line);
   border-radius: 50%;
   background:
-    radial-gradient(circle, #d4a54e 0 3.8%, #17191d 4.1% 9%, transparent 9.4%),
-    repeating-radial-gradient(circle, #22252a 0 1px, #0b0c10 2px 4px);
-  box-shadow: 12px 16px 30px rgba(0, 0, 0, .38);
+    radial-gradient(circle, var(--album-cover-accent) 0 3.8%, var(--album-cover-surface) 4.1% 9%, transparent 9.4%),
+    repeating-radial-gradient(circle, var(--album-cover-groove) 0 1px, var(--album-cover-deep) 2px 4px);
+  box-shadow: var(--shadow-2);
   transform: translateX(14px) rotate(3deg);
 }
 
@@ -463,7 +463,7 @@ html[data-theme='light'] .album-kicker {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: conic-gradient(from 30deg, transparent, rgba(255, 255, 255, .09), transparent 18%, transparent 56%, rgba(78, 215, 209, .08), transparent 72%);
+  background: conic-gradient(from 30deg, transparent, var(--album-cover-sheen), transparent 18%, transparent 56%, color-mix(in srgb, var(--aqua) 8%, transparent), transparent 72%);
   content: '';
 }
 
@@ -472,8 +472,8 @@ html[data-theme='light'] .album-kicker {
   inset: 43%;
   z-index: 1;
   border-radius: 50%;
-  background: #0b0c10;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, .16);
+  background: var(--album-cover-deep);
+  box-shadow: 0 0 0 1px var(--album-cover-line);
 }
 
 .album-details {
@@ -544,8 +544,8 @@ html[data-theme='light'] .album-kicker {
   justify-content: center;
   gap: 18px;
   padding: 0 18px;
-  color: #0b0c10;
-  background: #d4a54e;
+  color: var(--album-selected-ink);
+  background: var(--album-selected-fill);
   font-family: var(--mono);
   font-size: .7rem;
   font-weight: 700;
@@ -556,15 +556,15 @@ html[data-theme='light'] .album-kicker {
 
 .album-nav button:hover,
 .album-nav button:focus-visible {
-  border-color: #4ed7d1;
-  background: rgba(78, 215, 209, .12);
+  border-color: var(--album-hover-border);
+  background: var(--album-hover-surface);
   box-shadow: var(--interactive-shadow);
   transform: translateY(-2px);
 }
 
 .album-link:hover,
 .album-link:focus-visible {
-  background: #e5bd70;
+  background: var(--album-action-hover);
   box-shadow: var(--interactive-shadow);
   transform: translateY(-2px);
 }
@@ -626,11 +626,11 @@ html[data-theme='light'] .album-kicker {
   padding: 0;
   border: 1px solid var(--stage-line);
   border-radius: 8px;
-  color: #f5f3ee;
-  background: #17191d;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, .16);
+  color: var(--album-cover-ink);
+  background: var(--album-cover-surface);
+  box-shadow: var(--shadow-1);
   cursor: pointer;
-  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+  transition: transform var(--dur-fast) var(--ease-out), border-color var(--dur-fast), box-shadow var(--dur-fast);
 }
 
 .album-tile picture,
@@ -642,7 +642,7 @@ html[data-theme='light'] .album-kicker {
 
 .album-tile img {
   object-fit: cover;
-  transition: filter 180ms ease, transform 180ms ease;
+  transition: filter var(--dur-fast), transform var(--dur-fast) var(--ease-out);
 }
 
 .album-tile-meta {
@@ -652,10 +652,10 @@ html[data-theme='light'] .album-kicker {
   display: grid;
   gap: 2px;
   padding: 18px 8px 7px;
-  background: linear-gradient(transparent, rgba(4, 6, 10, .92));
+  background: linear-gradient(transparent, var(--album-cover-meta));
   opacity: 0;
   transform: translateY(4px);
-  transition: opacity 180ms ease, transform 180ms ease;
+  transition: opacity var(--dur-fast), transform var(--dur-fast) var(--ease-out);
   text-align: left;
 }
 
@@ -672,7 +672,7 @@ html[data-theme='light'] .album-kicker {
 }
 
 .album-tile-meta small {
-  color: rgba(245, 243, 238, .72);
+  color: var(--album-cover-muted);
   font-family: var(--mono);
   font-size: .53rem;
 }
@@ -683,10 +683,10 @@ html[data-theme='light'] .album-kicker {
   right: 6px;
   z-index: 3;
   padding: 4px 6px;
-  border: 1px solid rgba(255, 255, 255, .72);
+  border: 1px solid color-mix(in srgb, var(--album-cover-ink) 72%, transparent);
   border-radius: 999px;
-  color: #0b0c10;
-  background: #d4a54e;
+  color: var(--album-selected-ink);
+  background: var(--album-selected-fill);
   font-family: var(--mono);
   font-size: .5rem;
   font-weight: 700;
@@ -694,12 +694,12 @@ html[data-theme='light'] .album-kicker {
 }
 
 .album-tile.selected {
-  border-color: #d4a54e;
-  box-shadow: 0 0 0 2px #d4a54e, 0 12px 24px rgba(0, 0, 0, .28);
+  border-color: var(--album-selected-fill);
+  box-shadow: 0 0 0 2px var(--album-selected-fill), var(--shadow-2);
 }
 
 .album-tile.selected:focus-visible {
-  box-shadow: var(--focus-ring), 0 0 0 2px #d4a54e, 0 12px 24px rgba(0, 0, 0, .28);
+  box-shadow: var(--focus-ring), 0 0 0 2px var(--album-selected-fill), var(--shadow-2);
 }
 
 .album-tile.selected .album-tile-meta {
@@ -722,7 +722,7 @@ html[data-theme='light'] .album-kicker {
 
 .album-switch-enter-active,
 .album-switch-leave-active {
-  transition: opacity 170ms ease;
+  transition: opacity var(--dur-fast) var(--ease-out);
 }
 
 .album-switch-enter-from {
@@ -735,8 +735,8 @@ html[data-theme='light'] .album-kicker {
 
 @media (hover: hover) and (pointer: fine) {
   .album-tile:hover {
-    border-color: rgba(78, 215, 209, .72);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, .25);
+    border-color: var(--album-hover-border);
+    box-shadow: var(--interactive-shadow);
     transform: translateY(-3px);
   }
 
@@ -751,7 +751,7 @@ html[data-theme='light'] .album-kicker {
 @media (hover: none), (pointer: coarse) {
   .album-tile:hover {
     border-color: var(--stage-line);
-    box-shadow: 0 8px 18px rgba(0, 0, 0, .16);
+    box-shadow: var(--shadow-1);
     transform: none;
   }
 
