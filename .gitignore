@@ -12,6 +12,7 @@ desktop.ini
 _shots/
 test-screenshots/
 test-results/
+.lighthouseci/
 *.log
 
 # 简历源文件
