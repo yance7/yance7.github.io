@@ -322,6 +322,24 @@
   .world-card:is(:hover, :focus-visible) .world-arrow,
   .concert-poster:hover img { transform: none !important; }
 }
+@media (min-width: 761px) and (max-width: 1024px) {
+  .page-compass {
+    right: 12px;
+    width: 68px;
+    gap: 8px;
+    padding: 6px 5px;
+  }
+  .page-compass-link {
+    min-height: 44px;
+    padding: 4px;
+  }
+  .page-compass-link strong {
+    right: 56px;
+    max-width: min(28vw, 200px);
+  }
+  .page-compass-step a,
+  .page-compass-step-disabled { height: 44px; }
+}
 @media (max-width: 760px) {
   .site-shell.has-page-compass .site-footer {
     padding-bottom: max(92px, calc(76px + env(safe-area-inset-bottom)));
@@ -334,8 +352,11 @@
     justify-items: stretch;
     gap: 2px;
     width: min(370px, calc(100vw - 12px));
+    max-height: none;
     padding: 6px 8px;
+    padding-bottom: max(6px, env(safe-area-inset-bottom));
     border-radius: var(--radius-full);
+    overflow: visible;
     transform: translateX(50%);
   }
   .page-compass.page-compass-quiet,
@@ -352,7 +373,7 @@
     min-width: 0;
     padding: 0 4px;
     border-block: 0;
-    border-left: 1px solid var(--line);
+    border-left: 1px solid var(--compass-rail);
   }
   .page-compass-current strong { max-width: 100%; }
   .page-compass-links { grid-auto-flow: column; align-content: center; justify-content: center; gap: 0; }
@@ -363,7 +384,10 @@
     padding: 0;
     place-items: center;
   }
-  .page-compass-link span,
+  .page-compass-link span {
+    display: block;
+    font-size: .6rem;
+  }
   .page-compass-link strong { display: none; }
   .page-compass-step { align-self: center; gap: 0; }
   .page-compass-step a,
@@ -375,6 +399,13 @@
   .page-compass-current { display: none; }
 }
 
+@media (max-width: 760px) and (orientation: landscape) and (max-height: 520px) {
+  .page-compass {
+    bottom: max(8px, env(safe-area-inset-bottom));
+  }
+  .page-compass-current { display: none; }
+}
+
 @media (max-width: 760px) and (prefers-reduced-motion: reduce) {
   .page-compass,
   .page-compass.page-compass-quiet,
@@ -382,4 +413,31 @@
     transition-duration: .01ms;
     transition-delay: 0s;
   }
+}
+
+@media (forced-colors: active) {
+  .page-compass {
+    border-color: CanvasText;
+    background: Canvas;
+    box-shadow: none;
+  }
+  .page-compass-link.active {
+    border-color: Highlight;
+    background: Highlight;
+    color: HighlightText;
+  }
+  .page-compass-link.active span,
+  .page-compass-link.active i { color: HighlightText; }
+  .page-compass-link.active i {
+    border-color: HighlightText;
+    background: HighlightText;
+    box-shadow: none;
+  }
+  .page-compass-link strong {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+    box-shadow: none;
+  }
+  .page-compass-step-disabled { color: GrayText; }
 }

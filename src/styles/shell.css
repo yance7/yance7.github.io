@@ -252,19 +252,26 @@
 /* ===== 智能章节罗盘 ===== */
 .page-compass {
   position: fixed;
-  right: clamp(12px, 1.5vw, 24px);
-  top: 50%;
+  right: max(12px, calc((100vw - var(--w-wide)) / 2 - 76px));
+  top: 50vh;
+  top: 50dvh;
   z-index: var(--z-nav);
   display: grid;
   justify-items: center;
   gap: 10px;
-  width: 62px;
+  width: 68px;
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
   padding: 8px 7px;
   border: 1px solid var(--control-border);
   border-radius: var(--radius-full);
   background: var(--compass-bg);
   box-shadow: var(--control-shadow);
+  contain: layout paint;
   backdrop-filter: blur(var(--glass-blur));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
   transform: translateY(-50%);
   transition:
     border-color var(--dur-base),
@@ -274,6 +281,7 @@
     opacity var(--dur-base) var(--ease-out),
     visibility 0s linear 0s;
 }
+.page-compass::-webkit-scrollbar { display: none; }
 .page-compass-quiet,
 .page-compass-reading { opacity: 0; visibility: hidden; pointer-events: none; }
 .page-compass:hover,
@@ -285,12 +293,13 @@
   place-content: center;
   width: 46px;
   height: 46px;
+  flex-shrink: 0;
   padding: 0;
   border: 0;
   border-radius: 50%;
   background:
     radial-gradient(circle, var(--compass-bg) 58%, transparent 60%),
-    conic-gradient(var(--aqua) var(--page-progress), var(--line) 0);
+    conic-gradient(var(--aqua) var(--page-progress), var(--compass-rail) 0);
   color: var(--ink);
   line-height: 1;
   transition: transform var(--dur-fast) var(--ease-out), color var(--dur-fast);
@@ -305,7 +314,7 @@
   gap: 2px;
   width: 100%;
   padding: 7px 0 8px;
-  border-block: 1px solid var(--line);
+  border-block: 1px solid var(--compass-rail);
 }
 .page-compass-current span,
 .page-compass-link span {
@@ -314,6 +323,7 @@
   font-size: .55rem;
   letter-spacing: .08em;
   line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 .page-compass-current strong {
   overflow: hidden;
@@ -337,8 +347,10 @@
   width: 100%;
   min-height: 28px;
   padding: 4px 5px;
+  border: 1px solid transparent;
   border-radius: var(--radius-full);
   color: var(--dim);
+  transition: background-color var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast);
 }
 .page-compass-link i {
   width: 6px;
@@ -370,6 +382,11 @@
 }
 .page-compass-link:hover strong,
 .page-compass-link:focus-visible strong { opacity: 1; transform: translate(0, -50%); }
+.page-compass-link.active {
+  border-color: var(--compass-active-border);
+  background: var(--compass-active-bg);
+  color: var(--compass-active-text);
+}
 .page-compass-link:hover i,
 .page-compass-link:focus-visible i,
 .page-compass-link.active i {
@@ -378,7 +395,7 @@
   box-shadow: 0 0 10px var(--glow-gold);
   transform: scale(1.15);
 }
-.page-compass-link.active span { color: var(--ink); }
+.page-compass-link.active span { color: var(--compass-active-text); }
 .page-compass-step { display: grid; grid-template-columns: repeat(2, 1fr); gap: 3px; width: 100%; }
 .page-compass-step a,
 .page-compass-step-disabled {

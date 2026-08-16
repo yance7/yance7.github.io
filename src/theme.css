@@ -125,6 +125,10 @@
   --interactive-sheen: rgba(255, 255, 255, .78);
   --interactive-glow: rgba(39, 126, 118, .11);
   --compass-bg: rgba(255, 255, 255, .86);
+  --compass-active-bg: color-mix(in srgb, var(--gold) 12%, var(--control-bg));
+  --compass-active-border: color-mix(in srgb, var(--gold) 50%, var(--line));
+  --compass-active-text: var(--gold-text);
+  --compass-rail: color-mix(in srgb, var(--aqua) 38%, var(--line));
   --focus-ring: 0 0 0 3px var(--bg), 0 0 0 5px var(--focus);
   --danger: #A54A3C;
 
@@ -243,6 +247,10 @@
   --interactive-sheen: rgba(255, 255, 255, .10);
   --interactive-glow: rgba(109, 222, 208, .12);
   --compass-bg: rgba(14, 22, 27, .88);
+  --compass-active-bg: color-mix(in srgb, var(--gold) 16%, var(--control-bg));
+  --compass-active-border: color-mix(in srgb, var(--gold) 56%, var(--line));
+  --compass-active-text: var(--gold);
+  --compass-rail: color-mix(in srgb, var(--aqua) 48%, var(--line));
   --focus-ring: 0 0 0 3px var(--bg), 0 0 0 5px var(--focus);
   --danger: #F08B7E;
 

@@ -26,6 +26,63 @@ test('compatibility hash navigation and PageCompass settle together', async ({ p
   await expect(page.locator('.page-compass-link[href="#project-encore"]')).toHaveAttribute('aria-current', 'location')
 })
 
+test('PageCompass exposes progress text and a single active chapter', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('/works.html')
+
+  await expect(page.locator('.scroll-progress')).toHaveAttribute('aria-valuetext', /阅读进度/)
+  await expect(page.locator('.page-compass-current span')).toHaveText('01 / 03')
+  await expect(page.locator('.page-compass-link.active')).toHaveCount(1)
+  await expect(page.locator('.page-compass-link.active span')).toHaveText('01')
+  await expect(page.locator('.page-compass-link.active')).toHaveAttribute('aria-current', 'location')
+})
+
+test('compass stays inside the viewport and keeps touch targets usable', async ({ page }) => {
+  for (const width of [320, 390, 768, 820, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 844 })
+    await page.goto('/research.html')
+    const box = await page.locator('.page-compass').boundingBox()
+    expect(box, `${width}px compass geometry`).not.toBeNull()
+    expect(box!.x, `${width}px left edge`).toBeGreaterThanOrEqual(0)
+    expect(box!.x + box!.width, `${width}px right edge`).toBeLessThanOrEqual(width)
+    if (width <= 1024) {
+      const linkBox = await page.locator('.page-compass-link').first().boundingBox()
+      expect(linkBox, `${width}px link geometry`).not.toBeNull()
+      expect(linkBox!.width, `${width}px link width`).toBeGreaterThanOrEqual(44)
+      expect(linkBox!.height, `${width}px link height`).toBeGreaterThanOrEqual(44)
+    }
+  }
+})
+
+test('compass preserves reduced motion, keyboard navigation, and viewport changes', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('/works.html')
+  const transitionDuration = await page.locator('.page-compass').evaluate((element) => (
+    Number.parseFloat(getComputedStyle(element).transitionDuration)
+  ))
+  expect(transitionDuration).toBeLessThanOrEqual(0.00001)
+
+  const encoreLink = page.locator('.page-compass-link[href="#project-encore"]')
+  await encoreLink.focus()
+  await expect(encoreLink).toBeFocused()
+  await page.keyboard.press('Enter')
+  await expect(page).toHaveURL(/#project-encore$/)
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.setViewportSize({ width: 844, height: 390 })
+  await expect(page.locator('.page-compass')).toBeVisible()
+})
+
+test('mobile compass keeps numbered chapter controls legible', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/works.html')
+  await page.evaluate(() => window.scrollTo({ top: 320, behavior: 'auto' }))
+  await expect(page.locator('.page-compass')).toHaveAttribute('data-mobile-state', 'visible')
+  await expect(page.locator('.page-compass-link').first().locator('span')).toBeVisible()
+  await expect(page.locator('.page-compass-link').first().locator('span')).toHaveText('01')
+})
+
 test('mobile PageCompass follows reading direction without trapping focus', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/index.html')

@@ -1,16 +1,16 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { clampScrollProgress } from '../utils/scrollProgress'
+import { getScrollProgress } from '../utils/pageCompass'
 
 export function useScrollProgress() {
   const progress = ref(0)
   const percent = computed(() => Math.round(progress.value * 100))
   let frame = 0
+  let resizeObserver: ResizeObserver | null = null
 
   function update() {
     const root = document.documentElement
-    const scrollRange = root.scrollHeight - root.clientHeight
     const scrollTop = window.scrollY || root.scrollTop
-    progress.value = scrollRange > 0 ? clampScrollProgress(scrollTop / scrollRange) : 0
+    progress.value = getScrollProgress(scrollTop, root.scrollHeight, root.clientHeight)
   }
 
   function scheduleUpdate() {
@@ -25,11 +25,19 @@ export function useScrollProgress() {
     update()
     window.addEventListener('scroll', scheduleUpdate, { passive: true })
     window.addEventListener('resize', scheduleUpdate, { passive: true })
+    window.visualViewport?.addEventListener('resize', scheduleUpdate, { passive: true })
+    if ('ResizeObserver' in window) {
+      resizeObserver = new ResizeObserver(() => scheduleUpdate())
+      resizeObserver.observe(document.documentElement)
+    }
   })
 
   onUnmounted(() => {
     window.removeEventListener('scroll', scheduleUpdate)
     window.removeEventListener('resize', scheduleUpdate)
+    window.visualViewport?.removeEventListener('resize', scheduleUpdate)
+    resizeObserver?.disconnect()
+    resizeObserver = null
     cancelAnimationFrame(frame)
     frame = 0
   })
