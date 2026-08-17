@@ -23,6 +23,7 @@ const selectedActivities = activities.filter((item) => item.featured)
           class="focus-card focus-research"
           :href="`research.html#${item.id}`"
           v-reveal="{ delay: i * 70 }"
+          v-pointer-sheen
         >
           <span class="focus-label">RESEARCH / 0{{ i + 1 }}</span>
           <strong>{{ item.title }}</strong>
@@ -42,6 +43,7 @@ const selectedActivities = activities.filter((item) => item.featured)
           class="focus-card focus-product"
           :class="item.tone"
           v-reveal="{ delay: (i + featuredResearch.length) * 70 }"
+          v-pointer-sheen
         >
           <a class="focus-card-main" :href="`works.html#project-${item.id}`">
             <span class="focus-label">PRODUCT / 0{{ i + 1 }}</span>

@@ -120,14 +120,19 @@
   .world-card.accent-aqua .world-no { color: var(--aqua); }
   .world-card.accent-violet .world-no { color: var(--violet); }
 
-  /* ===== 首页精选研究与产品 ===== */
-  .home-focus-grid {
+/* ===== 首页精选研究与产品 ===== */
+.page-home > .home-focus { padding-top: clamp(36px, 5.5vw, 78px); }
+.home-focus-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(80px, 112px) minmax(0, 1fr);
     gap: 0;
     align-items: stretch;
   }
   .focus-card {
+    --pointer-x: 50%; --pointer-y: 50%; --pointer-active: 0;
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     min-height: 230px;
@@ -138,7 +143,19 @@
     box-shadow: var(--shadow-1);
     transition: transform var(--dur-base) var(--ease-apple), border-color var(--dur-base), box-shadow var(--dur-base);
   }
+  .focus-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: radial-gradient(300px circle at var(--pointer-x) var(--pointer-y), var(--interactive-glow), transparent 64%);
+    opacity: var(--pointer-active);
+    transition: opacity var(--dur-fast);
+  }
+  .focus-card > * { position: relative; z-index: 1; }
   .focus-card:is(:hover, :focus-visible, :focus-within) { transform: translateY(var(--motion-lift)); border-color: var(--gold); background: var(--surface-hover); box-shadow: var(--interactive-shadow); }
+  .focus-card:is(:focus-visible, :focus-within)::before { opacity: .42; }
   .focus-card.focus-product.gold:is(:hover, :focus-within) { border-color: var(--gold); }
   .focus-card.focus-product.aqua:is(:hover, :focus-within) { border-color: var(--aqua); }
   .home-focus-connector {

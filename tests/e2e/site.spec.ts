@@ -109,7 +109,7 @@ test('site navigation stays pinned and every compass destination clears it', asy
     ['academics.html', '#sec-ap-archive'],
     ['honors.html', '#sec-honors-archive'],
     ['research.html', '#sec-toolchain'],
-    ['works.html', '#project-encore'],
+    ['works.html', '#project-fresheye'],
     ['concerts.html', '#concert-archive']
   ] as const
 
@@ -130,12 +130,12 @@ test('site navigation stays pinned and every compass destination clears it', asy
 
 test('direct deep links settle below the pinned navigation', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 900 })
-  await page.goto('/works.html#project-encore')
+  await page.goto('/works.html#project-fresheye')
 
   const navigation = page.locator('.site-nav')
   const navBottom = await navigation.evaluate((element) => element.getBoundingClientRect().bottom)
-  await expect.poll(() => page.locator('#project-encore').evaluate((element) => element.getBoundingClientRect().top)).toBeGreaterThanOrEqual(navBottom + 12)
-  await expect(page.locator('.page-compass-link[href="#project-encore"]')).toHaveAttribute('aria-current', 'location')
+  await expect.poll(() => page.locator('#project-fresheye').evaluate((element) => element.getBoundingClientRect().top)).toBeGreaterThanOrEqual(navBottom + 12)
+  await expect(page.locator('.page-compass-link[href="#project-fresheye"]')).toHaveAttribute('aria-current', 'location')
 })
 
 test('slow page chunks still settle deep links and compass state', async ({ page }) => {
@@ -146,11 +146,11 @@ test('slow page chunks still settle deep links and compass state', async ({ page
     await route.continue()
   })
 
-  await page.goto('/works.html#project-encore')
-  await expect(page.locator('#project-encore')).toBeVisible({ timeout: 30000 })
+  await page.goto('/works.html#project-fresheye')
+  await expect(page.locator('#project-fresheye')).toBeVisible({ timeout: 30000 })
   expect(requestCount).toBeGreaterThan(0)
-  await expect.poll(() => page.locator('#project-encore').evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBeGreaterThanOrEqual(12)
-  await expect(page.locator('.page-compass-link[href="#project-encore"]')).toHaveAttribute('aria-current', 'location')
+  await expect.poll(() => page.locator('#project-fresheye').evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBeGreaterThanOrEqual(12)
+  await expect(page.locator('.page-compass-link[href="#project-fresheye"]')).toHaveAttribute('aria-current', 'location')
 })
 
 test('failed page chunks render a controlled error without a reload loop', async ({ page }) => {
@@ -171,6 +171,7 @@ test('failed page chunks render a controlled error without a reload loop', async
 test('signature surfaces track fine-pointer sheen without changing typography', { tag: '@fine-pointer' }, async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium', 'Fine-pointer interaction is intentionally disabled on touch projects')
   const targets = [
+    ['index.html', '.focus-card'],
     ['index.html', '.world-card'],
     ['works.html', '.showcase'],
     ['concerts.html', '.concert-poster']
@@ -291,9 +292,9 @@ test('rapid control clicks settle without duplicate or stale state', async ({ pa
 test('Works wordmarks keep typography on hover', async ({ page }) => {
   await page.goto('/works.html')
   const showcases = page.locator('.showcase')
-  await expect(showcases).toHaveCount(2)
+  await expect(showcases).toHaveCount(1)
 
-  for (let index = 0; index < 2; index += 1) {
+  for (let index = 0; index < 1; index += 1) {
     const before = await page.locator('.sc-wordmark').evaluateAll((elements) =>
       elements.map((element) => {
         const style = getComputedStyle(element)

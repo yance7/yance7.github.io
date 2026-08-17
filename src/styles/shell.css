@@ -174,16 +174,21 @@
   min-height: clamp(700px, calc(100svh - 88px), 920px);
   overflow: clip;
   isolation: isolate;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 0;
   background: var(--bg);
 }
 .home-hero::after {
   content: '';
   position: absolute;
   inset: auto 0 0;
-  height: 34%;
+  height: 42%;
   pointer-events: none;
-  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--bg-deep) 28%, transparent));
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    color-mix(in srgb, var(--bg-deep) 18%, transparent) 56%,
+    var(--bg) 100%
+  );
   z-index: -1;
 }
 .home-hero-grid {
@@ -451,6 +456,8 @@
 }
 .home-stage-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 2px; }
 .home-stage-scroll {
+  position: relative;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   align-self: flex-start;

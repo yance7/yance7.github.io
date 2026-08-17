@@ -65,11 +65,10 @@ const registry = {
     priority: '0.9',
     nav: { label: '作品', en: 'Works', desc: '已上线的项目' },
     ogImage: 'assets/og-works.png',
-    ogImageAlt: 'FreshEye and Encore product portfolio',
+    ogImageAlt: 'FreshEye product portfolio',
     sections: [
       { id: 'works-overview', label: 'RELEASED WORLDS', shortLabel: 'OVERVIEW' },
-      { id: 'project-fresheye', label: 'FRESHEYE' },
-      { id: 'project-encore', label: 'ENCORE' }
+      { id: 'project-fresheye', label: 'FRESHEYE' }
     ]
   },
   concerts: {

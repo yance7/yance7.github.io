@@ -3,6 +3,10 @@
   display: grid;
   gap: clamp(28px, 4vw, 48px);
 }
+.showcase-list:has(> .showcase:only-child) {
+  max-width: min(100%, 1120px);
+  margin-inline: auto;
+}
 
 .showcase {
   --pointer-x: 50%; --pointer-y: 50%; --pointer-active: 0;
@@ -23,6 +27,7 @@
 .showcase.aqua { color: var(--aqua); }
 .showcase.gold { color: var(--gold); }
 .showcase:focus-within {
+  transform: translateY(var(--motion-lift));
   border-color: color-mix(in srgb, currentColor 62%, var(--line));
   box-shadow: var(--interactive-shadow);
 }

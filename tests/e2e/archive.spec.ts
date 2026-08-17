@@ -95,16 +95,19 @@ test('works uses typographic project dossiers without legacy icons', async ({ pa
   await expect(lyric).toHaveAttribute('aria-label', '「因为我已慢慢懂，努力就能成功」')
   await expect(lyric).toHaveCSS('white-space', 'nowrap')
   await expect(lyric.locator('br')).toHaveCount(0)
-  await expect(page.locator('.showcase')).toHaveCount(2)
+  await expect(page.locator('.hero-copy')).toHaveText('一个已经上线的小世界，记录想法如何离开纸面，开始被真实使用。')
+  await expect(page.locator('.showcase')).toHaveCount(1)
   await expect(page.locator('.page-works img')).toHaveCount(0)
   await expect(page.locator('[class*="project-mark"], [class*="mark-fish"], [class*="mark-spotlight"]')).toHaveCount(0)
-  await expect(page.locator('.sc-dossier-main')).toHaveCount(2)
-  await expect(page.locator('.sc-chapter')).toHaveCount(6)
-  await expect(page.locator('.sc-proof-links a')).toHaveCount(4)
+  await expect(page.locator('.sc-dossier-main')).toHaveCount(1)
+  await expect(page.locator('.sc-chapter')).toHaveCount(3)
+  await expect(page.locator('.sc-proof-links a')).toHaveCount(2)
   await expect(page.locator('#project-fresheye .sc-identity h3')).toContainText('FreshEye')
-  await expect(page.locator('#project-encore .sc-identity h3')).toContainText('Encore')
+  await expect(page.locator('#project-encore')).toHaveCount(0)
+  await expect(page.locator('.page-works')).not.toContainText('Encore')
+  await expect(page.locator('.page-works')).not.toContainText('余响')
 
-  await expect(page.locator('.sc-story-head')).toHaveCount(2)
+  await expect(page.locator('.sc-story-head')).toHaveCount(1)
   await expect(page.locator('.sc-story-head h4')).toHaveCount(0)
   await expect(page.locator('.page-works')).not.toContainText('FROM RESEARCH TO PRODUCT')
   await expect(page.locator('.page-works')).not.toContainText('FROM LIVE TO MEMORY')
@@ -123,7 +126,6 @@ test('works uses typographic project dossiers without legacy icons', async ({ pa
       }
     }))
     expect(layouts, `project wordmarks at ${width}px`).toEqual([
-      { lines: 1, inside: true },
       { lines: 1, inside: true }
     ])
 

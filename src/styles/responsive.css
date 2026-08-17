@@ -48,6 +48,7 @@
   .home-stage-title { margin-top: 32px; font-size: clamp(2.5rem, 11vw, 3.5rem); }
   .home-stage-copy { font-size: .95rem; }
   .home-stage-scroll { margin-top: 0; }
+  .page-home > .home-focus { padding-top: 32px; }
   .archive-hero { padding-top: 74px; }
   .hero-title { font-size: 3rem; }
   .hero-line { width: 100%; }
@@ -148,6 +149,7 @@
   .home-stage-identity { font-size: .59rem; letter-spacing: .1em; line-height: 1.6; }
   .home-stage-heading { gap: 8px; font-size: .61rem; letter-spacing: .13em; line-height: 1.5; }
   .home-stage-title { font-size: clamp(2.5rem, 11vw, 3.5rem); }
+  .page-home > .home-focus { padding-top: 26px; }
   .hero-action { width: 100%; justify-content: space-between; }
   .sc-file-code span:last-child { display: none; }
   .sc-identity { grid-template-columns: 42px minmax(0, 1fr); gap: 12px; padding: 34px 18px 38px; }

@@ -121,6 +121,12 @@ test('home uses the shared page surface in both themes', async ({ page }) => {
   }
 })
 
+test('home stage flows into selected work without a hard divider', async ({ page }) => {
+  await page.goto('/index.html')
+
+  await expect.poll(() => page.locator('.home-hero').evaluate((element) => getComputedStyle(element).borderBottomWidth)).toBe('0px')
+})
+
 test('bundled typography and reading progress stay explicit', async ({ page }) => {
   await page.goto('/works.html')
   await page.evaluate(() => document.fonts.ready)

@@ -39,44 +39,6 @@ export const projects = [
         { type: 'source', label: 'SOURCE', value: 'GitHub', href: 'https://github.com/yance7/FreshEye', external: true }
       ]
     }
-  },
-  {
-    id: 'encore', status: 'deployed', updatedAt: '2026-08-08',
-    title: '余响', en: 'Encore', domain: 'encore.yance777.com', tone: 'gold',
-    discipline: 'LIVE MUSIC / PERSONAL ARCHIVE',
-    description: '记录演唱会足迹，把每一站灯光与合唱收进属于音乐的屋子。',
-    value: '把散落的演唱会记忆收进一个可以反复打开的档案。',
-    role: '前端开发 · UI 设计 · 内容策划',
-    stack: ['Vue 3', 'Vite', 'GitHub Pages'],
-    href: 'https://encore.yance777.com',
-    github: 'https://github.com/yance7/Encore',
-    story: {
-      label: 'FROM LIVE TO MEMORY',
-      note: '演出会散场，档案让现场拥有可以返回的坐标。',
-      chapters: [
-        {
-          label: '01 / CAPTURE',
-          title: '把一晚的现场留下来',
-          detail: '日期、场馆、巡演与海报，让记忆不只停留在相册的时间线上。'
-        },
-        {
-          label: '02 / ARCHIVE',
-          title: '按年份重新组织足迹',
-          detail: '把分散的演唱会记录整理成清晰、可浏览、可持续生长的个人档案。'
-        },
-        {
-          label: '03 / RETURN',
-          title: '给每次重看一个入口',
-          detail: '灯光、合唱与抵达过的城市，被收进一个可以反复打开的小世界。'
-        }
-      ],
-      sequenceLabel: 'MEMORY LOOP',
-      sequence: ['Live', 'Archive', 'Encore'],
-      proof: [
-        { type: 'deployment', label: 'LIVE PRODUCT', value: 'encore.yance777.com', href: 'https://encore.yance777.com', external: true },
-        { type: 'source', label: 'SOURCE', value: 'GitHub', href: 'https://github.com/yance7/Encore', external: true }
-      ]
-    }
   }
 ] satisfies Project[]
 

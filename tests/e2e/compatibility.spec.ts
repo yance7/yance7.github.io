@@ -19,11 +19,11 @@ test('compatibility pages boot without horizontal overflow', async ({ page }) =>
 })
 
 test('compatibility hash navigation and PageCompass settle together', async ({ page }) => {
-  await page.goto('/works.html#project-encore')
-  const target = page.locator('#project-encore')
+  await page.goto('/works.html#project-fresheye')
+  const target = page.locator('#project-fresheye')
   await expect(target).toBeVisible()
   await expect.poll(() => target.evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBeGreaterThanOrEqual(12)
-  await expect(page.locator('.page-compass-link[href="#project-encore"]')).toHaveAttribute('aria-current', 'location')
+  await expect(page.locator('.page-compass-link[href="#project-fresheye"]')).toHaveAttribute('aria-current', 'location')
 })
 
 test('PageCompass exposes progress text and a single active chapter', async ({ page }) => {
@@ -31,7 +31,7 @@ test('PageCompass exposes progress text and a single active chapter', async ({ p
   await page.goto('/works.html')
 
   await expect(page.locator('.scroll-progress')).toHaveAttribute('aria-valuetext', /阅读进度/)
-  await expect(page.locator('.page-compass-current span')).toHaveText('01 / 03')
+  await expect(page.locator('.page-compass-current span')).toHaveText('01 / 02')
   await expect(page.locator('.page-compass-link.active')).toHaveCount(1)
   await expect(page.locator('.page-compass-link.active span')).toHaveText('01')
   await expect(page.locator('.page-compass-link.active')).toHaveAttribute('aria-current', 'location')
@@ -63,11 +63,11 @@ test('compass preserves reduced motion, keyboard navigation, and viewport change
   ))
   expect(transitionDuration).toBeLessThanOrEqual(0.00001)
 
-  const encoreLink = page.locator('.page-compass-link[href="#project-encore"]')
-  await encoreLink.focus()
-  await expect(encoreLink).toBeFocused()
+  const fresheyeLink = page.locator('.page-compass-link[href="#project-fresheye"]')
+  await fresheyeLink.focus()
+  await expect(fresheyeLink).toBeFocused()
   await page.keyboard.press('Enter')
-  await expect(page).toHaveURL(/#project-encore$/)
+  await expect(page).toHaveURL(/#project-fresheye$/)
 
   await page.setViewportSize({ width: 390, height: 844 })
   await page.setViewportSize({ width: 844, height: 390 })
