@@ -54,6 +54,12 @@
   --motion-press-scale: .985;
   --anchor-offset: 138px;
 
+  /* 流体结构间距 */
+  --space-hero-block: clamp(4rem, 9vw, 8.5rem);
+  --space-section-block: clamp(5rem, 9vw, 8.125rem);
+  --space-section-head-gap: clamp(2rem, 3.3vw, 3rem);
+  --space-mobile-shell: clamp(1rem, 4vw, 1.5rem);
+
   /* 图像媒材：封面与照片上的深色信息层保持稳定可读 */
   --album-cover-surface: #17191D;
   --album-cover-deep: #0B0C10;

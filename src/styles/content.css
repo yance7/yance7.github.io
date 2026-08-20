@@ -1,6 +1,6 @@
 /* ===== 内容区与章节标题 ===== */
-.content { max-width: var(--w-max); margin: 0 auto; padding: 0 var(--w-pad) 130px; scroll-margin-top: var(--anchor-offset); }
-.section-head { position: relative; max-width: var(--w-read); margin-bottom: 48px; padding-top: 20px; }
+.content { max-width: var(--w-max); margin: 0 auto; padding: 0 var(--w-pad) var(--space-section-block); scroll-margin-top: var(--anchor-offset); }
+.section-head { position: relative; max-width: var(--w-read); margin-bottom: var(--space-section-head-gap); padding-top: 20px; }
 .section-no {
   position: absolute; top: 0; left: 0; line-height: 1;
   font-family: var(--display); font-style: italic; font-size: 1.5rem; color: var(--line-strong);
@@ -12,8 +12,11 @@
 .section-head h2 {
   margin: 0; font-family: var(--serif); font-weight: 400;
   font-size: clamp(1.8rem, 3.4vw, 3rem); line-height: 1.15; letter-spacing: -.01em;
+  text-wrap: balance;
+  word-break: normal;
+  line-break: strict;
 }
-.section-head h2 .accent { color: var(--gold); }
+.section-head h2 .accent { display: inline-block; max-width: 100%; color: var(--gold); vertical-align: baseline; }
 .section-head h2::after {
   content: ''; display: block; width: 56px; height: 2px; margin-top: 14px;
   background: linear-gradient(90deg, var(--gold), transparent);
@@ -28,6 +31,10 @@
 .section-head.minor h2 { font-family: var(--mono); font-size: clamp(1rem, 2vw, 1.25rem); letter-spacing: .08em; }
 .section-head.minor h2 .accent { color: var(--ink); }
 .section-head.minor h2::after { display: none; }
+
+@supports (word-break: auto-phrase) {
+  .section-head h2 { word-break: auto-phrase; }
+}
 
 /* ===== 状态徽章 ===== */
 .status-badge {

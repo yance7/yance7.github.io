@@ -40,7 +40,7 @@
   .nav-rail { display: none; }
 
   .home-hero { min-height: auto; }
-  .home-stage { padding-top: 38px; }
+  .home-stage { padding-top: var(--space-mobile-shell); }
   .home-stage-meta { align-items: flex-start; flex-direction: column; gap: 12px; }
   .home-stage-identity { max-width: 32ch; }
   .home-stage-body { padding: 44px 0 34px; }
@@ -49,8 +49,15 @@
   .home-stage-copy { font-size: .95rem; }
   .home-stage-scroll { margin-top: 0; }
   .page-home > .home-focus { padding-top: 32px; }
-  .archive-hero { padding-top: 74px; }
+  .archive-hero { padding-top: var(--space-hero-block); }
   .hero-title { font-size: 3rem; }
+  .hero-title.hero-lyric:not(.hero-works-title) { font-size: clamp(1.6rem, 8vw, 2.1rem); }
+  .hero-title.hero-works-title {
+    display: block;
+    white-space: normal;
+    font-size: clamp(1.45rem, 6.2vw, 1.9rem);
+    line-height: 1.38;
+  }
   .hero-line { width: 100%; }
 
   .metric-strip, .metric-strip.large { grid-template-columns: 1fr 1fr; }
@@ -179,6 +186,23 @@
    .lb-close { min-height: 44px; }
 
   .carousel-controls button { min-width: 44px; min-height: 44px; }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .site-nav { padding-block: 12px; }
+  .home-hero { min-height: calc(100svh - 68px); }
+  .home-stage { padding-block: 16px 12px; }
+  .home-stage-body { padding: 16px 0 10px; }
+  .home-stage-heading { font-size: .625rem; }
+  .home-stage-title {
+    max-width: 16ch;
+    margin: 12px 0 10px;
+    font-size: clamp(2rem, 8vh, 2.65rem);
+    line-height: 1;
+  }
+  .home-stage-copy-block { gap: 10px; }
+  .home-stage-copy { max-width: 72ch; font-size: .875rem; line-height: 1.55; }
+  .archive-hero { padding-block: clamp(2rem, 7vh, 2.75rem); }
 }
 
 /* Touch and coarse pointers do not get hover-only visual states. Keyboard focus

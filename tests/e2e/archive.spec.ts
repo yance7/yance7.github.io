@@ -2,6 +2,57 @@ import { expect, test } from '@playwright/test'
 import { pageEntries } from '../../src/data/pageRegistry'
 
 const contentRoutes = pageEntries.map(({ htmlName }) => `${htmlName}.html`)
+const archiveRoutes = pageEntries
+  .filter(({ key }) => key !== 'home')
+  .map(({ htmlName }) => `${htmlName}.html`)
+
+test('archive titles keep balanced Chinese lines at narrow widths', async ({ page }) => {
+  test.setTimeout(60000)
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+
+  for (const width of [320, 360, 390, 414]) {
+    await page.setViewportSize({ width, height: 844 })
+    for (const route of archiveRoutes) {
+      await page.goto(`/${route}`)
+      await page.evaluate(() => document.fonts.ready)
+      const lineSizes = await page.locator('.hero-title .lyric-char').evaluateAll((characters) => {
+        const lines = new Map<number, number>()
+        characters.forEach((character) => {
+          const top = Math.round(character.getBoundingClientRect().top)
+          lines.set(top, (lines.get(top) ?? 0) + 1)
+        })
+        return [...lines.values()]
+      })
+      const heroMetrics = await page.locator('.hero-title').evaluate((element) => {
+        const style = getComputedStyle(element)
+        const rect = element.getBoundingClientRect()
+        return {
+          width: Math.round(rect.width),
+          fontSize: style.fontSize,
+          textWrap: style.textWrap,
+          wordBreak: style.wordBreak,
+          whiteSpace: style.whiteSpace
+        }
+      })
+      expect(lineSizes.length, `${route} hero line count at ${width}px`).toBeGreaterThan(0)
+      expect(
+        lineSizes.every((count) => count >= 2),
+        `${route} hero orphan at ${width}px: ${lineSizes.join('/')} ${JSON.stringify(heroMetrics)}`
+      ).toBe(true)
+
+      const accents = await page.locator('.section-head .accent').evaluateAll((elements) =>
+        elements.map((element) => {
+          const rect = element.getBoundingClientRect()
+          return {
+            rects: element.getClientRects().length,
+            inside: rect.left >= 0 && rect.right <= window.innerWidth + 1
+          }
+        })
+      )
+      expect(accents.every(({ rects, inside }) => rects === 1 && inside), `${route} accents at ${width}px`).toBe(true)
+    }
+  }
+})
 
 test('honors filtering renders compact cards without detail controls', async ({ page }) => {
   await page.goto('/honors.html')

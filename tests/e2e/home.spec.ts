@@ -32,8 +32,15 @@ test('home renders a focused stage with explicit entry actions', async ({ page }
 })
 
 test('home stage keeps its visual hierarchy across desktop and narrow screens', async ({ page }) => {
-  for (const width of [1440, 390, 320]) {
-    await page.setViewportSize({ width, height: 844 })
+  const viewports = [
+    { width: 1440, height: 844 },
+    { width: 390, height: 844 },
+    { width: 320, height: 844 },
+    { width: 844, height: 390 }
+  ]
+
+  for (const viewport of viewports) {
+    await page.setViewportSize(viewport)
     await page.goto('/index.html')
     const layout = await page.evaluate(() => {
       const stage = document.querySelector('.home-stage')!.getBoundingClientRect()
@@ -42,15 +49,18 @@ test('home stage keeps its visual hierarchy across desktop and narrow screens', 
       return {
         documentWidth: document.documentElement.scrollWidth,
         viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight,
         stageLeft: stage.left,
         stageRight: stage.right,
+        titleTop: title.top,
         titleWidth: title.width,
         actionsBottom: actions.bottom
       }
     })
-    expect(layout.documentWidth, `home document at ${width}px`).toBeLessThanOrEqual(layout.viewportWidth)
+    expect(layout.documentWidth, `home document at ${viewport.width}×${viewport.height}`).toBeLessThanOrEqual(layout.viewportWidth)
     expect(layout.titleWidth).toBeLessThanOrEqual(layout.stageRight - layout.stageLeft)
-    expect(layout.actionsBottom).toBeGreaterThan(0)
+    expect(layout.titleTop).toBeGreaterThanOrEqual(0)
+    expect(layout.actionsBottom, `home actions at ${viewport.width}×${viewport.height}`).toBeLessThanOrEqual(layout.viewportHeight)
   }
 })
 

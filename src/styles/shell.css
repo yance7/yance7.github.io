@@ -163,7 +163,7 @@
 /* ===== 档案 Hero ===== */
 .archive-hero {
   max-width: var(--w-max); margin: 0 auto;
-  padding: clamp(64px, 11vh, 150px) var(--w-pad) clamp(48px, 8vh, 100px);
+  padding: var(--space-hero-block) var(--w-pad) clamp(48px, 8vh, 100px);
 }
 .hero-inner { display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 40px; align-items: start; }
 
@@ -492,6 +492,9 @@
   margin: 0 0 22px; max-width: 900px;
   font-family: var(--serif); font-weight: 400;
   font-size: clamp(2.8rem, 6vw, 5.6rem); line-height: 1.02; letter-spacing: -.03em;
+  text-wrap: balance;
+  word-break: normal;
+  line-break: strict;
   opacity: 0; transform: translateY(16px);
   animation: hero-stagger-in var(--dur-base) var(--ease-out) .34s forwards;
 }
