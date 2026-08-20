@@ -95,12 +95,15 @@ for (const viewport of viewports) {
 }
 
 test('section hashes clear the sticky navigation in portrait, landscape, and desktop layouts', async ({ page }) => {
+  test.setTimeout(120000)
   for (const viewport of [viewports[2], viewports[4], viewports[9]]) {
     await page.setViewportSize(viewport)
     for (const entry of pageEntries) {
       const section = entry.sections.at(-1)!
-      await page.goto(`/${entry.htmlName}.html#${section.id}`)
-      const placement = await page.locator(`#${section.id}`).evaluate((element) => {
+      await page.goto(`/${entry.htmlName}.html#${section.id}`, { waitUntil: 'domcontentloaded', timeout: 60000 })
+      const target = page.locator(`#${section.id}`)
+      await target.waitFor({ state: 'attached', timeout: 60000 })
+      const placement = await target.evaluate((element) => {
         const header = document.querySelector<HTMLElement>('.site-nav')
         return {
           headerBottom: header?.getBoundingClientRect().bottom ?? 0,

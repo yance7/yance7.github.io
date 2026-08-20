@@ -427,7 +427,10 @@ test('lightbox keeps the background inert and locked until leave finishes', asyn
 })
 
 test('concert visual surfaces use theme semantics and shared motion cadence', async ({ page }) => {
-  await page.goto('/concerts.html')
+  await page.goto('/concerts.html', { waitUntil: 'domcontentloaded' })
+  await expect(page.locator('.album-wall')).toBeVisible()
+  await expect(page.locator('.album-tile').first()).toBeVisible()
+  await expect(page.locator('.carousel-controls').first()).toBeVisible()
 
   const readVisualContract = () => page.evaluate(() => {
     const root = getComputedStyle(document.documentElement)
