@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { activities, albums, concerts, concertGroups, getConcertState, honors, pageMetadata, projects, research } from '../src/data'
+import { activities, albums, concerts, concertGroups, getConcertState, honors, honorCategories, pageMetadata, projects, research, researchMethods, worlds } from '../src/data'
 import { albumCoverFallback, albumCoverSrcset, albumCoverWebp } from '../src/utils/albumMedia'
 import { thumbnailUrl } from '../src/utils/concertMedia'
 
@@ -118,6 +118,18 @@ describe('content contracts', () => {
       'pioneer-research-institute',
       'ap-calculus-assistant'
     ])
+  })
+
+  it('keeps the home works description aligned with the published project count', () => {
+    const worksWorld = worlds.find((world) => world.key === 'works')
+    expect(worksWorld?.desc).toContain(`${projects.length} 个已经上线的小世界`)
+  })
+
+  it('keeps English archive labels and product brand names accurate', () => {
+    expect(honorCategories.find((category) => category.key === 'emerging')?.en).toBe('EMERGING')
+    expect(researchMethods.find((method) => method.label === 'Hugging Face')?.en).toBe('Hosting')
+    expect(projects[0]?.stack).toContain('Hugging Face Spaces')
+    expect(research.find((item) => item.id === 'fresheye')?.org).toContain('Hugging Face Spaces')
   })
 
   it('keeps content metadata and project/research contracts populated', () => {

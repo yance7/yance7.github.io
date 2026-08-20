@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { HeroCredit } from '../data/types'
+import { splitLyricChars } from '../utils/typography'
 
 const props = withDefaults(defineProps<{
   page: string
@@ -16,7 +17,7 @@ const props = withDefaults(defineProps<{
   copy: '',
   credit: null
 })
-const lyricChars = computed(() => props.title.split(''))
+const lyricChars = computed(() => splitLyricChars(props.title))
 const accessibleTitle = computed(() =>
   props.error ? props.title : `「${props.title}」`
 )

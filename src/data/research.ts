@@ -8,7 +8,7 @@ export const research = [
     tag: 'WEB TOOL',
     status: 'active',
     title: 'FreshEye：AI 水产品新鲜度评估网页工具',
-    org: '个人项目 · HuggingFace Spaces + GitHub Pages',
+    org: '个人项目 · Hugging Face Spaces + GitHub Pages',
     text: '将 FishFreshNet 研究线转化为零安装网页工具，用户上传鱼眼照片即可获得新鲜度等级、置信度与 Grad-CAM 热力图。',
     link: 'https://github.com/yance7/FreshEye',
     proof: [
@@ -173,7 +173,7 @@ export const researchMethods = [
   { label: 'Grad-CAM', en: 'Interpretability', cat: 'EXPLAINABLE AI' },
   { label: 'ONNX', en: 'Deployment', cat: 'ENGINEERING' },
   { label: 'FastAPI', en: 'Backend', cat: 'ENGINEERING' },
-  { label: 'HuggingFace', en: 'Hosting', cat: 'ENGINEERING' },
+  { label: 'Hugging Face', en: 'Hosting', cat: 'ENGINEERING' },
   { label: '16S rRNA', en: 'Microbiome', cat: 'SCIENCE' },
   { label: 'Random Forest', en: 'Regression', cat: 'SCIENCE' }
 ] satisfies ResearchMethod[]

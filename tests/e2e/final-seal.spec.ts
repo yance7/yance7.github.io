@@ -35,7 +35,8 @@ async function expectAccessible(page: Page) {
 
 for (const viewport of viewports) {
   test(`all pages preserve geometry and runtime integrity at ${viewport.width}x${viewport.height}`, async ({ page }) => {
-    test.setTimeout(60000)
+    // WebKit's mobile emulation is slow when it renders every page at a desktop-sized viewport.
+    test.setTimeout(viewport.width >= 1024 ? 90000 : 60000)
     await page.setViewportSize(viewport)
 
     for (const entry of htmlPageEntries) {

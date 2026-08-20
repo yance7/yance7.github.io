@@ -18,8 +18,8 @@ function assert(condition: unknown, message: string): asserts condition {
 assert(existsSync(dist), 'dist/ 不存在，请先运行 npm run build')
 for (const page of pages) {
   const html = read(`${page}.html`)
-  assert(/Content-Security-Policy/.test(html), `${page}.html 缂哄皯 CSP`)
-  assert(/script-src 'self' 'sha256-[^']+'/.test(html), `${page}.html CSP 鍖呭惈 theme bootstrap hash`)
+  assert(/Content-Security-Policy/.test(html), `${page}.html 缺少 CSP`)
+  assert(/script-src 'self' 'sha256-[^']+'/.test(html), `${page}.html CSP 缺少 theme bootstrap hash`)
   assert(html.includes('<div id="app"></div>'), `${page}.html 缺少 Vue 挂载点`)
   assert(/assets\/vue\/main-[^"']+\.js/.test(html), `${page}.html 缺少 hash 入口资源`)
   assert(!html.includes('../src/'), `${page}.html 仍引用源码资源`)

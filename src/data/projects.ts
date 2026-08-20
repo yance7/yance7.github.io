@@ -8,7 +8,7 @@ export const projects = [
     description: '上传鱼眼照片，AI 评估水产品新鲜度，输出等级、置信度与 Grad-CAM 热力图。',
     value: '让水产品新鲜度评估从实验室走向日常使用。',
     role: '全栈开发 · 模型训练 · UI 设计',
-    stack: ['PyTorch', 'ONNX', 'Vue 3', 'HuggingFace Spaces'],
+    stack: ['PyTorch', 'ONNX', 'Vue 3', 'Hugging Face Spaces'],
     href: 'https://fresheye.yance777.com',
     github: 'https://github.com/yance7/FreshEye',
     story: {

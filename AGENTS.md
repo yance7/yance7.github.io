@@ -5,11 +5,12 @@
 - `src/` — Vue 3 source code:
   - `components/` — reusable PascalCase `.vue` components
   - `pages/` — one component per page (Home, Academics, Honors, Research, Works, Concerts, 404)
-  - `composables/` — `useX.js` helpers (theme, scroll progress)
+  - `composables/` — `useX.ts` helpers (theme, scroll progress, modal and album state)
   - `directives/` — custom Vue directives
-  - `data/content.js` — centralized site copy and data
-  - `styles.css` + `theme.css` — base styles and light/dark theme tokens
-- `html-src/` — source HTML entry points. `vite.config.js` copies these to the repo root at build start; edit here, never root `*.html`.
+  - `data/` — page-scoped content modules, `index.ts` public exports, and `types.ts` contracts
+  - `styles/` — base, content, responsive, shell, and works stylesheets
+  - `utils/` — navigation, media, and preload helpers
+- `html-src/` — source HTML entry points consumed by `vite.config.ts`; edit here, never root `*.html`.
 - `public/assets/` — static media (concert posters in `public/assets/concerts/`, case-study visuals in `public/assets/case/`).
 - `html-src/` is the HTML source; `dist/` is the generated GitHub Pages artifact and is ignored by Git.
 - `public/` — Vite-native static assets and deployment metadata (`CNAME`, `robots.txt`, `sitemap.xml`).
@@ -24,15 +25,15 @@
 
 ## Coding Style & Naming Conventions
 
-- Two-space indentation, single quotes, semicolons, and kebab-case CSS classes.
+- Two-space indentation, single quotes, no semicolons, and kebab-case CSS classes.
 - PascalCase for component files and imports; camelCase for composables and variables.
-- Keep shared page copy in Chinese in `src/data/content.js`; page-specific copy stays in the matching `src/pages/*.vue`.
-- No formatter or linter is configured yet; match the existing files and keep diffs minimal.
+- Keep shared page copy in the matching page-scoped module under `src/data/`; page-specific view copy stays in `src/pages/*.vue`.
+- ESLint is configured; match the existing files and keep diffs minimal.
 
 ## Testing Guidelines
 
-- No automated test framework is set up; testing is manual and visual.
-- After UI changes, verify desktop and mobile layouts in both light and dark themes, then run `npm run build` and `npm run preview`.
+- Vitest covers unit/content contracts; Playwright covers browser, responsive, interaction, and axe checks.
+- After UI changes, verify desktop and mobile layouts in both light and dark themes, then run `npm run check` and `npm run test:e2e`.
 - Save local review screenshots under `test-screenshots/` (gitignored).
 
 ## Commit & Pull Request Guidelines
@@ -47,11 +48,11 @@
 - Edit `html-src/*.html` as the source of truth; do not edit root `*.html` directly.
 - Never hand-edit `dist/` build output; regenerate it with `npm run build`.
 - Regenerate the social preview image with `python scripts/render-og-card.py` after changing the OG card design.
-- Update shared content in `src/data/content.js`; keep page-specific content in the matching `src/pages/*.vue`.
+- Update shared content in the matching `src/data/*.ts` module; keep page-specific content in the matching `src/pages/*.vue`.
 - After deployment changes, verify the `dist/` artifact and the GitHub Pages workflow run.
 
 ## Current Quality Gates
 
-- Shared content is split into page-scoped modules under `src/data/`, with `src/data/index.js` as the public entry and `src/data/types.ts` for core contracts.
+- Shared content is split into page-scoped modules under `src/data/`, with `src/data/index.ts` as the public entry and `src/data/types.ts` for core contracts.
 - Run `npm run typecheck` before committing Vue or data changes.
 - Run `npm run images:concerts` after adding or replacing concert posters.

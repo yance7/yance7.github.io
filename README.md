@@ -6,19 +6,15 @@ Vue 3 + Vite MPA，部署目标为 GitHub Pages。
 
 ```bash
 npm ci
-npm run lint
-npm run typecheck
-npm run unit
-npm run build
-npm run sitemap
-npm run smoke
+npm run check
 npm run test:e2e
+npm run links
 ```
 
-端到端测试需要 Playwright Chromium：
+`npm run check` 会依次执行 ESLint、TypeScript/Vue 类型检查、死代码检查、Vitest、sitemap、生产构建和 smoke 检查。浏览器测试首次运行前需要安装 Playwright 浏览器：
 
 ```bash
-npx playwright install chromium
+npx playwright install --with-deps chromium webkit firefox
 ```
 
 ## 海报缩略图
@@ -32,4 +28,4 @@ npm run images:concerts
 
 ## Core Web Vitals 目标
 
-持续集成以以下目标作为上线门槛：Performance ≥ 90、Accessibility ≥ 95、SEO ≥ 95、LCP ≤ 2.5s、CLS ≤ 0.1。当前 CI 负责静态、类型、单元、构建、smoke 与浏览器/axe 回归；Lighthouse 分数应在发布前用真实部署环境采样记录。
+持续集成以 `.lighthouserc.json` 中的预算作为上线门槛：Performance ≥ 70、Accessibility ≥ 95、Best Practices ≥ 95、SEO ≥ 95、LCP ≤ 2.5s、TBT ≤ 300ms、CLS ≤ 0.1。运行 `npm run lighthouse` 可在本地预览构建上执行三轮桌面采样。

@@ -4,7 +4,7 @@ export const honorCategories = [
   { key: 'all', label: '全部' },
   { key: 'peak', label: '领航级', en: 'PIONEER' },
   { key: 'excellent', label: '卓越级', en: 'DISTINGUISHED' },
-  { key: 'emerging', label: '新锐级', en: 'MERIT' }
+  { key: 'emerging', label: '新锐级', en: 'EMERGING' }
 ] satisfies Array<{ key: 'all' | HonorLevel; label: string; en?: string }>
 
 export const honors = [
