@@ -342,7 +342,7 @@ test('concert thumbnails respond and carousel/lightbox controls work', async ({ 
   const thumbnailSrcset = await page.locator('.concert-poster picture source').first().getAttribute('srcset')
   expect(thumbnailSrcset).toBeTruthy()
   const thumbnail = thumbnailSrcset!.split(',')[0]!.trim().split(/\s+/)[0]!
-  const response = await page.request.get(new URL(thumbnail, 'http://127.0.0.1:4173').toString())
+  const response = await page.request.get(new URL(thumbnail, page.url()).toString())
   expect(response.status()).toBe(200)
   expect(response.headers()['content-type']).toMatch(/^image\//)
 

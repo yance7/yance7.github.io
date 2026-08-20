@@ -3,6 +3,7 @@ import { computed, nextTick, onUnmounted, ref } from 'vue'
 import { albums } from '../data'
 import type { Album } from '../data/types'
 import { albumCoverFallback, albumCoverSrcset, albumCoverWebp } from '../utils/albumMedia'
+import { getAlbumNavigationIndex } from '../utils/albumNavigation'
 import { loadImage } from '../utils/imagePreload'
 import { useAlbumSpotlight } from '../composables/useAlbumSpotlight'
 import SectionHeading from './SectionHeading.vue'
@@ -69,22 +70,21 @@ function gridColumnCount() {
 }
 
 function onTileKeydown(event: KeyboardEvent, index: number) {
-  let nextIndex: number | null = null
-  if (event.key === 'ArrowLeft') nextIndex = index - 1
-  else if (event.key === 'ArrowRight') nextIndex = index + 1
-  else if (event.key === 'ArrowUp') nextIndex = index - gridColumnCount()
-  else if (event.key === 'ArrowDown') nextIndex = index + gridColumnCount()
-  else if (event.key === 'Home') nextIndex = 0
-  else if (event.key === 'End') nextIndex = total - 1
-  else if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+  if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
     event.preventDefault()
     selectAlbum(index)
     return
   }
 
+  const nextIndex = getAlbumNavigationIndex({
+    key: event.key,
+    index,
+    total,
+    columns: gridColumnCount()
+  })
   if (nextIndex === null) return
   event.preventDefault()
-  selectAlbum(Math.min(Math.max(nextIndex, 0), total - 1), true)
+  selectAlbum(nextIndex, true)
 }
 
 function tiltSleeve(event: PointerEvent) {
