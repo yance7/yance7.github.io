@@ -89,6 +89,22 @@ test('research timeline highlights the item in the reading zone', async ({ page 
   }
 })
 
+test('research status markers keep a static hierarchy without competing pulses', async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 900 })
+  await page.goto('/research.html')
+
+  const contentMarkers = page.locator('.status-badge.active .status-dot, .tc-head-status i, .tl-item.active .tl-node i')
+  expect(await contentMarkers.count()).toBeGreaterThan(0)
+  const animations = await contentMarkers.evaluateAll((elements) =>
+    elements.map((element) => getComputedStyle(element).animationName)
+  )
+  expect(animations.every((animation) => animation === 'none')).toBe(true)
+
+  const currentNode = page.locator('.tl-item[data-reading-state="current"] .tl-node').first()
+  await expect.poll(() => currentNode.evaluate((element) => getComputedStyle(element).boxShadow)).not.toBe('none')
+  await expect(page.locator('.nav-status b')).toHaveCSS('animation-name', 'pulse')
+})
+
 test('research timeline removes breathing motion when reduced motion is enabled', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.emulateMedia({ reducedMotion: 'reduce' })

@@ -36,6 +36,37 @@ test('concert poster coalesces sheen and tilt into one layout read per frame', {
   await expect(poster).not.toHaveCSS('--ry', '')
 })
 
+test('album sleeve coalesces pointer tilt into one layout read per frame', { tag: '@fine-pointer' }, async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium', 'Fine-pointer interaction is intentionally disabled on touch projects')
+  await page.goto('/concerts.html')
+  const sleeve = page.locator('.album-sleeve')
+  await sleeve.scrollIntoViewIfNeeded()
+
+  const layoutReads = await sleeve.evaluate(async (element) => {
+    let reads = 0
+    const original = element.getBoundingClientRect.bind(element)
+    element.getBoundingClientRect = () => {
+      reads += 1
+      return original()
+    }
+    const bounds = original()
+    for (let index = 0; index < 24; index += 1) {
+      element.dispatchEvent(new PointerEvent('pointermove', {
+        bubbles: true,
+        clientX: bounds.left + bounds.width * (0.25 + index / 60),
+        clientY: bounds.top + bounds.height * 0.35,
+        pointerType: 'mouse'
+      }))
+    }
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+    return reads
+  })
+
+  expect(layoutReads).toBeLessThanOrEqual(2)
+  await expect(sleeve).not.toHaveCSS('--tilt-x', '0deg')
+  await expect(sleeve).not.toHaveCSS('--tilt-y', '0deg')
+})
+
 test('concert carousel controls keep touch-sized targets', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/concerts.html')
@@ -148,7 +179,21 @@ test('concert album spotlight keeps a decoded cover during delayed rapid switchi
 
   await expect(wall.locator('.album-visual-slot')).toHaveAttribute('aria-busy', 'true')
   await expect(wall.locator('.album-cover-frame img')).toHaveAttribute('src', /jay-fantasy\.jpg$/)
-  await expect.poll(() => wall.locator('.album-visual-slot').evaluate((element) => getComputedStyle(element, '::after').backgroundImage)).toMatch(/gradient/)
+  const loadingVisual = await wall.locator('.album-visual-slot').evaluate((element) => {
+    const pseudo = getComputedStyle(element, '::after')
+    return {
+      animationName: pseudo.animationName,
+      backgroundImage: pseudo.backgroundImage,
+      reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
+      state: element.getAttribute('data-spotlight-state')
+    }
+  })
+  expect(loadingVisual).toEqual({
+    animationName: expect.stringMatching(/^album-loading-pulse-/),
+    backgroundImage: expect.stringMatching(/gradient/),
+    reducedMotion: false,
+    state: 'loading'
+  })
 
   const visibleCover = await wall.locator('.album-cover-frame').evaluateAll((frames) => frames
     .map((frame) => {
@@ -167,6 +212,7 @@ test('concert album spotlight keeps a decoded cover during delayed rapid switchi
     expect.arrayContaining([expect.stringMatching(/jay-ye-hui-mei-(640|1200)\.webp$/)])
   )
   await expect(wall.locator('.album-visual-slot')).toHaveAttribute('aria-busy', 'false')
+  await expect.poll(() => wall.locator('.album-visual-slot').evaluate((element) => getComputedStyle(element, '::after').animationName)).toBe('none')
 })
 
 test('concert album spotlight settles on the selected album when both cover sources fail', async ({ page }) => {
@@ -188,6 +234,7 @@ test('concert album spotlight settles on the selected album when both cover sour
   await expect(wall.locator('.album-cover-frame img[src$="jay-ye-hui-mei.jpg"]')).toHaveCount(1)
   await expect(wall.locator('.album-visual-slot')).toHaveAttribute('aria-busy', 'false')
   await expect(wall.locator('.album-visual-slot')).toHaveAttribute('data-spotlight-state', 'error')
+  await expect.poll(() => wall.locator('.album-visual-slot').evaluate((element) => getComputedStyle(element, '::after').animationName)).toBe('none')
 })
 
 test('concert album spotlight commits the latest rapid selection only', async ({ page }) => {

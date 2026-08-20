@@ -33,6 +33,7 @@ export function useAlbumSpotlight(total: number, preload: (index: number) => Pro
     } catch {
       loaded = false
     }
+    // Only the newest selection may commit displayed/status after image decoding settles.
     if (token !== requestToken) return
 
     state.value = {

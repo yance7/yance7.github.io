@@ -49,7 +49,6 @@
 }
 .status-badge.active .status-dot {
   background: var(--aqua); box-shadow: 0 0 8px var(--aqua);
-  animation: pulse 2.4s ease-in-out infinite;
 }
 .status-badge.published .status-dot { background: var(--gold); }
 .status-badge.completed .status-dot { background: var(--dim); }
@@ -432,7 +431,6 @@
 .tc-head-status i {
   width: 6px; height: 6px; border-radius: 50%;
   background: var(--aqua); box-shadow: 0 0 8px var(--glow-aqua);
-  animation: pulse 2.4s ease-in-out infinite;
 }
 .toolchain-grid {
   display: grid;
@@ -626,8 +624,6 @@
   transition: background var(--dur-base) var(--ease-soft);
 }
 .tl-item:last-child::after { display: none; }
-.tl-item.active .tl-node i { animation: breathe 2.4s ease-in-out infinite; }
-@keyframes breathe { 0%, 100% { opacity: 1; box-shadow: 0 0 0 0 var(--glow-aqua) } 50% { opacity: .6; box-shadow: 0 0 0 6px transparent } }
 .tl-side { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; padding-right: 18px; }
 .tl-date {
   font-family: var(--mono); font-size: var(--text-micro); letter-spacing: .06em; color: var(--dim);

@@ -29,6 +29,7 @@ const pointerSheen: Directive<HTMLElement, PointerSheenOptions | undefined> = {
     const move = (event: PointerEvent) => {
       cancelAnimationFrame(frame)
       frame = requestAnimationFrame(() => {
+        // Keep the layout read and CSS writes in one frame so pointer bursts cannot force repeated layout.
         const bounds = element.getBoundingClientRect()
         const x = Math.min(Math.max(((event.clientX - bounds.left) / bounds.width) * 100, 0), 100)
         const y = Math.min(Math.max(((event.clientY - bounds.top) / bounds.height) * 100, 0), 100)

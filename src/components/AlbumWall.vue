@@ -13,6 +13,9 @@ const spotlightSizes = '(min-width: 1180px) 36vw, (min-width: 768px) 42vw, 82vw'
 const gridElement = ref<HTMLElement | null>(null)
 const tileElements = ref<Array<HTMLButtonElement | null>>([])
 let tiltFrame: number | null = null
+let tiltElement: HTMLElement | null = null
+let tiltClientX = 0
+let tiltClientY = 0
 
 const selectedAlbum = computed<Album>(() => albums[spotlight.state.value.selected]!)
 const spotlightAlbum = computed<Album>(() => albums[spotlight.state.value.displayed]!)
@@ -90,20 +93,25 @@ function onTileKeydown(event: KeyboardEvent, index: number) {
 function tiltSleeve(event: PointerEvent) {
   if (
     event.pointerType === 'touch'
-    || !window.matchMedia('(pointer: fine)').matches
+    || !window.matchMedia('(hover: hover) and (pointer: fine)').matches
     || window.matchMedia('(prefers-reduced-motion: reduce)').matches
   ) return
 
-  const sleeve = event.currentTarget as HTMLElement
-  const bounds = sleeve.getBoundingClientRect()
-  const horizontal = Math.min(Math.max(((event.clientX - bounds.left) / bounds.width) * 2 - 1, -1), 1)
-  const vertical = Math.min(Math.max(((event.clientY - bounds.top) / bounds.height) * 2 - 1, -1), 1)
-
-  if (tiltFrame !== null) window.cancelAnimationFrame(tiltFrame)
+  tiltElement = event.currentTarget as HTMLElement
+  tiltClientX = event.clientX
+  tiltClientY = event.clientY
+  if (tiltFrame !== null) return
   tiltFrame = window.requestAnimationFrame(() => {
+    const sleeve = tiltElement
+    tiltFrame = null
+    if (!sleeve) return
+
+    // Read geometry once, then write CSS variables in the same frame for the latest pointer event.
+    const bounds = sleeve.getBoundingClientRect()
+    const horizontal = Math.min(Math.max(((tiltClientX - bounds.left) / bounds.width) * 2 - 1, -1), 1)
+    const vertical = Math.min(Math.max(((tiltClientY - bounds.top) / bounds.height) * 2 - 1, -1), 1)
     sleeve.style.setProperty('--tilt-x', `${(-vertical * 3).toFixed(2)}deg`)
     sleeve.style.setProperty('--tilt-y', `${(horizontal * 3).toFixed(2)}deg`)
-    tiltFrame = null
   })
 }
 
@@ -113,12 +121,14 @@ function resetSleeve(event: PointerEvent) {
     tiltFrame = null
   }
   const sleeve = event.currentTarget as HTMLElement
+  if (tiltElement === sleeve) tiltElement = null
   sleeve.style.removeProperty('--tilt-x')
   sleeve.style.removeProperty('--tilt-y')
 }
 
 onUnmounted(() => {
   if (tiltFrame !== null) window.cancelAnimationFrame(tiltFrame)
+  tiltElement = null
 })
 </script>
 
@@ -573,33 +583,18 @@ html[data-theme='light'] .album-kicker {
 .album-link:active { transform: translateY(1px) scale(var(--motion-press-scale)); }
 
 @media (hover: none), (pointer: coarse) {
-  .album-nav button:hover,
-  .album-link:hover {
+  .album-nav button:hover {
     border-color: var(--stage-line);
     background: transparent;
     box-shadow: none;
     transform: none;
   }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .album-sleeve,
-  .album-tile,
-  .album-tile-meta,
-  .album-nav button,
-  .album-link { transition: none !important; }
-  .album-sleeve { transform: none !important; }
-  .album-vinyl { animation: none !important; transform: translateX(14px) rotate(3deg); }
-  .album-visual-slot::after { animation: none !important; }
-  .album-switch-enter-active,
-  .album-switch-leave-active { transition: none !important; }
-  .album-switch-enter-from,
-  .album-switch-leave-to { opacity: 1; transform: none; }
-  .album-nav button:hover,
-  .album-nav button:focus-visible,
-  .album-link:hover,
-  .album-link:focus-visible,
-  .album-tile:hover { transform: none !important; }
+  .album-link:hover {
+    border-color: var(--album-selected-fill);
+    background: var(--album-selected-fill);
+    box-shadow: none;
+    transform: none;
+  }
 }
 
 .album-nav button:focus-visible,
@@ -852,6 +847,8 @@ html[data-theme='light'] .album-kicker {
   .album-tile,
   .album-tile img,
   .album-tile-meta,
+  .album-nav button,
+  .album-link,
   .album-switch-enter-active,
   .album-switch-leave-active {
     animation: none !important;
@@ -861,6 +858,10 @@ html[data-theme='light'] .album-kicker {
   .album-sleeve,
   .album-tile,
   .album-tile-meta,
+  .album-nav button:hover,
+  .album-nav button:focus-visible,
+  .album-link:hover,
+  .album-link:focus-visible,
   .album-switch-enter-from,
   .album-switch-leave-to {
     transform: none !important;
@@ -870,5 +871,17 @@ html[data-theme='light'] .album-kicker {
     transform: translateX(14px) rotate(3deg);
   }
   .album-visual-slot::after { animation: none !important; }
+}
+
+@media (forced-colors: active) {
+  .album-tile.selected {
+    border-color: Highlight;
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+  .album-tile:focus-visible,
+  .album-nav button:focus-visible,
+  .album-link:focus-visible { outline-color: Highlight; }
+  .album-visual-slot[data-spotlight-state='error']::after { border-color: Mark; }
 }
 </style>
