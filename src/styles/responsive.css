@@ -1,5 +1,6 @@
 /* ===== 响应式 ===== */
 @media (max-width: 900px) {
+  .theme-orbit { min-height: 44px; }
   .nav-status { display: none; }
   .nav-rail { gap: 14px; }
   .nav-rail a .nav-en { display: none; }

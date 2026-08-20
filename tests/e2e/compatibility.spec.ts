@@ -209,3 +209,37 @@ test('touch carousel hover suppression follows the active theme control tokens',
   expect(colors.background).toBe(colors.expectedBackground)
   expect(colors.border).toBe(colors.expectedBorder)
 })
+
+test('Firefox preserves direct hashes and theme state across navigation', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'firefox-desktop-smoke', 'Firefox-specific desktop compatibility proof')
+  await page.goto('/research.html#sec-toolchain')
+  await expect(page.locator('.page-compass-link[href="#sec-toolchain"]')).toHaveAttribute('aria-current', 'location')
+  await page.locator('.theme-orbit').click()
+  const theme = await page.locator('html').getAttribute('data-theme')
+  await page.goto('/works.html#project-fresheye')
+  await expect(page.locator('html')).toHaveAttribute('data-theme', theme!)
+  await expect(page.locator('.page-compass-link[href="#project-fresheye"]')).toHaveAttribute('aria-current', 'location')
+})
+
+test('Android touch workflows survive portrait and landscape changes', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-android-smoke', 'Android-specific touch compatibility proof')
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/index.html')
+  await page.locator('.menu-trigger').click()
+  await expect(page.locator('.mobile-menu-overlay')).toBeVisible()
+  await page.keyboard.press('Escape')
+
+  await page.goto('/concerts.html#album-frequencies')
+  const targetAlbum = page.locator('[data-album-id="jay-ye-hui-mei"]')
+  await targetAlbum.tap()
+  await expect(targetAlbum).toHaveAttribute('aria-selected', 'true')
+  await page.setViewportSize({ width: 844, height: 390 })
+  const geometry = await page.evaluate(() => ({
+    bodyWidth: document.body.scrollWidth,
+    documentWidth: document.documentElement.scrollWidth,
+    viewportWidth: document.documentElement.clientWidth
+  }))
+  expect(geometry.documentWidth).toBeLessThanOrEqual(geometry.viewportWidth)
+  expect(geometry.bodyWidth).toBeLessThanOrEqual(geometry.viewportWidth)
+  await expect(page.locator('.page-compass')).toBeVisible()
+})
