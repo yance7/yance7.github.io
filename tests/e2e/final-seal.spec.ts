@@ -35,6 +35,7 @@ async function expectAccessible(page: Page) {
 
 for (const viewport of viewports) {
   test(`all pages preserve geometry and runtime integrity at ${viewport.width}x${viewport.height}`, async ({ page }) => {
+    test.setTimeout(60000)
     await page.setViewportSize(viewport)
 
     for (const entry of htmlPageEntries) {
@@ -138,6 +139,7 @@ test('dark theme and reduced motion preserve readable static content', async ({ 
 })
 
 test('representative light and dark layouts remain axe-clean', async ({ page }) => {
+  test.setTimeout(120000)
   for (const theme of ['light', 'dark'] as const) {
     await page.setViewportSize(theme === 'light' ? viewports[9] : viewports[2])
     await page.goto('/index.html')

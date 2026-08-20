@@ -11,7 +11,7 @@
   --display: "Inter Variable", "Noto Serif SC Variable", serif;
   --mono: "IBM Plex Mono", "Noto Sans SC Variable", monospace;
 
-  /* 缓动函数（接近苹果 spring 的丝滑感） */
+  /* 缓动曲线 */
   --ease: cubic-bezier(.22, .61, .36, 1);
   --ease-out: cubic-bezier(.16, 1, .3, 1);
   --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
@@ -23,7 +23,7 @@
   --text-xs: .75rem;
   --text-sm: .8125rem;
 
-  /* 圆角（更柔和） */
+  /* 圆角层级 */
   --radius-xs: 3px;
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -170,7 +170,7 @@
   --media-control-hover: rgba(255, 255, 255, .13);
   --media-control-hover-border: rgba(255, 255, 255, .34);
 
-  /* 阴影（分层、柔和） */
+  /* 阴影层级 */
   --shadow-1: 0 1px 2px rgba(69, 57, 40, .03), 0 4px 16px rgba(69, 57, 40, .05);
   --shadow-2: 0 2px 8px rgba(69, 57, 40, .05), 0 12px 40px rgba(109, 74, 27, .10);
   --shadow-3: 0 4px 16px rgba(69, 57, 40, .06), 0 24px 80px rgba(39, 34, 27, .14);
@@ -399,7 +399,7 @@
   }
 }
 
-/* ---------- 全局颜色过渡（丝滑主题切换） ---------- */
+/* ---------- 全局主题颜色过渡 ---------- */
 body, .site-shell, .site-nav, .stat-cell, .ap-row, .tl-tag, .concert-info,
 .site-footer, .carousel-controls, .lightbox, .lb-meta, .current-research,
 .ap-panel, .concert-list, .research-timeline, .honor-card, .section-head,

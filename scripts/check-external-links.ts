@@ -12,7 +12,9 @@ const maxAttempts = 3
 const retryDelayMs = 500
 const manualReviewUrls = new Set([
   // IEEE Xplore returns 418 to both HEAD and GET probes from CI-style clients.
-  'https://ieeexplore.ieee.org/abstract/document/11605650'
+  'https://ieeexplore.ieee.org/abstract/document/11605650',
+  // BIO Web of Conferences returns 403 to automated probes while the DOI remains publicly indexed.
+  'https://www.bio-conferences.org/articles/bioconf/abs/2026/30/bioconf_icbb2026_02029/bioconf_icbb2026_02029.html'
 ])
 
 async function fetchWithTimeout(url: string, init: RequestInit, timeout = getTimeoutMs) {

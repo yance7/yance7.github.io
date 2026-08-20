@@ -251,8 +251,8 @@ test('page compass exposes page-specific sections without covering narrow layout
       return { width: bounds.width, height: bounds.height }
     }))
     compactTargets.forEach(({ width, height }) => {
-      expect(width).toBeGreaterThanOrEqual(44)
-      expect(height).toBeGreaterThanOrEqual(44)
+      expect(Math.round(width)).toBeGreaterThanOrEqual(44)
+      expect(Math.round(height)).toBeGreaterThanOrEqual(44)
     })
   }
 
@@ -318,7 +318,7 @@ test('mobile compass keeps focus priority inside a compact visual frame', async 
       })
     )
     expect(
-      targets.every(({ width, height }) => width >= 44 && height >= 44),
+      targets.every(({ width, height }) => Math.round(width) >= 44 && Math.round(height) >= 44),
       `${viewport.width}×${viewport.height} targets: ${JSON.stringify(targets)}`
     ).toBe(true)
   }

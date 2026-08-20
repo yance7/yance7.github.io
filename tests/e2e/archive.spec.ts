@@ -56,7 +56,9 @@ test('archive titles keep balanced Chinese lines at narrow widths', async ({ pag
 
 test('honors filtering renders compact cards without detail controls', async ({ page }) => {
   await page.goto('/honors.html')
-  await page.locator('.filter-btn').filter({ hasText: '领航级' }).click()
+  const filter = page.locator('.filter-btn').filter({ hasText: '领航级' })
+  await filter.scrollIntoViewIfNeeded()
+  await filter.click()
   await expect(page.locator('.honor-card')).toHaveCount(4)
   await expect(page.locator('.honor-card').first()).toHaveClass(/revealed/)
   await expect(page.locator('.honor-expand, .honor-detail')).toHaveCount(0)
@@ -144,7 +146,11 @@ test('works uses typographic project dossiers without legacy icons', async ({ pa
   await page.goto('/works.html')
   const lyric = page.locator('.hero-works-title')
   await expect(lyric).toHaveAttribute('aria-label', '「因为我已慢慢懂，努力就能成功」')
-  await expect(lyric).toHaveCSS('white-space', 'nowrap')
+  if ((page.viewportSize()?.width ?? 0) > 640) {
+    await expect(lyric).toHaveCSS('white-space', 'nowrap')
+  } else {
+    await expect(lyric).toHaveCSS('white-space', 'normal')
+  }
   await expect(lyric.locator('br')).toHaveCount(0)
   await expect(page.locator('.hero-copy')).toHaveText('一个已经上线的小世界，记录想法如何离开纸面，开始被真实使用。')
   await expect(page.locator('.showcase')).toHaveCount(1)
