@@ -244,6 +244,70 @@ test('page compass exposes page-specific sections without covering narrow layout
   await expect(page.locator('.page-compass')).toHaveCount(0)
 })
 
+test('mobile compass keeps focus priority inside a compact visual frame', async ({ page }) => {
+  for (const viewport of [
+    { width: 320, height: 568 },
+    { width: 390, height: 844 },
+    { width: 844, height: 390 }
+  ]) {
+    await page.setViewportSize(viewport)
+    await page.goto('/honors.html')
+    const compass = page.locator('.page-compass')
+
+    if (viewport.width <= 760) {
+      await expect(compass).toHaveAttribute('data-mobile-state', 'quiet')
+      await page.evaluate(() => window.scrollTo({ top: 700, behavior: 'auto' }))
+      await expect(compass).toHaveAttribute('data-mobile-state', 'reading')
+      await expect.poll(() => compass.getAttribute('data-mobile-state'), { timeout: 1200 }).toBe('visible')
+    } else {
+      await expect(compass).toHaveAttribute('data-mobile-state', 'visible')
+    }
+
+    const topControl = compass.locator('.page-compass-top')
+    await topControl.focus()
+    await expect(topControl).toBeFocused()
+    await expect(compass).toHaveAttribute('data-mobile-state', 'visible')
+
+    if (viewport.width <= 760) {
+      await page.evaluate(() => window.scrollBy({ top: 120, behavior: 'auto' }))
+      await expect(compass).toHaveAttribute('data-mobile-state', 'visible')
+    }
+
+    const geometry = await compass.evaluate((element) => {
+      const rect = element.getBoundingClientRect()
+      return {
+        left: rect.left,
+        right: rect.right,
+        bottom: rect.bottom,
+        width: rect.width,
+        height: rect.height
+      }
+    })
+    expect(geometry.left).toBeGreaterThanOrEqual(0)
+    expect(geometry.right).toBeLessThanOrEqual(viewport.width)
+    expect(geometry.bottom).toBeLessThanOrEqual(viewport.height)
+    if (viewport.width <= 760) {
+      expect(geometry.width).toBeLessThanOrEqual(viewport.width - 24)
+      expect(geometry.height).toBeLessThanOrEqual(58)
+    }
+
+    const targets = await compass.locator('button, a').evaluateAll((elements) =>
+      elements.map((element) => {
+        const rect = element.getBoundingClientRect()
+        return {
+          label: element.getAttribute('aria-label') ?? element.textContent?.trim() ?? element.tagName,
+          width: rect.width,
+          height: rect.height
+        }
+      })
+    )
+    expect(
+      targets.every(({ width, height }) => width >= 44 && height >= 44),
+      `${viewport.width}×${viewport.height} targets: ${JSON.stringify(targets)}`
+    ).toBe(true)
+  }
+})
+
 test('interactive states remain accessible after opening', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/index.html')

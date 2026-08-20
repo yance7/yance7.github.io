@@ -20,6 +20,7 @@ export function usePageCompass(sections: MaybeRefOrGetter<readonly PageCompassSe
   const mobileViewport = ref(initialMobileViewport)
   const mobileCompassState = ref<CompassScrollState>(initialMobileViewport ? 'quiet' : 'visible')
   const mobileFocusWithin = ref(false)
+  // Focus visibility outranks scroll-driven hiding so keyboard users never lose the active control.
   const mobileVisible = computed(() => (
     !mobileViewport.value || mobileFocusWithin.value || mobileCompassState.value === 'visible'
   ))
@@ -99,6 +100,7 @@ export function usePageCompass(sections: MaybeRefOrGetter<readonly PageCompassSe
 
   function setupTargets() {
     if (!mounted) return
+    // Resolve the hash after async page content mounts, then observe the final section nodes.
     const hashTarget = decodeHashTarget(window.location.hash)
     hashNavigationId = hashTarget && sectionList.value.some((section) => section.id === hashTarget) ? hashTarget : null
     hashNavigationSettled = false
