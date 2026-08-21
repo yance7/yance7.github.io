@@ -150,15 +150,15 @@
 
   Run `npm run lint`, `npm run typecheck`, `npm run deadcode`, `npm run unit`, `npm run sitemap`, `npm run build`, `npm run smoke`, `npm run audit:assets`, and the focused/full Playwright suites available in the environment. Lighthouse was attempted; Windows Chrome cleanup returned `EPERM` after collection, so it remains an environment limitation rather than a relaxed threshold.
 
-- [ ] **Step 5: Review scope and publish directly**
+- [x] **Step 5: Review scope and publish directly**
 
-  Confirm `git diff -- src/data html-src` is empty, inspect the staged file list, commit with `完善档案站报告建议与发布审计`, push `origin main`, then verify local `HEAD` equals `origin/main` and the worktree is clean.
+  Confirm `git diff -- src/data html-src` is empty, inspect the staged file list, commit with `完善档案站报告建议与发布审计`, push `origin main`, then verify local `HEAD` equals `origin/main` and the worktree is clean. Verified on 2026-08-21: `ffd5f9940107b09d89436c6c2b237ed50b2e907e`.
 
 ---
 
 ## Completion Audit
 
-- [ ] Every report recommendation that can be proven in-repository has a source contract, test, or release audit output.
+- [x] Every report recommendation that can be proven in-repository has a source contract, test, or release audit output.
 - [x] Copyright ownership and real-world monitoring remain explicitly unresolved/disabled rather than being represented as completed.
 - [x] All required quality commands have fresh exit-code evidence, with Lighthouse's Windows cleanup limitation recorded above.
-- [ ] GitHub `main` contains the verified commit and no PR/branch was created.
+- [x] GitHub `main` contains the verified commit and no PR/branch was created.
