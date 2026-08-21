@@ -164,6 +164,21 @@ test('home removes duplicate archive navigation and keeps the five worlds as the
   await expect(page.locator('#home-worlds .world-card')).toHaveCount(5)
 })
 
+test('home keeps pointer sheen on featured work but not on the five world cards', async ({ page }) => {
+  await page.goto('/index.html')
+  await expect(page.locator('.world-card')).toHaveCount(5)
+  const featuredSheen = await page.locator('.focus-card').evaluateAll((elements) =>
+    elements.map((element) => element.hasAttribute('data-pointer-sheen'))
+  )
+  expect(featuredSheen.length).toBeGreaterThan(0)
+  expect(featuredSheen.every(Boolean)).toBe(true)
+
+  const worldSheen = await page.locator('.world-card').evaluateAll((elements) =>
+    elements.map((element) => element.hasAttribute('data-pointer-sheen'))
+  )
+  expect(worldSheen.every((value) => value === false)).toBe(true)
+})
+
 test('home entry actions route to selected work and the five worlds', async ({ page }) => {
   await page.goto('/index.html')
   const primary = page.locator('.home-stage-actions a[href="#selected-work"]')

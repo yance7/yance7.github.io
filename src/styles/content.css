@@ -70,12 +70,10 @@
   background: var(--surface-strong); padding: var(--space-6) var(--space-5);
   display: flex; flex-direction: column; gap: 6px;
   content-visibility: auto;
-  transition: background-color var(--dur-base) var(--ease-soft),
-    transform var(--dur-base) var(--ease-apple), box-shadow var(--dur-base);
+  transition: background-color var(--dur-base) var(--ease-soft);
 }
 .metric-card:hover {
-  position: relative; z-index: 1;
-  background: var(--surface-hover); transform: translateY(-2px); box-shadow: var(--interactive-shadow);
+  background: var(--surface-hover);
 }
 .metric-card b { font-family: var(--font-editorial); font-size: 3.2rem; font-weight: 440; line-height: 1; }
 .metric-card span { font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: .2em; color: var(--gold); text-transform: uppercase; }
@@ -551,9 +549,9 @@
   min-width: 0;
   padding: var(--space-5);
   background: var(--surface-strong);
-  transition: background-color var(--dur-base), transform var(--dur-base) var(--ease-apple);
+  transition: background-color var(--dur-base);
 }
-.toolchain-group:hover { background: var(--surface-tint); transform: translateY(-2px); }
+.toolchain-group:hover { background: var(--surface-tint); }
 .tc-group-head {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -823,7 +821,7 @@
   padding: var(--space-5); overflow: hidden;
   border: 1px solid var(--line); background: var(--surface);
   border-radius: var(--radius-card); box-shadow: var(--shadow-1);
-  transition: transform var(--dur-base) var(--ease-apple), border-color var(--dur-base), box-shadow var(--dur-base);
+  transition: border-color var(--dur-base);
 }
 .leadership-card::before {
   content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
@@ -831,7 +829,7 @@
   transform: scaleX(0); transform-origin: left;
   transition: transform var(--dur-base) var(--ease-apple);
 }
-.leadership-card:hover { transform: translateY(-2px); box-shadow: var(--interactive-shadow); border-color: var(--gold); }
+.leadership-card:hover { border-color: var(--gold); }
 .leadership-card:hover::before { transform: scaleX(1); }
 .leadership-role {
   display: block; font-family: var(--font-editorial); font-style: italic; font-size: 1.5rem;

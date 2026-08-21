@@ -75,6 +75,24 @@ test('page compass unifies section navigation, reading progress, and return to t
   await expect(page.locator('.section-dots, .scroll-to-top')).toHaveCount(0)
 })
 
+test('static metric surfaces do not advertise elevation on hover', async ({ page }) => {
+  await page.goto('/academics.html')
+  const metric = page.locator('.metric-card').first()
+  await metric.scrollIntoViewIfNeeded()
+  await expect.poll(() => metric.evaluate((element) => getComputedStyle(element).transform)).toBe('none')
+  const before = await metric.evaluate((element) => getComputedStyle(element).transform)
+  await metric.hover()
+  const after = await metric.evaluate((element) => getComputedStyle(element).transform)
+  expect(after).toBe(before)
+})
+
+test('desktop PageCompass is the primary progress surface', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 })
+  await page.goto('/research.html')
+  await expect(page.locator('.page-compass')).toBeVisible()
+  await expect(page.locator('.scroll-progress')).toHaveCSS('opacity', '0')
+})
+
 test('research timeline highlights the item in the reading zone', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/research.html')
@@ -188,7 +206,6 @@ test('signature surfaces track fine-pointer sheen without changing typography', 
   test.skip(testInfo.project.name !== 'chromium', 'Fine-pointer interaction is intentionally disabled on touch projects')
   const targets = [
     ['index.html', '.focus-card'],
-    ['index.html', '.world-card'],
     ['works.html', '.showcase'],
     ['concerts.html', '.concert-poster']
   ] as const
@@ -221,7 +238,7 @@ test('signature surfaces track fine-pointer sheen without changing typography', 
 test('signature pointer sheen stays static with reduced motion', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/index.html')
-  const surface = page.locator('.world-card').first()
+  const surface = page.locator('.focus-card').first()
   await surface.scrollIntoViewIfNeeded()
   const box = await surface.boundingBox()
   await page.mouse.move((box?.x ?? 0) + (box?.width ?? 0) * .8, (box?.y ?? 0) + (box?.height ?? 0) * .2)

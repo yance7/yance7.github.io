@@ -78,7 +78,6 @@ const selectedActivities = activities.filter((item) => item.featured)
           :href="w.href"
           :style="{ '--wi': i }"
           v-reveal="{ delay: i * 80 }"
-          v-pointer-sheen
         >
           <div class="world-left">
             <span class="world-no">{{ w.no }}</span>

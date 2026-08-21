@@ -350,6 +350,10 @@
   .concert-poster:hover img { transform: none !important; }
 }
 @media (min-width: 761px) and (max-width: 1024px) {
+  .site-shell.has-page-compass .scroll-progress {
+    opacity: 0;
+    pointer-events: none;
+  }
   .page-compass {
     right: 12px;
     width: 68px;
@@ -368,6 +372,14 @@
   .page-compass-step a,
   .page-compass-step-disabled { height: 44px; }
 }
+
+@media (min-width: 1025px) {
+  .site-shell.has-page-compass .scroll-progress {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
 @media (max-width: 760px) {
   .site-shell.has-page-compass .site-footer {
     padding-bottom: max(92px, calc(76px + env(safe-area-inset-bottom)));

@@ -43,6 +43,8 @@
   position: fixed; top: 0; left: 0; right: 0;
   height: 2px; z-index: var(--z-nav);
   pointer-events: none;
+  opacity: 1;
+  transition: opacity var(--dur-base) var(--ease-soft);
 }
 .scroll-bar {
   height: 100%; transform-origin: left;
@@ -171,7 +173,7 @@
 .home-hero {
   position: relative;
   display: flex;
-  min-height: clamp(700px, calc(100svh - 88px), 920px);
+  min-height: clamp(640px, calc(100svh - 88px), 920px);
   overflow: clip;
   isolation: isolate;
   border-bottom: 0;
