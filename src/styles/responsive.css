@@ -85,7 +85,7 @@
   .world-left { gap: 10px; }
   .world-icon { font-size: 20px; }
 
-  .now-active { flex-direction: column; align-items: flex-start; gap: 14px; padding: 22px; }
+  .now-active { flex-direction: column; align-items: flex-start; gap: var(--space-4); padding: var(--space-5); }
   .now-tag { margin-left: 0; }
   .now-arrow { position: absolute; right: 22px; bottom: 20px; }
 
@@ -153,9 +153,9 @@
   .wordmark { font-size: 1.75rem; }
   .archive-hero { padding-inline: max(var(--w-pad), env(safe-area-inset-left)) max(var(--w-pad), env(safe-area-inset-right)); }
   .home-stage { padding-inline: max(var(--w-pad), env(safe-area-inset-left)) max(var(--w-pad), env(safe-area-inset-right)); }
-  .home-stage-kicker { flex-wrap: wrap; gap: 8px; font-size: .64rem; letter-spacing: .11em; line-height: 1.55; }
-  .home-stage-identity { font-size: .59rem; letter-spacing: .1em; line-height: 1.6; }
-  .home-stage-heading { gap: 8px; font-size: .61rem; letter-spacing: .13em; line-height: 1.5; }
+  .home-stage-kicker { flex-wrap: wrap; gap: 8px; font-size: var(--type-meta-size); letter-spacing: .11em; line-height: 1.55; }
+  .home-stage-identity { font-size: var(--type-meta-size); letter-spacing: .1em; line-height: 1.6; }
+  .home-stage-heading { gap: 8px; font-size: var(--type-meta-size); letter-spacing: .13em; line-height: 1.5; }
   .home-stage-title { font-size: clamp(2.5rem, 11vw, 3.5rem); }
   .page-home > .home-focus { padding-top: var(--space-5); }
   .hero-action { width: 100%; justify-content: space-between; }
@@ -194,7 +194,7 @@
   .home-hero { min-height: calc(100svh - 68px); }
   .home-stage { padding-block: 16px 12px; }
   .home-stage-body { padding: 16px 0 10px; }
-  .home-stage-heading { font-size: .625rem; }
+  .home-stage-heading { font-size: var(--type-meta-size); }
   .home-stage-title {
     max-width: 16ch;
     margin: 12px 0 10px;
@@ -382,7 +382,7 @@
     width: min(356px, calc(100vw - 24px));
     max-height: none;
     padding: 5px 6px;
-    border-radius: var(--radius-full);
+    border-radius: var(--radius-pill);
     overflow: visible;
     transform: translateX(50%);
   }
@@ -413,7 +413,7 @@
   }
   .page-compass-link span {
     display: block;
-    font-size: .6rem;
+    font-size: var(--type-meta-size);
   }
   .page-compass-link strong { display: none; }
   .page-compass-step { align-self: center; gap: 0; }

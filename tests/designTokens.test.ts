@@ -50,11 +50,11 @@ describe('archive design tokens', () => {
     expect(theme).toContain('--text-xs: var(--type-meta-size)')
     expect(theme).toContain('--text-sm: var(--type-secondary-size)')
     expect(theme).toContain('--w-read: var(--w-editorial)')
-    expect(theme).toContain('--dur-micro:')
-    expect(theme).toContain('--dur-fast:')
-    expect(theme).toContain('--dur-base:')
-    expect(theme).toContain('--dur-slow:')
-    expect(theme).toContain('--dur-page:')
+    expect(theme).toContain('--dur-micro: .12s')
+    expect(theme).toContain('--dur-fast: .2s')
+    expect(theme).toContain('--dur-base: .28s')
+    expect(theme).toContain('--dur-slow: .52s')
+    expect(theme).toContain('--dur-page: .56s')
   })
 
   it('applies the semantic typography and width contract in the touched stylesheets', () => {
@@ -79,5 +79,34 @@ describe('archive design tokens', () => {
   it('preserves reduced-motion handling in the public stylesheet contract', () => {
     expect(theme).toContain('@media (prefers-reduced-motion: reduce)')
     expect(responsive).toContain('@media (prefers-reduced-motion: reduce)')
+  })
+
+  it('migrates the reviewed font-role declarations to semantic tokens', () => {
+    expect(content).toContain('font-family: var(--font-editorial); font-size: 1.3rem; color: var(--gold);')
+    expect(content).not.toContain('font-family: var(--display); font-size: 1.3rem; color: var(--gold);')
+    expect(shell).toContain('font-family: var(--font-technical); font-size: 1.2rem; line-height: 1;')
+    expect(shell).not.toContain('font-family: var(--mono); font-size: 1.2rem; line-height: 1;')
+  })
+
+  it('migrates the reviewed surface radius declarations to semantic tokens', () => {
+    expect(content).toContain('padding: 4px 10px; border-radius: var(--radius-pill);')
+    expect(content).not.toContain('padding: 4px 10px; border-radius: var(--radius-full);')
+    expect(content).toContain('border-radius: var(--radius-card); overflow: hidden;')
+    expect(content).not.toContain('border-radius: var(--radius-lg); overflow: hidden;')
+    expect(media).toContain('padding: 9px 12px; border-radius: var(--radius-small);')
+    expect(media).not.toContain('padding: 9px 12px; border-radius: var(--radius-sm);')
+    expect(shell).toContain('padding: 5px 12px 5px 6px; border-radius: var(--radius-pill);')
+    expect(shell).not.toContain('padding: 5px 12px 5px 6px; border-radius: var(--radius-full);')
+    expect(shell).toContain('padding: var(--space-3) var(--space-4); border: 1px solid var(--control-border); border-radius: var(--radius-pill);')
+    expect(shell).not.toContain('padding: 11px 18px; border: 1px solid var(--control-border); border-radius: var(--radius-full);')
+    expect(responsive).toContain('padding: 5px 6px;\n    border-radius: var(--radius-pill);')
+    expect(responsive).not.toContain('padding: 5px 6px;\n    border-radius: var(--radius-full);')
+  })
+
+  it('keeps important responsive labels at or above the public meta size', () => {
+    expect(responsive).not.toContain('font-size: .64rem')
+    expect(responsive).not.toContain('font-size: .61rem')
+    expect(responsive).not.toContain('font-size: .6rem')
+    expect(responsive).not.toContain('font-size: .59rem')
   })
 })
