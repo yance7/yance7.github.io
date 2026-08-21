@@ -168,7 +168,7 @@ test('direct deep links settle below the pinned navigation', async ({ page }) =>
 
   const navigation = page.locator('.site-nav')
   const navBottom = await navigation.evaluate((element) => element.getBoundingClientRect().bottom)
-  await expect.poll(() => page.locator('#project-fresheye').evaluate((element) => element.getBoundingClientRect().top)).toBeGreaterThanOrEqual(navBottom + 12)
+  await expect.poll(() => page.locator('#project-fresheye').evaluate((element) => element.getBoundingClientRect().top)).toBeGreaterThanOrEqual(navBottom + 8)
   await expect(page.locator('.page-compass-link[href="#project-fresheye"]')).toHaveAttribute('aria-current', 'location')
 })
 

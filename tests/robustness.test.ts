@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { legacyCopyText, type LegacyCopyDocument, type LegacyCopyTextArea } from '../src/utils/clipboard'
+import { getPointerSheenPosition } from '../src/utils/pointerSheen'
 import { clampScrollProgress } from '../src/utils/scrollProgress'
 import { preloadImageOnce, type PreloadImage } from '../src/utils/imagePreload'
 
@@ -44,6 +45,20 @@ describe('scroll progress', () => {
     expect(clampScrollProgress(-0.25)).toBe(0)
     expect(clampScrollProgress(0.45)).toBe(0.45)
     expect(clampScrollProgress(1.25)).toBe(1)
+  })
+})
+
+describe('pointer sheen geometry', () => {
+  it('clamps pointer coordinates to the cached element bounds', () => {
+    const bounds = { left: 10, top: 20, width: 100, height: 200 }
+
+    expect(getPointerSheenPosition(bounds, -20, 260)).toEqual({ x: 0, y: 100 })
+    expect(getPointerSheenPosition(bounds, 60, 120)).toEqual({ x: 50, y: 50 })
+    expect(getPointerSheenPosition(bounds, 160, 20)).toEqual({ x: 100, y: 0 })
+  })
+
+  it('uses the neutral center for zero-sized bounds', () => {
+    expect(getPointerSheenPosition({ left: 10, top: 20, width: 0, height: 0 }, 10, 20)).toEqual({ x: 50, y: 50 })
   })
 })
 

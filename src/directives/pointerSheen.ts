@@ -1,4 +1,5 @@
 import type { Directive } from 'vue'
+import { getPointerSheenPosition, type PointerSheenBounds } from '../utils/pointerSheen'
 
 interface PointerSheenOptions {
   tilt?: number
@@ -26,13 +27,14 @@ const pointerSheen: Directive<HTMLElement, PointerSheenOptions | undefined> = {
 
     const tilt = Math.min(Math.max(binding.value?.tilt ?? 0, 0), 6)
     let frame = 0
+    let bounds: PointerSheenBounds | null = null
+    const invalidateBounds = () => { bounds = null }
+    const refreshBounds = () => { bounds = element.getBoundingClientRect() }
     const move = (event: PointerEvent) => {
       cancelAnimationFrame(frame)
       frame = requestAnimationFrame(() => {
-        // Keep the layout read and CSS writes in one frame so pointer bursts cannot force repeated layout.
-        const bounds = element.getBoundingClientRect()
-        const x = Math.min(Math.max(((event.clientX - bounds.left) / bounds.width) * 100, 0), 100)
-        const y = Math.min(Math.max(((event.clientY - bounds.top) / bounds.height) * 100, 0), 100)
+        if (!bounds) refreshBounds()
+        const { x, y } = getPointerSheenPosition(bounds!, event.clientX, event.clientY)
         element.style.setProperty('--pointer-x', `${x.toFixed(1)}%`)
         element.style.setProperty('--pointer-y', `${y.toFixed(1)}%`)
         element.style.setProperty('--pointer-active', '1')
@@ -48,15 +50,23 @@ const pointerSheen: Directive<HTMLElement, PointerSheenOptions | undefined> = {
       cancelAnimationFrame(frame)
       frame = requestAnimationFrame(() => reset(element))
     }
+    const enter = () => refreshBounds()
 
+    element.addEventListener('pointerenter', enter, { passive: true })
     element.addEventListener('pointermove', move, { passive: true })
     element.addEventListener('pointerleave', leave)
     element.addEventListener('pointercancel', leave)
+    window.addEventListener('resize', invalidateBounds, { passive: true })
+    window.addEventListener('scroll', invalidateBounds, { passive: true })
     cleanups.set(element, () => {
       cancelAnimationFrame(frame)
+      element.removeEventListener('pointerenter', enter)
       element.removeEventListener('pointermove', move)
       element.removeEventListener('pointerleave', leave)
       element.removeEventListener('pointercancel', leave)
+      window.removeEventListener('resize', invalidateBounds)
+      window.removeEventListener('scroll', invalidateBounds)
+      bounds = null
       reset(element)
     })
   },

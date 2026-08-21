@@ -1,52 +1,11 @@
 import type { Directive, DirectiveBinding } from 'vue'
+import { getRevealMode } from '../utils/reveal'
 
 type RevealVariant = 'fade-up' | 'fade-left' | 'fade-right' | 'clip' | 'scale' | 'blur'
 type RevealValue = number | { delay?: number; variant?: RevealVariant }
 
 const tracked = new WeakMap<HTMLElement, IntersectionObserver>()
-const pending = new Set<HTMLElement>()
 let observer: IntersectionObserver | null = null
-let fallbackListening = false
-let fallbackRaf = 0
-
-function stopFallbackIfIdle() {
-  if (pending.size || !fallbackListening) return
-  window.removeEventListener('scroll', scheduleFallback)
-  window.removeEventListener('resize', scheduleFallback)
-  fallbackListening = false
-}
-
-function revealPassedElements() {
-  fallbackRaf = 0
-  const revealLine = window.innerHeight - 60
-
-  pending.forEach((element) => {
-    const rect = element.getBoundingClientRect()
-    if (rect.top > revealLine) return
-
-    if (rect.bottom < 0) revealImmediately(element)
-    else element.classList.add('revealed')
-    tracked.get(element)?.unobserve(element)
-    tracked.delete(element)
-    pending.delete(element)
-  })
-
-  stopFallbackIfIdle()
-}
-
-function scheduleFallback() {
-  if (fallbackRaf) return
-  fallbackRaf = requestAnimationFrame(revealPassedElements)
-}
-
-function startFallback() {
-  if (!fallbackListening) {
-    window.addEventListener('scroll', scheduleFallback, { passive: true })
-    window.addEventListener('resize', scheduleFallback)
-    fallbackListening = true
-  }
-  scheduleFallback()
-}
 
 function getObserver() {
   if (!observer) {
@@ -57,8 +16,6 @@ function getObserver() {
         element.classList.add('revealed')
         currentObserver.unobserve(element)
         tracked.delete(element)
-        pending.delete(element)
-        stopFallbackIfIdle()
       })
     }, { threshold: 0.08, rootMargin: '0px 0px -60px 0px' })
   }
@@ -80,12 +37,11 @@ function revealImmediately(element: HTMLElement) {
 
 const reveal: Directive<HTMLElement, RevealValue> = {
   mounted(element, binding) {
-    if (!('IntersectionObserver' in window)) {
-      revealImmediately(element)
-      return
-    }
-
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const mode = getRevealMode({
+      supportsIntersectionObserver: 'IntersectionObserver' in window,
+      prefersReducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    })
+    if (mode === 'immediate') {
       revealImmediately(element)
       return
     }
@@ -97,9 +53,7 @@ const reveal: Directive<HTMLElement, RevealValue> = {
 
     const currentObserver = getObserver()
     tracked.set(element, currentObserver)
-    pending.add(element)
     currentObserver.observe(element)
-    startFallback()
   },
 
   updated(element, binding: DirectiveBinding<RevealValue>) {
@@ -112,8 +66,6 @@ const reveal: Directive<HTMLElement, RevealValue> = {
   unmounted(element) {
     tracked.get(element)?.unobserve(element)
     tracked.delete(element)
-    pending.delete(element)
-    stopFallbackIfIdle()
     element.style.removeProperty('transition-delay')
   }
 }
