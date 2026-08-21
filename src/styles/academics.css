@@ -1,0 +1,68 @@
+  /* ===== 学业 · 教育履历 ===== */
+.education-track {
+  position: relative; padding-left: 8px;
+  border-left: 1px solid var(--line);
+}
+.education-row {
+  position: relative; padding: var(--space-5) 0 var(--space-5) var(--space-6);
+  transition: background-color var(--dur-base);
+}
+.education-row::before {
+  content: ''; position: absolute; left: -5px; top: 32px;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--gold); box-shadow: 0 0 10px var(--glow-gold);
+}
+.education-row:hover { background: transparent; }
+.education-period {
+  display: block; font-family: var(--font-technical); font-size: var(--type-meta-size);
+  letter-spacing: .14em; color: var(--gold); margin-bottom: 6px;
+}
+.education-name {
+  font-family: var(--font-editorial); font-size: 1.4rem; font-weight: 400;
+  color: var(--ink); line-height: 1.3;
+}
+.education-en {
+  display: block; margin-top: 4px;
+  font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: var(--tracking-zh-meta);
+  color: var(--dim); text-transform: uppercase;
+}
+
+/* ===== 学业 · AP 档案表 ===== */
+.ap-panel {
+  margin-top: 64px; border-top: 1px solid var(--line);
+  border-radius: var(--radius-card); overflow: hidden;
+  border: 1px solid var(--line); box-shadow: var(--shadow-1);
+}
+.panel-label {
+  padding: var(--space-5) var(--space-5) var(--space-3); font-family: var(--font-technical); font-size: var(--type-meta-size);
+  letter-spacing: .22em; color: var(--aqua); text-transform: uppercase;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-strong);
+}
+.ap-row {
+  display: grid; grid-template-columns: 54px 1fr 64px; align-items: center; gap: 16px;
+  padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--line);
+  background: var(--surface-strong);
+  transition: background-color var(--dur-base);
+}
+.ap-row:last-child { border-bottom: 0; }
+.ap-row:hover { background: var(--surface-strong); }
+.ap-no { font-family: var(--font-technical); font-size: var(--type-meta-size); color: var(--dim); }
+.ap-main { display: flex; flex-direction: column; gap: 2px; }
+.ap-main strong { font-family: var(--font-editorial); font-size: 1.25rem; font-weight: 400; }
+.ap-main small { font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: var(--tracking-zh-meta); color: var(--dim); }
+.ap-badge {
+  justify-self: end; width: 40px; height: 40px; display: grid; place-items: center;
+  border-radius: 50%; border: 1px solid var(--line); background: var(--surface);
+  font-family: var(--font-editorial); font-size: 1.3rem; color: var(--gold);
+  transition: border-color var(--dur-base), box-shadow var(--dur-base);
+}
+.ap-row:hover .ap-badge { border-color: var(--line); box-shadow: none; }
+/* AP pending 状态 */
+.ap-row.pending .ap-badge {
+  border-style: dashed; color: var(--dim);
+  font-size: var(--text-xs); letter-spacing: .1em; font-family: var(--font-technical);
+}
+.ap-row.pending .ap-badge::after { content: '?'; }
+.ap-row.pending .ap-badge > * { display: none; }
+.ap-row.pending:hover .ap-badge { border-color: var(--dim); box-shadow: none; }

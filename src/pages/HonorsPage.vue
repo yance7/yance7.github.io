@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import '../styles/honors.css'
 import { ref, computed } from 'vue'
 import { honors, honorCategories, honorStats } from '../data'
 import type { HonorLevel } from '../data/types'

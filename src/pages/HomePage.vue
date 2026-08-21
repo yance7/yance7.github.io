@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import '../styles/home.css'
 import { worlds, featuredResearch, featuredProjects, leadership, activities } from '../data'
 import SectionHeading from '../components/SectionHeading.vue'
 

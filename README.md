@@ -28,4 +28,4 @@ npm run images:concerts
 
 ## Core Web Vitals 目标
 
-持续集成以 `.lighthouserc.json` 中的预算作为上线门槛：Performance ≥ 70、Accessibility ≥ 95、Best Practices ≥ 95、SEO ≥ 95、LCP ≤ 2.5s、TBT ≤ 300ms、CLS ≤ 0.1。运行 `npm run lighthouse` 可在本地预览构建上执行三轮桌面采样。
+持续集成以 `.lighthouserc.json` 和 `.lighthouserc.mobile.json` 中的预算作为上线门槛：桌面 Performance ≥ 90、移动 Performance ≥ 85，Accessibility ≥ 98、Best Practices ≥ 95、SEO ≥ 95，LCP ≤ 2.5s、TBT ≤ 300ms、CLS ≤ 0.1、INP ≤ 200ms。运行 `npm run lighthouse` 会在本地预览构建上分别执行三轮桌面与移动采样；TBT 是实验室主线程阻塞指标，INP 是交互响应的 Core Web Vital，两者关注点不同。

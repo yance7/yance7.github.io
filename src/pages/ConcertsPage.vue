@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import '../styles/concerts.css'
 import { reactive } from 'vue'
 import { concertGroups, getConcertState, isConcertUpcoming } from '../data'
 import type { Concert, LightboxPayload } from '../data/types'

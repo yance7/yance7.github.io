@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import '../styles/works.css'
 import { computed } from 'vue'
 import { projects } from '../data'
 import SectionHeading from '../components/SectionHeading.vue'

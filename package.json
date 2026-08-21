@@ -14,7 +14,7 @@
     "preview": "vite preview",
     "smoke": "tsx scripts/smoke-test.ts",
     "sitemap": "tsx scripts/generate-sitemap.ts",
-    "lighthouse": "lhci autorun --config=.lighthouserc.json",
+    "lighthouse": "lhci autorun --config=.lighthouserc.json && lhci autorun --config=.lighthouserc.mobile.json",
     "links": "tsx scripts/check-external-links.ts",
     "images:concerts": "python scripts/generate-concert-thumbnails.py",
     "typecheck": "vue-tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.test.json",

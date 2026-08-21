@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
 import { htmlPageEntries, isPageKey, pageEntries, pageRegistry } from '../src/data/pageRegistry'
 import { getConcertState } from '../src/data/concerts'
@@ -115,5 +117,37 @@ describe('navigation failure paths', () => {
 
     expect(value).toBe('loaded')
     expect(attempts).toBe(3)
+  })
+})
+
+describe('page stylesheet boundaries', () => {
+  it('keeps the global entry limited to shared and responsive styles', () => {
+    const globalStyles = readFileSync(resolve(process.cwd(), 'src/styles.css'), 'utf8')
+
+    expect(globalStyles).toContain("@import './styles/components.css';")
+    expect(globalStyles).toContain("@import './styles/responsive.css';")
+    expect(globalStyles).not.toMatch(/content\.css|media\.css|works\.css/)
+  })
+
+  it('loads each page stylesheet from its async page component', () => {
+    const pageStyles = {
+      HomePage: readFileSync(resolve(process.cwd(), 'src/pages/HomePage.vue'), 'utf8'),
+      AcademicsPage: readFileSync(resolve(process.cwd(), 'src/pages/AcademicsPage.vue'), 'utf8'),
+      HonorsPage: readFileSync(resolve(process.cwd(), 'src/pages/HonorsPage.vue'), 'utf8'),
+      ResearchPage: readFileSync(resolve(process.cwd(), 'src/pages/ResearchPage.vue'), 'utf8'),
+      WorksPage: readFileSync(resolve(process.cwd(), 'src/pages/WorksPage.vue'), 'utf8'),
+      ConcertsPage: readFileSync(resolve(process.cwd(), 'src/pages/ConcertsPage.vue'), 'utf8')
+    }
+
+    expect(pageStyles.HomePage).toContain("import '../styles/home.css'")
+    expect(pageStyles.AcademicsPage).toContain("import '../styles/academics.css'")
+    expect(pageStyles.HonorsPage).toContain("import '../styles/honors.css'")
+    expect(pageStyles.ResearchPage).toContain("import '../styles/research.css'")
+    expect(pageStyles.WorksPage).toContain("import '../styles/works.css'")
+    expect(pageStyles.ConcertsPage).toContain("import '../styles/concerts.css'")
+
+    for (const source of Object.values(pageStyles)) {
+      expect(source).not.toContain("import '../styles.css'")
+    }
   })
 })
