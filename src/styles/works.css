@@ -4,7 +4,8 @@
   gap: clamp(28px, 4vw, 48px);
 }
 .showcase-list:has(> .showcase:only-child) {
-  max-width: min(100%, 1120px);
+  width: min(100%, var(--w-data));
+  max-width: var(--w-data);
   margin-inline: auto;
 }
 
@@ -15,7 +16,7 @@
   color: var(--gold);
   border: 1px solid var(--line);
   border-top: 2px solid color-mix(in srgb, currentColor 72%, var(--line));
-  border-radius: var(--radius-2xl);
+  border-radius: var(--radius-large);
   background: var(--surface);
   box-shadow: var(--shadow-1);
   scroll-margin-top: var(--anchor-offset);
@@ -56,9 +57,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
+  gap: var(--space-5);
   min-height: 58px;
-  padding: 14px 26px;
+  padding: var(--space-3) var(--space-6);
   border-bottom: 1px solid var(--line);
   background: var(--surface-tint);
 }
@@ -67,8 +68,8 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  font-family: var(--mono);
-  font-size: var(--text-micro);
+  font-family: var(--font-technical);
+  font-size: var(--type-meta-size);
   letter-spacing: .14em;
   text-transform: uppercase;
 }
@@ -112,7 +113,7 @@
   bottom: -22px;
   z-index: -1;
   color: color-mix(in srgb, currentColor 5%, transparent);
-  font-family: var(--display);
+  font-family: var(--font-editorial);
   font-size: clamp(4rem, 10vw, 8.5rem);
   font-weight: 560;
   letter-spacing: -.06em;
@@ -123,7 +124,7 @@
   align-self: start;
   padding-top: 28px;
   color: currentColor;
-  font-family: var(--display);
+  font-family: var(--font-editorial);
   font-size: clamp(2.8rem, 5vw, 4.8rem);
   font-style: italic;
   font-weight: 380;
@@ -136,8 +137,8 @@
 .sc-overline {
   margin: 0 0 18px;
   color: var(--dim);
-  font-family: var(--mono);
-  font-size: var(--text-micro);
+  font-family: var(--font-technical);
+  font-size: var(--type-meta-size);
   letter-spacing: .18em;
 }
 .sc-identity h3 {
@@ -148,7 +149,7 @@
 .sc-identity h3 > span {
   display: block;
   margin-bottom: 8px;
-  font-family: var(--display);
+  font-family: var(--font-editorial);
   font-size: clamp(1.35rem, 2.5vw, 2.1rem);
   font-weight: 400;
   letter-spacing: .08em;
@@ -157,7 +158,7 @@
   display: block;
   max-width: 100%;
   color: currentColor;
-  font-family: var(--display);
+  font-family: var(--font-editorial);
   font-size: clamp(1.35rem, 2.5vw, 2.1rem);
   font-style: italic;
   font-weight: 400;
@@ -167,10 +168,10 @@
   white-space: nowrap;
 }
 .sc-value {
-  max-width: 540px;
+  max-width: var(--w-editorial);
   margin: 28px 0 0;
   color: var(--muted);
-  font-family: var(--serif);
+  font-family: var(--font-prose);
   font-size: clamp(1rem, 1.4vw, 1.15rem);
   line-height: 1.75;
 }
@@ -187,14 +188,15 @@
   display: block;
   margin-bottom: 5px;
   color: var(--dim);
-  font-family: var(--mono);
+  font-family: var(--font-technical);
   font-size: var(--text-xs);
   letter-spacing: .18em;
 }
 .sc-desc {
-  max-width: 460px;
+  max-width: var(--w-editorial);
   margin: 0;
   color: var(--muted);
+  font-family: var(--font-prose);
   font-size: .9375rem;
   line-height: 1.9;
 }
@@ -228,16 +230,16 @@
 .sc-story-ident .sc-meta-label { margin: 0; }
 .sc-story-count {
   color: var(--dim);
-  font-family: var(--mono);
-  font-size: var(--text-micro);
+  font-family: var(--font-technical);
+  font-size: var(--type-meta-size);
   letter-spacing: .12em;
   line-height: 1.4;
 }
 .sc-story-head p {
-  max-width: 510px;
+  max-width: var(--w-editorial);
   margin: 0;
   color: var(--muted);
-  font-family: var(--serif);
+  font-family: var(--font-prose);
   font-size: .92rem;
   line-height: 1.75;
 }
@@ -246,7 +248,7 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   overflow: hidden;
   border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-card);
   background: var(--line);
   gap: 1px;
 }
@@ -279,14 +281,14 @@
 }
 .sc-chapter > span {
   color: currentColor;
-  font-family: var(--mono);
-  font-size: var(--text-micro);
+  font-family: var(--font-technical);
+  font-size: var(--type-meta-size);
   letter-spacing: .14em;
   opacity: .72;
 }
 .sc-chapter strong {
   margin-top: 30px;
-  font-family: var(--display);
+  font-family: var(--font-editorial);
   font-size: 1.08rem;
   font-weight: 400;
   line-height: 1.5;
@@ -301,8 +303,8 @@
   margin-top: auto;
   padding-top: 18px;
   color: currentColor;
-  font-family: var(--mono);
-  font-size: var(--text-micro);
+  font-family: var(--font-technical);
+  font-size: var(--type-meta-size);
   letter-spacing: .1em;
 }
 .sc-chapter[href]:hover,
@@ -333,9 +335,9 @@
   align-items: center;
   gap: 24px;
   margin-top: 16px;
-  padding: 18px 20px;
+  padding: var(--space-4) var(--space-5);
   border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-card);
   background: var(--surface-strong);
 }
 .sc-sequence .sc-meta-label { margin: 0; }
@@ -360,15 +362,15 @@
 .sc-sequence li:focus-within { background: color-mix(in srgb, currentColor 5%, transparent); }
 .sc-sequence li b {
   color: currentColor;
-  font-family: var(--mono);
-  font-size: var(--text-micro);
+  font-family: var(--font-technical);
+  font-size: var(--type-meta-size);
   font-weight: 450;
   letter-spacing: .12em;
 }
 .sc-sequence li span {
   overflow: hidden;
   color: var(--ink);
-  font-family: var(--mono);
+  font-family: var(--font-technical);
   font-size: var(--text-xs);
   letter-spacing: .04em;
   text-overflow: ellipsis;
@@ -399,11 +401,11 @@
   max-width: 100%;
   padding: 9px 12px;
   border: 1px solid var(--line);
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-pill);
   background: var(--surface-strong);
   color: var(--muted);
-  font-family: var(--mono);
-  font-size: var(--text-micro);
+  font-family: var(--font-technical);
+  font-size: var(--type-meta-size);
   transition:
     border-color var(--dur-fast),
     color var(--dur-fast),
@@ -447,9 +449,9 @@
 .sc-tag {
   padding: 4px 9px;
   border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-small);
   color: var(--muted);
-  font-family: var(--mono);
+  font-family: var(--font-technical);
   font-size: var(--text-xs);
   letter-spacing: .06em;
 }

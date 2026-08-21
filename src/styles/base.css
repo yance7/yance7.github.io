@@ -20,10 +20,10 @@ body {
   min-width: 320px;
   background: var(--bg);
   color: var(--ink);
-  font-family: var(--sans);
+  font-family: var(--font-prose);
   font-synthesis: none;
-  font-size: 15.5px;
-  line-height: 1.75;
+  font-size: var(--type-body-size);
+  line-height: var(--type-body-leading);
   overflow-x: clip;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -50,7 +50,7 @@ img { display: block; max-width: 100%; }
   outline: 2px solid var(--focus);
   outline-offset: 2px;
   box-shadow: 0 0 0 4px var(--bg);
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-small);
 }
 
 .sr-only {

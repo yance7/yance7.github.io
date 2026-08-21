@@ -6,10 +6,13 @@
 /* ---------- 全局设计令牌（与主题无关） ---------- */
 :root {
   /* 字体族 */
-  --sans: "Inter Variable", "Noto Sans SC Variable", sans-serif;
-  --serif: "Noto Serif SC Variable", serif;
-  --display: "Inter Variable", "Noto Serif SC Variable", serif;
-  --mono: "IBM Plex Mono", "Noto Sans SC Variable", monospace;
+  --font-prose: "Inter Variable", "Noto Sans SC Variable", sans-serif;
+  --font-editorial: "Inter Variable", "Noto Serif SC Variable", serif;
+  --font-technical: "IBM Plex Mono", "Noto Sans SC Variable", monospace;
+  --sans: var(--font-prose);
+  --serif: var(--font-editorial);
+  --display: var(--font-editorial);
+  --mono: var(--font-technical);
 
   /* 缓动曲线 */
   --ease: cubic-bezier(.22, .61, .36, 1);
@@ -18,19 +21,38 @@
   --ease-apple: cubic-bezier(.28, .68, .53, .94);
   --ease-soft: cubic-bezier(.4, 0, .2, 1);
 
+  /* 正文字级与追踪 */
+  --type-body-size: 1rem;
+  --type-body-leading: 1.78;
+  --type-secondary-size: .8125rem;
+  --type-meta-size: .75rem;
+  --tracking-latin-meta: .14em;
+  --tracking-latin-wide: .18em;
+  --tracking-zh-meta: .06em;
+  --tracking-editorial: -.01em;
+
   /* 可读的最小文本级别，装饰性文字也不低于 11px */
   --text-micro: .6875rem;
-  --text-xs: .75rem;
-  --text-sm: .8125rem;
+  --text-xs: var(--type-meta-size);
+  --text-sm: var(--type-secondary-size);
+
+  /* 结构宽度 */
+  --w-editorial: 700px;
+  --w-data: 840px;
+  --w-read: var(--w-editorial);
 
   /* 圆角层级 */
+  --radius-small: 6px;
+  --radius-card: 14px;
+  --radius-large: 20px;
+  --radius-pill: 999px;
   --radius-xs: 3px;
-  --radius-sm: 6px;
+  --radius-sm: var(--radius-small);
   --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
+  --radius-lg: var(--radius-card);
+  --radius-xl: var(--radius-large);
   --radius-2xl: 28px;
-  --radius-full: 999px;
+  --radius-full: var(--radius-pill);
 
   /* z-index 层级 */
   --z-base: 1;
@@ -43,9 +65,9 @@
   /* 动画时长：操作利落，叙事渐入 */
   --dur-micro: .12s;
   --dur-fast: .2s;
-  --dur-base: .32s;
-  --dur-slow: .6s;
-  --dur-page: .72s;
+  --dur-base: .28s;
+  --dur-slow: .52s;
+  --dur-page: .56s;
 
   /* 统一交互幅度 */
   --motion-lift: -3px;
@@ -53,6 +75,18 @@
   --motion-icon-shift: 4px;
   --motion-press-scale: .985;
   --anchor-offset: 138px;
+
+  /* 基础间距刻度 */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+  --space-10: 128px;
 
   /* 流体结构间距 */
   --space-hero-block: clamp(4rem, 9vw, 8.5rem);
@@ -74,7 +108,6 @@
   /* 内容宽度 */
   --w-max: 1240px;
   --w-wide: 1440px;
-  --w-read: 760px;
   --w-pad: 5vw;
 
 }
