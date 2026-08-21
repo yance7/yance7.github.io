@@ -114,4 +114,26 @@ describe('archive design tokens', () => {
     expect(responsive).not.toContain('font-size: .6rem')
     expect(responsive).not.toContain('font-size: .59rem')
   })
+
+  it('uses semantic tracking tokens for repeated metadata roles', () => {
+    expect(pageStyles).not.toMatch(/letter-spacing:\s*\.14em/)
+    expect(pageStyles).not.toMatch(/letter-spacing:\s*\.18em/)
+    expect(pageStyles).not.toMatch(/letter-spacing:\s*\.06em/)
+  })
+
+  it('keeps viewport-unit fallback declarations explicit and non-duplicated', () => {
+    const compassBlock = shell.match(/\.page-compass\s*\{([\s\S]*?)\n\}/)?.[1] ?? ''
+    expect(compassBlock.match(/\btop:/g)?.length).toBe(1)
+    expect(compassBlock.match(/\bmax-height:/g)?.length).toBe(1)
+    expect(shell).toContain('@supports (height: 100dvh)')
+    expect(shell).toContain('top: 50dvh;')
+    expect(shell).toContain('max-height: calc(100dvh - 32px);')
+  })
+
+  it('does not use oversized tracking for ordinary metadata labels', () => {
+    const styles = [components, home, academics, honors, research, concerts, shell, works, responsive].join('\n')
+    for (const value of ['.2em', '.20em', '.22em', '.24em', '.26em']) {
+      expect(styles).not.toContain(`letter-spacing: ${value}`)
+    }
+  })
 })

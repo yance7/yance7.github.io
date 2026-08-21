@@ -4,8 +4,14 @@ import { getRevealMode } from '../utils/reveal'
 type RevealVariant = 'fade-up' | 'fade-left' | 'fade-right' | 'clip' | 'scale' | 'blur'
 type RevealValue = number | { delay?: number; variant?: RevealVariant }
 
-const tracked = new WeakMap<HTMLElement, IntersectionObserver>()
+const tracked = new Set<HTMLElement>()
 let observer: IntersectionObserver | null = null
+
+function revealElement(element: HTMLElement, currentObserver: IntersectionObserver) {
+  element.classList.add('revealed')
+  currentObserver.unobserve(element)
+  tracked.delete(element)
+}
 
 function getObserver() {
   if (!observer) {
@@ -13,9 +19,14 @@ function getObserver() {
       entries.forEach((entry) => {
         if (!entry.isIntersecting) return
         const element = entry.target as HTMLElement
-        element.classList.add('revealed')
-        currentObserver.unobserve(element)
-        tracked.delete(element)
+        revealElement(element, currentObserver)
+      })
+
+      const viewportBottom = window.innerHeight
+      tracked.forEach((element) => {
+        if (element.getBoundingClientRect().top < viewportBottom) {
+          revealElement(element, currentObserver)
+        }
       })
     }, { threshold: 0.08, rootMargin: '0px 0px -60px 0px' })
   }
@@ -52,7 +63,7 @@ const reveal: Directive<HTMLElement, RevealValue> = {
     element.classList.add('reveal')
 
     const currentObserver = getObserver()
-    tracked.set(element, currentObserver)
+    tracked.add(element)
     currentObserver.observe(element)
   },
 
@@ -64,7 +75,7 @@ const reveal: Directive<HTMLElement, RevealValue> = {
   },
 
   unmounted(element) {
-    tracked.get(element)?.unobserve(element)
+    observer?.unobserve(element)
     tracked.delete(element)
     element.style.removeProperty('transition-delay')
   }

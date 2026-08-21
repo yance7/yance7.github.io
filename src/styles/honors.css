@@ -90,7 +90,7 @@
 .honor-content { display: flex; flex-direction: column; gap: 8px; }
 .honor-level-tag {
   display: inline-flex; align-self: flex-start;
-  font-family: var(--font-technical); font-size: var(--text-xs); letter-spacing: .2em;
+  font-family: var(--font-technical); font-size: var(--text-xs); letter-spacing: var(--tracking-latin-wide);
   padding: 3px 9px; border-radius: var(--radius-pill);
   border: 1px solid currentColor; color: currentColor;
   text-transform: uppercase;

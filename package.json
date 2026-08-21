@@ -17,6 +17,7 @@
     "lighthouse": "lhci autorun --config=.lighthouserc.json && lhci autorun --config=.lighthouserc.mobile.json",
     "links": "tsx scripts/check-external-links.ts",
     "images:concerts": "python scripts/generate-concert-thumbnails.py",
+    "audit:assets": "python scripts/audit-assets.py",
     "typecheck": "vue-tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.test.json",
     "deadcode": "knip --include files,dependencies,unlisted,unresolved,exports,types --no-progress",
     "check": "npm run lint && npm run typecheck && npm run deadcode && npm run unit && npm run sitemap && npm run build && npm run smoke",

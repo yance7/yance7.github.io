@@ -26,6 +26,34 @@ test('compatibility hash navigation and PageCompass settle together', async ({ p
   await expect(page.locator('.page-compass-link[href="#project-fresheye"]')).toHaveAttribute('aria-current', 'location')
 })
 
+test('keyboard focus targets stay clear of sticky navigation surfaces', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 })
+  await page.goto('/research.html')
+
+  const target = page.locator('.tl-link').first()
+  await expect(target).toBeVisible()
+  await target.focus()
+
+  const geometry = await target.evaluate((element) => {
+    const rect = element.getBoundingClientRect()
+    const header = document.querySelector<HTMLElement>('.site-nav')?.getBoundingClientRect()
+    const compass = document.querySelector<HTMLElement>('.page-compass')?.getBoundingClientRect()
+    const compassVisible = compass && getComputedStyle(document.querySelector<HTMLElement>('.page-compass')!).visibility !== 'hidden'
+    const intersectsCompass = Boolean(compassVisible && compass && rect.right > compass.left && rect.left < compass.right && rect.bottom > compass.top && rect.top < compass.bottom)
+    return {
+      headerBottom: header?.bottom ?? 0,
+      intersectsCompass,
+      top: rect.top,
+      bottom: rect.bottom,
+      viewportHeight: window.innerHeight
+    }
+  })
+
+  expect(geometry.top, 'focused target below sticky header').toBeGreaterThanOrEqual(geometry.headerBottom)
+  expect(geometry.bottom, 'focused target inside viewport').toBeLessThanOrEqual(geometry.viewportHeight)
+  expect(geometry.intersectsCompass, 'focused target clear of PageCompass').toBe(false)
+})
+
 test('PageCompass exposes progress text and a single active chapter', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto('/works.html')

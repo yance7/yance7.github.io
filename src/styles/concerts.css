@@ -5,7 +5,7 @@
   background: var(--surface); box-shadow: var(--shadow-1);
 }
 .next-up-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
-.next-up-label { font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: .2em; color: var(--gold); }
+.next-up-label { font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: var(--tracking-latin-wide); color: var(--gold); }
 .next-up-note { font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: .08em; color: var(--dim); }
 .next-up-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .next-up-card {
@@ -27,7 +27,7 @@
 }
 .group-year { font-family: var(--font-editorial); font-style: italic; font-size: 3rem; color: var(--gold); line-height: 1; }
 .group-mood { margin: 0; flex: 1; color: var(--muted); font-family: var(--font-prose); font-size: var(--text-sm); line-height: 1.7; min-width: 200px; }
-.group-count { font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: .18em; color: var(--dim); }
+.group-count { font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: var(--tracking-latin-wide); color: var(--dim); }
 
 .concert-list { border-top: 1px solid var(--line); }
 .concert-row {
@@ -109,7 +109,7 @@
 }
 .carousel-controls button:hover { border-color: var(--media-control-hover-border); background: var(--media-control-hover); color: var(--gold); transform: translateY(-2px); }
 .carousel-controls button:active { color: var(--gold); transform: translateY(1px) scale(var(--motion-press-scale)); }
-.concert-info > span { display: block; font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: .18em; color: var(--aqua); text-transform: uppercase; }
+.concert-info > span { display: block; font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: var(--tracking-latin-wide); color: var(--aqua); text-transform: uppercase; }
 .concert-info .concert-status.upcoming { color: var(--gold); }
 .concert-info .concert-venue { margin-top: 5px; color: var(--dim); font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: .08em; }
 .concert-info h3 { margin: 12px 0 7px; font-family: var(--font-editorial); font-size: clamp(1.7rem, 2.7vw, 2.8rem); font-weight: 430; }

@@ -7,6 +7,8 @@ This checklist records only what the repository currently shows on 2026-08-21.
 - The site currently stores only `yance-theme` in local storage, based on `src/composables/useTheme.ts` and the inline theme bootstrap in `html-src/*.html`.
 - No analytics or tracker integration was found in the current repository inspection.
 - No analytics or tracker consent flow was found in the current repository inspection.
+- `npm run audit:assets` is a read-only release gate for raster dimensions, decodability, and EXIF GPS metadata; it must be run again after adding or replacing media.
+- Security and data-collection decisions are recorded in `docs/security-privacy-decisions.md`; the site intentionally has no third-party analytics, tracker, or RUM endpoint.
 
 ## Pre-release checks
 
@@ -18,3 +20,4 @@ This checklist records only what the repository currently shows on 2026-08-21.
 - EXIF and GPS removal: strip metadata from exported photos and screenshots before release.
 - Certificate identifiers: redact certificate numbers, student IDs, registration IDs, or verification codes unless disclosure is explicitly intended.
 - Concert ticket QR and seat review: inspect every ticket, poster, and venue screenshot for QR codes, barcodes, seat numbers, order numbers, or gate details.
+- Asset audit result: record the command date and output, and stop release on GPS metadata or unreadable files until a human reviews the affected assets.
