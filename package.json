@@ -34,7 +34,7 @@
     "vue": "^3.5.40"
   },
   "devDependencies": {
-    "@axe-core/playwright": "^4.12.1",
+    "@axe-core/playwright": "^4.13.0",
     "@eslint/js": "^10.0.1",
     "@lhci/cli": "0.15.1",
     "@playwright/test": "1.60.0",
