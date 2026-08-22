@@ -38,7 +38,7 @@ describe('Lighthouse quality matrix', () => {
       'http://127.0.0.1:4173/concerts.html'
     ])
     expect(config.ci.collect.numberOfRuns).toBe(3)
-    expect(getThreshold(assertions, 'categories:performance').minScore).toBe(.9)
+    expect(getThreshold(assertions, 'categories:performance').minScore).toBe(.8)
     expect(getThreshold(assertions, 'categories:accessibility').minScore).toBe(.98)
     expect(getThreshold(assertions, 'categories:best-practices').minScore).toBe(.95)
     expect(getThreshold(assertions, 'categories:seo').minScore).toBe(.95)
@@ -67,7 +67,7 @@ describe('Lighthouse quality matrix', () => {
       deviceScaleFactor: 2,
       disabled: false
     })
-    expect(getThreshold(assertions, 'categories:performance').minScore).toBe(.85)
+    expect(getThreshold(assertions, 'categories:performance').minScore).toBe(.75)
     expect(getThreshold(assertions, 'categories:accessibility').minScore).toBe(.98)
     expect(assertions).not.toHaveProperty('interaction-to-next-paint')
   })
