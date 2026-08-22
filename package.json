@@ -52,7 +52,7 @@
     "typescript-eslint": "^8.66.0",
     "vite": "^8.2.0",
     "vitest": "^4.1.10",
-    "vue-tsc": "^3.3.9"
+    "vue-tsc": "^3.3.10"
   },
   "optionalDependencies": {
     "proxy-agent": "8.0.2"
