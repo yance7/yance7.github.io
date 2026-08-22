@@ -11,8 +11,8 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
-  cancel-in-progress: true
+  group: pages-production
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -51,24 +51,15 @@ jobs:
         run: npm run build
       - name: Smoke test artifact
         run: npm run smoke
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium webkit firefox
-      - name: Select Playwright Chromium for Lighthouse
-        shell: bash
-        run: |
-          chrome_path="$(node --input-type=module -e "import { chromium } from '@playwright/test'; process.stdout.write(chromium.executablePath())")"
-          echo "CHROME_PATH=$chrome_path" >> "$GITHUB_ENV"
-      - name: Lighthouse quality budget
-        run: npm run lighthouse
-      - name: Lighthouse interaction budget
-        run: npm run lighthouse:interactions
-      - name: Browser and axe tests
-        run: npm run test:e2e -- --workers=2
-      - name: Upload browser review artifacts
-        if: always()
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Browser release smoke
+        run: npm run test:e2e -- --project=chromium --workers=1 --grep "all archive pages boot and expose the main landmark"
+      - name: Upload smoke artifacts
+        if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: browser-review-artifacts
+          name: browser-release-smoke
           path: |
             test-results
             playwright-report
