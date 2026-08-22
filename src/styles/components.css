@@ -131,7 +131,7 @@
 .lightbox {
   position: fixed; inset: 0; z-index: var(--z-modal);
   display: flex; align-items: center; justify-content: center; gap: var(--space-4); padding: 44px;
-  background: var(--lb-bg); backdrop-filter: blur(16px);
+  background: var(--lb-bg); backdrop-filter: blur(8px); will-change: opacity, transform;
 }
 .lightbox-enter-active,
 .lightbox-leave-active { transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out); }

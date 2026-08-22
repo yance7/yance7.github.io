@@ -23,11 +23,18 @@ def main():
     for path in files:
         try:
             with Image.open(path) as image:
-                formats[image.format or path.suffix.lower().lstrip('.')] += 1
-                dimensions[image.size] += 1
-                if image.getexif().get(GPS_INFO_TAG):
+                image.verify()
+
+            with Image.open(path) as reopened:
+                frame_count = getattr(reopened, 'n_frames', 1)
+                for frame_index in range(frame_count):
+                    reopened.seek(frame_index)
+                    reopened.load()
+                formats[reopened.format or path.suffix.lower().lstrip('.')] += 1
+                dimensions[reopened.size] += 1
+                if reopened.getexif().get(GPS_INFO_TAG):
                     gps_files.append(path.relative_to(ROOT).as_posix())
-        except (OSError, UnidentifiedImageError):
+        except (OSError, UnidentifiedImageError, SyntaxError, ValueError):
             unreadable.append(path.relative_to(ROOT).as_posix())
 
     format_summary = ', '.join(f'{name}={count}' for name, count in sorted(formats.items()))

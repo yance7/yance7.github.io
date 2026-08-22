@@ -125,6 +125,7 @@
   .honor-date-col { flex-direction: row; align-items: center; gap: var(--space-3); }
 }
 @media (hover: none), (pointer: coarse) {
+  .filter-btn { min-height: 44px; }
   .honor-card:hover:not(:focus-visible) { border-color: var(--line); background: var(--surface); box-shadow: var(--shadow-1); transform: none; }
   .honor-card:hover:not(:focus-visible)::before { width: 3px; }
 }

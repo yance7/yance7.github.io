@@ -1,20 +1,51 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
 const routes = ['index', 'research', 'concerts'] as const
 const viewports = [
   { name: 'mobile', width: 390, height: 844 },
   { name: 'desktop', width: 1440, height: 900 }
 ] as const
+const themes = ['light', 'dark'] as const
+const FIXED_NOW = '2026-08-21T12:00:00+08:00'
+
+const screenshotOptions = {
+  animations: 'disabled' as const,
+  caret: 'hide' as const,
+  scale: 'css' as const,
+  maxDiffPixelRatio: .025
+}
+
+async function settlePage(page: Page) {
+  await page.waitForLoadState('domcontentloaded')
+  await page.evaluate(async () => {
+    await document.fonts?.ready
+  })
+  await page.waitForTimeout(250)
+}
 
 for (const viewport of viewports) {
-  for (const theme of ['light', 'dark'] as const) {
-    test(`captures ${theme} ${viewport.name} review surfaces`, async ({ page }, testInfo) => {
+  for (const theme of themes) {
+    test(`captures ${theme} ${viewport.name} visual baselines`, async ({ page }, testInfo) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height })
+      await page.addInitScript(({ fixedNow, selectedTheme }) => {
+        localStorage.setItem('yance-theme', selectedTheme)
+        const OriginalDate = globalThis.Date
+        const fixedTimestamp = OriginalDate.parse(fixedNow)
+        class FixedDate extends OriginalDate {
+          constructor(value?: string | number) {
+            super(value === undefined ? fixedTimestamp : value)
+          }
+
+          static now() {
+            return fixedTimestamp
+          }
+        }
+        globalThis.Date = FixedDate as unknown as DateConstructor
+      }, { fixedNow: FIXED_NOW, selectedTheme: theme })
 
       for (const route of routes) {
         await page.goto(`/${route}.html`)
-        await page.evaluate((value) => localStorage.setItem('yance-theme', value), theme)
-        await page.reload()
+        await settlePage(page)
         await expect(page.locator('main#main')).toBeVisible()
         await expect(page.locator('.site-footer')).toHaveCount(1)
 
@@ -25,9 +56,21 @@ for (const viewport of viewports) {
         expect(layout.documentWidth, `${route} ${theme} ${viewport.name} overflow`).toBeLessThanOrEqual(layout.viewportWidth)
 
         await page.screenshot({
-          path: `test-screenshots/${route}-${theme}-${viewport.name}-${testInfo.project.name}.png`,
+          ...screenshotOptions,
+          path: testInfo.outputPath(`${route}-${theme}-${viewport.name}-review.png`),
           fullPage: false
         })
+        await expect(page).toHaveScreenshot(`${route}-${theme}-${viewport.name}-viewport.png`, screenshotOptions)
+
+        if (route !== 'index' && viewport.name === 'desktop') {
+          await expect(page.locator('main#main')).toHaveScreenshot(`${route}-${theme}-desktop-main.png`, screenshotOptions)
+        }
+        if (route === 'index' && viewport.name === 'desktop') {
+          await expect(page).toHaveScreenshot(`index-${theme}-desktop-full.png`, {
+            ...screenshotOptions,
+            fullPage: true
+          })
+        }
       }
     })
   }

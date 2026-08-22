@@ -16,6 +16,34 @@ function assert(condition: unknown, message: string): asserts condition {
 }
 
 assert(existsSync(dist), 'dist/ 不存在，请先运行 npm run build')
+const manifestPath = join(dist, '.vite/manifest.json')
+assert(existsSync(manifestPath), 'dist 缺少 Vite manifest')
+const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as Record<string, { css?: string[] }>
+const auditedPageSources = [
+  '../src/pages/HomePage.vue',
+  '../src/pages/ResearchPage.vue',
+  '../src/pages/ConcertsPage.vue'
+] as const
+const pageManifest = Object.fromEntries(
+  auditedPageSources.map((source) => {
+    const page = source.split('/').at(-1)?.replace(/\.vue$/, '') ?? source
+    const entry = manifest[source]
+    assert(entry, `Vite manifest 缺少 ${source}`)
+    assert(entry.css?.length, `${source} 缺少页面 CSS chunk`)
+    return [page, entry.css]
+  })
+) as Record<string, string[]>
+
+for (const [page, cssFiles] of Object.entries(pageManifest)) {
+  for (const [otherPage, otherCssFiles] of Object.entries(pageManifest)) {
+    if (page === otherPage) continue
+    assert(
+      !cssFiles.some((cssFile) => otherCssFiles.includes(cssFile)),
+      `${page} 错误包含 ${otherPage} 页面 CSS chunk`
+    )
+  }
+}
+
 for (const page of pages) {
   const html = read(`${page}.html`)
   assert(/Content-Security-Policy/.test(html), `${page}.html 缺少 CSP`)

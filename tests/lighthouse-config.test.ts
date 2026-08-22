@@ -45,7 +45,7 @@ describe('Lighthouse quality matrix', () => {
     expect(getThreshold(assertions, 'largest-contentful-paint').maxNumericValue).toBe(2500)
     expect(getThreshold(assertions, 'total-blocking-time').maxNumericValue).toBe(300)
     expect(getThreshold(assertions, 'cumulative-layout-shift').maxNumericValue).toBe(.1)
-    expect(getThreshold(assertions, 'interaction-to-next-paint').maxNumericValue).toBe(200)
+    expect(assertions).not.toHaveProperty('interaction-to-next-paint')
   })
 
   it('covers the required mobile routes and mobile emulation', () => {
@@ -58,9 +58,39 @@ describe('Lighthouse quality matrix', () => {
       'http://127.0.0.1:4173/concerts.html'
     ])
     expect(config.ci.collect.numberOfRuns).toBe(3)
-    expect(config.ci.collect.settings.preset).toBe('mobile')
+    expect(config.ci.collect.settings.formFactor).toBe('mobile')
+    expect(config.ci.collect.settings).not.toHaveProperty('preset')
+    expect(config.ci.collect.settings.screenEmulation).toMatchObject({
+      mobile: true,
+      width: 390,
+      height: 844,
+      deviceScaleFactor: 2,
+      disabled: false
+    })
     expect(getThreshold(assertions, 'categories:performance').minScore).toBe(.85)
     expect(getThreshold(assertions, 'categories:accessibility').minScore).toBe(.98)
-    expect(getThreshold(assertions, 'interaction-to-next-paint').maxNumericValue).toBe(200)
+    expect(assertions).not.toHaveProperty('interaction-to-next-paint')
+  })
+
+  it('defines a separate User Flow interaction budget', () => {
+    const runner = readFileSync(resolve(process.cwd(), 'scripts/lighthouse-interactions.mjs'), 'utf8')
+
+    for (const interaction of [
+      'theme-toggle',
+      'mobile-menu',
+      'page-compass',
+      'album-selection',
+      'carousel-next',
+      'lightbox-open',
+      'lightbox-next',
+      'lightbox-close'
+    ]) {
+      expect(runner).toContain(interaction)
+    }
+    expect(runner).toContain('interaction-to-next-paint')
+    expect(runner).toContain('200')
+    expect(runner).toContain('index.html')
+    expect(runner).toContain('research.html')
+    expect(runner).toContain('concerts.html')
   })
 })

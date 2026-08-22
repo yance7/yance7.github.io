@@ -33,29 +33,32 @@ function applyTheme(value: Theme, rippleEl: HTMLElement | null = null) {
     !window.matchMedia('(prefers-reduced-motion: reduce)').matches &&
     !window.matchMedia('(pointer: coarse)').matches
   ) {
-    activeRipple?.remove()
-    const rect = rippleEl.getBoundingClientRect()
-    const cx = rect.left + rect.width / 2
-    const cy = rect.top + rect.height / 2
-    const maxDim = Math.max(
-      Math.hypot(cx, cy),
-      Math.hypot(window.innerWidth - cx, cy),
-      Math.hypot(cx, window.innerHeight - cy),
-      Math.hypot(window.innerWidth - cx, window.innerHeight - cy)
-    )
-    const ripple = document.createElement('div')
-    ripple.className = 'theme-ripple'
-    ripple.style.left = `${cx}px`
-    ripple.style.top = `${cy}px`
-    ripple.style.width = `${maxDim * 2.4}px`
-    ripple.style.height = `${maxDim * 2.4}px`
-    document.body.appendChild(ripple)
-    activeRipple = ripple
-    requestAnimationFrame(() => ripple.classList.add('active'))
     window.setTimeout(() => {
-      ripple.remove()
-      if (activeRipple === ripple) activeRipple = null
-    }, 800)
+      if (!rippleEl.isConnected) return
+      activeRipple?.remove()
+      const rect = rippleEl.getBoundingClientRect()
+      const cx = rect.left + rect.width / 2
+      const cy = rect.top + rect.height / 2
+      const maxDim = Math.max(
+        Math.hypot(cx, cy),
+        Math.hypot(window.innerWidth - cx, cy),
+        Math.hypot(cx, window.innerHeight - cy),
+        Math.hypot(window.innerWidth - cx, window.innerHeight - cy)
+      )
+      const ripple = document.createElement('div')
+      ripple.className = 'theme-ripple'
+      ripple.style.left = `${cx}px`
+      ripple.style.top = `${cy}px`
+      ripple.style.width = `${maxDim * 2.4}px`
+      ripple.style.height = `${maxDim * 2.4}px`
+      document.body.appendChild(ripple)
+      activeRipple = ripple
+      requestAnimationFrame(() => ripple.classList.add('active'))
+      window.setTimeout(() => {
+        ripple.remove()
+        if (activeRipple === ripple) activeRipple = null
+      }, 800)
+    }, 0)
   }
 }
 

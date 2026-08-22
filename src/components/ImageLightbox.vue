@@ -38,6 +38,7 @@ useModalDialog(dialogActive, {
   dialogRef,
   initialFocus: closeButton,
   inertSelectors: ['.site-shell'],
+  deferInert: true,
   onClose: closeLightbox,
 })
 

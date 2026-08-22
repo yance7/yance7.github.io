@@ -66,3 +66,10 @@
 .ap-row.pending .ap-badge::after { content: '?'; }
 .ap-row.pending .ap-badge > * { display: none; }
 .ap-row.pending:hover .ap-badge { border-color: var(--dim); box-shadow: none; }
+
+@media (hover: none), (pointer: coarse) {
+  .education-row:hover:not(:focus-visible) { background: transparent; }
+  .ap-row:hover:not(:focus-visible) { background: var(--surface-strong); }
+  .ap-row:hover:not(:focus-visible) .ap-badge { border-color: var(--line); box-shadow: none; }
+  .ap-row.pending:hover:not(:focus-visible) .ap-badge { border-color: var(--dim); box-shadow: none; }
+}

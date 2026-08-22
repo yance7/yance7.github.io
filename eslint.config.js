@@ -51,6 +51,10 @@ export default [
     languageOptions: { globals: globals.node }
   },
   {
+    files: ['scripts/**/*.mjs'],
+    languageOptions: { globals: { ...globals.node, ...globals.browser } }
+  },
+  {
     files: ['tests/**/*.ts'],
     languageOptions: { globals: { ...globals.node, ...globals.browser } }
   }

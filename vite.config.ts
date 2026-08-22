@@ -46,6 +46,7 @@ export default defineConfig({
   build: {
     outDir: resolve(rootDir, 'dist'),
     emptyOutDir: true,
+    manifest: true,
     rollupOptions: {
       input: htmlInputs,
       output: {

@@ -150,4 +150,42 @@ describe('page stylesheet boundaries', () => {
       expect(source).not.toContain("import '../styles.css'")
     }
   })
+
+  it('keeps page-specific responsive selectors out of the global stylesheet', () => {
+    const responsiveStyles = readFileSync(resolve(process.cwd(), 'src/styles/responsive.css'), 'utf8')
+
+    for (const selector of [
+      '.home-',
+      '.world-',
+      '.focus-',
+      '.honor-',
+      '.activity-',
+      '.tl-',
+      '.method-',
+      '.toolchain-',
+      '.sc-',
+      '.concert-',
+      '.next-up'
+    ]) {
+      expect(responsiveStyles).not.toContain(selector)
+    }
+  })
+
+  it('contracts the built manifest and the dedicated visual project', () => {
+    const viteConfig = readFileSync(resolve(process.cwd(), 'vite.config.ts'), 'utf8')
+    const smoke = readFileSync(resolve(process.cwd(), 'scripts/smoke-test.ts'), 'utf8')
+    const playwrightConfig = readFileSync(resolve(process.cwd(), 'playwright.config.ts'), 'utf8')
+    const visualSpec = readFileSync(resolve(process.cwd(), 'tests/e2e/visual-matrix.spec.ts'), 'utf8')
+
+    expect(viteConfig).toMatch(/manifest:\s*true/)
+    expect(smoke).toContain('manifest.json')
+    for (const page of ['HomePage.vue', 'ResearchPage.vue', 'ConcertsPage.vue']) {
+      expect(smoke).toContain(page)
+    }
+    expect(playwrightConfig).toContain("name: 'chromium-visual'")
+    expect(playwrightConfig).toContain('visual-matrix\\.spec\\.ts')
+    expect(playwrightConfig).toContain("snapshotPathTemplate: '{testDir}/visual-snapshots/{projectName}/{testFilePath}/{arg}{ext}'")
+    expect(playwrightConfig).not.toContain('{platform}')
+    expect(visualSpec).toContain('toHaveScreenshot')
+  })
 })

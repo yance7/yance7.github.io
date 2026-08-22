@@ -13,9 +13,11 @@ export default defineConfig({
     baseURL: previewOrigin,
     trace: 'retain-on-failure'
   },
+  snapshotPathTemplate: '{testDir}/visual-snapshots/{projectName}/{testFilePath}/{arg}{ext}',
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] }, testIgnore: /compatibility\.spec\.ts/ },
-    { name: 'webkit-mobile', use: { ...devices['iPhone 13'] }, testIgnore: /compatibility\.spec\.ts/ },
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] }, testIgnore: /compatibility\.spec\.ts|visual-matrix\.spec\.ts/ },
+    { name: 'webkit-mobile', use: { ...devices['iPhone 13'] }, testIgnore: /compatibility\.spec\.ts|visual-matrix\.spec\.ts/ },
+    { name: 'chromium-visual', use: { ...devices['Desktop Chrome'] }, testMatch: /visual-matrix\.spec\.ts/ },
     { name: 'firefox-desktop-smoke', use: { ...devices['Desktop Firefox'] }, testMatch: /compatibility\.spec\.ts/ },
     { name: 'chromium-android-smoke', use: { ...devices['Pixel 5'] }, testMatch: /compatibility\.spec\.ts/ }
   ],

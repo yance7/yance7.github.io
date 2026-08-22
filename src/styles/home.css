@@ -279,3 +279,77 @@
 @media (max-width: 420px) {
   .page-home > .home-focus { padding-top: var(--space-5); }
 }
+
+@media (max-width: 900px) {
+  .home-stage-body { padding-top: 66px; }
+}
+
+@media (max-width: 640px) {
+  .home-hero { min-height: auto; }
+  .home-stage { padding-top: var(--space-mobile-shell); }
+  .home-stage-meta { align-items: flex-start; flex-direction: column; gap: var(--space-3); }
+  .home-stage-identity { max-width: 32ch; }
+  .home-stage-body { padding: 44px 0 34px; }
+  .home-stage-heading { letter-spacing: .17em; }
+  .home-stage-title { margin-top: 32px; font-size: clamp(2.5rem, 11vw, 3.5rem); }
+  .home-stage-copy { font-size: .95rem; }
+  .home-stage-scroll { margin-top: 0; }
+}
+
+@media (max-width: 420px) {
+  .home-stage { padding-inline: max(var(--w-pad), env(safe-area-inset-left)) max(var(--w-pad), env(safe-area-inset-right)); }
+  .home-stage-kicker { flex-wrap: wrap; gap: 8px; font-size: var(--type-meta-size); letter-spacing: .11em; line-height: 1.55; }
+  .home-stage-identity { font-size: var(--type-meta-size); letter-spacing: .1em; line-height: 1.6; }
+  .home-stage-heading { gap: 8px; font-size: var(--type-meta-size); letter-spacing: .13em; line-height: 1.5; }
+  .home-stage-title { font-size: clamp(2.5rem, 11vw, 3.5rem); }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .home-hero { min-height: calc(100svh - 68px); }
+  .home-stage { padding-block: 16px 12px; }
+  .home-stage-body { padding: 16px 0 10px; }
+  .home-stage-heading { font-size: var(--type-meta-size); }
+  .home-stage-title {
+    max-width: 16ch;
+    margin: 12px 0 10px;
+    font-size: clamp(2rem, 8vh, 2.65rem);
+    line-height: 1;
+  }
+  .home-stage-copy-block { gap: 10px; }
+  .home-stage-copy { max-width: 72ch; font-size: .875rem; line-height: 1.55; }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .home-stage-scroll:hover:not(:focus-visible) { color: var(--dim); transform: none; }
+  .home-stage-scroll:hover:not(:focus-visible) .home-stage-scroll-line { width: clamp(36px, 5vw, 72px); }
+  .world-card:hover:not(:focus-visible) { transform: none; background: var(--surface-strong); box-shadow: none; }
+  .world-card:hover:not(:focus-visible) .world-arrow { opacity: 0; transform: translate(-4px, 2px); }
+  .world-card:hover:not(:focus-visible) .world-icon { transform: none; color: var(--dim); }
+  .focus-card:hover:not(:focus-visible):not(:focus-within) {
+    transform: none; border-color: var(--line); background: var(--surface); box-shadow: var(--shadow-1);
+  }
+  .home-focus-grid:has(.focus-research:hover:not(:focus-visible)) .home-focus-connector,
+  .home-focus-grid:has(.focus-product:hover:not(:focus-visible)) .home-focus-connector { opacity: .72; }
+  .home-focus-grid:has(.focus-research:hover:not(:focus-visible)) .focus-product,
+  .home-focus-grid:has(.focus-product:hover:not(:focus-visible)) .focus-research { border-color: var(--line); }
+  .focus-live-link:hover:not(:focus-visible) { color: var(--aqua); }
+  .focus-live-link:hover:not(:focus-visible) span { transform: none; }
+  .beyond-links a:hover:not(:focus-visible) { color: var(--gold); transform: none; }
+  .leadership-card:hover:not(:focus-visible) { transform: none; box-shadow: var(--shadow-1); border-color: var(--line); }
+  .leadership-card:hover:not(:focus-visible)::before { transform: scaleX(0); }
+  .activity-row:hover:not(:focus-visible) .activity-btn { background: transparent; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-stage-scroll:hover,
+  .home-stage-scroll:focus-visible,
+  .world-card:is(:hover, :focus-visible),
+  .focus-card:is(:hover, :focus-visible, :focus-within),
+  .leadership-card:hover { transform: none !important; }
+  .home-stage-scroll:hover .home-stage-scroll-line,
+  .home-stage-scroll:focus-visible .home-stage-scroll-line { width: clamp(36px, 5vw, 72px); }
+  .focus-card:is(:hover, :focus-visible, :focus-within) .focus-link span,
+  .focus-live-link:is(:hover, :focus-visible) span,
+  .world-card:is(:hover, :focus-visible) .world-icon,
+  .world-card:is(:hover, :focus-visible) .world-arrow { transform: none !important; }
+}

@@ -401,6 +401,8 @@
   .toolchain-foot { align-items: flex-start; flex-direction: column; padding: var(--space-3) var(--space-5); }
 }
 @media (hover: none), (pointer: coarse) {
+  .method-toggle,
+  .tl-link { min-height: 44px; }
   .toolchain-cell:hover:not(:focus-visible) { background: var(--surface-strong); }
   .toolchain-cell:hover:not(:focus-visible)::after { transform: scaleX(0); }
   .toolchain-cell:hover:not(:focus-visible) .tc-no { color: var(--line-strong); }
@@ -413,6 +415,7 @@
   .tl-link:hover:not(:focus-visible) {
     border-color: var(--control-border); background: var(--control-bg); box-shadow: var(--control-shadow); transform: none;
   }
+  .copy-citation:hover:not(:focus-visible):not(.is-success):not(.is-error) { border-color: var(--control-border); color: var(--ink); }
   .tl-proof-list a:hover:not(:focus-visible) { color: var(--muted); border-color: var(--line); transform: none; }
 }
 @media (prefers-reduced-motion: reduce) {

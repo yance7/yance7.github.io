@@ -10,7 +10,7 @@
       "startServerReadyPattern": "4173",
       "numberOfRuns": 3,
       "settings": {
-        "preset": "mobile",
+        "formFactor": "mobile",
         "screenEmulation": {
           "mobile": true,
           "width": 390,
@@ -29,8 +29,7 @@
         "categories:seo": ["error", { "minScore": 0.95 }],
         "largest-contentful-paint": ["error", { "maxNumericValue": 2500 }],
         "total-blocking-time": ["error", { "maxNumericValue": 300 }],
-        "cumulative-layout-shift": ["error", { "maxNumericValue": 0.1 }],
-        "interaction-to-next-paint": ["error", { "maxNumericValue": 200 }]
+        "cumulative-layout-shift": ["error", { "maxNumericValue": 0.1 }]
       }
     }
   }

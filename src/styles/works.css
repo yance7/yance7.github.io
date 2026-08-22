@@ -465,6 +465,12 @@
   .sc-sequence li:first-child { border-left: 0; }
 }
 @media (max-width: 640px) {
+  .hero-title.hero-works-title {
+    display: block;
+    white-space: normal;
+    font-size: clamp(1.45rem, 6.2vw, 1.9rem);
+    line-height: 1.38;
+  }
   .sc-dossier-head { align-items: flex-start; flex-direction: column; gap: var(--space-3); padding: var(--space-4) var(--space-5); }
   .sc-head-status { width: 100%; justify-content: space-between; }
   .sc-head-status > a { max-width: 65%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
