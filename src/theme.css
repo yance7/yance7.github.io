@@ -110,6 +110,17 @@
   --w-wide: 1440px;
   --w-pad: 5vw;
 
+  /* Component primitives */
+  --control-height-sm: 36px;
+  --control-height-md: 42px;
+  --control-height-lg: 48px;
+  --control-radius: var(--radius-small);
+  --control-radius-soft: var(--radius-md);
+  --tooltip-offset: 10px;
+  --tooltip-max-width: 260px;
+  --signature-line-width: 1px;
+  --signature-motion-duration: 18s;
+
 }
 
 /* ---------- 亮色 · 暖白纸（默认） ---------- */
@@ -158,6 +169,13 @@
   --control-pressed: #E8EFEC;
   --control-border: rgba(31, 45, 41, .18);
   --control-shadow: 0 1px 2px rgba(35, 45, 42, .04), 0 5px 18px rgba(52, 63, 59, .06);
+  --tooltip-bg: var(--ink);
+  --tooltip-ink: var(--bg);
+  --tooltip-shadow: var(--shadow-2);
+  --status-neutral-bg: color-mix(in srgb, var(--surface-raised) 84%, transparent);
+  --status-aqua-bg: color-mix(in srgb, var(--aqua) 9%, transparent);
+  --status-gold-bg: color-mix(in srgb, var(--gold) 9%, transparent);
+  --status-violet-bg: color-mix(in srgb, var(--violet) 9%, transparent);
   --card-hover: rgba(255, 255, 255, .99);
   --surface-hover: rgba(255, 255, 255, .98);
   --interactive-border: color-mix(in srgb, var(--gold) 48%, var(--line));
@@ -280,6 +298,13 @@
   --control-pressed: rgba(109, 222, 208, .11);
   --control-border: rgba(235, 242, 245, .2);
   --control-shadow: 0 1px 2px rgba(0, 0, 0, .2), 0 7px 22px rgba(0, 0, 0, .22);
+  --tooltip-bg: var(--ink);
+  --tooltip-ink: var(--bg);
+  --tooltip-shadow: var(--shadow-2);
+  --status-neutral-bg: color-mix(in srgb, var(--surface-raised) 84%, transparent);
+  --status-aqua-bg: color-mix(in srgb, var(--aqua) 9%, transparent);
+  --status-gold-bg: color-mix(in srgb, var(--gold) 9%, transparent);
+  --status-violet-bg: color-mix(in srgb, var(--violet) 9%, transparent);
   --card-hover: rgba(25, 38, 46, .98);
   --surface-hover: rgba(25, 38, 46, .98);
   --interactive-border: color-mix(in srgb, var(--gold) 58%, var(--line));

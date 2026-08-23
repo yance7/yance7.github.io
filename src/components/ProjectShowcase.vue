@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import StatusBadge from './StatusBadge.vue'
+import YanceButton from './YanceButton.vue'
 import type { Project } from '../data/types'
 
 const props = withDefaults(defineProps<{ project: Project; index?: number }>(), { index: 0 })
@@ -50,12 +51,27 @@ const chapterCount = computed(() => String(props.project.story.chapters.length).
         <span class="sc-meta-label">PROJECT NOTE</span>
         <p class="sc-desc">{{ project.description }}</p>
         <div class="sc-actions">
-          <a class="btn-primary" :href="project.href" target="_blank" rel="noopener noreferrer" v-magnetic="{ strength: 3.5 }">
-            ENTER PROJECT <span aria-hidden="true">→</span>
-          </a>
-          <a v-if="project.github" class="btn-ghost" :href="project.github" target="_blank" rel="noopener noreferrer" v-magnetic="{ strength: 3.5 }">
-            SOURCE CODE <span aria-hidden="true">→</span>
-          </a>
+          <YanceButton
+            :href="project.href"
+            target="_blank"
+            rel="noopener noreferrer"
+            variant="primary"
+            v-magnetic="{ strength: 3.5 }"
+          >
+            ENTER PROJECT
+            <template #trailing>→</template>
+          </YanceButton>
+          <YanceButton
+            v-if="project.github"
+            :href="project.github"
+            target="_blank"
+            rel="noopener noreferrer"
+            variant="secondary"
+            v-magnetic="{ strength: 3.5 }"
+          >
+            SOURCE CODE
+            <template #trailing>→</template>
+          </YanceButton>
         </div>
       </div>
     </div>

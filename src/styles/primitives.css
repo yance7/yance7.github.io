@@ -1,0 +1,141 @@
+/* ===== Shared component primitives ===== */
+.y-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--control-height-md);
+  padding: 0 var(--space-5);
+  border: 1px solid transparent;
+  border-radius: var(--control-radius);
+  font-family: var(--font-prose);
+  font-size: var(--text-xs);
+  font-weight: 560;
+  letter-spacing: .1em;
+  line-height: 1;
+  text-decoration: none;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    background-color var(--dur-base) var(--ease-soft),
+    border-color var(--dur-base) var(--ease-soft),
+    color var(--dur-base) var(--ease-soft),
+    box-shadow var(--dur-base) var(--ease-soft);
+}
+
+.y-button--sm { min-height: var(--control-height-sm); padding-inline: var(--space-4); }
+.y-button--lg { min-height: var(--control-height-lg); padding-inline: var(--space-6); }
+.y-button--icon { width: var(--control-height-md); min-height: var(--control-height-md); padding: 0; }
+
+.y-button--primary {
+  border-color: var(--action-fill);
+  background: var(--action-fill);
+  color: var(--accent-contrast);
+  box-shadow: 0 6px 18px var(--glow-gold);
+}
+.y-button--secondary {
+  border-color: var(--control-border);
+  background: var(--control-bg);
+  color: var(--ink);
+  box-shadow: var(--control-shadow);
+}
+.y-button--ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--ink);
+  box-shadow: none;
+}
+.y-button--quiet {
+  border-color: var(--control-border);
+  background: var(--control-bg);
+  color: var(--ink);
+  box-shadow: var(--control-shadow);
+}
+.y-button--archive {
+  min-height: var(--control-height-sm);
+  padding-inline: var(--space-3);
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-technical);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: var(--tracking-zh-meta);
+}
+
+.y-button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+.y-button--primary:not(:disabled):hover {
+  border-color: var(--button-hover);
+  background: var(--button-hover);
+  box-shadow: 0 8px 24px var(--glow-gold);
+}
+.y-button--secondary:not(:disabled):hover,
+.y-button--quiet:not(:disabled):hover {
+  border-color: var(--gold);
+  background: var(--control-hover);
+  color: var(--gold);
+}
+.y-button--ghost:not(:disabled):hover {
+  background: var(--control-hover);
+  color: var(--gold);
+}
+.y-button--archive:not(:disabled):hover {
+  border-color: var(--aqua);
+  background: var(--surface-tint);
+  color: var(--ink);
+}
+.y-button:active:not(:disabled) { transform: translateY(1px) scale(var(--motion-press-scale)); }
+.y-button:focus-visible { box-shadow: var(--focus-ring); }
+.y-button:disabled,
+.y-button[aria-disabled='true'] { cursor: not-allowed; opacity: .58; }
+
+.y-button__leading,
+.y-button__trailing {
+  display: inline-flex;
+  align-items: center;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .y-button:not(:disabled):hover .y-button__trailing { transform: translateX(3px); }
+}
+
+@media (pointer: coarse) {
+  .y-button--icon,
+  .y-button--quiet { min-height: 44px; }
+  .y-button--icon { width: 44px; }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .y-button:not(:disabled):hover { transform: none; }
+  .y-button--primary:not(:disabled):hover {
+    border-color: var(--action-fill);
+    background: var(--action-fill);
+    box-shadow: 0 6px 18px var(--glow-gold);
+  }
+  .y-button--secondary:not(:disabled):hover,
+  .y-button--quiet:not(:disabled):hover {
+    border-color: var(--control-border);
+    background: var(--control-bg);
+    color: var(--ink);
+  }
+  .y-button--ghost:not(:disabled):hover {
+    background: transparent;
+    color: var(--ink);
+  }
+  .y-button--archive:not(:disabled):hover {
+    border-color: transparent;
+    background: transparent;
+    color: var(--muted);
+  }
+  .y-button:not(:disabled):hover .y-button__trailing { transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .y-button,
+  .y-button__leading,
+  .y-button__trailing { transition-duration: .01ms; }
+  .y-button:not(:disabled):hover,
+  .y-button:active:not(:disabled) { transform: none; }
+  .y-button:not(:disabled):hover .y-button__trailing { transform: none; }
+}
