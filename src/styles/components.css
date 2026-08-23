@@ -40,24 +40,51 @@
 .status-badge {
   display: inline-flex; align-items: center; gap: 6px;
   font-family: var(--font-technical); font-size: var(--text-xs); letter-spacing: var(--tracking-latin-wide);
-  padding: 4px 10px; border-radius: var(--radius-pill);
-  border: 1px solid var(--line); text-transform: uppercase;
+  padding: 5px 8px; border-radius: var(--control-radius);
+  border: 1px solid var(--line); background: var(--status-neutral-bg);
+  color: var(--dim); text-transform: uppercase;
 }
 .status-dot {
-  width: 6px; height: 6px; border-radius: 50%;
+  width: 5px; height: 5px; border-radius: 50%;
   background: var(--dim);
 }
-.status-badge.active .status-dot {
-  background: var(--aqua); box-shadow: 0 0 8px var(--aqua);
+.status-badge.active,
+.status-badge.deployed {
+  border-color: color-mix(in srgb, var(--aqua) 42%, var(--line));
+  background: var(--status-aqua-bg);
+  color: var(--aqua);
+}
+.status-badge.active .status-dot,
+.status-badge.deployed .status-dot {
+  background: var(--aqua);
+  box-shadow: 0 0 0 2px var(--status-aqua-bg);
+}
+.status-badge.published {
+  border-color: color-mix(in srgb, var(--gold) 42%, var(--line));
+  background: var(--status-gold-bg);
+  color: var(--gold-text);
 }
 .status-badge.published .status-dot { background: var(--gold); }
-.status-badge.completed .status-dot { background: var(--dim); }
-.status-badge.deployed .status-dot { background: var(--aqua); box-shadow: 0 0 8px var(--glow-aqua); }
+.status-badge.completed,
+.status-badge.archived {
+  border-color: var(--line);
+  background: var(--status-neutral-bg);
+  color: var(--dim);
+}
+.status-badge.completed .status-dot,
+.status-badge.archived .status-dot { background: var(--dim); }
+.status-badge.open-source {
+  border-color: color-mix(in srgb, var(--violet) 42%, var(--line));
+  background: var(--status-violet-bg);
+  color: var(--violet);
+}
 .status-badge.open-source .status-dot { background: var(--violet); }
-.status-badge.active { color: var(--aqua); border-color: var(--glow-aqua); }
-.status-badge.published { color: var(--gold); border-color: var(--glow-gold); }
-.status-badge.deployed { color: var(--aqua); border-color: var(--glow-aqua); }
-.status-badge.open-source { color: var(--violet); border-color: var(--glow-violet); }
+.status-badge.planned {
+  border-style: dashed;
+  background: transparent;
+  color: var(--muted);
+}
+.status-badge.planned .status-dot { background: var(--muted); }
 
 /* ===== 指标条 ===== */
 .metric-strip {

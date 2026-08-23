@@ -12,3 +12,21 @@ test('shared project actions expose stable keyboard targets', async ({ page }) =
   const box = await projectLink.boundingBox()
   expect(box?.height ?? 0).toBeGreaterThanOrEqual(42)
 })
+
+test('status badges use compact semantic surfaces without pulse animation', async ({ page }) => {
+  await page.goto('/works.html')
+
+  const badges = page.locator('.status-badge')
+  await expect(badges.first()).toBeVisible()
+  await expect(badges.first()).toHaveCSS('border-radius', '6px')
+  await expect(badges.first()).toHaveCSS('padding-top', '5px')
+
+  const statuses = await badges.evaluateAll((elements) => elements.map((element) => {
+    const status = [...element.classList].find((name) => name !== 'status-badge')
+    return status ?? ''
+  }))
+  expect(statuses.every((status) => status.length > 0)).toBe(true)
+  for (const badge of await badges.all()) {
+    await expect(badge).not.toHaveCSS('animation-name', /pulse/)
+  }
+})
