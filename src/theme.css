@@ -133,7 +133,8 @@
   /* 文字 */
   --ink: #1B2523;
   --muted: #53615E;
-  --dim: #65736F;
+  /* Tertiary metadata keeps a small contrast buffer above AA on warm paper. */
+  --dim: #62716C;
   --dim-soft: #8E9A96;
 
   /* 线条 */
