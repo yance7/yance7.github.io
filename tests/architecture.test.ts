@@ -26,11 +26,14 @@ describe('page registry', () => {
 describe('shared button public contract', () => {
   it('keeps the documented variants and sizes available to callers', () => {
     const buttonTypes = readFileSync(resolve(process.cwd(), 'src/components/yanceButtonTypes.ts'), 'utf8')
+    const primitives = readFileSync(resolve(process.cwd(), 'src/styles/primitives.css'), 'utf8')
     const variants = ['primary', 'secondary', 'quiet'] satisfies YanceButtonVariant[]
     const sizes = ['sm', 'md', 'lg', 'icon'] satisfies YanceButtonSize[]
 
     expect(buttonTypes).not.toContain("'ghost'")
     expect(buttonTypes).not.toContain("'archive'")
+    expect(primitives).not.toContain('.y-button--ghost')
+    expect(primitives).not.toContain('.y-button--archive')
     expect(variants).toHaveLength(3)
     expect(sizes).toHaveLength(4)
   })

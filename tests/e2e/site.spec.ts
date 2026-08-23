@@ -390,7 +390,9 @@ test('rapid control clicks settle without duplicate or stale state', async ({ pa
   await page.goto('/concerts.html')
   const carousel = page.locator('.concert-poster').filter({ has: page.locator('.carousel-controls') }).first()
   const next = carousel.locator('button[aria-label="下一张"]')
-  for (let i = 0; i < 8; i += 1) await next.click({ force: true })
+  await expect(next).toBeVisible()
+  await expect(next).toBeEnabled()
+  for (let i = 0; i < 8; i += 1) await next.click()
   await expect(carousel.locator('.carousel-controls span')).toHaveText(/\d+ \/ \d+/)
 })
 

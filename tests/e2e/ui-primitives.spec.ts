@@ -10,7 +10,7 @@ test('shared project actions expose stable keyboard targets', async ({ page }) =
   await expect(projectLink).toHaveClass(/y-button/)
 
   const box = await projectLink.boundingBox()
-  expect(Math.round(box?.height ?? 0)).toBeGreaterThanOrEqual(42)
+  expect(Math.round(box?.height ?? 0)).toBeGreaterThanOrEqual(44)
 })
 
 test('404 entry actions use the shared button primitive', async ({ page }) => {
@@ -20,7 +20,7 @@ test('404 entry actions use the shared button primitive', async ({ page }) => {
   await expect(actions).toHaveCount(2)
   for (const action of await actions.all()) {
     const box = await action.boundingBox()
-    expect(box?.height ?? 0).toBeGreaterThanOrEqual(42)
+    expect(box?.height ?? 0).toBeGreaterThanOrEqual(44)
   }
 })
 

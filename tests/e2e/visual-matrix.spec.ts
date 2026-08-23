@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 
-const routes = ['index', 'research', 'works', 'concerts'] as const
+const routes = ['index', 'academics', 'honors', 'research', 'works', 'concerts'] as const
 const viewports = [
   { name: 'mobile', width: 390, height: 844 },
   { name: 'desktop', width: 1440, height: 900 }
@@ -8,12 +8,14 @@ const viewports = [
 const themes = ['light', 'dark'] as const
 const FIXED_NOW = '2026-08-21T12:00:00+08:00'
 
-const screenshotOptions = {
+const sharedScreenshotOptions = {
   animations: 'disabled' as const,
   caret: 'hide' as const,
-  scale: 'css' as const,
-  maxDiffPixelRatio: .025
+  scale: 'css' as const
 }
+const fullPageScreenshotOptions = { ...sharedScreenshotOptions, maxDiffPixelRatio: .02 }
+const pageScreenshotOptions = { ...sharedScreenshotOptions, maxDiffPixelRatio: .01 }
+const componentScreenshotOptions = { ...sharedScreenshotOptions, maxDiffPixelRatio: .005 }
 
 async function installTheme(page: Page, selectedTheme: typeof themes[number]) {
   await page.addInitScript(({ fixedNow, selectedTheme: theme }) => {
@@ -68,18 +70,18 @@ for (const viewport of viewports) {
         expect(layout.documentWidth, `${route} ${theme} ${viewport.name} overflow`).toBeLessThanOrEqual(layout.viewportWidth)
 
         await page.screenshot({
-          ...screenshotOptions,
+          ...pageScreenshotOptions,
           path: testInfo.outputPath(`${route}-${theme}-${viewport.name}-review.png`),
           fullPage: false
         })
-        await expect(page).toHaveScreenshot(`${route}-${theme}-${viewport.name}-viewport.png`, screenshotOptions)
+        await expect(page).toHaveScreenshot(`${route}-${theme}-${viewport.name}-viewport.png`, pageScreenshotOptions)
 
         if (route !== 'index' && viewport.name === 'desktop') {
-          await expect(page.locator('main#main')).toHaveScreenshot(`${route}-${theme}-desktop-main.png`, screenshotOptions)
+          await expect(page.locator('main#main')).toHaveScreenshot(`${route}-${theme}-desktop-main.png`, componentScreenshotOptions)
         }
         if (route === 'index' && viewport.name === 'desktop') {
           await expect(page).toHaveScreenshot(`index-${theme}-desktop-full.png`, {
-            ...screenshotOptions,
+            ...fullPageScreenshotOptions,
             fullPage: true
           })
         }
@@ -98,7 +100,7 @@ for (const theme of themes) {
     const link = page.locator('.page-compass-link').nth(1)
     await link.focus()
     await expect(page.locator('#compass-tip-sec-research-timeline')).toBeVisible()
-    await expect(page).toHaveScreenshot(`${theme}-page-compass-focused.png`, screenshotOptions)
+    await expect(page).toHaveScreenshot(`${theme}-page-compass-focused.png`, componentScreenshotOptions)
   })
 
   test(`captures ${theme} Lightbox landscape portrait and mobile states`, async ({ page }) => {
@@ -110,14 +112,14 @@ for (const theme of themes) {
     await page.locator('.concert-poster.land .poster-open').first().click()
     await expect(page.locator('.lb-stage img')).toHaveClass(/loaded/)
     await expectLightboxGeometry(page)
-    await expect(page.locator('.lightbox')).toHaveScreenshot(`${theme}-lightbox-landscape.png`, screenshotOptions)
+    await expect(page.locator('.lightbox')).toHaveScreenshot(`${theme}-lightbox-landscape.png`, componentScreenshotOptions)
     await page.keyboard.press('Escape')
     await expect(page.locator('.lightbox')).toHaveCount(0)
 
     await page.locator('.concert-poster:not(.land) .poster-open').first().click()
     await expect(page.locator('.lb-stage img')).toHaveClass(/loaded/)
     await expectLightboxGeometry(page)
-    await expect(page.locator('.lightbox')).toHaveScreenshot(`${theme}-lightbox-portrait.png`, screenshotOptions)
+    await expect(page.locator('.lightbox')).toHaveScreenshot(`${theme}-lightbox-portrait.png`, componentScreenshotOptions)
     await page.keyboard.press('Escape')
     await expect(page.locator('.lightbox')).toHaveCount(0)
 
@@ -125,7 +127,7 @@ for (const theme of themes) {
     await page.locator('.concert-poster:not(.land) .poster-open').first().click()
     await expect(page.locator('.lb-stage img')).toHaveClass(/loaded/)
     await expectLightboxGeometry(page)
-    await expect(page.locator('.lightbox')).toHaveScreenshot(`${theme}-lightbox-mobile.png`, screenshotOptions)
+    await expect(page.locator('.lightbox')).toHaveScreenshot(`${theme}-lightbox-mobile.png`, componentScreenshotOptions)
   })
 }
 
