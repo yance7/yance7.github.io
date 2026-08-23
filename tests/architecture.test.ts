@@ -304,6 +304,16 @@ describe('lightbox depth contracts', () => {
 })
 
 describe('motion hierarchy contracts', () => {
+  it('caches theme ripple geometry before mutating theme tokens', () => {
+    const theme = readFileSync(resolve(process.cwd(), 'src/composables/useTheme.ts'), 'utf8')
+
+    expect(theme).toContain('const rippleGeometry = rippleEl && canRipple ? getRippleGeometry(rippleEl) : null')
+    expect(theme).toContain('const rect = rippleEl.getBoundingClientRect()')
+    expect(theme.indexOf('const rippleGeometry = rippleEl && canRipple ? getRippleGeometry(rippleEl) : null'))
+      .toBeLessThan(theme.indexOf('setTheme(value)'))
+    expect(theme).toContain('createThemeRipple(rippleGeometry)')
+  })
+
   it('keeps project actions free of nested magnetic bindings', () => {
     const project = readFileSync(resolve(process.cwd(), 'src/components/ProjectShowcase.vue'), 'utf8')
     expect(project).not.toContain('v-magnetic')
