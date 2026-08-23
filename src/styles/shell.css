@@ -272,9 +272,9 @@
   border-radius: var(--radius-pill);
   background: var(--compass-bg);
   box-shadow: var(--control-shadow);
-  contain: layout paint;
+  contain: layout;
   backdrop-filter: blur(var(--glass-blur));
-  overflow-y: auto;
+  overflow: visible;
   overscroll-behavior: contain;
   scrollbar-width: none;
   transform: translateY(-50%);

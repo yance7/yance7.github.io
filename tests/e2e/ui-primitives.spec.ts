@@ -39,6 +39,7 @@ test('page compass exposes keyboard tooltip hierarchy', async ({ page }) => {
 
   await expect(link).toHaveAttribute('aria-describedby', /compass-tip-/)
   await expect(page.locator('[role="tooltip"]').nth(1)).toBeVisible()
+  await expect(page.locator('.page-compass')).toHaveCSS('overflow', 'visible')
 
   const top = page.locator('.page-compass-top')
   await expect(top).toHaveAttribute('aria-describedby', 'page-compass-top-tip')
