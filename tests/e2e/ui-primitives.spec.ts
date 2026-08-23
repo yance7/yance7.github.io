@@ -61,3 +61,11 @@ test('lightbox keeps metadata and quiet control chrome bounded', async ({ page }
   await page.keyboard.press('Escape')
   await expect(page.locator('.lightbox')).toHaveCount(0)
 })
+
+test('archive proof links share one semantic primitive across works and research', async ({ page }) => {
+  await page.goto('/works.html')
+  await expect(page.locator('.sc-proof-links .y-archive-link').first()).toBeVisible()
+
+  await page.goto('/research.html')
+  await expect(page.locator('.tl-proof-list .y-archive-link').first()).toBeVisible()
+})

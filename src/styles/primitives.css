@@ -1,4 +1,39 @@
 /* ===== Shared component primitives ===== */
+.y-archive-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--control-height-sm);
+  padding: 5px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--control-radius);
+  color: var(--muted);
+  font-family: var(--font-technical);
+  font-size: var(--type-meta-size);
+  letter-spacing: var(--tracking-zh-meta);
+  text-decoration: none;
+  transition:
+    color var(--dur-fast) var(--ease-soft),
+    border-color var(--dur-fast) var(--ease-soft),
+    background-color var(--dur-fast) var(--ease-soft),
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-soft);
+}
+.y-archive-link strong { color: var(--ink); font-weight: 450; }
+.y-archive-link > span:last-child {
+  color: var(--aqua);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.y-archive-link:hover {
+  border-color: var(--aqua);
+  color: var(--ink);
+  transform: translateY(-1px);
+  box-shadow: var(--interactive-shadow);
+}
+.y-archive-link:hover > span:last-child { transform: translateX(3px); }
+.y-archive-link:active { transform: translateY(1px) scale(var(--motion-press-scale)); }
+.y-archive-link:focus-visible { box-shadow: var(--focus-ring); }
+
 .y-button {
   display: inline-flex;
   align-items: center;
@@ -98,6 +133,7 @@
 }
 @media (hover: hover) and (pointer: fine) {
   .y-button:not(:disabled):hover .y-button__trailing { transform: translateX(3px); }
+  .y-archive-link:hover > span:last-child { transform: translateX(3px); }
 }
 
 @media (pointer: coarse) {
@@ -107,6 +143,14 @@
 }
 
 @media (hover: none), (pointer: coarse) {
+  .y-archive-link:hover {
+    border-color: var(--line);
+    background: transparent;
+    color: var(--muted);
+    transform: none;
+    box-shadow: none;
+  }
+  .y-archive-link:hover > span:last-child { transform: none; }
   .y-button:not(:disabled):hover { transform: none; }
   .y-button--primary:not(:disabled):hover {
     border-color: var(--action-fill);
@@ -132,10 +176,15 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .y-archive-link,
+  .y-archive-link > span:last-child,
   .y-button,
   .y-button__leading,
   .y-button__trailing { transition-duration: .01ms; }
   .y-button:not(:disabled):hover,
   .y-button:active:not(:disabled) { transform: none; }
   .y-button:not(:disabled):hover .y-button__trailing { transform: none; }
+  .y-archive-link:hover,
+  .y-archive-link:hover > span:last-child,
+  .y-archive-link:active { transform: none; }
 }

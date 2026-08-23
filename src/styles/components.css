@@ -109,18 +109,6 @@
 .metric-strip.large .metric-card { padding: var(--space-7) var(--space-6); }
 .metric-strip.large .metric-card b { font-size: 4.2rem; }
 
-
-.tl-proof-list a, .sc-proof-links a {
-  display: inline-flex; align-items: center; gap: 8px; padding: 5px 9px;
-  border: 1px solid var(--line); border-radius: var(--radius-small);
-  color: var(--muted); font-family: var(--font-technical); font-size: var(--type-meta-size);
-  letter-spacing: var(--tracking-zh-meta); transition: color var(--dur-base), border-color var(--dur-base), transform var(--dur-base);
-}
-.tl-proof-list a strong, .sc-proof-links a strong { color: var(--ink); font-weight: 450; }
-.tl-proof-list a:hover, .sc-proof-links a:hover { color: var(--ink); border-color: var(--aqua); transform: translateY(-2px); box-shadow: var(--interactive-shadow); }
-.tl-proof-list a > span:last-child, .sc-proof-links a > span:last-child { color: var(--aqua); }
-
-
 /* ===== 深链落点确认 ===== */
 .showcase:target, .honor-card:target {
   border-color: color-mix(in srgb, var(--aqua) 55%, var(--line));

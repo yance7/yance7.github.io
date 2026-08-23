@@ -393,7 +393,7 @@
   justify-content: flex-end;
   gap: 8px;
 }
-.sc-proof-links a {
+.sc-proof-links .y-archive-link {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
@@ -412,20 +412,20 @@
     transform var(--dur-fast) var(--ease-out),
     box-shadow var(--dur-fast);
 }
-.sc-proof-links a strong {
+.sc-proof-links .y-archive-link strong {
   overflow: hidden;
   color: var(--ink);
   font-weight: 450;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.sc-proof-links a:hover {
+.sc-proof-links .y-archive-link:hover {
   transform: translateY(-1px);
   border-color: currentColor;
   color: currentColor;
   box-shadow: var(--interactive-shadow);
 }
-.sc-proof-links a:active { transform: translateY(1px) scale(var(--motion-press-scale)); }
+.sc-proof-links .y-archive-link:active { transform: translateY(1px) scale(var(--motion-press-scale)); }
 
 .sc-meta-row {
   display: grid;
@@ -500,7 +500,7 @@
   .sc-sequence ol { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 0; }
   .sc-sequence li:nth-child(odd) { border-left: 0; }
   .sc-proof-links { width: 100%; }
-  .sc-proof-links a { width: 100%; }
+  .sc-proof-links .y-archive-link { width: 100%; }
 }
 @media (hover: none), (pointer: coarse) {
   .sc-head-status > a:hover:not(:focus-visible) { color: var(--muted); }

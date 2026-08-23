@@ -416,7 +416,7 @@
     border-color: var(--control-border); background: var(--control-bg); box-shadow: var(--control-shadow); transform: none;
   }
   .copy-citation:hover:not(:focus-visible):not(.is-success):not(.is-error) { border-color: var(--control-border); color: var(--ink); }
-  .tl-proof-list a:hover:not(:focus-visible) { color: var(--muted); border-color: var(--line); transform: none; }
+  .tl-proof-list .y-archive-link:hover:not(:focus-visible) { color: var(--muted); border-color: var(--line); transform: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .tl-item.active .tl-node i,

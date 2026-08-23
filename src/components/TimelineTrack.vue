@@ -178,6 +178,7 @@ onUnmounted(() => {
               :href="proof.href"
               :target="proof.external ? '_blank' : undefined"
               :rel="proof.external ? 'noopener noreferrer' : undefined"
+              class="y-archive-link"
             >
               <span>{{ proof.label }}</span>
               <strong>{{ proof.value }}</strong>
