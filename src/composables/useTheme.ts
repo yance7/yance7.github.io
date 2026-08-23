@@ -56,6 +56,22 @@ function createThemeRipple({ cx, cy, maxDim }: RippleGeometry) {
   }, 800)
 }
 
+function commitThemeChange(
+  value: Theme,
+  rippleEl: HTMLElement | null,
+  rippleGeometry: RippleGeometry | null
+) {
+  setTheme(value)
+
+  if (rippleEl && rippleGeometry) {
+    requestAnimationFrame(() => {
+      if (!rippleEl.isConnected) return
+      activeRipple?.remove()
+      createThemeRipple(rippleGeometry)
+    })
+  }
+}
+
 function applyTheme(value: Theme, rippleEl: HTMLElement | null = null) {
   const canRipple = Boolean(
     rippleEl &&
@@ -64,19 +80,11 @@ function applyTheme(value: Theme, rippleEl: HTMLElement | null = null) {
   )
   const rippleGeometry = rippleEl && canRipple ? getRippleGeometry(rippleEl) : null
 
-  setTheme(value)
-
   try {
     localStorage.setItem(THEME_KEY, value)
   } catch { /* 隐私模式下静默失败 */ }
 
-  if (rippleEl && rippleGeometry) {
-    window.setTimeout(() => {
-      if (!rippleEl.isConnected) return
-      activeRipple?.remove()
-      createThemeRipple(rippleGeometry)
-    }, 0)
-  }
+  window.setTimeout(() => commitThemeChange(value, rippleEl, rippleGeometry), 0)
 }
 
 function toggleTheme(rippleEl: HTMLElement | null = null) {

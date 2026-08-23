@@ -310,7 +310,9 @@ describe('motion hierarchy contracts', () => {
     expect(theme).toContain('const rippleGeometry = rippleEl && canRipple ? getRippleGeometry(rippleEl) : null')
     expect(theme).toContain('const rect = rippleEl.getBoundingClientRect()')
     expect(theme.indexOf('const rippleGeometry = rippleEl && canRipple ? getRippleGeometry(rippleEl) : null'))
-      .toBeLessThan(theme.indexOf('setTheme(value)'))
+      .toBeLessThan(theme.indexOf('window.setTimeout(() => commitThemeChange(value, rippleEl, rippleGeometry), 0)'))
+    expect(theme).toContain('function commitThemeChange(')
+    expect(theme).toContain('window.setTimeout(() => commitThemeChange(value, rippleEl, rippleGeometry), 0)')
     expect(theme).toContain('createThemeRipple(rippleGeometry)')
   })
 
