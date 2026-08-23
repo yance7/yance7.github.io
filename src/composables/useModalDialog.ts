@@ -1,11 +1,13 @@
 import { nextTick, onMounted, onUnmounted, unref, watch, type MaybeRef } from 'vue'
 import { useBodyScrollLock } from './useBodyScrollLock'
 
+type FocusTarget = Pick<HTMLElement, 'focus'>
+
 export function useModalDialog(
   open: MaybeRef<boolean>,
   options: {
     dialogRef: { value: HTMLElement | null }
-    initialFocus?: { value: HTMLElement | null }
+    initialFocus?: { value: FocusTarget | null }
     inertSelectors?: readonly string[]
     deferInert?: boolean
     onClose: () => void

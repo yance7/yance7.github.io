@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
 import type { LightboxMeta, NonEmptyArray } from '../data/types'
 import { useModalDialog } from '../composables/useModalDialog'
 import { sharedImagePreloader } from '../utils/imagePreload'
+import { clampLightboxIndex } from '../utils/lightbox'
+import YanceButton from './YanceButton.vue'
 
 const props = defineProps<{
   images: NonEmptyArray<string>
@@ -19,10 +21,11 @@ const loading = ref(true)
 const loadError = ref(false)
 const retryKey = ref(0)
 const dialogRef = ref<HTMLElement | null>(null)
-const closeButton = ref<HTMLButtonElement | null>(null)
+const closeButton = ref<{ focus: () => void } | null>(null)
 const isVisible = ref(true)
 const dialogActive = ref(true)
 const imagePreloader = sharedImagePreloader
+const safeIndex = computed(() => clampLightboxIndex(props.index, props.images.length))
 
 function closeLightbox() {
   if (!isVisible.value) return
@@ -55,7 +58,7 @@ function preloadNeighbors(index: number) {
 function onImgLoad() {
   loading.value = false
   loadError.value = false
-  preloadNeighbors(props.index)
+  preloadNeighbors(safeIndex.value)
 }
 
 function onImgError() {
@@ -83,10 +86,10 @@ onUnmounted(() => {
   window.removeEventListener('keydown', onKey)
 })
 
-watch(() => [props.index, props.images[props.index]], () => {
+watch(() => [safeIndex.value, props.images[safeIndex.value]], () => {
   loading.value = true
   loadError.value = false
-  preloadNeighbors(props.index)
+  preloadNeighbors(safeIndex.value)
 }, { immediate: true })
 </script>
 
@@ -103,14 +106,24 @@ watch(() => [props.index, props.images[props.index]], () => {
         aria-label="演唱会海报大图"
         @click.self="closeLightbox"
       >
-        <button ref="closeButton" class="lb-close" type="button" aria-label="关闭灯箱" @click="closeLightbox">×</button>
+        <div class="lb-meta-dock" aria-hidden="true">
+          <i class="lb-meta-blur lb-meta-blur--1"></i>
+          <i class="lb-meta-blur lb-meta-blur--2"></i>
+          <i class="lb-meta-blur lb-meta-blur--3"></i>
+        </div>
 
-      <button v-if="images.length > 1" class="lb-nav lb-prev" type="button" aria-label="上一张" @click="emit('prev')">←</button>
+        <YanceButton ref="closeButton" class="lb-close" variant="quiet" size="icon" aria-label="关闭灯箱" @click="closeLightbox">
+          ×
+        </YanceButton>
+
+      <YanceButton v-if="images.length > 1" class="lb-nav lb-prev" variant="quiet" size="icon" aria-label="上一张" @click="emit('prev')">
+        ←
+      </YanceButton>
 
       <figure class="lb-stage">
         <img
-          :key="`${images[index]}-${retryKey}`"
-          :src="images[index]"
+          :key="`${images[safeIndex]}-${retryKey}`"
+          :src="images[safeIndex]"
           :alt="meta ? `${meta.artist} · ${meta.tour} 海报大图` : '演唱会海报大图'"
           :class="{ loaded: !loading }"
           fetchpriority="high"
@@ -124,18 +137,24 @@ watch(() => [props.index, props.images[props.index]], () => {
         </div>
         <div v-else-if="loadError" class="lb-error" role="alert">
           <p>图片加载失败</p>
-          <button type="button" class="lb-retry" @click="retryImage">重试</button>
+          <YanceButton class="lb-retry" variant="quiet" size="sm" @click="retryImage">重试</YanceButton>
         </div>
         <figcaption v-if="meta" class="lb-meta">
-          <span>{{ meta.artist }} · {{ meta.tour }}</span>
-          <span>{{ index + 1 }} / {{ images.length }}</span>
+          <span class="lb-meta-copy">
+            <small>LIVE ARCHIVE</small>
+            <strong>{{ meta.artist }}</strong>
+            <span>{{ meta.tour }}</span>
+          </span>
+          <span class="lb-meta-index">{{ safeIndex + 1 }} / {{ images.length }}</span>
         </figcaption>
         <p class="sr-only" aria-live="polite">
-          {{ meta ? `${meta.artist} · ${meta.tour}` : '演唱会海报' }}，第 {{ index + 1 }} 张，共 {{ images.length }} 张
+          {{ meta ? `${meta.artist} · ${meta.tour}` : '演唱会海报' }}，第 {{ safeIndex + 1 }} 张，共 {{ images.length }} 张
         </p>
       </figure>
 
-      <button v-if="images.length > 1" class="lb-nav lb-next" type="button" aria-label="下一张" @click="emit('next')">→</button>
+      <YanceButton v-if="images.length > 1" class="lb-nav lb-next" variant="quiet" size="icon" aria-label="下一张" @click="emit('next')">
+        →
+      </YanceButton>
       </div>
     </Transition>
   </Teleport>

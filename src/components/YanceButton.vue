@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 export type YanceButtonVariant = 'primary' | 'secondary' | 'ghost' | 'quiet' | 'archive'
 export type YanceButtonSize = 'sm' | 'md' | 'lg' | 'icon'
@@ -22,7 +22,12 @@ const props = withDefaults(defineProps<Props>(), {
   disabled: false
 })
 
+const root = ref<HTMLElement | null>(null)
 const tag = computed(() => props.href ? 'a' : 'button')
+
+defineExpose({
+  focus: () => root.value?.focus()
+})
 
 function preventDisabledLink(event: MouseEvent) {
   if (props.disabled && props.href) event.preventDefault()
@@ -32,6 +37,7 @@ function preventDisabledLink(event: MouseEvent) {
 <template>
   <component
     :is="tag"
+    ref="root"
     class="y-button"
     :class="[`y-button--${variant}`, `y-button--${size}`]"
     :href="href"

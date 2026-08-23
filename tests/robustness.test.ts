@@ -3,6 +3,7 @@ import { legacyCopyText, type LegacyCopyDocument, type LegacyCopyTextArea } from
 import { getPointerSheenPosition } from '../src/utils/pointerSheen'
 import { clampScrollProgress } from '../src/utils/scrollProgress'
 import { preloadImageOnce, type PreloadImage } from '../src/utils/imagePreload'
+import { clampLightboxIndex } from '../src/utils/lightbox'
 
 function createFakeDocument(result: boolean | Error) {
   const calls = { appended: 0, removed: 0, selected: 0 }
@@ -83,5 +84,15 @@ describe('concert image preloading', () => {
     expect(pending.has('/poster.jpg')).toBe(false)
     expect(preloaded.has('/poster.jpg')).toBe(true)
     expect(preloadImageOnce('/poster.jpg', preloaded, pending, preloader)).toBe(false)
+  })
+})
+
+describe('lightbox index boundaries', () => {
+  it('clamps invalid indexes to the available image range', () => {
+    expect(clampLightboxIndex(Number.NaN, 3)).toBe(0)
+    expect(clampLightboxIndex(-1, 3)).toBe(0)
+    expect(clampLightboxIndex(1.8, 3)).toBe(1)
+    expect(clampLightboxIndex(8, 3)).toBe(2)
+    expect(clampLightboxIndex(8, 0)).toBe(0)
   })
 })

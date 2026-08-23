@@ -44,3 +44,20 @@ test('page compass exposes keyboard tooltip hierarchy', async ({ page }) => {
   await expect(top).toHaveAttribute('aria-describedby', 'page-compass-top-tip')
   await expect(page.locator('#page-compass-top-tip')).toHaveAttribute('role', 'tooltip')
 })
+
+test('lightbox keeps metadata and quiet control chrome bounded', async ({ page }) => {
+  await page.goto('/concerts.html')
+  const carousel = page.locator('.concert-poster').filter({ has: page.locator('.carousel-controls') }).first()
+  await carousel.locator('.poster-open').click()
+
+  await expect(page.locator('.lightbox')).toBeVisible()
+  await expect(page.locator('.lb-meta-dock')).toHaveCount(1)
+  await expect(page.locator('.lb-meta-copy')).toBeVisible()
+  await expect(page.locator('.lb-meta-copy small')).toHaveText('LIVE ARCHIVE')
+  await expect(page.locator('.lb-meta-index')).toHaveText(/\d+ \/ \d+/)
+  await expect(page.locator('.lb-close')).toHaveClass(/y-button--icon/)
+  await expect(page.locator('.lb-nav').first()).toHaveClass(/y-button--icon/)
+
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.lightbox')).toHaveCount(0)
+})
