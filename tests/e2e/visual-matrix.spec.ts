@@ -41,6 +41,14 @@ async function settlePage(page: Page) {
   await page.waitForTimeout(250)
 }
 
+async function expectLightboxGeometry(page: Page) {
+  const geometry = await page.evaluate(() => ({
+    imageBottom: document.querySelector<HTMLImageElement>('.lb-stage img')?.getBoundingClientRect().bottom ?? 0,
+    metadataTop: document.querySelector<HTMLElement>('.lb-meta-dock')?.getBoundingClientRect().top ?? 0
+  }))
+  expect(geometry.imageBottom, JSON.stringify(geometry)).toBeLessThanOrEqual(geometry.metadataTop - 12)
+}
+
 for (const viewport of viewports) {
   for (const theme of themes) {
     test(`captures ${theme} ${viewport.name} visual baselines`, async ({ page }, testInfo) => {
@@ -101,12 +109,14 @@ for (const theme of themes) {
 
     await page.locator('.concert-poster.land .poster-open').first().click()
     await expect(page.locator('.lb-stage img')).toHaveClass(/loaded/)
+    await expectLightboxGeometry(page)
     await expect(page.locator('.lightbox')).toHaveScreenshot(`${theme}-lightbox-landscape.png`, screenshotOptions)
     await page.keyboard.press('Escape')
     await expect(page.locator('.lightbox')).toHaveCount(0)
 
     await page.locator('.concert-poster:not(.land) .poster-open').first().click()
     await expect(page.locator('.lb-stage img')).toHaveClass(/loaded/)
+    await expectLightboxGeometry(page)
     await expect(page.locator('.lightbox')).toHaveScreenshot(`${theme}-lightbox-portrait.png`, screenshotOptions)
     await page.keyboard.press('Escape')
     await expect(page.locator('.lightbox')).toHaveCount(0)
@@ -114,6 +124,7 @@ for (const theme of themes) {
     await page.setViewportSize({ width: 390, height: 844 })
     await page.locator('.concert-poster:not(.land) .poster-open').first().click()
     await expect(page.locator('.lb-stage img')).toHaveClass(/loaded/)
+    await expectLightboxGeometry(page)
     await expect(page.locator('.lightbox')).toHaveScreenshot(`${theme}-lightbox-mobile.png`, screenshotOptions)
   })
 }

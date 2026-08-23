@@ -260,3 +260,16 @@ describe('shared UI correction contracts', () => {
     expect(shell).toContain('@media (hover: hover) and (pointer: fine) and (min-width: 761px)')
   })
 })
+
+describe('lightbox depth contracts', () => {
+  it('keeps metadata treatment single-layered and reserves stage space', () => {
+    const lightbox = readFileSync(resolve(process.cwd(), 'src/components/ImageLightbox.vue'), 'utf8')
+    const styles = readFileSync(resolve(process.cwd(), 'src/styles/components.css'), 'utf8')
+
+    expect(lightbox).not.toContain('lb-meta-blur')
+    expect(styles).not.toContain('lb-meta-blur')
+    expect(styles.match(/(?:^|\n)\s+backdrop-filter:\s*blur\(/g)).toHaveLength(1)
+    expect(styles).toContain('--lb-meta-reserve: 132px')
+    expect(styles).toContain('var(--lb-meta-reserve)')
+  })
+})

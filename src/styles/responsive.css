@@ -33,11 +33,14 @@
   .site-footer { flex-direction: column; align-items: flex-start; gap: var(--space-3); }
 
   .lightbox { padding: var(--space-4) var(--space-3); gap: var(--space-2); }
-  .lightbox img { max-width: 82vw; max-height: 76vh; }
+  .lightbox { --lb-meta-reserve: 118px; }
+  .lightbox img {
+    max-width: 82vw;
+    max-height: min(76vh, calc(100dvh - var(--lb-meta-reserve) - 72px));
+  }
   .lb-stage { min-width: 0; min-height: 46vh; }
   .lb-nav, .lb-close { width: 44px; height: 44px; min-height: 44px; font-size: 15px; }
   .lb-close { top: 14px; right: 14px; }
-  .lb-meta-dock { height: 118px; }
   .lb-meta {
     left: max(16px, env(safe-area-inset-left));
     right: max(16px, env(safe-area-inset-right));

@@ -70,6 +70,24 @@ test('lightbox keeps metadata and quiet control chrome bounded', async ({ page }
   await expect(page.locator('.lb-close')).toHaveClass(/y-button--icon/)
   await expect(page.locator('.lb-nav').first()).toHaveClass(/y-button--icon/)
 
+  const geometry = await page.evaluate(() => ({
+    image: (() => {
+      const element = document.querySelector<HTMLImageElement>('.lb-stage img')
+      const rect = element?.getBoundingClientRect()
+      return {
+        bottom: rect?.bottom ?? 0,
+        top: rect?.top ?? 0,
+        height: rect?.height ?? 0,
+        maxHeight: element ? getComputedStyle(element).maxHeight : ''
+      }
+    })(),
+    metadata: (() => {
+      const rect = document.querySelector<HTMLElement>('.lb-meta-dock')?.getBoundingClientRect()
+      return { top: rect?.top ?? 0, height: rect?.height ?? 0 }
+    })()
+  }))
+  expect(geometry.image.bottom, JSON.stringify(geometry)).toBeLessThanOrEqual(geometry.metadata.top - 12)
+
   await page.keyboard.press('Escape')
   await expect(page.locator('.lightbox')).toHaveCount(0)
 })
