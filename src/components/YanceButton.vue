@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-
-export type YanceButtonVariant = 'primary' | 'secondary' | 'ghost' | 'quiet' | 'archive'
-export type YanceButtonSize = 'sm' | 'md' | 'lg' | 'icon'
+import type { YanceButtonSize, YanceButtonVariant } from './yanceButtonTypes'
 
 interface Props {
   href?: string

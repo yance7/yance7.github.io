@@ -6,6 +6,7 @@ import { getConcertState } from '../src/data/concerts'
 import { useAlbumSpotlight } from '../src/composables/useAlbumSpotlight'
 import { createImagePreloader, type PreloadImage } from '../src/utils/imagePreload'
 import { decodeHashTarget, retryAsync } from '../src/utils/navigation'
+import type { YanceButtonSize, YanceButtonVariant } from '../src/components/yanceButtonTypes'
 
 describe('page registry', () => {
   it('derives navigable and HTML page entries from one registry', () => {
@@ -19,6 +20,16 @@ describe('page registry', () => {
     expect(pageRegistry.research.nav.en).toBe('Research')
     expect(isPageKey('research')).toBe(true)
     expect(isPageKey('missing')).toBe(false)
+  })
+})
+
+describe('shared button public contract', () => {
+  it('keeps the documented variants and sizes available to callers', () => {
+    const variants = ['primary', 'secondary', 'ghost', 'quiet', 'archive'] satisfies YanceButtonVariant[]
+    const sizes = ['sm', 'md', 'lg', 'icon'] satisfies YanceButtonSize[]
+
+    expect(variants).toHaveLength(5)
+    expect(sizes).toHaveLength(4)
   })
 })
 
