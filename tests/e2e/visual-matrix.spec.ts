@@ -40,7 +40,9 @@ async function settlePage(page: Page) {
   await page.evaluate(async () => {
     await document.fonts?.ready
   })
-  await page.waitForTimeout(250)
+  await page.evaluate(() => new Promise<void>((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+  }))
 }
 
 async function expectLightboxGeometry(page: Page) {

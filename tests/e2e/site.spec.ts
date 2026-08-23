@@ -209,7 +209,7 @@ test('failed page chunks render a controlled error without a reload loop', async
   await expect(page.locator('[data-page-load-state="error"]')).toBeVisible({ timeout: 15000 })
   await expect(page.locator('.page-load-error')).toBeVisible()
   expect(requestCount).toBeLessThanOrEqual(3)
-  await page.waitForTimeout(300)
+  await page.waitForLoadState('networkidle')
   expect(requestCount).toBeLessThanOrEqual(3)
 })
 

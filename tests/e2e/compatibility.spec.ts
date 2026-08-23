@@ -232,8 +232,23 @@ test('mobile menu typography follows the light-theme semantic text tokens', asyn
 test('touch carousel hover suppression follows the active theme control tokens', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/concerts.html')
+  const previousTheme = await page.locator('html').getAttribute('data-theme')
   await page.locator('.theme-orbit').click()
-  await page.waitForTimeout(420)
+  await expect.poll(() => page.locator('html').getAttribute('data-theme')).not.toBe(previousTheme)
+  await expect.poll(() => page.evaluate(() => {
+    const root = getComputedStyle(document.documentElement)
+    const button = document.querySelector<HTMLElement>('.carousel-controls button')!
+    const probe = document.createElement('span')
+    probe.style.backgroundColor = 'var(--media-control-bg)'
+    probe.style.borderColor = 'var(--media-control-border)'
+    document.body.append(probe)
+    const expectedBackground = getComputedStyle(probe).backgroundColor
+    const expectedBorder = getComputedStyle(probe).borderColor
+    probe.remove()
+    return getComputedStyle(button).backgroundColor === expectedBackground
+      && getComputedStyle(button).borderColor === expectedBorder
+      && root.getPropertyValue('--media-control-bg').trim() !== ''
+  })).toBe(true)
 
   const colors = await page.evaluate(() => {
     const root = getComputedStyle(document.documentElement)

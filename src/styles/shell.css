@@ -346,7 +346,7 @@
   line-height: 1.2;
 }
 .page-compass-top-tooltip strong { font-size: var(--type-meta-size); letter-spacing: .1em; }
-.page-compass-top-tooltip small { color: var(--text-decorative); font-size: var(--text-micro); letter-spacing: .08em; }
+.page-compass-top-tooltip small { color: var(--tooltip-muted); font-size: var(--text-micro); letter-spacing: .08em; }
 .page-compass-current {
   display: grid;
   justify-items: center;

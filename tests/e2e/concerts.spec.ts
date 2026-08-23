@@ -195,16 +195,12 @@ test('concert album spotlight keeps a decoded cover during delayed rapid switchi
   expect(loadingVisual.animationName).toMatch(/^album-loading-pulse-/)
   expect(loadingVisual.backgroundImage).toMatch(/gradient/)
 
-  const visibleCover = await wall.locator('.album-cover-frame').evaluateAll((frames) => frames
-    .map((frame) => {
-      const image = frame.querySelector('img')
-      return {
-        opacity: Number.parseFloat(getComputedStyle(frame).opacity),
-        decoded: !!image?.complete && image.naturalWidth > 0
-      }
-    })
-    .sort((left, right) => right.opacity - left.opacity)[0]?.decoded)
-  expect(visibleCover).toBe(true)
+  const preservedCover = wall.locator('.album-cover-frame:has(img[src$="jay-fantasy.jpg"])')
+  await expect(preservedCover).toHaveCount(1)
+  await expect.poll(() => preservedCover.locator('img').evaluate((image: HTMLImageElement) => (
+    image.complete && image.naturalWidth > 0
+  ))).toBe(true)
+  await expect.poll(() => preservedCover.evaluate((frame) => Number.parseFloat(getComputedStyle(frame).opacity))).toBeGreaterThan(0)
 
   releaseTargetRequest()
   await expect.poll(() => wall.locator('.album-cover-frame img').evaluateAll((images) => (
@@ -257,7 +253,6 @@ test('concert album spotlight commits the latest rapid selection only', async ({
   ).map((image) => image.currentSrc))).toEqual(
     expect.arrayContaining([expect.stringMatching(/jay-common-jasmine-orange-(640|1200)\.webp$/)])
   )
-  await page.waitForTimeout(600)
   await expect(wall.locator('.album-cover-frame img')).toHaveCount(1)
   await expect(wall.locator('.album-cover-frame img')).toHaveAttribute('src', /jay-common-jasmine-orange\.jpg$/)
 })

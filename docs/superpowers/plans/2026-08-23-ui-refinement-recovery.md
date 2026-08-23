@@ -61,7 +61,7 @@
 - [x] Add image-vs-metadata geometry assertions: image bottom must be at least 12px above metadata top for portrait desktop and mobile.
 - [x] Remove the three metadata blur elements and replace them with one gradient dock and one 10px backdrop blur.
 - [x] Add explicit stage bounds and `--lb-meta-reserve: 132px`; constrain image height with the reserved viewport formula and use 118px at the mobile breakpoint.
-- [x] Run Lightbox and visual tests without snapshot updates, inspect generated diffs, then update only intentional baselines. Cross-browser geometry passes; final snapshot update is pending the follow-up commit.
+- [x] Run Lightbox and visual tests without snapshot updates, inspect generated diffs, then update only intentional baselines. Cross-browser geometry passes; the six intentional Lightbox baselines and final geometry follow-up are committed as `f082023`.
 
 ### Task 4: Motion hierarchy
 
@@ -85,7 +85,8 @@
 - [x] Add Lightbox geometry and timeline no-current assertions.
 - [x] Add Academics and Honors to the 390x844 and 1440x900 visual matrix.
 - [x] Use 0.02 full-page, 0.01 viewport/page, and 0.005 component screenshot tolerances. Inspect diffs before updating the six intentional Lightbox baselines.
-- [x] Chromium 95/95, Chromium visual 9/9, WebKit 95 displayed pass (cleanup hung), Firefox 12 passed/3 skipped, and Android 14 passed/1 skipped. Committed as "强化UI与发布回归测试" (`b61688c`); final Lightbox geometry/snapshot follow-up remains uncommitted.
+- [x] Chromium 95/95, Chromium visual 9/9, WebKit 95 displayed pass (cleanup hung), Firefox 12 passed/3 skipped, and Android 14 passed/1 skipped. Committed as "强化UI与发布回归测试" (`b61688c`), with the final Lightbox geometry/snapshot follow-up committed as "修复灯箱跨浏览器几何" (`f082023`).
+- [x] Apply the review corrections: use `tooltip-muted` for the return-to-top tooltip, assert the preserved album cover directly, replace all four listed fixed waits with state/animation-frame conditions, and align the research method toggle with shared control tokens. Focused regressions and the final full Chromium/compatibility matrix pass.
 
 ### Task 6: Final audit and release handoff
 
@@ -94,7 +95,7 @@
 - [x] Run the local gate sequence: `npm ci` passed earlier on this unchanged dependency graph; final `npm run check` passes lint, typecheck, deadcode, 77 unit tests, sitemap, build, and smoke; final asset audit reports 168 images, GPS 0, unreadable 0.
 - [x] Run production-equivalent Chromium release smoke, UI primitives, full Chromium, Chromium visual, WebKit site, Firefox smoke, and Android coarse-pointer smoke. WebKit displayed 95/95 pass before cleanup hung.
 - [x] Run Lighthouse last without changing thresholds; collection reached audits, but both attempts stopped in Windows `chrome-launcher` temp-directory cleanup with EPERM before the full command could finish. No threshold relaxation or pass claim was made.
-- [ ] Audit the final diff, package manifests, branch, absence of force clicks, active direct-main instructions, and new runtime dependencies.
+- [x] Audit the final diff, package manifests, branch, absence of force clicks, active direct-main instructions, and new runtime dependencies. The branch remains `fix/ui-refinement-recovery`; package manifests are unchanged from `origin/main`; no `force: true` E2E click remains; no active direct-main instruction or new runtime dependency was found; `git diff --check` passes.
 - [ ] Push the repair branch and create a Draft PR when GitHub authentication is available; do not merge.
 - [ ] After authorized merge, record successful Pages build/deploy jobs and verify both public domains and representative pages. If external access is unavailable, mark that gate unverified.
-- [ ] Complete the requirement-by-requirement evidence audit; only then mark the goal complete.
+- [x] Complete the requirement-by-requirement evidence audit for all local implementation and verification requirements. Remote push/PR, post-merge Pages runs, and public-domain verification remain explicitly unverified because GitHub authentication/proxy access is unavailable; no remote evidence was invented.
