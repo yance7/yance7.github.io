@@ -49,7 +49,13 @@ test('page compass exposes keyboard tooltip hierarchy', async ({ page }) => {
   await link.focus()
 
   await expect(link).toHaveAttribute('aria-describedby', /compass-tip-/)
-  await expect(page.locator('[role="tooltip"]').nth(1)).toBeVisible()
+  const tooltip = page.locator('#compass-tip-sec-research-timeline')
+  const hasFinePointer = await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine) and (min-width: 761px)').matches)
+  if (hasFinePointer) {
+    await expect(tooltip).toBeVisible()
+  } else {
+    await expect(tooltip).toBeHidden()
+  }
   await expect(page.locator('.page-compass')).toHaveCSS('overflow', 'visible')
 
   const top = page.locator('.page-compass-top')
@@ -89,7 +95,12 @@ test('metric surfaces refine their boundary without adding elevation', async ({ 
   await metric.hover()
 
   await expect(metric).toHaveCSS('transform', 'none')
-  await expect(metric).toHaveCSS('box-shadow', /inset/)
+  const hasFinePointer = await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)
+  if (hasFinePointer) {
+    await expect(metric).toHaveCSS('box-shadow', /inset/)
+  } else {
+    await expect(metric).toHaveCSS('box-shadow', 'none')
+  }
   const numberMetrics = await metric.locator('b').evaluate((element) => {
     const style = getComputedStyle(element)
     return { fontSize: parseFloat(style.fontSize), lineHeight: parseFloat(style.lineHeight) }

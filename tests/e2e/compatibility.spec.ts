@@ -61,7 +61,7 @@ test('PageCompass exposes progress text and a single active chapter', async ({ p
   await expect(page.locator('.scroll-progress')).toHaveAttribute('aria-valuetext', /阅读进度/)
   await expect(page.locator('.page-compass-current span')).toHaveText('01 / 02')
   await expect(page.locator('.page-compass-link.active')).toHaveCount(1)
-  await expect(page.locator('.page-compass-link.active span')).toHaveText('01')
+  await expect(page.locator('.page-compass-link.active > span:not(.page-compass-tooltip)')).toHaveText('01')
   await expect(page.locator('.page-compass-link.active')).toHaveAttribute('aria-current', 'location')
 })
 
@@ -107,8 +107,9 @@ test('mobile compass keeps numbered chapter controls legible', async ({ page }) 
   await page.goto('/works.html')
   await page.evaluate(() => window.scrollTo({ top: 320, behavior: 'auto' }))
   await expect(page.locator('.page-compass')).toHaveAttribute('data-mobile-state', 'visible')
-  await expect(page.locator('.page-compass-link').first().locator('span')).toBeVisible()
-  await expect(page.locator('.page-compass-link').first().locator('span')).toHaveText('01')
+  const firstIndex = page.locator('.page-compass-link').first().locator(':scope > span:not(.page-compass-tooltip)')
+  await expect(firstIndex).toBeVisible()
+  await expect(firstIndex).toHaveText('01')
 })
 
 test('mobile PageCompass follows reading direction without trapping focus', async ({ page }) => {

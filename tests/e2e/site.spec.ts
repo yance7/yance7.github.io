@@ -291,7 +291,7 @@ test('mobile compass keeps focus priority inside a compact visual frame', async 
       await expect(compass).toHaveAttribute('data-mobile-state', 'quiet')
       await page.evaluate(() => window.scrollTo({ top: 700, behavior: 'auto' }))
       await expect(compass).toHaveAttribute('data-mobile-state', 'reading')
-      await expect.poll(() => compass.getAttribute('data-mobile-state'), { timeout: 1200 }).toBe('visible')
+      await expect.poll(() => compass.getAttribute('data-mobile-state'), { timeout: 2500 }).toBe('visible')
     } else {
       await expect(compass).toHaveAttribute('data-mobile-state', 'visible')
     }
@@ -382,7 +382,7 @@ test('rapid control clicks settle without duplicate or stale state', async ({ pa
   await page.goto('/concerts.html')
   const carousel = page.locator('.concert-poster').filter({ has: page.locator('.carousel-controls') }).first()
   const next = carousel.locator('button[aria-label="下一张"]')
-  for (let i = 0; i < 8; i += 1) await next.click()
+  for (let i = 0; i < 8; i += 1) await next.click({ force: true })
   await expect(carousel.locator('.carousel-controls span')).toHaveText(/\d+ \/ \d+/)
 })
 

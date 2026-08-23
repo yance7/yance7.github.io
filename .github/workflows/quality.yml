@@ -48,8 +48,18 @@ jobs:
         run: npm run lighthouse
       - name: Lighthouse interaction budget
         run: npm run lighthouse:interactions
-      - name: Browser and axe quality matrix
-        run: npm run test:e2e -- --workers=2
+      - name: Chromium browser and axe quality
+        run: npm run test:e2e -- --project=chromium --workers=4
+      - name: WebKit site and axe quality
+        run: npm run test:e2e -- tests/e2e/site.spec.ts --project=webkit-mobile --workers=4
+      - name: WebKit UI primitive quality
+        run: npm run test:e2e -- tests/e2e/ui-primitives.spec.ts --project=webkit-mobile --workers=4
+      - name: Chromium visual quality
+        run: npm run test:e2e -- --project=chromium-visual --workers=2
+      - name: Firefox compatibility quality
+        run: npm run test:e2e -- --project=firefox-desktop-smoke --workers=2
+      - name: Android compatibility quality
+        run: npm run test:e2e -- --project=chromium-android-smoke --workers=2
       - name: Upload quality artifacts
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
