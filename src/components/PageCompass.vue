@@ -54,11 +54,15 @@ const {
       type="button"
       :style="progressStyle"
       :aria-label="`回到顶部，当前阅读进度 ${percent}%`"
-      :title="`回到顶部 · ${percent}%`"
+      aria-describedby="page-compass-top-tip"
       @click="goTop"
     >
       <span aria-hidden="true">↑</span>
       <small>{{ percent }}%</small>
+      <span id="page-compass-top-tip" class="page-compass-top-tooltip" role="tooltip">
+        <strong>RETURN TO TOP</strong>
+        <small>{{ percent }}% READ</small>
+      </span>
     </button>
 
     <div class="page-compass-current" aria-live="polite">
@@ -75,11 +79,16 @@ const {
         :href="`#${section.id}`"
         :aria-label="`前往章节：${section.label}`"
         :aria-current="activeId === section.id ? 'location' : undefined"
+        :aria-describedby="`compass-tip-${section.id}`"
         @click="selectSection(section.id)"
       >
         <i aria-hidden="true"></i>
         <span>{{ String(index + 1).padStart(2, '0') }}</span>
-        <strong>{{ section.label }}</strong>
+        <span :id="`compass-tip-${section.id}`" class="page-compass-tooltip" role="tooltip">
+          <small>{{ String(index + 1).padStart(2, '0') }}</small>
+          <strong>{{ section.label }}</strong>
+          <em v-if="activeId === section.id">CURRENT</em>
+        </span>
       </a>
     </div>
 

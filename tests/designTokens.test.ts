@@ -94,8 +94,8 @@ describe('archive design tokens', () => {
   })
 
   it('migrates the reviewed surface radius declarations to semantic tokens', () => {
-    expect(components).toContain('padding: 4px 10px; border-radius: var(--radius-pill);')
-    expect(components).not.toContain('padding: 4px 10px; border-radius: var(--radius-full);')
+    expect(components).toContain('padding: 5px 8px; border-radius: var(--control-radius);')
+    expect(components).not.toContain('padding: 4px 10px; border-radius: var(--radius-pill);')
     expect(components).toContain('border-radius: var(--radius-card); overflow: hidden;')
     expect(components).not.toContain('border-radius: var(--radius-lg); overflow: hidden;')
     expect(concerts).toContain('padding: 9px 12px; border-radius: var(--radius-small);')

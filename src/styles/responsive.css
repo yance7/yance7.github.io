@@ -135,8 +135,8 @@
     min-height: 44px;
     padding: 4px;
   }
-  .page-compass-link strong {
-    right: 56px;
+  .page-compass-tooltip {
+    inset-inline-end: 56px;
     max-width: min(28vw, 200px);
   }
   .page-compass-step { grid-template-columns: 1fr; }
@@ -175,7 +175,7 @@
     transition-delay: 0s, 0s, 0s, 0s, 0s, var(--dur-base);
   }
   .page-compass-top { width: 44px; height: 44px; }
-  .page-compass-top span { display: none; }
+  .page-compass-top > span:not(.page-compass-top-tooltip) { display: none; }
   .page-compass-current {
     align-content: center;
     justify-items: start;
@@ -194,11 +194,12 @@
     padding: 0;
     place-items: center;
   }
-  .page-compass-link span {
+  .page-compass-link > span:not(.page-compass-tooltip) {
     display: block;
     font-size: var(--type-meta-size);
   }
-  .page-compass-link strong { display: none; }
+  .page-compass-tooltip,
+  .page-compass-top-tooltip { display: none; }
   .page-compass-step { align-self: center; gap: 0; }
   .page-compass-step a,
   .page-compass-step-disabled { width: 44px; height: 44px; }
@@ -236,14 +237,15 @@
     background: Highlight;
     color: HighlightText;
   }
-  .page-compass-link.active span,
+  .page-compass-link.active > span:not(.page-compass-tooltip),
   .page-compass-link.active i { color: HighlightText; }
   .page-compass-link.active i {
     border-color: HighlightText;
     background: HighlightText;
     box-shadow: none;
   }
-  .page-compass-link strong {
+  .page-compass-tooltip,
+  .page-compass-top-tooltip {
     border-color: CanvasText;
     background: Canvas;
     color: CanvasText;

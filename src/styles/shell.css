@@ -315,10 +315,38 @@
   line-height: 1;
   transition: transform var(--dur-fast) var(--ease-out), color var(--dur-fast);
 }
-.page-compass-top span { font-size: .75rem; transform: translateY(1px); }
-.page-compass-top small { font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: .02em; }
+.page-compass-top > span:not(.page-compass-top-tooltip) { font-size: .75rem; transform: translateY(1px); }
+.page-compass-top > small { font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: .02em; }
 .page-compass-top:hover,
 .page-compass-top:focus-visible { color: var(--gold); transform: translateY(-2px); }
+.page-compass-top-tooltip {
+  position: absolute;
+  inset-inline-end: calc(100% + var(--tooltip-offset));
+  top: 50%;
+  display: grid;
+  gap: 3px;
+  min-width: max-content;
+  max-width: var(--tooltip-max-width);
+  padding: 8px 10px;
+  border: 1px solid var(--control-border);
+  border-radius: var(--control-radius);
+  background: var(--tooltip-bg);
+  box-shadow: var(--tooltip-shadow);
+  color: var(--tooltip-ink);
+  opacity: 0;
+  transform: translate(6px, -50%);
+  transition: opacity var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+  pointer-events: none;
+  text-align: start;
+  white-space: nowrap;
+}
+.page-compass-top-tooltip strong,
+.page-compass-top-tooltip small {
+  font-family: var(--font-technical);
+  line-height: 1.2;
+}
+.page-compass-top-tooltip strong { font-size: var(--type-meta-size); letter-spacing: .1em; }
+.page-compass-top-tooltip small { color: var(--text-decorative); font-size: var(--text-micro); letter-spacing: .08em; }
 .page-compass-current {
   display: grid;
   justify-items: center;
@@ -328,7 +356,7 @@
   border-block: 1px solid var(--compass-rail);
 }
 .page-compass-current span,
-.page-compass-link span {
+.page-compass-link > span:not(.page-compass-tooltip) {
   color: var(--dim);
   font-family: var(--font-technical);
   font-size: var(--type-meta-size);
@@ -371,28 +399,50 @@
   background: var(--surface);
   transition: transform var(--dur-fast) var(--ease-out), background-color var(--dur-fast), box-shadow var(--dur-fast);
 }
-.page-compass-link strong {
+.page-compass-tooltip {
   position: absolute;
-  right: 52px;
+  inset-inline-end: calc(100% + var(--tooltip-offset));
   top: 50%;
-  padding: 6px 9px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 3px 8px;
+  min-width: max-content;
+  max-width: var(--tooltip-max-width);
+  padding: 8px 10px;
   border: 1px solid var(--control-border);
-  border-radius: var(--radius-small);
-  background: var(--compass-bg);
-  box-shadow: var(--shadow-1);
-  color: var(--ink);
+  border-radius: var(--control-radius);
+  background: var(--tooltip-bg);
+  box-shadow: var(--tooltip-shadow);
+  color: var(--tooltip-ink);
   font-family: var(--font-technical);
-  font-size: var(--type-meta-size);
-  font-weight: 500;
-  letter-spacing: .08em;
   opacity: 0;
   pointer-events: none;
   transform: translate(5px, -50%);
   transition: opacity var(--dur-fast), transform var(--dur-fast) var(--ease-out);
   white-space: nowrap;
 }
-.page-compass-link:hover strong,
-.page-compass-link:focus-visible strong { opacity: 1; transform: translate(0, -50%); }
+.page-compass-tooltip small,
+.page-compass-tooltip strong,
+.page-compass-tooltip em { line-height: 1.2; }
+.page-compass-tooltip small { color: var(--text-decorative); font-size: var(--text-micro); letter-spacing: .08em; }
+.page-compass-tooltip strong { font-size: var(--type-meta-size); font-weight: 600; letter-spacing: .08em; }
+.page-compass-tooltip em {
+  grid-column: 2;
+  color: var(--tooltip-ink);
+  font-size: var(--text-micro);
+  font-style: normal;
+  letter-spacing: .12em;
+  opacity: .68;
+}
+@media (hover: hover) and (pointer: fine) and (min-width: 761px) {
+  .page-compass-link:hover .page-compass-tooltip,
+  .page-compass-link:focus-visible .page-compass-tooltip,
+  .page-compass-top:hover .page-compass-top-tooltip,
+  .page-compass-top:focus-visible .page-compass-top-tooltip {
+    opacity: 1;
+    transform: translate(0, -50%);
+  }
+}
 .page-compass-link.active {
   border-color: var(--compass-active-border);
   background: var(--compass-active-bg);
@@ -406,7 +456,7 @@
   box-shadow: 0 0 10px var(--glow-gold);
   transform: scale(1.15);
 }
-.page-compass-link.active span { color: var(--compass-active-text); }
+.page-compass-link.active > span:not(.page-compass-tooltip) { color: var(--compass-active-text); }
 .page-compass-step { display: grid; grid-template-columns: repeat(2, 1fr); gap: 3px; width: 100%; }
 .page-compass-step a,
 .page-compass-step-disabled {

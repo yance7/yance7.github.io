@@ -30,3 +30,17 @@ test('status badges use compact semantic surfaces without pulse animation', asyn
     await expect(badge).not.toHaveCSS('animation-name', /pulse/)
   }
 })
+
+test('page compass exposes keyboard tooltip hierarchy', async ({ page }) => {
+  await page.goto('/research.html')
+
+  const link = page.locator('.page-compass-link').nth(1)
+  await link.focus()
+
+  await expect(link).toHaveAttribute('aria-describedby', /compass-tip-/)
+  await expect(page.locator('[role="tooltip"]').nth(1)).toBeVisible()
+
+  const top = page.locator('.page-compass-top')
+  await expect(top).toHaveAttribute('aria-describedby', 'page-compass-top-tip')
+  await expect(page.locator('#page-compass-top-tip')).toHaveAttribute('role', 'tooltip')
+})
