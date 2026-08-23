@@ -126,7 +126,10 @@ test('research status markers keep a static hierarchy without competing pulses',
   )
   expect(animations.every((animation) => animation === 'none')).toBe(true)
 
-  const currentNode = page.locator('.tl-item[data-reading-state="current"] .tl-node').first()
+  const firstItem = page.locator('.tl-item').first()
+  await firstItem.evaluate((element) => element.scrollIntoView({ block: 'center', behavior: 'auto' }))
+  await expect(firstItem).toHaveAttribute('data-reading-state', 'current')
+  const currentNode = firstItem.locator('.tl-node')
   await expect.poll(() => currentNode.evaluate((element) => getComputedStyle(element).boxShadow)).not.toBe('none')
   await expect(page.locator('.nav-status b')).toHaveCSS('animation-name', 'pulse')
 })
