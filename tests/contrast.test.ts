@@ -5,7 +5,7 @@ import { getContrastRatio, parseHexColor } from '../src/utils/contrast'
 
 const theme = readFileSync(resolve(process.cwd(), 'src/theme.css'), 'utf8')
 
-function themeColor(selector: '--ink' | '--muted' | '--dim' | '--gold-text' | '--aqua' | '--bg', scope: 'light' | 'dark') {
+function themeColor(selector: '--ink' | '--muted' | '--dim' | '--gold-text' | '--aqua' | '--aqua-text' | '--tooltip-muted' | '--bg', scope: 'light' | 'dark') {
   const block = scope === 'light'
     ? theme.match(/:root,\s*\[data-theme='light'\]\s*\{([\s\S]*?)\n\}/)?.[1]
     : theme.match(/\[data-theme='dark'\]\s*\{([\s\S]*?)\n\}/)?.[1]
@@ -28,11 +28,16 @@ describe('contrast helpers', () => {
 
   it.each(['light', 'dark'] as const)('keeps normal text roles readable in %s theme', (scope) => {
     const background = themeColor('--bg', scope)
-    for (const role of ['--ink', '--muted', '--dim', '--gold-text', '--aqua'] as const) {
+    for (const role of ['--ink', '--muted', '--dim', '--gold-text', '--aqua', '--aqua-text'] as const) {
       expect(
         getContrastRatio(themeColor(role, scope), background),
         `${scope} ${role} against ${background}`
       ).toBeGreaterThanOrEqual(4.5)
     }
+  })
+
+  it.each(['light', 'dark'] as const)('keeps tooltip secondary text readable in %s theme', (scope) => {
+    const tooltipBackground = themeColor('--ink', scope)
+    expect(getContrastRatio(themeColor('--tooltip-muted', scope), tooltipBackground)).toBeGreaterThanOrEqual(4.5)
   })
 })

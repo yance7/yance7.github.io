@@ -10,7 +10,7 @@ test('shared project actions expose stable keyboard targets', async ({ page }) =
   await expect(projectLink).toHaveClass(/y-button/)
 
   const box = await projectLink.boundingBox()
-  expect(box?.height ?? 0).toBeGreaterThanOrEqual(42)
+  expect(Math.round(box?.height ?? 0)).toBeGreaterThanOrEqual(42)
 })
 
 test('404 entry actions use the shared button primitive', async ({ page }) => {
@@ -33,8 +33,7 @@ test('status badges use compact semantic surfaces without pulse animation', asyn
   await expect(badges.first()).toHaveCSS('padding-top', '5px')
 
   const statuses = await badges.evaluateAll((elements) => elements.map((element) => {
-    const status = [...element.classList].find((name) => name !== 'status-badge')
-    return status ?? ''
+    return element.getAttribute('data-status') ?? ''
   }))
   expect(statuses.every((status) => status.length > 0)).toBe(true)
   for (const badge of await badges.all()) {
@@ -50,12 +49,7 @@ test('page compass exposes keyboard tooltip hierarchy', async ({ page }) => {
 
   await expect(link).toHaveAttribute('aria-describedby', /compass-tip-/)
   const tooltip = page.locator('#compass-tip-sec-research-timeline')
-  const hasFinePointer = await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine) and (min-width: 761px)').matches)
-  if (hasFinePointer) {
-    await expect(tooltip).toBeVisible()
-  } else {
-    await expect(tooltip).toBeHidden()
-  }
+  await expect(tooltip).toBeVisible()
   await expect(page.locator('.page-compass')).toHaveCSS('overflow', 'visible')
 
   const top = page.locator('.page-compass-top')

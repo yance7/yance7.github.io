@@ -424,7 +424,7 @@
 .page-compass-tooltip small,
 .page-compass-tooltip strong,
 .page-compass-tooltip em { line-height: 1.2; }
-.page-compass-tooltip small { color: var(--text-decorative); font-size: var(--text-micro); letter-spacing: .08em; }
+.page-compass-tooltip small { color: var(--tooltip-muted); font-size: var(--text-micro); letter-spacing: .08em; }
 .page-compass-tooltip strong { font-size: var(--type-meta-size); font-weight: 600; letter-spacing: .08em; }
 .page-compass-tooltip em {
   grid-column: 2;
@@ -434,11 +434,16 @@
   letter-spacing: .12em;
   opacity: .68;
 }
+@media (min-width: 761px) {
+  .page-compass-link:focus-visible .page-compass-tooltip,
+  .page-compass-top:focus-visible .page-compass-top-tooltip {
+    opacity: 1;
+    transform: translate(0, -50%);
+  }
+}
 @media (hover: hover) and (pointer: fine) and (min-width: 761px) {
   .page-compass-link:hover .page-compass-tooltip,
-  .page-compass-link:focus-visible .page-compass-tooltip,
-  .page-compass-top:hover .page-compass-top-tooltip,
-  .page-compass-top:focus-visible .page-compass-top-tooltip {
+  .page-compass-top:hover .page-compass-top-tooltip {
     opacity: 1;
     transform: translate(0, -50%);
   }

@@ -235,3 +235,28 @@ describe('release workflow contracts', () => {
     expect(plan).not.toContain('不创建 feature branch 或 PR')
   })
 })
+
+describe('shared UI correction contracts', () => {
+  it('keeps disabled links and shared semantic tokens explicit', () => {
+    const button = readFileSync(resolve(process.cwd(), 'src/components/YanceButton.vue'), 'utf8')
+    const status = readFileSync(resolve(process.cwd(), 'src/components/StatusBadge.vue'), 'utf8')
+    const primitives = readFileSync(resolve(process.cwd(), 'src/styles/primitives.css'), 'utf8')
+    const theme = readFileSync(resolve(process.cwd(), 'src/theme.css'), 'utf8')
+    const compass = readFileSync(resolve(process.cwd(), 'src/components/PageCompass.vue'), 'utf8')
+    const shell = readFileSync(resolve(process.cwd(), 'src/styles/shell.css'), 'utf8')
+
+    expect(button).toContain('const effectiveHref = computed(')
+    expect(button).toContain(':href="effectiveHref"')
+    expect(button).toContain(':rel="effectiveRel"')
+    expect(primitives).toContain(".y-button:not(:disabled):not([aria-disabled='true']):hover")
+    expect(primitives).toContain('.y-button,\n  .y-archive-link')
+    expect(theme).toContain('--aqua-text:')
+    expect(theme).toContain('--tooltip-muted:')
+    expect(theme).toContain('--motion-control-lift:')
+    expect(status).toContain(':data-status="status"')
+    expect(compass).not.toContain('aria-live="polite"')
+    expect(shell).toContain('@media (min-width: 761px)')
+    expect(shell).toContain('.page-compass-link:focus-visible .page-compass-tooltip')
+    expect(shell).toContain('@media (hover: hover) and (pointer: fine) and (min-width: 761px)')
+  })
+})

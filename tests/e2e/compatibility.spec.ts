@@ -65,6 +65,28 @@ test('PageCompass exposes progress text and a single active chapter', async ({ p
   await expect(page.locator('.page-compass-link.active')).toHaveAttribute('aria-current', 'location')
 })
 
+test('coarse-pointer shared controls keep 44px touch targets', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-android-smoke', 'Android-specific coarse-pointer contract')
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/works.html')
+
+  for (const selector of ['.sc-actions .y-button', '.sc-proof-links .y-archive-link']) {
+    const box = await page.locator(selector).first().boundingBox()
+    expect(box, `${selector} geometry`).not.toBeNull()
+    expect(box!.height, `${selector} height`).toBeGreaterThanOrEqual(44)
+  }
+})
+
+test('keyboard PageCompass tooltips work with coarse pointer at desktop width', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-android-smoke', 'Android-specific coarse-pointer keyboard contract')
+  await page.setViewportSize({ width: 1024, height: 768 })
+  await page.goto('/research.html')
+
+  const link = page.locator('.page-compass-link').nth(1)
+  await link.focus()
+  await expect(page.locator('#compass-tip-sec-research-timeline')).toBeVisible()
+})
+
 test('compass stays inside the viewport and keeps touch targets usable', async ({ page }) => {
   for (const width of [320, 390, 768, 820, 1024, 1440]) {
     await page.setViewportSize({ width, height: 844 })

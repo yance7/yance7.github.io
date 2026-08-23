@@ -21,14 +21,20 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const root = ref<HTMLElement | null>(null)
-const tag = computed(() => props.href ? 'a' : 'button')
+const isLink = computed(() => Boolean(props.href))
+const tag = computed(() => isLink.value ? 'a' : 'button')
+const effectiveHref = computed(() => props.disabled ? undefined : props.href)
+const effectiveRel = computed(() => {
+  if (props.target !== '_blank') return props.rel
+  return props.rel ?? 'noopener noreferrer'
+})
 
 defineExpose({
   focus: () => root.value?.focus()
 })
 
 function preventDisabledLink(event: MouseEvent) {
-  if (props.disabled && props.href) event.preventDefault()
+  if (props.disabled) event.preventDefault()
 }
 </script>
 
@@ -38,14 +44,14 @@ function preventDisabledLink(event: MouseEvent) {
     ref="root"
     class="y-button"
     :class="[`y-button--${variant}`, `y-button--${size}`]"
-    :href="href"
+    :href="effectiveHref"
     :target="target"
-    :rel="rel"
-    :type="href ? undefined : type"
-    :disabled="href ? undefined : disabled"
+    :rel="effectiveRel"
+    :type="isLink ? undefined : type"
+    :disabled="isLink ? undefined : disabled"
     :aria-label="ariaLabel"
-    :aria-disabled="href && disabled ? 'true' : undefined"
-    :tabindex="href && disabled ? -1 : undefined"
+    :aria-disabled="isLink && disabled ? 'true' : undefined"
+    :tabindex="isLink && disabled ? -1 : undefined"
     @click="preventDisabledLink"
   >
     <span v-if="$slots.leading" class="y-button__leading" aria-hidden="true">

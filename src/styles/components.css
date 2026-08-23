@@ -52,7 +52,7 @@
 .status-badge.deployed {
   border-color: color-mix(in srgb, var(--aqua) 42%, var(--line));
   background: var(--status-aqua-bg);
-  color: var(--aqua);
+  color: var(--aqua-text);
 }
 .status-badge.active .status-dot,
 .status-badge.deployed .status-dot {

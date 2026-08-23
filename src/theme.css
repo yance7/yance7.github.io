@@ -71,6 +71,7 @@
 
   /* 统一交互幅度 */
   --motion-lift: -3px;
+  --motion-control-lift: -1px;
   --motion-media-scale: 1.03;
   --motion-icon-shift: 4px;
   --motion-press-scale: .985;
@@ -158,6 +159,7 @@
   --gold-text: #8E5816;
   --action-fill: #8E5816;
   --aqua: #277E76;
+  --aqua-text: #236F68;
   --violet: #695F98;
   --focus: #8D5815;
   --accent-contrast: #FFFAF0;
@@ -171,6 +173,7 @@
   --control-shadow: 0 1px 2px rgba(35, 45, 42, .04), 0 5px 18px rgba(52, 63, 59, .06);
   --tooltip-bg: var(--ink);
   --tooltip-ink: var(--bg);
+  --tooltip-muted: #B6C1BC;
   --tooltip-shadow: var(--shadow-2);
   --status-neutral-bg: color-mix(in srgb, var(--surface-raised) 84%, transparent);
   --status-aqua-bg: color-mix(in srgb, var(--aqua) 9%, transparent);
@@ -287,6 +290,7 @@
   --gold-text: #E8B962;
   --action-fill: #E8B962;
   --aqua: #6DDED0;
+  --aqua-text: #6DDED0;
   --violet: #A698E6;
   --focus: #E8B962;
   --accent-contrast: #151616;
@@ -300,6 +304,7 @@
   --control-shadow: 0 1px 2px rgba(0, 0, 0, .2), 0 7px 22px rgba(0, 0, 0, .22);
   --tooltip-bg: var(--ink);
   --tooltip-ink: var(--bg);
+  --tooltip-muted: #646E74;
   --tooltip-shadow: var(--shadow-2);
   --status-neutral-bg: color-mix(in srgb, var(--surface-raised) 84%, transparent);
   --status-aqua-bg: color-mix(in srgb, var(--aqua) 9%, transparent);
