@@ -95,16 +95,17 @@
 }
 .metric-card {
   background: var(--surface-strong); padding: var(--space-6) var(--space-5);
-  display: flex; flex-direction: column; gap: 6px;
+  display: flex; flex-direction: column; gap: 8px;
   content-visibility: auto;
-  transition: background-color var(--dur-base) var(--ease-soft);
+  transition: background-color var(--dur-base) var(--ease-soft), box-shadow var(--dur-base) var(--ease-soft);
 }
 .metric-card:hover {
   background: var(--surface-hover);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gold) 24%, transparent);
 }
-.metric-card b { font-family: var(--font-editorial); font-size: 3.2rem; font-weight: 440; line-height: 1; }
-.metric-card span { font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: var(--tracking-latin-wide); color: var(--gold); text-transform: uppercase; }
-.metric-card small { color: var(--dim); font-size: var(--text-sm); }
+.metric-card b { font-family: var(--font-editorial); font-size: 3.2rem; font-weight: 440; line-height: .94; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.metric-card span { margin-top: -1px; font-family: var(--font-technical); font-size: var(--type-meta-size); line-height: 1.35; letter-spacing: var(--tracking-latin-wide); color: var(--gold); text-transform: uppercase; }
+.metric-card small { color: var(--dim); font-size: var(--text-sm); line-height: 1.45; }
 .metric-strip.large { margin-top: 8px; }
 .metric-strip.large .metric-card { padding: var(--space-7) var(--space-6); }
 .metric-strip.large .metric-card b { font-size: 4.2rem; }

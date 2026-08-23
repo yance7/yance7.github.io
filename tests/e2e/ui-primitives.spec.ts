@@ -69,3 +69,18 @@ test('archive proof links share one semantic primitive across works and research
   await page.goto('/research.html')
   await expect(page.locator('.tl-proof-list .y-archive-link').first()).toBeVisible()
 })
+
+test('metric surfaces refine their boundary without adding elevation', async ({ page }) => {
+  await page.goto('/academics.html')
+  const metric = page.locator('.metric-card').first()
+  await metric.scrollIntoViewIfNeeded()
+  await metric.hover()
+
+  await expect(metric).toHaveCSS('transform', 'none')
+  await expect(metric).toHaveCSS('box-shadow', /inset/)
+  const numberMetrics = await metric.locator('b').evaluate((element) => {
+    const style = getComputedStyle(element)
+    return { fontSize: parseFloat(style.fontSize), lineHeight: parseFloat(style.lineHeight) }
+  })
+  expect(numberMetrics.lineHeight).toBeLessThan(numberMetrics.fontSize)
+})
