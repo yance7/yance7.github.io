@@ -88,7 +88,10 @@ describe('image preloader', () => {
 
       expect(controller.preload('/slow-poster.jpg')).toBe(true)
       expect(controller.isPending('/slow-poster.jpg')).toBe(true)
-      await vi.runAllTimersAsync()
+      await vi.advanceTimersByTimeAsync(19)
+      expect(controller.isPending('/slow-poster.jpg')).toBe(true)
+
+      await vi.advanceTimersByTimeAsync(1)
 
       expect(controller.isPending('/slow-poster.jpg')).toBe(false)
       expect(controller.isLoaded('/slow-poster.jpg')).toBe(false)

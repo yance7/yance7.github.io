@@ -105,7 +105,7 @@ export function createImagePreloader(
 
   return {
     preload(src) {
-      return preloadImageOnce(src, loaded, pending, preloader)
+      return preloadImageOnce(src, loaded, pending, preloader, options)
     },
     isLoaded(src) {
       return loaded.has(src)
