@@ -37,12 +37,35 @@ async function installTheme(page: Page, selectedTheme: typeof themes[number]) {
 
 async function settlePage(page: Page) {
   await page.waitForLoadState('domcontentloaded')
+  await expect.poll(() => page.locator('html').getAttribute('data-fonts-ready')).toBe('ready')
+  await expect.poll(() => page.evaluate(() => {
+    const viewportHeight = window.innerHeight
+    return [...document.querySelectorAll<HTMLElement>('.metric-strip')]
+      .filter((strip) => {
+        const rect = strip.getBoundingClientRect()
+        const visibleHeight = Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, 0)
+        return visibleHeight / rect.height >= .3
+      })
+      .every((strip) => strip.dataset.metricsReady === 'true')
+  })).toBe(true)
   await page.evaluate(async () => {
     await document.fonts?.ready
   })
   await page.evaluate(() => new Promise<void>((resolve) => {
     requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
   }))
+}
+
+async function settleConcertVisualState(page: Page) {
+  await page.locator('#album-frequencies').scrollIntoViewIfNeeded()
+  await expect.poll(() => page.locator('.album-tile img').evaluateAll((images) => {
+    const imageElements = images as HTMLImageElement[]
+    return imageElements.length > 0 && imageElements.every((image) => image.complete && image.naturalWidth > 0)
+  })).toBe(true)
+  await expect.poll(() => page.locator('.next-up').evaluateAll((elements) => (
+    elements.every((element) => element.classList.contains('revealed'))
+  ))).toBe(true)
+  await page.locator('main#main').scrollIntoViewIfNeeded()
 }
 
 async function expectLightboxGeometry(page: Page) {
@@ -79,6 +102,7 @@ for (const viewport of viewports) {
         await expect(page).toHaveScreenshot(`${route}-${theme}-${viewport.name}-viewport.png`, pageScreenshotOptions)
 
         if (route !== 'index' && viewport.name === 'desktop') {
+          if (route === 'concerts') await settleConcertVisualState(page)
           await expect(page.locator('main#main')).toHaveScreenshot(`${route}-${theme}-desktop-main.png`, componentScreenshotOptions)
         }
         if (route === 'index' && viewport.name === 'desktop') {

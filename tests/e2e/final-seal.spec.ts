@@ -30,6 +30,20 @@ const criticalTouchTargetSelector = [
   '.lb-close'
 ].join(', ')
 
+async function waitForA11yReady(page: Page) {
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+  await expect.poll(() => page.evaluate(() => {
+    const stylesLoaded = [...document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')]
+      .every((link) => link.sheet !== null)
+    const revealsSettled = [...document.querySelectorAll<HTMLElement>('.reveal')]
+      .every((element) => {
+        const opacity = Number.parseFloat(getComputedStyle(element).opacity)
+        return opacity === 0 || opacity === 1
+      })
+    return document.documentElement.dataset.fontsReady === 'ready' && stylesLoaded && revealsSettled
+  })).toBe(true)
+}
+
 async function expectAccessible(page: Page) {
   const results = await new AxeBuilder({ page }).analyze()
   expect(results.violations).toEqual([])
@@ -153,6 +167,7 @@ test('representative light and dark layouts remain axe-clean', async ({ page }) 
     for (const entry of htmlPageEntries) {
       await page.goto(`/${entry.htmlName}.html`)
       await expect(page.locator('html')).toHaveAttribute('data-theme', theme)
+      await waitForA11yReady(page)
       await expectAccessible(page)
     }
   }

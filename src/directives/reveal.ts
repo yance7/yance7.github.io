@@ -1,5 +1,5 @@
 import type { Directive, DirectiveBinding } from 'vue'
-import { getRevealMode } from '../utils/reveal'
+import { getRevealMode, isInInitialViewport } from '../utils/reveal'
 
 type RevealVariant = 'fade-up' | 'fade-left' | 'fade-right' | 'clip' | 'scale' | 'blur'
 type RevealValue = number | { delay?: number; variant?: RevealVariant }
@@ -53,6 +53,11 @@ const reveal: Directive<HTMLElement, RevealValue> = {
       prefersReducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches
     })
     if (mode === 'immediate') {
+      revealImmediately(element)
+      return
+    }
+
+    if (isInInitialViewport(element.getBoundingClientRect(), window.innerHeight)) {
       revealImmediately(element)
       return
     }

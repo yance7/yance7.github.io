@@ -23,6 +23,28 @@ describe('page registry', () => {
   })
 })
 
+describe('critical rendering contracts', () => {
+  it('loads the bundled font stylesheet after the initial app mount', () => {
+    const main = readFileSync(resolve(process.cwd(), 'src/main.ts'), 'utf8')
+
+    expect(main).not.toContain("import './fonts.css'")
+    expect(main).toContain("document.documentElement.dataset.fontsReady = 'loading'")
+    expect(main).toContain("await document.fonts.ready")
+    expect(main).toContain("document.documentElement.dataset.fontsReady = 'ready'")
+    expect(main).toContain("app.mount('#app')\nrequestAnimationFrame(() => {\n  requestAnimationFrame(() => {\n    void import('./fonts.css').then(async () => {")
+  })
+
+    it('exposes a settled state for metric count-up surfaces', () => {
+      const metric = readFileSync(resolve(process.cwd(), 'src/components/MetricStrip.vue'), 'utf8')
+
+      expect(metric).toContain('data-metrics-ready')
+      expect(metric).toContain('metricsReady.value = true')
+      expect(metric).toContain('const observedIndexes = new Set<number>()')
+      expect(metric).toContain('initialObservationComplete')
+      expect(metric).toContain('if (!entry.isIntersecting) return')
+    })
+})
+
 describe('shared button public contract', () => {
   it('keeps the documented variants and sizes available to callers', () => {
     const buttonTypes = readFileSync(resolve(process.cwd(), 'src/components/yanceButtonTypes.ts'), 'utf8')
