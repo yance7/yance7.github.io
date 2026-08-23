@@ -107,6 +107,14 @@ test('research timeline highlights the item in the reading zone', async ({ page 
   }
 })
 
+test('research timeline clears current state outside the reading zone', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/research.html')
+
+  await page.evaluate(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'auto' }))
+  await expect.poll(() => page.locator('.tl-item[data-reading-state="current"]').count()).toBe(0)
+})
+
 test('research status markers keep a static hierarchy without competing pulses', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 900 })
   await page.goto('/research.html')
