@@ -58,8 +58,6 @@
   .theme-orbit,
   .menu-trigger,
   .mobile-menu-close,
-  .btn-primary,
-  .btn-ghost,
   .lb-nav,
   .lb-close { min-height: 44px; }
 }
@@ -98,10 +96,6 @@
     background: var(--control-bg); border-color: var(--control-border); color: var(--ink); box-shadow: var(--control-shadow); transform: none;
   }
   .lb-retry:hover:not(:focus-visible) { border-color: var(--control-border); background: var(--control-bg); color: var(--text-primary); transform: none; }
-  .btn-primary:hover:not(:focus-visible) { background: var(--action-fill); border-color: var(--action-fill); transform: none; box-shadow: 0 8px 24px var(--glow-gold); }
-  .btn-ghost:hover:not(:focus-visible) { border-color: var(--control-border); background: var(--control-bg); color: var(--ink); transform: none; box-shadow: var(--control-shadow); }
-  .btn-primary:hover:not(:focus-visible) > span,
-  .btn-ghost:hover:not(:focus-visible) > span { transform: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -117,12 +111,8 @@
   .hero-action:hover,
   .hero-action:focus-visible,
   .lb-nav:hover,
-  .lb-close:hover,
-  .btn-primary:hover,
-  .btn-ghost:hover { transform: none !important; }
-  .hero-action:hover span,
-  .btn-primary:hover > span,
-  .btn-ghost:hover > span { transform: none !important; }
+  .lb-close:hover { transform: none !important; }
+  .hero-action:hover span { transform: none !important; }
 }
 
 /* ===== PageCompass / 阅读罗盘 ===== */

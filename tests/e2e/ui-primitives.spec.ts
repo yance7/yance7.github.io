@@ -13,6 +13,17 @@ test('shared project actions expose stable keyboard targets', async ({ page }) =
   expect(box?.height ?? 0).toBeGreaterThanOrEqual(42)
 })
 
+test('404 entry actions use the shared button primitive', async ({ page }) => {
+  await page.goto('/404.html')
+
+  const actions = page.locator('.error-actions .y-button')
+  await expect(actions).toHaveCount(2)
+  for (const action of await actions.all()) {
+    const box = await action.boundingBox()
+    expect(box?.height ?? 0).toBeGreaterThanOrEqual(42)
+  }
+})
+
 test('status badges use compact semantic surfaces without pulse animation', async ({ page }) => {
   await page.goto('/works.html')
 

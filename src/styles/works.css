@@ -495,7 +495,7 @@
   .sc-summary { padding: var(--space-5) var(--space-4); }
   .sc-body { padding: var(--space-5) var(--space-4); }
   .sc-actions { flex-direction: column; align-items: stretch; }
-  .sc-actions .btn-primary, .sc-actions .btn-ghost { justify-content: center; padding-inline: 16px; }
+  .sc-actions .y-button { justify-content: center; padding-inline: 16px; }
   .sc-sequence { padding: var(--space-4); }
   .sc-sequence ol { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 0; }
   .sc-sequence li:nth-child(odd) { border-left: 0; }

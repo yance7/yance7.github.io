@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import SectionHeading from '../components/SectionHeading.vue'
+import YanceButton from '../components/YanceButton.vue'
 </script>
 
 <template>
@@ -13,8 +14,14 @@ import SectionHeading from '../components/SectionHeading.vue'
         copy="你访问的页面不存在，或者已经被移走。回到主页，重新选一间屋子走进去。"
       />
       <div class="error-actions">
-        <a class="btn-primary" href="index.html" v-magnetic>回到首页 <span aria-hidden="true">→</span></a>
-        <a class="btn-ghost" href="research.html" v-magnetic>去看看研究 <span aria-hidden="true">→</span></a>
+        <YanceButton href="index.html" variant="primary" v-magnetic>
+          回到首页
+          <template #trailing>→</template>
+        </YanceButton>
+        <YanceButton href="research.html" variant="secondary" v-magnetic>
+          去看看研究
+          <template #trailing>→</template>
+        </YanceButton>
       </div>
     </section>
   </div>
