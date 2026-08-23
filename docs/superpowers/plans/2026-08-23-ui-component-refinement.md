@@ -10,7 +10,7 @@
 - 不引入 Tailwind、Shadcn、Origin UI、Inspira UI、Reka UI、GSAP、Motion runtime 或新图标库。
 - 每个 viewport 最多保留一个明显动态焦点；不叠加 pointer sheen 与 Border Beam。
 - 保持 WCAG AA、键盘操作、`:focus-visible`、44px 触控目标、modal focus trap/inert/focus restore 和 reduced-motion 行为。
-- 生产分支遵循项目约定：直接提交并推送 `main`，不创建 feature branch 或 PR。
+- 生产分支只接受经过 PR CI、Quality Audit 和视觉检查的 feature branch 合并；禁止直接在 `main` 上开发或推送半成品。
 
 ## Delivered tasks
 
@@ -46,4 +46,4 @@ Visual snapshots are updated only after a no-update run, manual diff inspection,
 
 ## Commits
 
-The implementation is split into independently reviewable commits on `main`, covering preloader, button, status, compass, lightbox, archive links, metric refinement, and visual coverage.
+ The implementation is split into independently reviewable commits on a feature branch and enters `main` only through the reviewed PR flow, covering preloader, button, status, compass, lightbox, archive links, metric refinement, and visual coverage.

@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
 import { htmlPageEntries, isPageKey, pageEntries, pageRegistry } from '../src/data/pageRegistry'
@@ -201,5 +201,37 @@ describe('page stylesheet boundaries', () => {
     expect(playwrightConfig).toContain("snapshotPathTemplate: '{testDir}/visual-snapshots/{projectName}/{testFilePath}/{arg}{ext}'")
     expect(playwrightConfig).not.toContain('{platform}')
     expect(visualSpec).toContain('toHaveScreenshot')
+  })
+})
+
+describe('release workflow contracts', () => {
+  it('prepares the Pages artifact with the official configure action', () => {
+    const pagesWorkflow = readFileSync(resolve(process.cwd(), '.github/workflows/pages.yml'), 'utf8')
+
+    expect(pagesWorkflow).toContain('actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b')
+    expect(pagesWorkflow).toContain('actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b')
+    expect(pagesWorkflow).toContain('actions/deploy-pages@')
+    expect(pagesWorkflow.indexOf('actions/configure-pages@')).toBeLessThan(pagesWorkflow.indexOf('actions/upload-pages-artifact@'))
+  })
+
+  it('runs deterministic checks on pull requests without deploying Pages', () => {
+    const ciPath = resolve(process.cwd(), '.github/workflows/ci.yml')
+    const qualityWorkflow = readFileSync(resolve(process.cwd(), '.github/workflows/quality.yml'), 'utf8')
+
+    expect(existsSync(ciPath)).toBe(true)
+    const ciWorkflow = readFileSync(ciPath, 'utf8')
+    expect(ciWorkflow).toContain('pull_request:')
+    expect(ciWorkflow).toContain('npm ci')
+    expect(ciWorkflow).toContain('npm run test:e2e -- --project=chromium --workers=1 --grep')
+    expect(ciWorkflow).not.toContain('deploy-pages')
+    expect(qualityWorkflow).toContain('pull_request:')
+    expect(qualityWorkflow).toContain('branches: [main]')
+  })
+
+  it('does not instruct active UI refinement work to push directly to main', () => {
+    const plan = readFileSync(resolve(process.cwd(), 'docs/superpowers/plans/2026-08-23-ui-component-refinement.md'), 'utf8')
+
+    expect(plan).not.toContain('直接提交并推送 `main`')
+    expect(plan).not.toContain('不创建 feature branch 或 PR')
   })
 })
