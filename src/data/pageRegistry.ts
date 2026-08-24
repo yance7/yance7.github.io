@@ -24,9 +24,9 @@ const registry = {
     ogImage: 'assets/og-academics.png',
     ogImageAlt: 'Yance academic archive',
     sections: [
-      { id: 'sec-education', label: 'EDUCATION' },
-      { id: 'sec-scoreboard', label: 'SCOREBOARD' },
-      { id: 'sec-ap-archive', label: 'AP ARCHIVE' }
+      { id: 'sec-education', label: 'EDUCATION', shortLabel: 'EDU' },
+      { id: 'sec-scoreboard', label: 'SCOREBOARD', shortLabel: 'SCORES' },
+      { id: 'sec-ap-archive', label: 'AP ARCHIVE', shortLabel: 'AP' }
     ]
   },
   honors: {
@@ -39,8 +39,8 @@ const registry = {
     ogImage: 'assets/og-honors.png',
     ogImageAlt: 'Yance honors and competition archive',
     sections: [
-      { id: 'sec-milestones', label: 'MILESTONES' },
-      { id: 'sec-honors-archive', label: 'ARCHIVE' }
+      { id: 'sec-milestones', label: 'MILESTONES', shortLabel: 'MILE' },
+      { id: 'sec-honors-archive', label: 'ARCHIVE', shortLabel: 'ARCH' }
     ]
   },
   research: {
@@ -53,8 +53,8 @@ const registry = {
     ogImage: 'assets/og-research.png',
     ogImageAlt: 'Yance research archive',
     sections: [
-      { id: 'sec-research-timeline', label: 'RESEARCH' },
-      { id: 'sec-toolchain', label: 'METHODS' }
+      { id: 'sec-research-timeline', label: 'RESEARCH', shortLabel: 'R&D' },
+      { id: 'sec-toolchain', label: 'METHODS', shortLabel: 'METHOD' }
     ]
   },
   works: {
@@ -67,8 +67,8 @@ const registry = {
     ogImage: 'assets/og-works.png',
     ogImageAlt: 'FreshEye product portfolio',
     sections: [
-      { id: 'works-overview', label: 'RELEASED WORLDS', shortLabel: 'OVERVIEW' },
-      { id: 'project-fresheye', label: 'FRESHEYE' }
+      { id: 'works-overview', label: 'RELEASED WORLDS', shortLabel: 'WORKS' },
+      { id: 'project-fresheye', label: 'FRESHEYE', shortLabel: 'FRESH' }
     ]
   },
   concerts: {
@@ -81,9 +81,9 @@ const registry = {
     ogImage: 'assets/og-concerts.png',
     ogImageAlt: 'Yance live music archive',
     sections: [
-      { id: 'concerts-overview', label: 'LIVE ARCHIVE', shortLabel: 'OVERVIEW' },
+      { id: 'concerts-overview', label: 'LIVE ARCHIVE', shortLabel: 'LIVE' },
       { id: 'album-frequencies', label: 'ALBUM WALL', shortLabel: 'ALBUMS' },
-      { id: 'concert-archive', label: 'CONCERT ARCHIVE', shortLabel: 'POSTERS' }
+      { id: 'concert-archive', label: 'CONCERT ARCHIVE', shortLabel: 'POSTER' }
     ]
   }
 } as const

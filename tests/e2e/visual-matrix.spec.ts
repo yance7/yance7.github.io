@@ -139,10 +139,26 @@ for (const theme of themes) {
         await expect(page.locator('#compass-tip-sec-research-timeline')).toBeVisible()
       }
 
-      await expect(page.locator('.page-compass')).toHaveScreenshot(
-        `${theme}-page-compass-${viewport.name}.png`,
-        componentScreenshotOptions
-      )
+      if (viewport.width <= 760) {
+        await expect(page.locator('.page-compass')).toHaveScreenshot(
+          `${theme}-page-compass-${viewport.name}.png`,
+          componentScreenshotOptions
+        )
+      } else {
+        const clipWidth = Math.min(360, viewport.width)
+        await expect(page).toHaveScreenshot(
+          `${theme}-page-compass-${viewport.name}.png`,
+          {
+            ...componentScreenshotOptions,
+            clip: {
+              x: viewport.width - clipWidth,
+              y: 0,
+              width: clipWidth,
+              height: viewport.height
+            }
+          }
+        )
+      }
     })
   }
 

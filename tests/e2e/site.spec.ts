@@ -56,6 +56,20 @@ test('theme preference persists after reload', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
 })
 
+test('rapid theme toggles commit deterministically', async ({ page }) => {
+  await page.goto('/index.html')
+  await page.evaluate(() => localStorage.setItem('yance-theme', 'light'))
+  await page.reload()
+
+  await page.locator('.theme-orbit').evaluate((element: HTMLElement) => {
+    element.click()
+    element.click()
+  })
+
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('yance-theme'))).toBe('light')
+})
+
 test('page compass unifies section navigation, reading progress, and return to top', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 900 })
   await page.goto('/honors.html')

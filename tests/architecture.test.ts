@@ -18,6 +18,14 @@ describe('page registry', () => {
     ])
     expect(pageRegistry.concerts.sections.map((section) => section.id)).toContain('album-frequencies')
     expect(pageRegistry.research.nav.en).toBe('Research')
+    expect(pageRegistry.academics.sections.map((section) => section.shortLabel)).toEqual(['EDU', 'SCORES', 'AP'])
+    expect(pageRegistry.honors.sections.map((section) => section.shortLabel)).toEqual(['MILE', 'ARCH'])
+    expect(pageRegistry.research.sections.map((section) => section.shortLabel)).toEqual(['R&D', 'METHOD'])
+    const shortLabels = pageEntries.reduce<string[]>((labels, entry) => {
+      entry.sections.forEach((section) => labels.push(section.shortLabel ?? ''))
+      return labels
+    }, [])
+    expect(shortLabels.every((label) => label.length <= 6)).toBe(true)
     expect(isPageKey('research')).toBe(true)
     expect(isPageKey('missing')).toBe(false)
   })
@@ -263,6 +271,9 @@ describe('page stylesheet boundaries', () => {
     expect(playwrightConfig).toContain('visual-matrix\\.spec\\.ts')
     expect(playwrightConfig).toContain("snapshotPathTemplate: '{testDir}/visual-snapshots/{projectName}/{platform}/{testFilePath}/{arg}{ext}'")
     expect(visualSpec).toContain('toHaveScreenshot')
+    expect(visualSpec).toContain('if (viewport.width <= 760)')
+    expect(visualSpec).toContain('clip: {')
+    expect(visualSpec).toContain('page.screenshot')
   })
 })
 
@@ -288,6 +299,7 @@ describe('release workflow contracts', () => {
     expect(ciWorkflow).not.toContain('deploy-pages')
     expect(qualityWorkflow).toContain('pull_request:')
     expect(qualityWorkflow).toContain('branches: [main]')
+    expect(qualityWorkflow.match(/if: \$\{\{ !cancelled\(\) \}\}/g)).toHaveLength(2)
   })
 
   it('does not instruct active UI refinement work to push directly to main', () => {
@@ -338,16 +350,37 @@ describe('lightbox depth contracts', () => {
 })
 
 describe('motion hierarchy contracts', () => {
-  it('caches theme ripple geometry before mutating theme tokens', () => {
+  it('commits theme state synchronously while deferring only ripple decoration', () => {
     const theme = readFileSync(resolve(process.cwd(), 'src/composables/useTheme.ts'), 'utf8')
 
     expect(theme).toContain('const rippleGeometry = rippleEl && canRipple ? getRippleGeometry(rippleEl) : null')
     expect(theme).toContain('const rect = rippleEl.getBoundingClientRect()')
-    expect(theme.indexOf('const rippleGeometry = rippleEl && canRipple ? getRippleGeometry(rippleEl) : null'))
-      .toBeLessThan(theme.indexOf('window.setTimeout(() => commitThemeChange(value, rippleEl, rippleGeometry), 0)'))
-    expect(theme).toContain('function commitThemeChange(')
-    expect(theme).toContain('window.setTimeout(() => commitThemeChange(value, rippleEl, rippleGeometry), 0)')
+    const applyThemeStart = theme.indexOf('function applyTheme(')
+    const rippleGeometryIndex = theme.indexOf('const rippleGeometry = rippleEl && canRipple ? getRippleGeometry(rippleEl) : null', applyThemeStart)
+    const setThemeIndex = theme.indexOf('\n  setTheme(value)', applyThemeStart)
+    expect(rippleGeometryIndex).toBeLessThan(setThemeIndex)
+    expect(theme).not.toContain('function commitThemeChange(')
+    expect(theme).not.toContain('window.setTimeout(() => commitThemeChange')
+    expect(theme).toContain('setTheme(value)')
+    expect(theme).toContain('requestAnimationFrame(() => {')
     expect(theme).toContain('createThemeRipple(rippleGeometry)')
+  })
+
+  it('lets IntersectionObserver own reveal geometry after initial viewport setup', () => {
+    const reveal = readFileSync(resolve(process.cwd(), 'src/directives/reveal.ts'), 'utf8')
+
+    expect(reveal).not.toContain('const tracked = new Set<HTMLElement>()')
+    expect(reveal).not.toContain('tracked.forEach(')
+    expect(reveal).not.toContain('tracked.add(element)')
+    expect(reveal).not.toContain('tracked.delete(element)')
+    expect(reveal).toContain('currentObserver.unobserve(element)')
+    expect(reveal).toContain('isInInitialViewport(element.getBoundingClientRect(), window.innerHeight)')
+    expect(reveal).toContain('function revealRemainingAtDocumentEnd()')
+    expect(reveal).toContain('document.documentElement.scrollHeight')
+    expect(reveal).toContain("document.querySelectorAll<HTMLElement>('.reveal:not(.revealed)')")
+    expect(reveal).toContain("window.addEventListener('scroll', handleScroll, { passive: true })")
+    expect(reveal).toContain('let reachedDocumentEnd = false')
+    expect(reveal).toContain('new ResizeObserver(')
   })
 
   it('keeps project actions free of nested magnetic bindings', () => {
