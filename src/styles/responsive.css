@@ -71,6 +71,7 @@
   .mobile-menu-close,
   .lb-nav,
   .lb-close { min-height: 44px; }
+  .mobile-menu-close { min-width: 44px; }
 }
 
 @media (orientation: landscape) and (max-height: 520px) {

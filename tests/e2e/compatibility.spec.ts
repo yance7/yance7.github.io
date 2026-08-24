@@ -75,6 +75,16 @@ test('coarse-pointer shared controls keep 44px touch targets', async ({ page }, 
     expect(box, `${selector} geometry`).not.toBeNull()
     expect(box!.height, `${selector} height`).toBeGreaterThanOrEqual(44)
   }
+
+  await page.goto('/index.html')
+  await page.locator('.menu-trigger').click()
+  const closeButton = page.locator('.mobile-menu-close')
+  await expect(closeButton).toBeVisible()
+  const closeBox = await closeButton.boundingBox()
+  expect(closeBox, 'mobile menu close geometry').not.toBeNull()
+  expect(closeBox!.width, 'mobile menu close width').toBeGreaterThanOrEqual(44)
+  expect(closeBox!.height, 'mobile menu close height').toBeGreaterThanOrEqual(44)
+  await closeButton.click()
 })
 
 test('keyboard PageCompass tooltips work with coarse pointer at desktop width', async ({ page }, testInfo) => {
