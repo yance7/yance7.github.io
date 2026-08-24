@@ -5,7 +5,72 @@ import { htmlPageEntries, pageEntries } from '../../src/data/pageRegistry'
 
 const archiveRoutes = htmlPageEntries.map(({ htmlName }) => `${htmlName}.html`)
 
+async function settleAccessibilityState(page: Page) {
+  await page.waitForLoadState('domcontentloaded')
+  await expect(page.locator('main#main')).toBeVisible()
+
+  await expect(page.locator('html')).toHaveAttribute(
+    'data-fonts-ready',
+    'ready',
+    { timeout: 10_000 }
+  )
+
+  await page.evaluate(() => {
+    window.scrollTo(0, document.documentElement.scrollHeight)
+  })
+
+  await expect.poll(
+    () => page.locator('.reveal:not(.revealed)').count(),
+    {
+      timeout: 5_000,
+      message: 'all deferred reveal content should be revealed before axe audit'
+    }
+  ).toBe(0)
+
+  await expect.poll(
+    () =>
+      page.locator('.reveal').evaluateAll((elements) =>
+        elements.every((element) => {
+          const style = getComputedStyle(element)
+          // WebKit serializes finished `transform: none` animations as identity matrices.
+          const transformMatch = style.transform.match(/^matrix(3d)?\((.+)\)$/)
+          const transformValues = transformMatch?.[2]?.split(',').map(Number)
+          const identityTransform = transformMatch?.[1]
+            ? [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
+            : [1, 0, 0, 1, 0, 0]
+          const transformIsFinal =
+            style.transform === 'none' ||
+            (transformValues?.length === identityTransform.length &&
+              transformValues.every((value, index) => Math.abs(value - (identityTransform[index] ?? 0)) < 0.001))
+
+          return (
+            Number.parseFloat(style.opacity || '1') >= 0.999 &&
+            transformIsFinal &&
+            style.filter === 'none' &&
+            style.clipPath === 'none'
+          )
+        })
+      ),
+    {
+      timeout: 5_000,
+      message: 'reveal transitions should reach their final visual state before axe audit'
+    }
+  ).toBe(true)
+
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        window.scrollTo(0, 0)
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => resolve())
+        })
+      })
+  )
+}
+
 async function expectAccessible(page: Page) {
+  await settleAccessibilityState(page)
+
   const results = await new AxeBuilder({ page }).analyze()
   expect(results.violations).toEqual([])
 }
