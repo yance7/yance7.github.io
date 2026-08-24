@@ -4,6 +4,11 @@ import { htmlPageEntries } from '../../src/data/pageRegistry'
 
 const archiveRoutes = htmlPageEntries.map(({ htmlName }) => `${htmlName}.html`)
 
+function expectTouchTarget(box: { width: number; height: number }, label: string) {
+  expect(Math.round(box.width), `${label} width`).toBeGreaterThanOrEqual(44)
+  expect(Math.round(box.height), `${label} height`).toBeGreaterThanOrEqual(44)
+}
+
 test('compatibility pages boot without horizontal overflow', async ({ page }) => {
   for (const route of archiveRoutes) {
     await page.goto(`/${route}`)
@@ -73,7 +78,7 @@ test('coarse-pointer shared controls keep 44px touch targets', async ({ page }, 
   for (const selector of ['.sc-actions .y-button', '.sc-proof-links .y-archive-link']) {
     const box = await page.locator(selector).first().boundingBox()
     expect(box, `${selector} geometry`).not.toBeNull()
-    expect(box!.height, `${selector} height`).toBeGreaterThanOrEqual(44)
+    expectTouchTarget(box!, selector)
   }
 
   await page.goto('/index.html')
@@ -82,8 +87,7 @@ test('coarse-pointer shared controls keep 44px touch targets', async ({ page }, 
   await expect(closeButton).toBeVisible()
   const closeBox = await closeButton.boundingBox()
   expect(closeBox, 'mobile menu close geometry').not.toBeNull()
-  expect(closeBox!.width, 'mobile menu close width').toBeGreaterThanOrEqual(44)
-  expect(closeBox!.height, 'mobile menu close height').toBeGreaterThanOrEqual(44)
+  expectTouchTarget(closeBox!, 'mobile menu close')
   await closeButton.click()
 })
 
@@ -108,8 +112,7 @@ test('compass stays inside the viewport and keeps touch targets usable', async (
     if (width <= 1024) {
       const linkBox = await page.locator('.page-compass-link').first().boundingBox()
       expect(linkBox, `${width}px link geometry`).not.toBeNull()
-      expect(linkBox!.width, `${width}px link width`).toBeGreaterThanOrEqual(44)
-      expect(linkBox!.height, `${width}px link height`).toBeGreaterThanOrEqual(44)
+      expectTouchTarget(linkBox!, `${width}px link`)
     }
   }
 })

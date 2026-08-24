@@ -70,6 +70,55 @@ test('rapid theme toggles commit deterministically', async ({ page }) => {
   await expect.poll(() => page.evaluate(() => localStorage.getItem('yance-theme'))).toBe('light')
 })
 
+test('deferred fonts do not cause material late layout shift', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium', 'Chromium is the supported layout-shift measurement project')
+
+  await page.addInitScript(() => {
+    type FontShiftWindow = Window & {
+      __fontLayoutShifts?: Array<{ startTime: number; value: number }>
+      __fontLayoutShiftSupported?: boolean
+    }
+
+    const shiftWindow = window as FontShiftWindow
+    shiftWindow.__fontLayoutShifts = []
+    shiftWindow.__fontLayoutShiftSupported = PerformanceObserver.supportedEntryTypes?.includes('layout-shift') === true
+    if (!shiftWindow.__fontLayoutShiftSupported) return
+
+    new PerformanceObserver((list) => {
+      list.getEntries().forEach((entry) => {
+        const shift = entry as PerformanceEntry & { hadRecentInput: boolean; value: number }
+        if (!shift.hadRecentInput) {
+          shiftWindow.__fontLayoutShifts?.push({ startTime: shift.startTime, value: shift.value })
+        }
+      })
+    }).observe({ type: 'layout-shift', buffered: true })
+  })
+
+  await page.goto('/index.html')
+  await expect.poll(() => page.locator('html').getAttribute('data-fonts-ready')).toBe('ready')
+  await page.evaluate(() => new Promise<void>((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+  }))
+
+  const metrics = await page.evaluate(() => {
+    type FontShiftWindow = Window & {
+      __fontLayoutShifts?: Array<{ startTime: number; value: number }>
+      __fontLayoutShiftSupported?: boolean
+    }
+
+    const shiftWindow = window as FontShiftWindow
+    return {
+      lateShift: shiftWindow.__fontLayoutShifts
+        ?.filter(({ startTime }) => startTime > 1500)
+        .reduce((total, shift) => total + shift.value, 0) ?? 0,
+      supported: shiftWindow.__fontLayoutShiftSupported === true
+    }
+  })
+
+  expect(metrics.supported, 'Chromium must expose layout-shift entries for this gate').toBe(true)
+  expect(metrics.lateShift).toBeLessThan(0.01)
+})
+
 test('page compass unifies section navigation, reading progress, and return to top', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 900 })
   await page.goto('/honors.html')

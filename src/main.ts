@@ -7,7 +7,7 @@ import { preloadPage } from './pageLoaders'
 import './styles.css'
 import './theme.css'
 
-const fontStartDelay = document.body.dataset.page === 'concerts' ? 0 : 2400
+const fontLoadTimeout = document.body.dataset.page === 'concerts' ? 0 : 2400
 
 function loadFonts() {
   void import('./fonts.css').then(async () => {
@@ -20,19 +20,18 @@ function scheduleFonts() {
   const idleWindow = window as Window & {
     requestIdleCallback?: (callback: () => void, options?: { timeout?: number }) => number
   }
-  const scheduledAt = performance.now()
-  const scheduleLoad = () => {
-    const elapsed = performance.now() - scheduledAt
-    const remaining = Math.max(0, fontStartDelay - elapsed)
-    window.setTimeout(loadFonts, remaining)
-  }
 
-  if (idleWindow.requestIdleCallback) {
-    idleWindow.requestIdleCallback(scheduleLoad, { timeout: fontStartDelay })
+  if (fontLoadTimeout === 0) {
+    loadFonts()
     return
   }
 
-  scheduleLoad()
+  if (idleWindow.requestIdleCallback) {
+    idleWindow.requestIdleCallback(loadFonts, { timeout: fontLoadTimeout })
+    return
+  }
+
+  window.setTimeout(loadFonts, fontLoadTimeout)
 }
 
 const app = createApp(App)

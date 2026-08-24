@@ -53,15 +53,17 @@ describe('critical rendering contracts', () => {
     expect(main).not.toContain('requestAnimationFrame')
   })
 
-  it('loads concert fonts immediately while keeping other pages idle-scheduled', () => {
+  it('loads concert fonts immediately while keeping other pages idle-first', () => {
     const main = readFileSync(resolve(process.cwd(), 'src/main.ts'), 'utf8')
 
-    expect(main).toContain("const fontStartDelay = document.body.dataset.page === 'concerts' ? 0 : 2400")
+    expect(main).toContain("const fontLoadTimeout = document.body.dataset.page === 'concerts' ? 0 : 2400")
+    expect(main).toContain('if (fontLoadTimeout === 0)')
+    expect(main).toContain('loadFonts()')
     expect(main).toContain('requestIdleCallback')
-    expect(main).toContain('const scheduledAt = performance.now()')
-    expect(main).toContain('const remaining = Math.max(0, fontStartDelay - elapsed)')
-    expect(main).toContain('timeout: fontStartDelay')
-    expect(main).toContain('window.setTimeout(loadFonts, remaining)')
+    expect(main).toContain('idleWindow.requestIdleCallback(loadFonts, { timeout: fontLoadTimeout })')
+    expect(main).toContain('window.setTimeout(loadFonts, fontLoadTimeout)')
+    expect(main).not.toContain('const scheduledAt')
+    expect(main).not.toContain('const remaining')
   })
 
   it('contains the album grid before it enters the viewport', () => {
@@ -426,9 +428,13 @@ describe('motion hierarchy contracts', () => {
     expect(reveal).toContain('document.documentElement.scrollHeight')
     expect(reveal).toContain("document.querySelectorAll<HTMLElement>('.reveal:not(.revealed)')")
     expect(reveal).toContain("window.addEventListener('scroll', handleScroll, { passive: true })")
-    expect(reveal).toContain('const atDocumentEnd = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - documentEndBuffer')
-    expect(reveal).toContain('if (atDocumentEnd) {')
+    expect(reveal).toContain('function isNearDocumentEnd()')
+    expect(reveal).toContain('if (reachedDocumentEnd || !isNearDocumentEnd()) return')
     expect(reveal).toContain('let reachedDocumentEnd = false')
+    expect(reveal).toContain('let bottomResizeObserver: ResizeObserver | null = null')
+    expect(reveal).toContain("window.removeEventListener('scroll', handleScroll)")
+    expect(reveal).toContain('bottomResizeObserver?.disconnect()')
+    expect(reveal).toContain('if (reachedDocumentEnd) {\n      revealImmediately(element)')
     expect(reveal).toContain('new ResizeObserver(')
   })
 

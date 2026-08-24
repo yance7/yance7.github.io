@@ -5,7 +5,7 @@ type RevealVariant = 'fade-up' | 'fade-left' | 'fade-right' | 'clip' | 'scale' |
 type RevealValue = number | { delay?: number; variant?: RevealVariant }
 
 let observer: IntersectionObserver | null = null
-let bottomRevealFrame: number | null = null
+let bottomResizeObserver: ResizeObserver | null = null
 let reachedDocumentEnd = false
 const documentEndBuffer = 240
 
@@ -14,31 +14,30 @@ function revealElement(element: HTMLElement, currentObserver: IntersectionObserv
   currentObserver.unobserve(element)
 }
 
+function isNearDocumentEnd() {
+  return window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - documentEndBuffer
+}
+
+function disconnectBottomFallback() {
+  window.removeEventListener('scroll', handleScroll)
+  bottomResizeObserver?.disconnect()
+  bottomResizeObserver = null
+}
+
 function revealRemainingAtDocumentEnd() {
-  if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - documentEndBuffer) {
-    reachedDocumentEnd = true
-  }
-  if (!reachedDocumentEnd) return
+  if (reachedDocumentEnd || !isNearDocumentEnd()) return
+  reachedDocumentEnd = true
 
   document.querySelectorAll<HTMLElement>('.reveal:not(.revealed)').forEach((element) => {
     element.classList.add('revealed')
     observer?.unobserve(element)
   })
+  disconnectBottomFallback()
 }
 
 function handleScroll() {
-  const atDocumentEnd = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - documentEndBuffer
-  if (atDocumentEnd) {
-    reachedDocumentEnd = true
-    revealRemainingAtDocumentEnd()
-    return
-  }
-  if (bottomRevealFrame !== null) return
-
-  bottomRevealFrame = window.requestAnimationFrame(() => {
-    bottomRevealFrame = null
-    revealRemainingAtDocumentEnd()
-  })
+  if (reachedDocumentEnd || !isNearDocumentEnd()) return
+  revealRemainingAtDocumentEnd()
 }
 
 function getObserver() {
@@ -52,10 +51,10 @@ function getObserver() {
     }, { threshold: 0.08, rootMargin: '0px 0px 120px 0px' })
     window.addEventListener('scroll', handleScroll, { passive: true })
     if ('ResizeObserver' in window) {
-      const resizeObserver = new ResizeObserver(() => {
-        if (reachedDocumentEnd) revealRemainingAtDocumentEnd()
+      bottomResizeObserver = new ResizeObserver(() => {
+        if (!reachedDocumentEnd && isNearDocumentEnd()) revealRemainingAtDocumentEnd()
       })
-      resizeObserver.observe(document.documentElement)
+      bottomResizeObserver.observe(document.documentElement)
     }
   }
   return observer
@@ -86,6 +85,11 @@ const reveal: Directive<HTMLElement, RevealValue> = {
     }
 
     if (isInInitialViewport(element.getBoundingClientRect(), window.innerHeight)) {
+      revealImmediately(element)
+      return
+    }
+
+    if (reachedDocumentEnd) {
       revealImmediately(element)
       return
     }
