@@ -62,6 +62,16 @@ describe('critical rendering contracts', () => {
     expect(main).toContain('setTimeout(loadFonts, fontIdleTimeout)')
   })
 
+  it('preloads the first concert album cover before the async page chunk mounts', () => {
+    const concertsHtml = readFileSync(resolve(process.cwd(), 'html-src/concerts.html'), 'utf8')
+
+    expect(concertsHtml).toContain('<link\n    rel="preload"\n    as="image"')
+    expect(concertsHtml).toContain('/assets/albums/thumbs/jay-fantasy-640.webp')
+    expect(concertsHtml).toContain('imagesrcset="/assets/albums/thumbs/jay-fantasy-640.webp 640w, /assets/albums/thumbs/jay-fantasy-1200.webp 1200w"')
+    expect(concertsHtml).toContain('imagesizes="(min-width: 1180px) 36vw, (min-width: 768px) 42vw, 82vw"')
+    expect(concertsHtml).toContain('fetchpriority="high"')
+  })
+
   it('exposes a settled state for metric count-up surfaces', () => {
     const metric = readFileSync(resolve(process.cwd(), 'src/components/MetricStrip.vue'), 'utf8')
 
@@ -300,6 +310,7 @@ describe('release workflow contracts', () => {
     expect(qualityWorkflow).toContain('pull_request:')
     expect(qualityWorkflow).toContain('branches: [main]')
     expect(qualityWorkflow.match(/if: \$\{\{ !cancelled\(\) \}\}/g)).toHaveLength(2)
+    expect(qualityWorkflow).toContain('include-hidden-files: true')
   })
 
   it('does not instruct active UI refinement work to push directly to main', () => {
