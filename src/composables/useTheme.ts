@@ -7,13 +7,6 @@ const THEME_KEY = 'yance-theme'
 const theme = ref<Theme>('light')
 let systemMedia: MediaQueryList | null = null
 let systemListenerAttached = false
-let activeRipple: HTMLElement | null = null
-
-type RippleGeometry = {
-  cx: number
-  cy: number
-  maxDim: number
-}
 
 function systemTheme(): Theme {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
@@ -27,60 +20,17 @@ function setTheme(value: Theme) {
   if (meta) meta.setAttribute('content', value === 'dark' ? THEME_COLORS.dark : THEME_COLORS.light)
 }
 
-function getRippleGeometry(rippleEl: HTMLElement): RippleGeometry {
-  const rect = rippleEl.getBoundingClientRect()
-  const cx = rect.left + rect.width / 2
-  const cy = rect.top + rect.height / 2
-  const maxDim = Math.max(
-    Math.hypot(cx, cy),
-    Math.hypot(window.innerWidth - cx, cy),
-    Math.hypot(cx, window.innerHeight - cy),
-    Math.hypot(window.innerWidth - cx, window.innerHeight - cy)
-  )
-  return { cx, cy, maxDim }
-}
-
-function createThemeRipple({ cx, cy, maxDim }: RippleGeometry) {
-  const ripple = document.createElement('div')
-  ripple.className = 'theme-ripple'
-  ripple.style.left = `${cx}px`
-  ripple.style.top = `${cy}px`
-  ripple.style.width = `${maxDim * 2.4}px`
-  ripple.style.height = `${maxDim * 2.4}px`
-  document.body.appendChild(ripple)
-  activeRipple = ripple
-  requestAnimationFrame(() => ripple.classList.add('active'))
-  window.setTimeout(() => {
-    ripple.remove()
-    if (activeRipple === ripple) activeRipple = null
-  }, 800)
-}
-
-function applyTheme(value: Theme, rippleEl: HTMLElement | null = null) {
-  const canRipple = Boolean(
-    rippleEl &&
-    !window.matchMedia('(prefers-reduced-motion: reduce)').matches &&
-    !window.matchMedia('(pointer: coarse)').matches
-  )
-  const rippleGeometry = rippleEl && canRipple ? getRippleGeometry(rippleEl) : null
-
+function applyTheme(value: Theme) {
   try {
     localStorage.setItem(THEME_KEY, value)
   } catch { /* 隐私模式下静默失败 */ }
 
   setTheme(value)
 
-  if (rippleEl && rippleGeometry) {
-    requestAnimationFrame(() => {
-      if (!rippleEl.isConnected) return
-      activeRipple?.remove()
-      createThemeRipple(rippleGeometry)
-    })
-  }
 }
 
-function toggleTheme(rippleEl: HTMLElement | null = null) {
-  applyTheme(theme.value === 'light' ? 'dark' : 'light', rippleEl)
+function toggleTheme() {
+  applyTheme(theme.value === 'light' ? 'dark' : 'light')
 }
 
 function initTheme() {

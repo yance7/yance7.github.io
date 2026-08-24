@@ -92,5 +92,6 @@ describe('Lighthouse quality matrix', () => {
     expect(runner).toContain('index.html')
     expect(runner).toContain('research.html')
     expect(runner).toContain('concerts.html')
+    expect(runner).toContain('process.env.PLAYWRIGHT_PORT')
   })
 })

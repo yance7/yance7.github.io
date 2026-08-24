@@ -8,7 +8,7 @@ import puppeteer from 'puppeteer-core'
 import { startFlow } from 'lighthouse'
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)))
-const PORT = 4174
+const PORT = Number(process.env.PLAYWRIGHT_PORT ?? 4174)
 const BASE_URL = `http://127.0.0.1:${PORT}`
 const INP_BUDGET = 200
 const concertPosterSelector = '.concert-row:has(.carousel-controls)'

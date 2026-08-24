@@ -34,7 +34,11 @@
 .grain {
   position: fixed; inset: 0; pointer-events: none;
   opacity: var(--grain-opacity);
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E");
+  background-image:
+    radial-gradient(rgba(0, 0, 0, .2) .45px, transparent .55px),
+    radial-gradient(rgba(255, 255, 255, .12) .45px, transparent .55px);
+  background-position: 0 0, 2px 3px;
+  background-size: 5px 5px, 7px 7px;
   z-index: var(--z-base);
 }
 

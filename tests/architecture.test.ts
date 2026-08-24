@@ -350,20 +350,31 @@ describe('lightbox depth contracts', () => {
 })
 
 describe('motion hierarchy contracts', () => {
-  it('commits theme state synchronously while deferring only ripple decoration', () => {
+  it('commits theme state synchronously without deferring the theme change', () => {
     const theme = readFileSync(resolve(process.cwd(), 'src/composables/useTheme.ts'), 'utf8')
+    const themeStyles = readFileSync(resolve(process.cwd(), 'src/theme.css'), 'utf8')
+    const shellStyles = readFileSync(resolve(process.cwd(), 'src/styles/shell.css'), 'utf8')
 
-    expect(theme).toContain('const rippleGeometry = rippleEl && canRipple ? getRippleGeometry(rippleEl) : null')
-    expect(theme).toContain('const rect = rippleEl.getBoundingClientRect()')
     const applyThemeStart = theme.indexOf('function applyTheme(')
-    const rippleGeometryIndex = theme.indexOf('const rippleGeometry = rippleEl && canRipple ? getRippleGeometry(rippleEl) : null', applyThemeStart)
     const setThemeIndex = theme.indexOf('\n  setTheme(value)', applyThemeStart)
-    expect(rippleGeometryIndex).toBeLessThan(setThemeIndex)
+    const applyThemeEnd = theme.indexOf('\n}\n\nfunction toggleTheme', applyThemeStart)
+
+    expect(setThemeIndex).toBeGreaterThan(applyThemeStart)
+    expect(setThemeIndex).toBeLessThan(applyThemeEnd)
+    expect(theme.slice(applyThemeStart, applyThemeEnd)).not.toContain('getBoundingClientRect')
+    expect(theme.slice(applyThemeStart, applyThemeEnd)).not.toContain('setTimeout')
+    expect(theme.slice(applyThemeStart, applyThemeEnd)).not.toContain('requestAnimationFrame')
     expect(theme).not.toContain('function commitThemeChange(')
     expect(theme).not.toContain('window.setTimeout(() => commitThemeChange')
     expect(theme).toContain('setTheme(value)')
-    expect(theme).toContain('requestAnimationFrame(() => {')
-    expect(theme).toContain('createThemeRipple(rippleGeometry)')
+    expect(themeStyles).not.toContain('transition-property: background, background-color, border-color, color, box-shadow, fill;')
+    expect(themeStyles).not.toContain('.theme-ripple')
+    expect(themeStyles).not.toContain('mix-blend-mode: multiply;')
+    expect(themeStyles).not.toContain("[data-theme='light'] .grain")
+    expect(themeStyles).not.toContain("[data-theme='dark'] .grain")
+    expect(shellStyles).toContain('.grain {')
+    expect(shellStyles).toContain('radial-gradient(rgba(0, 0, 0, .2) .45px, transparent .55px)')
+    expect(shellStyles).not.toContain('feTurbulence')
   })
 
   it('lets IntersectionObserver own reveal geometry after initial viewport setup', () => {
