@@ -151,8 +151,7 @@
   color: var(--ink);
   font-family: var(--font-prose); font-size: var(--text-xs); letter-spacing: var(--tracking-latin-meta);
   box-shadow: var(--control-shadow);
-  transition: background-color var(--dur-base), border-color var(--dur-base), box-shadow var(--dur-base), transform var(--dur-base) var(--ease-apple);
-  transition-duration: .01ms;
+  transition: none;
 }
 .theme-orbit:hover { border-color: var(--gold); background: var(--control-hover); transform: translateY(var(--motion-control-lift)); box-shadow: var(--interactive-shadow); }
 .orbit-track {
@@ -163,8 +162,7 @@
 .orbit-knob {
   position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%;
   background: var(--gold); box-shadow: 0 1px 6px rgba(0, 0, 0, .28);
-  transition: transform var(--dur-base) var(--ease-apple), background-color var(--dur-base);
-  transition-duration: .01ms;
+  transition: none;
 }
 .orbit-knob.dark { transform: translateX(24px); background: var(--violet); }
 

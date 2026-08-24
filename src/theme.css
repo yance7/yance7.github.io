@@ -414,6 +414,13 @@
 .theme-orbit.dark .orbit-opt.sun { color: var(--dim); }
 .theme-orbit.dark .orbit-opt.moon { color: var(--violet); }
 
+html[data-theme-changing],
+html[data-theme-changing] *,
+html[data-theme-changing] *::before,
+html[data-theme-changing] *::after {
+  transition: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .theme-orbit,
   .orbit-knob {

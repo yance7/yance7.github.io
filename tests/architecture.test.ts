@@ -395,6 +395,8 @@ describe('motion hierarchy contracts', () => {
     expect(theme).not.toContain('function commitThemeChange(')
     expect(theme).not.toContain('window.setTimeout(() => commitThemeChange')
     expect(theme).toContain('setTheme(value)')
+    expect(theme).toContain('deferThemeTransitionRestore()')
+    expect(themeStyles).toContain('html[data-theme-changing] *')
     expect(themeStyles).not.toContain('transition-property: background, background-color, border-color, color, box-shadow, fill;')
     expect(themeStyles).not.toContain('.theme-ripple')
     expect(themeStyles).not.toContain('mix-blend-mode: multiply;')
@@ -405,10 +407,10 @@ describe('motion hierarchy contracts', () => {
     expect(shellStyles).not.toContain('feTurbulence')
     const themeOrbitStart = shellStyles.indexOf('.theme-orbit {')
     const themeOrbitEnd = shellStyles.indexOf('\n}', themeOrbitStart)
-    expect(shellStyles.slice(themeOrbitStart, themeOrbitEnd)).toContain('transition-duration: .01ms;')
+    expect(shellStyles.slice(themeOrbitStart, themeOrbitEnd)).toContain('transition: none;')
     const orbitKnobStart = shellStyles.indexOf('.orbit-knob {')
     const orbitKnobEnd = shellStyles.indexOf('\n}', orbitKnobStart)
-    expect(shellStyles.slice(orbitKnobStart, orbitKnobEnd)).toContain('transition-duration: .01ms;')
+    expect(shellStyles.slice(orbitKnobStart, orbitKnobEnd)).toContain('transition: none;')
   })
 
   it('lets IntersectionObserver own reveal geometry after initial viewport setup', () => {

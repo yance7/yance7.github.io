@@ -7,6 +7,7 @@ const THEME_KEY = 'yance-theme'
 const theme = ref<Theme>('light')
 let systemMedia: MediaQueryList | null = null
 let systemListenerAttached = false
+let themeTransitionFrame: number | null = null
 
 function systemTheme(): Theme {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
@@ -25,12 +26,21 @@ function applyTheme(value: Theme) {
     localStorage.setItem(THEME_KEY, value)
   } catch { /* 隐私模式下静默失败 */ }
 
+  document.documentElement.dataset.themeChanging = 'true'
   setTheme(value)
-
+  deferThemeTransitionRestore()
 }
 
 function toggleTheme() {
   applyTheme(theme.value === 'light' ? 'dark' : 'light')
+}
+
+function deferThemeTransitionRestore() {
+  if (themeTransitionFrame !== null) window.cancelAnimationFrame(themeTransitionFrame)
+  themeTransitionFrame = window.requestAnimationFrame(() => {
+    themeTransitionFrame = null
+    delete document.documentElement.dataset.themeChanging
+  })
 }
 
 function initTheme() {
