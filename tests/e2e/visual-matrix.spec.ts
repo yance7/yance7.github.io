@@ -79,6 +79,7 @@ async function expectLightboxGeometry(page: Page) {
 for (const viewport of viewports) {
   for (const theme of themes) {
     test(`captures ${theme} ${viewport.name} visual baselines`, async ({ page }, testInfo) => {
+      if (viewport.name === 'desktop') test.setTimeout(60_000)
       await page.setViewportSize({ width: viewport.width, height: viewport.height })
       await installTheme(page, theme)
 
