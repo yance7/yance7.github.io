@@ -13,7 +13,7 @@
   min-width: 0; padding: 13px 14px; border: 1px solid var(--line); color: var(--ink);
   transition: border-color var(--dur-fast), color var(--dur-fast), transform var(--dur-fast) var(--ease-apple);
 }
-.next-up-card:hover { border-color: var(--gold); color: var(--gold); transform: translateY(-2px); box-shadow: var(--interactive-shadow); }
+.next-up-card:hover { border-color: var(--gold); color: var(--gold); transform: translateY(var(--motion-control-lift)); box-shadow: var(--interactive-shadow); }
 .next-up-card:focus-visible { outline-color: var(--focus); box-shadow: var(--focus-ring); }
 .next-up-card time { font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: .08em; color: var(--gold); }
 .next-up-card strong, .next-up-card small { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

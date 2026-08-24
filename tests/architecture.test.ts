@@ -61,6 +61,21 @@ describe('shared button public contract', () => {
   })
 })
 
+describe('motion hierarchy', () => {
+  it('does not retain legacy two-pixel control lifts', () => {
+    const stylePaths = [
+      'src/styles/concerts.css',
+      'src/styles/home.css',
+      'src/styles/shell.css'
+    ]
+
+    for (const stylePath of stylePaths) {
+      const styles = readFileSync(resolve(process.cwd(), stylePath), 'utf8')
+      expect(styles).not.toContain('translateY(-2px)')
+    }
+  })
+})
+
 describe('concert state snapshots', () => {
   it('derives every time-sensitive value from the supplied page timestamp', () => {
     const before = getConcertState(new Date('2026-08-19T12:00:00+08:00'))

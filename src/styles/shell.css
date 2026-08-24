@@ -73,7 +73,7 @@
 .wordmark:hover,
 .wordmark:focus-visible { color: var(--gold); transform: translateY(-1px); }
 .wordmark:hover span,
-.wordmark:focus-visible span { transform: translateY(-2px); }
+.wordmark:focus-visible span { transform: translateY(var(--motion-control-lift)); }
 .nav-rail { display: flex; align-items: center; gap: var(--space-5); margin-left: auto; }
 .nav-rail a {
   position: relative; display: flex; align-items: baseline; gap: 7px; padding: 8px 2px;
