@@ -13,7 +13,7 @@ export default defineConfig({
     baseURL: previewOrigin,
     trace: 'retain-on-failure'
   },
-  snapshotPathTemplate: '{testDir}/visual-snapshots/{projectName}/{testFilePath}/{arg}{ext}',
+  snapshotPathTemplate: '{testDir}/visual-snapshots/{projectName}/{platform}/{testFilePath}/{arg}{ext}',
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] }, testIgnore: /compatibility\.spec\.ts|visual-matrix\.spec\.ts/ },
     { name: 'webkit-mobile', use: { ...devices['iPhone 13'] }, testIgnore: /compatibility\.spec\.ts|visual-matrix\.spec\.ts/ },

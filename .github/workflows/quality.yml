@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      update_visual_snapshots:
+        description: 'Regenerate Linux visual baselines for manual review'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -57,7 +63,13 @@ jobs:
       - name: WebKit UI primitive quality
         run: npm run test:e2e -- tests/e2e/ui-primitives.spec.ts --project=webkit-mobile --workers=4
       - name: Chromium visual quality
-        run: npm run test:e2e -- --project=chromium-visual --workers=2
+        shell: bash
+        run: |
+          if [ "${{ inputs.update_visual_snapshots }}" = "true" ]; then
+            npm run test:e2e -- --project=chromium-visual --workers=2 --update-snapshots
+          else
+            npm run test:e2e -- --project=chromium-visual --workers=2
+          fi
       - name: Firefox compatibility quality
         run: npm run test:e2e -- --project=firefox-desktop-smoke --workers=2
       - name: Android compatibility quality
@@ -72,3 +84,10 @@ jobs:
             test-results
             playwright-report
           if-no-files-found: ignore
+      - name: Upload refreshed visual baselines
+        if: ${{ inputs.update_visual_snapshots == true }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: linux-visual-snapshots
+          path: tests/e2e/visual-snapshots/chromium-visual/linux
+          if-no-files-found: error

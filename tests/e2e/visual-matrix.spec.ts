@@ -116,18 +116,35 @@ for (const viewport of viewports) {
   }
 }
 
-for (const theme of themes) {
-  test(`captures ${theme} focused PageCompass hierarchy`, async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 })
-    await installTheme(page, theme)
-    await page.goto('/research.html')
-    await settlePage(page)
+const pageCompassViewports = [
+  { name: '320x568', width: 320, height: 568 },
+  { name: '1024x768', width: 1024, height: 768 },
+  { name: '1440x900', width: 1440, height: 900 }
+] as const
 
-    const link = page.locator('.page-compass-link').nth(1)
-    await link.focus()
-    await expect(page.locator('#compass-tip-sec-research-timeline')).toBeVisible()
-    await expect(page).toHaveScreenshot(`${theme}-page-compass-focused.png`, componentScreenshotOptions)
-  })
+for (const theme of themes) {
+  for (const viewport of pageCompassViewports) {
+    test(`captures ${theme} PageCompass at ${viewport.name}`, async ({ page }) => {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height })
+      await installTheme(page, theme)
+      await page.goto('/research.html')
+      await settlePage(page)
+
+      if (viewport.width <= 760) {
+        await page.evaluate(() => window.scrollTo({ top: 320, behavior: 'auto' }))
+        await expect(page.locator('.page-compass')).toHaveAttribute('data-mobile-state', 'visible')
+      } else {
+        const link = page.locator('.page-compass-link').nth(1)
+        await link.focus()
+        await expect(page.locator('#compass-tip-sec-research-timeline')).toBeVisible()
+      }
+
+      await expect(page.locator('.page-compass')).toHaveScreenshot(
+        `${theme}-page-compass-${viewport.name}.png`,
+        componentScreenshotOptions
+      )
+    })
+  }
 
   test(`captures ${theme} Lightbox landscape portrait and mobile states`, async ({ page }) => {
     await installTheme(page, theme)

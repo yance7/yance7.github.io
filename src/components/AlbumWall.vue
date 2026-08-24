@@ -569,14 +569,14 @@ html[data-theme='light'] .album-kicker {
   border-color: var(--album-hover-border);
   background: var(--album-hover-surface);
   box-shadow: var(--interactive-shadow);
-  transform: translateY(-2px);
+  transform: translateY(var(--motion-control-lift));
 }
 
 .album-link:hover,
 .album-link:focus-visible {
   background: var(--album-action-hover);
   box-shadow: var(--interactive-shadow);
-  transform: translateY(-2px);
+  transform: translateY(var(--motion-control-lift));
 }
 
 .album-nav button:active,

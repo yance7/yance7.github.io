@@ -120,7 +120,7 @@
   border-radius: 50%; background: var(--control-bg); color: var(--ink); box-shadow: var(--control-shadow);
   font-family: var(--font-technical); font-size: 1.2rem; line-height: 1;
 }
-.mobile-menu-close:hover { border-color: var(--gold); background: var(--control-hover); color: var(--gold); transform: translateY(-2px); }
+.mobile-menu-close:hover { border-color: var(--gold); background: var(--control-hover); color: var(--gold); transform: translateY(var(--motion-control-lift)); }
 .mobile-menu {
   display: flex; flex-direction: column; gap: 0;
   width: 100%; max-width: 420px; padding: 0 32px;
@@ -149,7 +149,7 @@
   box-shadow: var(--control-shadow);
   transition: background-color var(--dur-base), border-color var(--dur-base), box-shadow var(--dur-base), transform var(--dur-base) var(--ease-apple);
 }
-.theme-orbit:hover { border-color: var(--gold); background: var(--control-hover); transform: translateY(-2px); box-shadow: var(--interactive-shadow); }
+.theme-orbit:hover { border-color: var(--gold); background: var(--control-hover); transform: translateY(var(--motion-control-lift)); box-shadow: var(--interactive-shadow); }
 .orbit-track {
   position: relative; display: inline-flex; align-items: center; justify-content: space-between;
   width: 46px; height: 22px; padding: 0 5px; border-radius: var(--radius-pill); background: var(--line);
@@ -318,7 +318,7 @@
 .page-compass-top > span:not(.page-compass-top-tooltip) { font-size: .75rem; transform: translateY(1px); }
 .page-compass-top > small { font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: .02em; }
 .page-compass-top:hover,
-.page-compass-top:focus-visible { color: var(--gold); transform: translateY(-2px); }
+.page-compass-top:focus-visible { color: var(--gold); transform: translateY(var(--motion-control-lift)); }
 .page-compass-top-tooltip {
   position: absolute;
   inset-inline-end: calc(100% + var(--tooltip-offset));
@@ -608,7 +608,7 @@
   transition: transform var(--dur-base) var(--ease-spring), border-color var(--dur-base), background-color var(--dur-base), color var(--dur-base), box-shadow var(--dur-base);
 }
 .hero-action.primary { border-color: var(--action-fill); background: var(--action-fill); color: var(--accent-contrast); box-shadow: 0 8px 26px var(--glow-gold); }
-.hero-action:hover { transform: translateY(-2px); border-color: var(--gold); background: var(--control-hover); box-shadow: var(--interactive-shadow); }
+.hero-action:hover { transform: translateY(var(--motion-control-lift)); border-color: var(--gold); background: var(--control-hover); box-shadow: var(--interactive-shadow); }
 .hero-action.primary:hover { background: var(--button-hover); color: var(--accent-contrast); }
 .hero-action:active { transform: translateY(1px) scale(var(--motion-press-scale)); }
 .hero-action:not(.primary):active { background: var(--surface-pressed); }

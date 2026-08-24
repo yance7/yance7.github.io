@@ -226,8 +226,7 @@ describe('page stylesheet boundaries', () => {
     }
     expect(playwrightConfig).toContain("name: 'chromium-visual'")
     expect(playwrightConfig).toContain('visual-matrix\\.spec\\.ts')
-    expect(playwrightConfig).toContain("snapshotPathTemplate: '{testDir}/visual-snapshots/{projectName}/{testFilePath}/{arg}{ext}'")
-    expect(playwrightConfig).not.toContain('{platform}')
+    expect(playwrightConfig).toContain("snapshotPathTemplate: '{testDir}/visual-snapshots/{projectName}/{platform}/{testFilePath}/{arg}{ext}'")
     expect(visualSpec).toContain('toHaveScreenshot')
   })
 })

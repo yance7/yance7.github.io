@@ -138,3 +138,18 @@ test('metric surfaces refine their boundary without adding elevation', async ({ 
   })
   expect(numberMetrics.lineHeight).toBeLessThan(numberMetrics.fontSize)
 })
+
+test('shared control hover lift stays within the restrained motion token', async ({ page }) => {
+  await page.goto('/index.html')
+  const finePointer = await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)
+  test.skip(!finePointer, 'Hover lift is only observable on fine-pointer projects')
+
+  for (const selector of ['.theme-orbit', '.hero-action']) {
+    const control = page.locator(selector).first()
+    await control.hover()
+    await expect.poll(() => control.evaluate((element) => {
+      const transform = getComputedStyle(element).transform
+      return transform === 'none' ? 0 : new DOMMatrixReadOnly(transform).m42
+    })).toBe(-1)
+  }
+})
