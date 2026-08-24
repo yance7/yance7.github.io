@@ -403,6 +403,9 @@ describe('motion hierarchy contracts', () => {
     expect(shellStyles).toContain('.grain {')
     expect(shellStyles).toContain('radial-gradient(rgba(0, 0, 0, .2) .45px, transparent .55px)')
     expect(shellStyles).not.toContain('feTurbulence')
+    const themeOrbitStart = shellStyles.indexOf('.theme-orbit {')
+    const themeOrbitEnd = shellStyles.indexOf('\n}', themeOrbitStart)
+    expect(shellStyles.slice(themeOrbitStart, themeOrbitEnd)).toContain('transition-duration: .01ms;')
   })
 
   it('lets IntersectionObserver own reveal geometry after initial viewport setup', () => {
