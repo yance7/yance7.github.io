@@ -21,7 +21,7 @@ const page = (() => {
   const candidate = document.body.dataset.page
   return isPageKey(candidate) ? candidate : undefined
 })()
-const { theme, initTheme } = useTheme()
+const { initTheme } = useTheme()
 
 const lightbox = ref<LightboxPayload | null>(null)
 type PageLoadState = 'loading' | 'ready' | 'error'
@@ -91,7 +91,7 @@ function moveLightbox(step: number) {
 </script>
 
 <template>
-  <div class="site-shell" :class="[`theme-${theme}`, { 'has-page-compass': pageSections.length }]" :data-page-load-state="pageLoadState">
+  <div class="site-shell" :class="{ 'has-page-compass': pageSections.length }" :data-page-load-state="pageLoadState">
     <a class="skip-link" href="#main">跳到主要内容</a>
     <div class="ambient ambient-one"></div>
     <div class="ambient ambient-two"></div>

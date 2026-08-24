@@ -38,8 +38,10 @@ function toggleTheme() {
 function deferThemeTransitionRestore() {
   if (themeTransitionFrame !== null) window.cancelAnimationFrame(themeTransitionFrame)
   themeTransitionFrame = window.requestAnimationFrame(() => {
-    themeTransitionFrame = null
-    delete document.documentElement.dataset.themeChanging
+    themeTransitionFrame = window.requestAnimationFrame(() => {
+      themeTransitionFrame = null
+      delete document.documentElement.dataset.themeChanging
+    })
   })
 }
 
