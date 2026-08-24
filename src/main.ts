@@ -7,7 +7,7 @@ import { preloadPage } from './pageLoaders'
 import './styles.css'
 import './theme.css'
 
-const fontIdleTimeout = 1200
+const fontStartDelay = 2400
 
 function loadFonts() {
   void import('./fonts.css').then(async () => {
@@ -20,13 +20,19 @@ function scheduleFonts() {
   const idleWindow = window as Window & {
     requestIdleCallback?: (callback: () => void, options?: { timeout?: number }) => number
   }
+  const scheduledAt = performance.now()
+  const scheduleLoad = () => {
+    const elapsed = performance.now() - scheduledAt
+    const remaining = Math.max(0, fontStartDelay - elapsed)
+    window.setTimeout(loadFonts, remaining)
+  }
 
   if (idleWindow.requestIdleCallback) {
-    idleWindow.requestIdleCallback(loadFonts, { timeout: fontIdleTimeout })
+    idleWindow.requestIdleCallback(scheduleLoad, { timeout: fontStartDelay })
     return
   }
 
-  window.setTimeout(loadFonts, fontIdleTimeout)
+  scheduleLoad()
 }
 
 const app = createApp(App)

@@ -27,8 +27,11 @@ function revealRemainingAtDocumentEnd() {
 }
 
 function handleScroll() {
-  if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - documentEndBuffer) {
+  const atDocumentEnd = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - documentEndBuffer
+  if (atDocumentEnd) {
     reachedDocumentEnd = true
+    revealRemainingAtDocumentEnd()
+    return
   }
   if (bottomRevealFrame !== null) return
 

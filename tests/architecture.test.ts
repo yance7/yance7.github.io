@@ -56,10 +56,12 @@ describe('critical rendering contracts', () => {
   it('defers bundled font loading until the initial page work is idle', () => {
     const main = readFileSync(resolve(process.cwd(), 'src/main.ts'), 'utf8')
 
-    expect(main).toContain('const fontIdleTimeout = 1200')
+    expect(main).toContain('const fontStartDelay = 2400')
     expect(main).toContain('requestIdleCallback')
-    expect(main).toContain('timeout: fontIdleTimeout')
-    expect(main).toContain('setTimeout(loadFonts, fontIdleTimeout)')
+    expect(main).toContain('const scheduledAt = performance.now()')
+    expect(main).toContain('const remaining = Math.max(0, fontStartDelay - elapsed)')
+    expect(main).toContain('timeout: fontStartDelay')
+    expect(main).toContain('window.setTimeout(loadFonts, remaining)')
   })
 
   it('preloads the first concert album cover before the async page chunk mounts', () => {
@@ -408,6 +410,8 @@ describe('motion hierarchy contracts', () => {
     expect(reveal).toContain('document.documentElement.scrollHeight')
     expect(reveal).toContain("document.querySelectorAll<HTMLElement>('.reveal:not(.revealed)')")
     expect(reveal).toContain("window.addEventListener('scroll', handleScroll, { passive: true })")
+    expect(reveal).toContain('const atDocumentEnd = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - documentEndBuffer')
+    expect(reveal).toContain('if (atDocumentEnd) {')
     expect(reveal).toContain('let reachedDocumentEnd = false')
     expect(reveal).toContain('new ResizeObserver(')
   })

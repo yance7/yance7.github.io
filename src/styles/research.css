@@ -121,7 +121,7 @@
   letter-spacing: var(--tracking-latin-meta);
 }
 .toolchain-flow span { white-space: nowrap; }
-.toolchain-flow b { margin-right: 6px; color: var(--gold); font-weight: 450; }
+.toolchain-flow b { margin-right: 6px; color: var(--gold-text); font-weight: 450; }
 .toolchain-flow i {
   flex: 1;
   height: 1px;

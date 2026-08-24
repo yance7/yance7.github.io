@@ -369,6 +369,7 @@ test('mobile compass keeps focus priority inside a compact visual frame', async 
 test('interactive states remain accessible after opening', async ({ page }) => {
   test.setTimeout(60000)
   await page.setViewportSize({ width: 390, height: 844 })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/index.html')
   await page.locator('.menu-trigger').click()
   await expectAccessible(page)
