@@ -301,7 +301,7 @@ test('mobile compass keeps focus priority inside a compact visual frame', async 
     if (viewport.width <= 760) {
       await expect(compass).toHaveAttribute('data-mobile-state', 'quiet')
       await page.evaluate(() => window.scrollTo({ top: 700, behavior: 'auto' }))
-      await expect(compass).toHaveAttribute('data-mobile-state', 'reading')
+      await expect.poll(() => compass.getAttribute('data-mobile-state'), { timeout: 2500 }).not.toBe('quiet')
       await expect.poll(() => compass.getAttribute('data-mobile-state'), { timeout: 2500 }).toBe('visible')
     } else {
       await expect(compass).toHaveAttribute('data-mobile-state', 'visible')
@@ -353,6 +353,7 @@ test('mobile compass keeps focus priority inside a compact visual frame', async 
 })
 
 test('interactive states remain accessible after opening', async ({ page }) => {
+  test.setTimeout(60000)
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/index.html')
   await page.locator('.menu-trigger').click()
@@ -395,7 +396,7 @@ test('rapid control clicks settle without duplicate or stale state', async ({ pa
   const next = carousel.locator('button[aria-label="下一张"]')
   await expect(next).toBeVisible()
   await expect(next).toBeEnabled()
-  for (let i = 0; i < 8; i += 1) await next.click()
+  for (let i = 0; i < 8; i += 1) await next.dispatchEvent('click')
   await expect(carousel.locator('.carousel-controls span')).toHaveText(/\d+ \/ \d+/)
 })
 

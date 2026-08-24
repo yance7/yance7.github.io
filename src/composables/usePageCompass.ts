@@ -173,8 +173,7 @@ export function usePageCompass(sections: MaybeRefOrGetter<readonly PageCompassSe
     hashNavigationId = null
     hashNavigationSettled = false
     activeId.value = sectionList.value[0]?.id ?? ''
-    const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
-    window.scrollTo({ top: 0, behavior })
+    window.scrollTo({ top: 0, behavior: 'auto' })
   }
 
   function handleHashChange() {
