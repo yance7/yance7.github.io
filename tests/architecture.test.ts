@@ -24,6 +24,16 @@ describe('page registry', () => {
 })
 
 describe('critical rendering contracts', () => {
+  it('starts the current page chunk before mounting the Vue shell', () => {
+    const main = readFileSync(resolve(process.cwd(), 'src/main.ts'), 'utf8')
+    const loaders = readFileSync(resolve(process.cwd(), 'src/pageLoaders.ts'), 'utf8')
+
+    expect(loaders).toContain('export function preloadPage(')
+    expect(main).toContain('preloadPage(document.body.dataset.page)')
+    expect(main.indexOf('preloadPage(document.body.dataset.page)'))
+      .toBeLessThan(main.indexOf("app.mount('#app')"))
+  })
+
   it('loads the bundled font stylesheet after the initial app mount', () => {
     const main = readFileSync(resolve(process.cwd(), 'src/main.ts'), 'utf8')
 
@@ -31,18 +41,28 @@ describe('critical rendering contracts', () => {
     expect(main).toContain("document.documentElement.dataset.fontsReady = 'loading'")
     expect(main).toContain("await document.fonts.ready")
     expect(main).toContain("document.documentElement.dataset.fontsReady = 'ready'")
-    expect(main).toContain("app.mount('#app')\nrequestAnimationFrame(() => {\n  requestAnimationFrame(() => {\n    void import('./fonts.css').then(async () => {")
+    expect(main).toContain("app.mount('#app')\nscheduleFonts()")
+    expect(main).not.toContain('requestAnimationFrame')
   })
 
-    it('exposes a settled state for metric count-up surfaces', () => {
-      const metric = readFileSync(resolve(process.cwd(), 'src/components/MetricStrip.vue'), 'utf8')
+  it('defers bundled font loading until the initial page work is idle', () => {
+    const main = readFileSync(resolve(process.cwd(), 'src/main.ts'), 'utf8')
 
-      expect(metric).toContain('data-metrics-ready')
-      expect(metric).toContain('metricsReady.value = true')
-      expect(metric).toContain('const observedIndexes = new Set<number>()')
-      expect(metric).toContain('initialObservationComplete')
-      expect(metric).toContain('if (!entry.isIntersecting) return')
-    })
+    expect(main).toContain('const fontIdleTimeout = 1200')
+    expect(main).toContain('requestIdleCallback')
+    expect(main).toContain('timeout: fontIdleTimeout')
+    expect(main).toContain('setTimeout(loadFonts, fontIdleTimeout)')
+  })
+
+  it('exposes a settled state for metric count-up surfaces', () => {
+    const metric = readFileSync(resolve(process.cwd(), 'src/components/MetricStrip.vue'), 'utf8')
+
+    expect(metric).toContain('data-metrics-ready')
+    expect(metric).toContain('metricsReady.value = true')
+    expect(metric).toContain('const observedIndexes = new Set<number>()')
+    expect(metric).toContain('initialObservationComplete')
+    expect(metric).toContain('if (!entry.isIntersecting) return')
+  })
 })
 
 describe('shared button public contract', () => {

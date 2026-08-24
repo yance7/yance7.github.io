@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, nextTick, onMounted, ref, watch, type Component } from 'vue'
-import { isPageKey, pageMeta, pageRegistry, type PageKey } from './data'
+import { computed, defineAsyncComponent, nextTick, onMounted, ref, watch } from 'vue'
+import { isPageKey, pageMeta, pageRegistry } from './data'
 import { useTheme } from './composables/useTheme'
 import { decodeHashTarget, retryAsync } from './utils/navigation'
+import { getPageLoader } from './pageLoaders'
 
 import SiteHeader from './components/SiteHeader.vue'
 import ArchiveHero from './components/ArchiveHero.vue'
@@ -24,18 +25,8 @@ const { theme, initTheme } = useTheme()
 
 const lightbox = ref<LightboxPayload | null>(null)
 type PageLoadState = 'loading' | 'ready' | 'error'
-type PageLoader = () => Promise<{ default: Component }>
 
-const pageLoaders = {
-  home: () => import('./pages/HomePage.vue'),
-  academics: () => import('./pages/AcademicsPage.vue'),
-  honors: () => import('./pages/HonorsPage.vue'),
-  research: () => import('./pages/ResearchPage.vue'),
-  works: () => import('./pages/WorksPage.vue'),
-  concerts: () => import('./pages/ConcertsPage.vue')
-} satisfies Record<PageKey, PageLoader>
-
-const pageLoader: PageLoader | undefined = page ? pageLoaders[page] : undefined
+const pageLoader = page ? getPageLoader(page) : undefined
 const pageLoadState = ref<PageLoadState>(pageLoader ? 'loading' : 'ready')
 let hashScrolled = false
 
