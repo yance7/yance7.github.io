@@ -72,6 +72,13 @@ describe('critical rendering contracts', () => {
     expect(concertsHtml).toContain('fetchpriority="high"')
   })
 
+  it('keeps archive hero copy on its deterministic entrance animation', () => {
+    const hero = readFileSync(resolve(process.cwd(), 'src/components/ArchiveHero.vue'), 'utf8')
+
+    expect(hero).toContain('<p class="hero-copy">{{ copy }}</p>')
+    expect(hero).not.toContain('<p class="hero-copy" v-reveal')
+  })
+
   it('exposes a settled state for metric count-up surfaces', () => {
     const metric = readFileSync(resolve(process.cwd(), 'src/components/MetricStrip.vue'), 'utf8')
 
