@@ -378,23 +378,23 @@ describe('lightbox depth contracts', () => {
 })
 
 describe('motion hierarchy contracts', () => {
-  it('commits theme state synchronously without deferring the theme change', () => {
+  it('keeps theme controls immediate while deferring the full document restyle', () => {
     const theme = readFileSync(resolve(process.cwd(), 'src/composables/useTheme.ts'), 'utf8')
     const themeStyles = readFileSync(resolve(process.cwd(), 'src/theme.css'), 'utf8')
     const shellStyles = readFileSync(resolve(process.cwd(), 'src/styles/shell.css'), 'utf8')
 
     const applyThemeStart = theme.indexOf('function applyTheme(')
-    const setThemeIndex = theme.indexOf('\n  setTheme(value)', applyThemeStart)
+    const setThemeIndex = theme.indexOf('\n  theme.value = value', applyThemeStart)
     const applyThemeEnd = theme.indexOf('\n}\n\nfunction toggleTheme', applyThemeStart)
 
     expect(setThemeIndex).toBeGreaterThan(applyThemeStart)
     expect(setThemeIndex).toBeLessThan(applyThemeEnd)
     expect(theme.slice(applyThemeStart, applyThemeEnd)).not.toContain('getBoundingClientRect')
-    expect(theme.slice(applyThemeStart, applyThemeEnd)).not.toContain('setTimeout')
-    expect(theme.slice(applyThemeStart, applyThemeEnd)).not.toContain('requestAnimationFrame')
+    expect(theme.slice(applyThemeStart, applyThemeEnd)).toContain('window.setTimeout')
+    expect(theme.slice(applyThemeStart, applyThemeEnd)).toContain('applyThemeDocument(value)')
+    expect(theme.slice(applyThemeStart, applyThemeEnd)).toContain('window.clearTimeout(themeApplyTimer)')
     expect(theme).not.toContain('function commitThemeChange(')
     expect(theme).not.toContain('window.setTimeout(() => commitThemeChange')
-    expect(theme).toContain('setTheme(value)')
     expect(theme).toContain('deferThemeTransitionRestore()')
     expect(themeStyles).toContain('html[data-theme-changing] *')
     expect(themeStyles).not.toContain('transition-property: background, background-color, border-color, color, box-shadow, fill;')

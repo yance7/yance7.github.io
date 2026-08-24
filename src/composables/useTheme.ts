@@ -7,6 +7,7 @@ const THEME_KEY = 'yance-theme'
 const theme = ref<Theme>('light')
 let systemMedia: MediaQueryList | null = null
 let systemListenerAttached = false
+let themeApplyTimer: number | null = null
 let themeTransitionFrame: number | null = null
 
 function systemTheme(): Theme {
@@ -15,6 +16,10 @@ function systemTheme(): Theme {
 
 function setTheme(value: Theme) {
   theme.value = value
+  applyThemeDocument(value)
+}
+
+function applyThemeDocument(value: Theme) {
   document.documentElement.dataset.theme = value
 
   const meta = document.querySelector('meta[name="theme-color"]')
@@ -26,9 +31,14 @@ function applyTheme(value: Theme) {
     localStorage.setItem(THEME_KEY, value)
   } catch { /* 隐私模式下静默失败 */ }
 
+  theme.value = value
+  if (themeApplyTimer !== null) window.clearTimeout(themeApplyTimer)
   document.documentElement.dataset.themeChanging = 'true'
-  setTheme(value)
-  deferThemeTransitionRestore()
+  themeApplyTimer = window.setTimeout(() => {
+    themeApplyTimer = null
+    applyThemeDocument(value)
+    deferThemeTransitionRestore()
+  }, 0)
 }
 
 function toggleTheme() {
