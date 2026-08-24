@@ -610,6 +610,8 @@ html[data-theme='light'] .album-kicker {
   grid-template-columns: repeat(6, minmax(0, 1fr));
   align-content: start;
   gap: clamp(8px, 1vw, 13px);
+  content-visibility: auto;
+  contain-intrinsic-size: auto 1400px;
 }
 
 .album-tile {
@@ -754,6 +756,8 @@ html[data-theme='light'] .album-kicker {
 }
 
 @media (min-width: 1180px) {
+  .album-grid { contain-intrinsic-size: auto 680px; }
+
   .album-stage-layout {
     grid-template-columns: minmax(0, 42fr) minmax(0, 58fr);
     gap: clamp(28px, 3vw, 48px);
@@ -765,6 +769,8 @@ html[data-theme='light'] .album-kicker {
 }
 
 @media (min-width: 768px) and (max-width: 1179px) {
+  .album-grid { contain-intrinsic-size: auto 1760px; }
+
   .album-spotlight-body {
     grid-template-columns: minmax(220px, .85fr) minmax(0, 1fr);
   }
@@ -774,6 +780,10 @@ html[data-theme='light'] .album-kicker {
   .album-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
+}
+
+@media (min-width: 900px) and (max-width: 1179px) {
+  .album-grid { contain-intrinsic-size: auto 1000px; }
 }
 
 @media (max-width: 767px) {
@@ -813,6 +823,7 @@ html[data-theme='light'] .album-kicker {
   .album-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 6px;
+    contain-intrinsic-size: auto 1500px;
   }
 
   .album-actions {

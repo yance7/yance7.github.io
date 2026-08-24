@@ -53,15 +53,23 @@ describe('critical rendering contracts', () => {
     expect(main).not.toContain('requestAnimationFrame')
   })
 
-  it('defers bundled font loading until the initial page work is idle', () => {
+  it('loads concert fonts immediately while keeping other pages idle-scheduled', () => {
     const main = readFileSync(resolve(process.cwd(), 'src/main.ts'), 'utf8')
 
-    expect(main).toContain('const fontStartDelay = 2400')
+    expect(main).toContain("const fontStartDelay = document.body.dataset.page === 'concerts' ? 0 : 2400")
     expect(main).toContain('requestIdleCallback')
     expect(main).toContain('const scheduledAt = performance.now()')
     expect(main).toContain('const remaining = Math.max(0, fontStartDelay - elapsed)')
     expect(main).toContain('timeout: fontStartDelay')
     expect(main).toContain('window.setTimeout(loadFonts, remaining)')
+  })
+
+  it('contains the album grid before it enters the viewport', () => {
+    const albumWall = readFileSync(resolve(process.cwd(), 'src/components/AlbumWall.vue'), 'utf8')
+
+    expect(albumWall).toContain('content-visibility: auto')
+    expect(albumWall).toContain('contain-intrinsic-size: auto 1400px')
+    expect(albumWall).toContain('contain-intrinsic-size: auto 680px')
   })
 
   it('preloads the first concert album cover before the async page chunk mounts', () => {

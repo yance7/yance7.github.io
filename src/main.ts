@@ -7,7 +7,7 @@ import { preloadPage } from './pageLoaders'
 import './styles.css'
 import './theme.css'
 
-const fontStartDelay = 2400
+const fontStartDelay = document.body.dataset.page === 'concerts' ? 0 : 2400
 
 function loadFonts() {
   void import('./fonts.css').then(async () => {
