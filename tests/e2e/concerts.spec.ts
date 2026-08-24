@@ -466,6 +466,7 @@ test('concert visual surfaces use theme semantics and shared motion cadence', as
   expect(light.controlsBackground).not.toBe(light.expectedBgTint)
 
   await page.locator('.theme-orbit').click()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
   const dark = await readVisualContract()
   expect(dark.theme).toBe('dark')
   expect(dark.stageSurface).toBe(dark.bgTint)
