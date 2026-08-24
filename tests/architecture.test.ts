@@ -406,6 +406,9 @@ describe('motion hierarchy contracts', () => {
     const themeOrbitStart = shellStyles.indexOf('.theme-orbit {')
     const themeOrbitEnd = shellStyles.indexOf('\n}', themeOrbitStart)
     expect(shellStyles.slice(themeOrbitStart, themeOrbitEnd)).toContain('transition-duration: .01ms;')
+    const orbitKnobStart = shellStyles.indexOf('.orbit-knob {')
+    const orbitKnobEnd = shellStyles.indexOf('\n}', orbitKnobStart)
+    expect(shellStyles.slice(orbitKnobStart, orbitKnobEnd)).toContain('transition-duration: .01ms;')
   })
 
   it('lets IntersectionObserver own reveal geometry after initial viewport setup', () => {

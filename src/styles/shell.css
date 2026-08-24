@@ -164,6 +164,7 @@
   position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%;
   background: var(--gold); box-shadow: 0 1px 6px rgba(0, 0, 0, .28);
   transition: transform var(--dur-base) var(--ease-apple), background-color var(--dur-base);
+  transition-duration: .01ms;
 }
 .orbit-knob.dark { transform: translateX(24px); background: var(--violet); }
 
