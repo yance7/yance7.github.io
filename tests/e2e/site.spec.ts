@@ -272,6 +272,8 @@ test('research status markers keep a static hierarchy without competing pulses',
   await page.goto('/research.html')
 
   const contentMarkers = page.locator('.status-badge.active .status-dot, .tc-head-status i, .tl-item.active .tl-node i')
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+  await expect(contentMarkers.first()).toBeAttached()
   expect(await contentMarkers.count()).toBeGreaterThan(0)
   const animations = await contentMarkers.evaluateAll((elements) =>
     elements.map((element) => getComputedStyle(element).animationName)

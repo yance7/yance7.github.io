@@ -124,14 +124,18 @@ test('archive proof links share one semantic primitive across works and research
 
 test('metric surfaces refine their boundary without adding elevation', async ({ page }) => {
   await page.goto('/academics.html')
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
   const metric = page.locator('.metric-card').first()
+  await expect(metric).toBeVisible()
   await metric.scrollIntoViewIfNeeded()
   await metric.hover()
 
   await expect(metric).toHaveCSS('transform', 'none')
   const hasFinePointer = await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)
   if (hasFinePointer) {
-    await expect(metric).toHaveCSS('box-shadow', /inset/)
+    await expect
+      .poll(() => metric.evaluate((element) => getComputedStyle(element).boxShadow))
+      .toMatch(/inset/)
   } else {
     await expect(metric).toHaveCSS('box-shadow', 'none')
   }

@@ -115,6 +115,8 @@ test('album sleeve coalesces pointer tilt into one layout read per frame', { tag
 test('concert carousel controls keep touch-sized targets', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/concerts.html')
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+  await expect(page.locator('.carousel-controls button').first()).toBeAttached()
 
   const controls = await page.locator('.carousel-controls button').evaluateAll((elements) => elements.map((element) => {
     const bounds = element.getBoundingClientRect()
@@ -427,6 +429,7 @@ test('concert album wall preserves theme and reduced-motion accessibility', asyn
 
 test('concert thumbnails respond and carousel/lightbox controls work', async ({ page }) => {
   await page.goto('/concerts.html')
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
   await expect(page.locator('.metric-strip .metric-card')).toHaveCount(4)
   const thumbnailSrcset = await page.locator('.concert-poster picture source').first().getAttribute('srcset')
   expect(thumbnailSrcset).toBeTruthy()
@@ -437,9 +440,9 @@ test('concert thumbnails respond and carousel/lightbox controls work', async ({ 
 
   const carousel = page.locator('.concert-poster').filter({ has: page.locator('.carousel-controls') }).first()
   const counter = carousel.locator('.carousel-controls span')
-  const before = await counter.textContent()
+  await expect(counter).toHaveText('1 / 2')
   await carousel.locator('button[aria-label="下一张"]').click()
-  await expect(counter).not.toHaveText(before || '')
+  await expect(counter).toHaveText('2 / 2')
 
   await carousel.locator('.poster-open').click()
   await expect(page.locator('.lightbox')).toBeVisible()

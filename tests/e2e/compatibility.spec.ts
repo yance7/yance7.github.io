@@ -181,11 +181,12 @@ test('compatibility menu, carousel, modal, and axe smoke remain usable', async (
   await expect(page.locator('.mobile-menu-overlay')).toHaveCount(0)
 
   await page.goto('/concerts.html')
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
   const carousel = page.locator('.concert-poster').filter({ has: page.locator('.carousel-controls') }).first()
   const counter = carousel.locator('.carousel-controls span')
-  const before = await counter.textContent()
+  await expect(counter).toHaveText('1 / 2')
   await carousel.locator('button[aria-label="下一张"]').click()
-  await expect(counter).not.toHaveText(before || '')
+  await expect(counter).toHaveText('2 / 2')
 
   await page.locator('.concert-poster .poster-open').first().click()
   await expect(page.locator('.lightbox')).toBeVisible()

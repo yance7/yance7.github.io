@@ -146,7 +146,7 @@ watch(() => [safeIndex.value, props.images[safeIndex.value]], () => {
           <span class="lb-meta-index">{{ safeIndex + 1 }} / {{ images.length }}</span>
         </figcaption>
         <p class="sr-only" aria-live="polite">
-          {{ meta ? `${meta.artist} · ${meta.tour}` : messages.lightbox.gallery }} · {{ safeIndex + 1 }} / {{ images.length }}
+          {{ meta ? `${meta.artist} · ${meta.tour}` : messages.lightbox.gallery }}{{ messages.lightbox.position(safeIndex + 1, images.length) }}
         </p>
       </figure>
 

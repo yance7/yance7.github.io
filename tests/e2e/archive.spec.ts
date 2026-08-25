@@ -222,11 +222,13 @@ test('reduced motion keeps project content immediately available', async ({ page
 })
 
 test('fast page jumps do not leave passed reveal content hidden', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 568 })
   for (const route of contentRoutes) {
     await page.goto(`/${route}`)
     await expect(page.locator('.content').first()).toBeVisible()
+    await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
     await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
-    expect(await page.locator('.reveal').count()).toBeGreaterThan(0)
+    await expect.poll(() => page.locator('.reveal').count(), { message: `${route} reveal elements` }).toBeGreaterThan(0)
     await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight))
     await expect.poll(() => page.locator('.reveal:not(.revealed)').count()).toBe(0)
   }

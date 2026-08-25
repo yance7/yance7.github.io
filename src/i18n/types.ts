@@ -127,6 +127,7 @@ export interface UiMessages {
     close: string
     previous: string
     next: string
+    position: (current: number, total: number) => string
     loading: string
     failed: string
     retry: string
