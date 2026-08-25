@@ -1,11 +1,15 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { localeRegistry } from '../src/i18n/locales'
+import type { Locale } from '../src/i18n/types'
+import { getLocalizedSeo, localizedSitemapEntries } from '../src/data/seo'
 import { htmlPageEntries, pageEntries } from '../src/data/pageRegistry'
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)))
 const dist = join(root, 'dist')
 const pages = htmlPageEntries.map(({ htmlName }) => htmlName)
+const locales = ['zh-CN', 'zh-HK', 'en'] as const
 
 function read(path: string) {
   return readFileSync(join(dist, path), 'utf8')
@@ -44,15 +48,36 @@ for (const [page, cssFiles] of Object.entries(pageManifest)) {
   }
 }
 
-for (const page of pages) {
-  const html = read(`${page}.html`)
-  assert(/Content-Security-Policy/.test(html), `${page}.html 缺少 CSP`)
-  assert(/script-src 'self' 'sha256-[^']+'/.test(html), `${page}.html CSP 缺少 theme bootstrap hash`)
-  assert(html.includes('<div id="app"></div>'), `${page}.html 缺少 Vue 挂载点`)
-  assert(/assets\/vue\/main-[^"']+\.js/.test(html), `${page}.html 缺少 hash 入口资源`)
-  assert(!html.includes('../src/'), `${page}.html 仍引用源码资源`)
-  assert(!html.includes('fonts.googleapis.com'), `${page}.html 仍阻塞加载 Google Fonts`)
-  assert(!html.includes('fonts.gstatic.com'), `${page}.html 仍依赖 Google Fonts 字体文件`)
+function assertHtmlContract(path: string, locale: Locale, pageKey?: (typeof pageEntries)[number]['key']) {
+  const html = read(path)
+  assert(/Content-Security-Policy/.test(html), `${path} 缺少 CSP`)
+  assert(/script-src 'self' 'sha256-[^']+'/.test(html), `${path} CSP 缺少 theme bootstrap hash`)
+  assert(html.includes('<div id="app"></div>'), `${path} 缺少 Vue 挂载点`)
+  assert(/assets\/vue\/main-[^"']+\.js/.test(html), `${path} 缺少 hash 入口资源`)
+  assert(!html.includes('../src/'), `${path} 仍引用源码资源`)
+  assert(!html.includes('fonts.googleapis.com'), `${path} 仍阻塞加载 Google Fonts`)
+  assert(!html.includes('fonts.gstatic.com'), `${path} 仍依赖 Google Fonts 字体文件`)
+  assert(html.includes(`data-locale="${locale}"`), `${path} 缺少 data-locale=${locale}`)
+  assert(html.includes(`<html lang="${localeRegistry[locale].htmlLang}"`), `${path} lang 属性不正确`)
+
+  if (!pageKey) return
+  const seo = getLocalizedSeo(locale, pageKey)
+  assert(html.includes(`<link rel="canonical" href="${seo.canonical}">`), `${path} canonical 不正确`)
+  assert(html.includes(`og:locale" content="${seo.ogLocale}"`), `${path} og:locale 不正确`)
+  assert(html.includes(`og:image" content="${seo.ogImage}"`), `${path} OG image 不正确`)
+  assert(html.includes(`og:image:alt" content="${seo.ogImageAlt}`), `${path} OG image alt 不正确`)
+  for (const alternate of seo.alternates) {
+    assert(html.includes(`rel="alternate" hreflang="${alternate.hreflang}" href="${alternate.href}"`), `${path} 缺少 ${alternate.hreflang} hreflang`)
+  }
+}
+
+for (const entry of pageEntries) assertHtmlContract(`${entry.htmlName}.html`, 'zh-CN', entry.key)
+assertHtmlContract('404.html', 'zh-CN')
+
+for (const locale of locales.slice(1)) {
+  const prefix = localeRegistry[locale].pathPrefix.slice(1)
+  for (const entry of pageEntries) assertHtmlContract(`${prefix}/${entry.htmlName}.html`, locale, entry.key)
+  assertHtmlContract(`${prefix}/404.html`, locale)
 }
 
 for (const asset of [
@@ -77,15 +102,19 @@ for (const asset of [
 
 const index = read('index.html')
 assert(!index.includes('og-card.svg'), 'OG image 仍引用 SVG')
-for (const { htmlName, ogImage, ogImageAlt } of pageEntries) {
+for (const { htmlName, ogImage } of pageEntries) {
   const html = read(`${htmlName}.html`)
   assert(html.includes(ogImage), `${htmlName}.html 未使用专属 OG image`)
-  assert(html.includes(`og:image:alt" content="${ogImageAlt}"`), `${htmlName}.html 未使用页面专属 OG image alt`)
 }
+
+const sitemap = read('sitemap.xml')
+assert((sitemap.match(/<url>/g) ?? []).length === localizedSitemapEntries.length, 'sitemap URL 数量不是 18')
+assert((sitemap.match(/<xhtml:link/g) ?? []).length === localizedSitemapEntries.length * 3, 'sitemap hreflang 数量不正确')
+assert(!sitemap.includes('/404.html'), 'sitemap 不应包含 404')
 
 const concertOriginals = readdirSync(join(dist, 'assets/concerts')).filter((file) => /\.(?:jpe?g|png|webp)$/i.test(file))
 const concertThumbs = readdirSync(join(dist, 'assets/concerts/thumbs')).filter((file) => /\.(?:webp|avif)$/i.test(file))
 assert(concertOriginals.length > 0, 'Concert 原图产物为空')
 assert(concertThumbs.length > 0, 'Concert 缩略图产物为空')
 assert(read('CNAME').trim() === 'www.yance777.com', 'CNAME 产物不正确')
-console.log(`smoke: ${pages.length} pages and static assets verified`)
+console.log(`smoke: ${pages.length} root pages, ${localizedSitemapEntries.length} localized sitemap URLs, and static assets verified`)

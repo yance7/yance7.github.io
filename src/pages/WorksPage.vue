@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import '../styles/works.css'
 import { computed } from 'vue'
-import { projects } from '../data'
+import { getLocalizedProjectSection, getLocalizedProjects } from '../data/locales'
+import { useLocale } from '../i18n'
 import SectionHeading from '../components/SectionHeading.vue'
 import ProjectShowcase from '../components/ProjectShowcase.vue'
 
-const worksCopy = computed(() => projects.length === 1
-  ? '一个已经上线的小世界，记录想法如何离开纸面，开始被真实使用。'
-  : `${projects.length} 个已经上线的小世界，记录想法如何离开纸面，开始被真实使用。`)
+const { locale } = useLocale()
+const projects = computed(() => getLocalizedProjects(locale.value))
+const section = computed(() => getLocalizedProjectSection(locale.value))
+const worksCopy = computed(() => projects.value.length === 1
+  ? section.value.copySingular
+  : `${projects.value.length} ${section.value.copyPlural}`)
 </script>
 
 <template>
@@ -15,9 +19,9 @@ const worksCopy = computed(() => projects.length === 1
     <section id="works-overview" class="content">
       <SectionHeading
         no="01"
-        label="RELEASED WORLDS"
-        title="让想法"
-        accent="可以被打开"
+        :label="section.label"
+        :title="section.title"
+        :accent="section.accent"
         :copy="worksCopy"
       />
 

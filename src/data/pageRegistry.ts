@@ -5,14 +5,8 @@ const registry = {
     sitemapPath: '',
     changefreq: 'weekly',
     priority: '1.0',
-    nav: { label: '首页', en: 'Home', desc: '个人档案入口' },
     ogImage: 'assets/og-home.png',
-    ogImageAlt: 'Yance · Research and product archive',
-    sections: [
-      { id: 'selected-work', label: 'SELECTED WORK', shortLabel: 'WORK' },
-      { id: 'home-worlds', label: 'FIVE WORLDS', shortLabel: 'WORLDS' },
-      { id: 'home-beyond', label: 'BEYOND THE LAB', shortLabel: 'BEYOND' }
-    ]
+    sectionIds: ['selected-work', 'home-worlds', 'home-beyond']
   },
   academics: {
     htmlName: 'academics',
@@ -20,14 +14,8 @@ const registry = {
     sitemapPath: 'academics.html',
     changefreq: 'monthly',
     priority: '0.8',
-    nav: { label: '学业', en: 'Academics', desc: '绩点、标化与 AP 成绩' },
     ogImage: 'assets/og-academics.png',
-    ogImageAlt: 'Yance academic archive',
-    sections: [
-      { id: 'sec-education', label: 'EDUCATION', shortLabel: 'EDU' },
-      { id: 'sec-scoreboard', label: 'SCOREBOARD', shortLabel: 'SCORES' },
-      { id: 'sec-ap-archive', label: 'AP ARCHIVE', shortLabel: 'AP' }
-    ]
+    sectionIds: ['sec-education', 'sec-scoreboard', 'sec-ap-archive']
   },
   honors: {
     htmlName: 'honors',
@@ -35,13 +23,8 @@ const registry = {
     sitemapPath: 'honors.html',
     changefreq: 'monthly',
     priority: '0.8',
-    nav: { label: '荣誉', en: 'Honors', desc: '奖项与竞赛记录' },
     ogImage: 'assets/og-honors.png',
-    ogImageAlt: 'Yance honors and competition archive',
-    sections: [
-      { id: 'sec-milestones', label: 'MILESTONES', shortLabel: 'MILE' },
-      { id: 'sec-honors-archive', label: 'ARCHIVE', shortLabel: 'ARCH' }
-    ]
+    sectionIds: ['sec-milestones', 'sec-honors-archive']
   },
   research: {
     htmlName: 'research',
@@ -49,13 +32,8 @@ const registry = {
     sitemapPath: 'research.html',
     changefreq: 'monthly',
     priority: '0.9',
-    nav: { label: '研究', en: 'Research', desc: '从论文到产品' },
     ogImage: 'assets/og-research.png',
-    ogImageAlt: 'Yance research archive',
-    sections: [
-      { id: 'sec-research-timeline', label: 'RESEARCH', shortLabel: 'R&D' },
-      { id: 'sec-toolchain', label: 'METHODS', shortLabel: 'METHOD' }
-    ]
+    sectionIds: ['sec-research-timeline', 'sec-toolchain']
   },
   works: {
     htmlName: 'works',
@@ -63,13 +41,8 @@ const registry = {
     sitemapPath: 'works.html',
     changefreq: 'monthly',
     priority: '0.9',
-    nav: { label: '作品', en: 'Works', desc: '已上线的项目' },
     ogImage: 'assets/og-works.png',
-    ogImageAlt: 'FreshEye product portfolio',
-    sections: [
-      { id: 'works-overview', label: 'RELEASED WORLDS', shortLabel: 'WORKS' },
-      { id: 'project-fresheye', label: 'FRESHEYE', shortLabel: 'FRESH' }
-    ]
+    sectionIds: ['works-overview', 'project-fresheye']
   },
   concerts: {
     htmlName: 'concerts',
@@ -77,14 +50,8 @@ const registry = {
     sitemapPath: 'concerts.html',
     changefreq: 'monthly',
     priority: '0.7',
-    nav: { label: '演唱会', en: 'Concerts', desc: '现场记忆档案' },
     ogImage: 'assets/og-concerts.png',
-    ogImageAlt: 'Yance live music archive',
-    sections: [
-      { id: 'concerts-overview', label: 'LIVE ARCHIVE', shortLabel: 'LIVE' },
-      { id: 'album-frequencies', label: 'ALBUM WALL', shortLabel: 'ALBUMS' },
-      { id: 'concert-archive', label: 'CONCERT ARCHIVE', shortLabel: 'POSTER' }
-    ]
+    sectionIds: ['concerts-overview', 'album-frequencies', 'concert-archive']
   }
 } as const
 
@@ -107,16 +74,9 @@ export const htmlPageEntries = [
     sitemapPath: null,
     changefreq: null,
     priority: null,
-    sections: [] as const
+    sectionIds: [] as const
   }
 ]
-
-export const sitemapEntries = pageEntries.map(({ key, sitemapPath, changefreq, priority }) => ({
-  key,
-  path: sitemapPath,
-  changefreq,
-  priority
-}))
 
 export function isPageKey(value: string | undefined): value is PageKey {
   return value !== undefined && Object.prototype.hasOwnProperty.call(pageRegistry, value)

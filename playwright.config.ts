@@ -22,9 +22,7 @@ export default defineConfig({
     { name: 'chromium-android-smoke', use: { ...devices['Pixel 5'] }, testMatch: /compatibility\.spec\.ts/ }
   ],
   webServer: {
-    command: process.env.CI
-      ? `npm run preview -- --host 127.0.0.1 --port ${previewPort}`
-      : `npm run build && npm run preview -- --host 127.0.0.1 --port ${previewPort}`,
+    command: `npm run dev -- --host 127.0.0.1 --port ${previewPort}`,
     url: `${previewOrigin}/index.html`,
     reuseExistingServer: !process.env.CI,
     timeout: 120000

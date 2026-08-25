@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useLocale } from '../i18n'
+
 interface ArchiveCategory {
   key: 'all' | import('../data/types').HonorLevel
   label: string
@@ -16,10 +18,11 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
   filter: [category: ArchiveCategory['key']]
 }>()
+const { messages } = useLocale()
 </script>
 
 <template>
-  <div class="honor-filter" role="group" aria-label="荣誉分类筛选">
+  <div class="honor-filter" role="group" :aria-label="messages.honors.filterLabel">
     <button
       v-for="cat in props.categories"
       :key="cat.key"

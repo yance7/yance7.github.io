@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { useLocale } from '../i18n'
 import StatusBadge from './StatusBadge.vue'
 import CopyCitation from './CopyCitation.vue'
 import type { ResearchItem } from '../data/types'
 
 const props = defineProps<{ items: ResearchItem[] }>()
+const { messages } = useLocale()
 
 const openMethod = reactive<Record<string, boolean>>({})
 const timelineRoot = ref<HTMLElement | null>(null)
@@ -111,7 +113,7 @@ onUnmounted(() => {
             @click="toggleMethod(item.id)"
           >
             <span class="disclosure-mark" aria-hidden="true">{{ openMethod[item.id] ? '−' : '+' }}</span>
-            {{ openMethod[item.id] ? '收起方法论' : '展开方法论' }}
+            {{ openMethod[item.id] ? messages.research.collapseMethodology : messages.research.expandMethodology }}
           </button>
           <div
             :id="`method-${item.id}`"
@@ -122,27 +124,27 @@ onUnmounted(() => {
             <div class="method-disclosure-inner">
               <div class="method-grid">
                 <div class="method-cell">
-                  <span class="method-label">QUESTION</span>
+                  <span class="method-label">{{ messages.research.question }}</span>
                   <p>{{ item.methodology.question }}</p>
                 </div>
                 <div class="method-cell">
-                  <span class="method-label">HYPOTHESIS</span>
+                  <span class="method-label">{{ messages.research.hypothesis }}</span>
                   <p>{{ item.methodology.hypothesis }}</p>
                 </div>
                 <div class="method-cell">
-                  <span class="method-label">METHOD</span>
+                  <span class="method-label">{{ messages.research.method }}</span>
                   <p>{{ item.methodology.method }}</p>
                 </div>
                 <div class="method-cell">
-                  <span class="method-label">PROTOTYPE</span>
+                  <span class="method-label">{{ messages.research.prototype }}</span>
                   <p>{{ item.methodology.prototype }}</p>
                 </div>
                 <div class="method-cell">
-                  <span class="method-label">RESULT</span>
+                  <span class="method-label">{{ messages.research.result }}</span>
                   <p>{{ item.methodology.result }}</p>
                 </div>
                 <div class="method-cell">
-                  <span class="method-label">NEXT</span>
+                  <span class="method-label">{{ messages.research.next }}</span>
                   <p>{{ item.methodology.next }}</p>
                 </div>
               </div>
@@ -164,16 +166,16 @@ onUnmounted(() => {
               rel="noopener noreferrer"
               class="tl-link"
             >
-              READ PAPER <span class="tl-paper-tag">{{ item.paper.tag }}</span>
+              {{ messages.common.readPaper }} <span class="tl-paper-tag">{{ item.paper.tag }}</span>
               <span aria-hidden="true">↗</span>
             </a>
             <a v-if="item.link" :href="item.link" target="_blank" rel="noopener noreferrer" class="tl-link">
-              OPEN PROJECT <span aria-hidden="true">↗</span>
+              {{ messages.common.openProject }} <span aria-hidden="true">↗</span>
             </a>
           </div>
         </div>
         <div v-if="item.proof?.length" class="tl-proof">
-          <span class="tl-proof-label">PROOF</span>
+          <span class="tl-proof-label">{{ messages.common.proof }}</span>
           <div class="tl-proof-list">
             <a
               v-for="proof in item.proof"

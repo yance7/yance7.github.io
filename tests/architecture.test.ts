@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
 import { htmlPageEntries, isPageKey, pageEntries, pageRegistry } from '../src/data/pageRegistry'
+import { getLocalizedSections } from '../src/data/locales'
 import { getConcertState } from '../src/data/concerts'
 import { useAlbumSpotlight } from '../src/composables/useAlbumSpotlight'
 import { createImagePreloader, type PreloadImage } from '../src/utils/imagePreload'
@@ -16,16 +17,17 @@ describe('page registry', () => {
     expect(htmlPageEntries.map((entry) => entry.htmlName)).toEqual([
       'index', 'academics', 'honors', 'research', 'works', 'concerts', '404'
     ])
-    expect(pageRegistry.concerts.sections.map((section) => section.id)).toContain('album-frequencies')
-    expect(pageRegistry.research.nav.en).toBe('Research')
-    expect(pageRegistry.academics.sections.map((section) => section.shortLabel)).toEqual(['EDU', 'SCORES', 'AP'])
-    expect(pageRegistry.honors.sections.map((section) => section.shortLabel)).toEqual(['MILE', 'ARCH'])
-    expect(pageRegistry.research.sections.map((section) => section.shortLabel)).toEqual(['R&D', 'METHOD'])
+    expect(pageRegistry.concerts.sectionIds).toContain('album-frequencies')
+    expect('nav' in pageRegistry.research).toBe(false)
+    expect('sections' in pageRegistry.academics).toBe(false)
+    expect(getLocalizedSections('en', 'academics').map((section) => section.shortLabel)).toEqual(['Education', 'Scores', 'AP'])
+    expect(getLocalizedSections('en', 'honors').map((section) => section.shortLabel)).toEqual(['Milestones', 'Archive'])
+    expect(getLocalizedSections('en', 'research').map((section) => section.shortLabel)).toEqual(['Research', 'Methods'])
     const shortLabels = pageEntries.reduce<string[]>((labels, entry) => {
-      entry.sections.forEach((section) => labels.push(section.shortLabel ?? ''))
+      getLocalizedSections('en', entry.key).forEach((section) => labels.push(section.shortLabel ?? ''))
       return labels
     }, [])
-    expect(shortLabels.every((label) => label.length <= 6)).toBe(true)
+    expect(shortLabels.every((label) => label.length > 0 && label.length <= 12)).toBe(true)
     expect(isPageKey('research')).toBe(true)
     expect(isPageKey('missing')).toBe(false)
   })
@@ -348,6 +350,7 @@ describe('shared UI correction contracts', () => {
     const theme = readFileSync(resolve(process.cwd(), 'src/theme.css'), 'utf8')
     const compass = readFileSync(resolve(process.cwd(), 'src/components/PageCompass.vue'), 'utf8')
     const shell = readFileSync(resolve(process.cwd(), 'src/styles/shell.css'), 'utf8')
+    const responsive = readFileSync(resolve(process.cwd(), 'src/styles/responsive.css'), 'utf8')
 
     expect(button).toContain('const effectiveHref = computed(')
     expect(button).toContain(':href="effectiveHref"')
@@ -358,11 +361,11 @@ describe('shared UI correction contracts', () => {
     expect(theme).toContain('--tooltip-muted:')
     expect(theme).toContain('--motion-control-lift:')
     expect(status).toContain(':data-status="status"')
-    expect(compass).not.toContain('aria-live="polite"')
-    expect(shell).toContain('@media (min-width: 761px)')
-    expect(shell).toContain('.page-compass-link:focus-visible .page-compass-tooltip')
-    expect(shell).toContain('.page-compass-top-tooltip small { color: var(--tooltip-muted);')
-    expect(shell).toContain('@media (hover: hover) and (pointer: fine) and (min-width: 761px)')
+    expect(compass).toContain('class="page-compass-read" aria-live="polite"')
+    expect(shell).toContain('.page-compass-link:focus-visible,')
+    expect(shell).toContain('.page-compass-top:focus-visible')
+    expect(responsive).toContain('@media (min-width: 761px) and (max-width: 1024px)')
+    expect(responsive).toContain('@media (max-width: 760px)')
   })
 })
 

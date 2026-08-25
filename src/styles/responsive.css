@@ -14,8 +14,8 @@
   .theme-orbit { order: 2; margin-left: auto; padding: 5px 7px; }
   .theme-orbit .orbit-label { display: none; }
   .menu-trigger {
-    order: 3; margin-left: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
-    width: 44px; height: 44px; padding: 0; border: 1px solid var(--control-border); border-radius: 50%;
+    order: 3; flex: 0 0 44px; margin-left: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+    width: 44px; min-width: 44px; height: 44px; padding: 0; border: 1px solid var(--control-border); border-radius: 50%;
     background: var(--control-bg); color: var(--ink); box-shadow: var(--control-shadow);
   }
   .menu-trigger i { display: block; width: 24px; height: 1.5px; background: currentColor; transition: transform var(--dur-base) var(--ease-apple), opacity var(--dur-fast); }
@@ -127,36 +127,9 @@
   .hero-action:hover span { transform: none !important; }
 }
 
-/* ===== PageCompass / 阅读罗盘 ===== */
+/* ===== Adaptive PageCompass / 閱讀羅盤 ===== */
 @media (min-width: 761px) and (max-width: 1024px) {
-  .site-shell.has-page-compass .scroll-progress {
-    opacity: 0;
-    pointer-events: none;
-  }
-  .page-compass {
-    right: 12px;
-    width: 68px;
-    gap: 8px;
-    padding: 6px 5px;
-  }
-  .page-compass-link {
-    min-height: 44px;
-    padding: 4px;
-  }
-  .page-compass-tooltip {
-    inset-inline-end: 56px;
-    max-width: min(28vw, 200px);
-  }
-  .page-compass-step { grid-template-columns: 1fr; }
-  .page-compass-step a,
-  .page-compass-step-disabled { height: 44px; }
-}
-
-@media (min-width: 1025px) {
-  .site-shell.has-page-compass .scroll-progress {
-    opacity: 0;
-    pointer-events: none;
-  }
+  .page-compass { right: 12px; }
 }
 
 @media (max-width: 760px) {
@@ -165,70 +138,43 @@
   }
   .page-compass {
     top: auto;
-    right: 50%;
+    right: 12px;
     bottom: max(12px, env(safe-area-inset-bottom));
-    grid-template-columns: 44px minmax(20px, 1fr) auto 88px;
-    justify-items: stretch;
-    gap: 2px;
-    width: min(356px, calc(100vw - 24px));
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: stretch;
+    width: 76px;
     max-height: none;
-    padding: 5px 6px;
     border-radius: var(--radius-pill);
-    overflow: visible;
-    transform: translateX(50%);
+    transform: none;
   }
-  .page-compass.page-compass-quiet,
-  .page-compass.page-compass-reading {
-    transform: translateX(50%) translateY(10px);
-    transition-delay: 0s, 0s, 0s, 0s, 0s, var(--dur-base);
+  .page-compass-expanded {
+    width: min(340px, calc(100vw - 24px));
+    border-radius: var(--control-radius);
   }
-  .page-compass-top { width: 44px; height: 44px; }
-  .page-compass-top > span:not(.page-compass-top-tooltip) { display: none; }
-  .page-compass-current {
-    align-content: center;
-    justify-items: start;
-    gap: 3px;
-    min-width: 0;
-    padding: 0 4px;
-    border-block: 0;
-    border-left: 1px solid var(--compass-rail);
-  }
-  .page-compass-current strong { max-width: 100%; }
-  .page-compass-links { grid-auto-flow: column; align-content: center; justify-content: center; gap: 0; }
-  .page-compass-link {
-    display: grid;
-    width: 44px;
+  .page-compass-trigger {
     min-height: 44px;
-    padding: 0;
-    place-items: center;
+    padding: 5px 6px;
   }
-  .page-compass-link > span:not(.page-compass-tooltip) {
-    display: block;
-    font-size: var(--type-meta-size);
-  }
-  .page-compass-tooltip,
-  .page-compass-top-tooltip { display: none; }
-  .page-compass-step { align-self: center; gap: 0; }
-  .page-compass-step a,
-  .page-compass-step-disabled { width: 44px; height: 44px; }
+  .page-compass-trigger-section,
+  .page-compass-trigger-icon { display: none; }
+  .page-compass-panel { width: 100%; }
+  .page-compass-expanded .page-compass-panel { max-height: min(62vh, 440px); }
 }
 
 @media (max-width: 340px) {
-  .page-compass { grid-template-columns: 44px minmax(0, 1fr) 88px; }
-  .page-compass-current { display: none; }
+  .page-compass { right: 12px; }
+  .page-compass-expanded { width: calc(100vw - 24px); }
 }
 
 @media (max-width: 760px) and (orientation: landscape) and (max-height: 520px) {
-  .page-compass {
-    bottom: max(8px, env(safe-area-inset-bottom));
-  }
-  .page-compass-current { display: none; }
+  .page-compass { bottom: max(8px, env(safe-area-inset-bottom)); }
 }
 
 @media (max-width: 760px) and (prefers-reduced-motion: reduce) {
   .page-compass,
-  .page-compass.page-compass-quiet,
-  .page-compass.page-compass-reading {
+  .page-compass-panel,
+  .page-compass-trigger-icon {
     transition-duration: .01ms;
     transition-delay: 0s;
   }
@@ -240,24 +186,12 @@
     background: Canvas;
     box-shadow: none;
   }
+  .page-compass-link:hover,
+  .page-compass-link:focus-visible,
   .page-compass-link.active {
     border-color: Highlight;
     background: Highlight;
     color: HighlightText;
   }
-  .page-compass-link.active > span:not(.page-compass-tooltip),
-  .page-compass-link.active i { color: HighlightText; }
-  .page-compass-link.active i {
-    border-color: HighlightText;
-    background: HighlightText;
-    box-shadow: none;
-  }
-  .page-compass-tooltip,
-  .page-compass-top-tooltip {
-    border-color: CanvasText;
-    background: Canvas;
-    color: CanvasText;
-    box-shadow: none;
-  }
-  .page-compass-step-disabled { color: GrayText; }
+  .page-compass-link-current { color: HighlightText; }
 }

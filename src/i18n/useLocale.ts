@@ -1,7 +1,7 @@
 import { computed, readonly, ref } from 'vue'
 import { localeRegistry } from './locales'
 import type { Locale } from './types'
-import { uiMessages } from './index'
+import { uiMessages } from './messages'
 
 const activeLocale = ref<Locale>('zh-CN')
 

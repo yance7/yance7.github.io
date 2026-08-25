@@ -46,8 +46,8 @@ export function stripLocalePrefix(pathname: string) {
 }
 
 function withPathSuffix(prefix: string, suffix: string) {
-  if (suffix === '/') return `${prefix}/` || '/'
-  return `${prefix}${suffix}` || '/'
+  if (suffix === '/') return `${prefix}/`
+  return `${prefix}${suffix}`
 }
 
 export function buildLocalizedPageHref(

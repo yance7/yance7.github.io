@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import '../styles/concerts.css'
-import { reactive } from 'vue'
-import { concertGroups, getConcertState, isConcertUpcoming } from '../data'
+import { computed, reactive } from 'vue'
+import { getLocalizedConcertGroups, getLocalizedConcertSection, getLocalizedConcertState } from '../data/locales'
+import { localeRegistry, useLocale } from '../i18n'
 import type { Concert, LightboxPayload } from '../data/types'
 import SectionHeading from '../components/SectionHeading.vue'
 import MetricStrip from '../components/MetricStrip.vue'
@@ -15,28 +16,28 @@ const emit = defineEmits<{
 
 const carouselIndexes = reactive<Record<string, number>>({})
 const imagePreloader = sharedImagePreloader
+const { locale, messages } = useLocale()
+const concertState = computed(() => getLocalizedConcertState(locale.value, new Date()))
+const concertGroups = computed(() => getLocalizedConcertGroups(locale.value))
+const section = computed(() => getLocalizedConcertSection(locale.value))
+const venueCount = computed(() => concertState.value.venueCount)
+const artistCount = computed(() => concertState.value.stats.artistCount)
+const posterCount = computed(() => concertState.value.stats.posterCount)
 
-const concertState = getConcertState(new Date())
-const venueCount = concertState.venueCount
-const artistCount = concertState.stats.artistCount
-const posterCount = concertState.stats.posterCount
+const concertMetrics = computed(() => [
+  { value: String(concertState.value.stats.attended), label: section.value.attended, note: `${concertState.value.stats.upcoming} ${section.value.upcoming}` },
+  { value: String(venueCount.value), label: section.value.venues, note: concertState.value.stats.venues },
+  { value: `${artistCount.value}+`, label: section.value.artists, note: `${posterCount.value} ${section.value.posters}` },
+  { value: String(concertState.value.stats.total), label: section.value.total, note: section.value.recorded }
+])
 
-const concertMetrics = [
-  { value: String(concertState.stats.attended), label: '已赴约', note: `${concertState.stats.upcoming} 待相见` },
-  { value: String(venueCount), label: '场馆', note: concertState.stats.venues },
-  { value: `${artistCount}+`, label: '艺人', note: `${posterCount} 张海报` },
-  { value: String(concertState.stats.total), label: '总现场', note: '已记录的演出' }
-]
-
-const sortedYears = Object.keys(concertGroups).sort()
-const upcomingConcerts = concertState.upcoming
-const concertMoods = concertState.moods
+const sortedYears = computed(() => Object.keys(concertGroups.value).sort())
+const upcomingConcerts = computed(() => concertState.value.upcoming)
+const concertMoods = computed(() => concertState.value.moods)
 
 function formatConcertDate(date: string) { return date.replaceAll('-', '.') }
 function formatNextDate(date: string) {
-  const [, month, day] = date.split('-')
-  const monthLabel = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'][Number(month) - 1] ?? '---'
-  return `${monthLabel} ${day}`
+  return new Intl.DateTimeFormat(localeRegistry[locale.value].htmlLang, { month: 'short', day: 'numeric' }).format(new Date(`${date}T00:00:00`))
 }
 function currentImageName(item: Concert, fallbackIndex = 0) {
   const index = carouselIndexes[item.id] ?? fallbackIndex
@@ -64,6 +65,10 @@ function preloadItem(item: Concert) {
   imagePreloader.preload(src)
 }
 
+function isUpcoming(item: Concert) {
+  return item.date >= concertState.value.now.toISOString().slice(0, 10)
+}
+
 </script>
 
 <template>
@@ -71,18 +76,18 @@ function preloadItem(item: Concert) {
     <section id="concerts-overview" class="content">
       <SectionHeading
         no="01"
-        label="LIVE ARCHIVE"
-        title="现场是"
-        accent="另一种记忆"
-        copy="点击海报进入全屏档案。每张图都保留原始比例，轮播记录同一场演出的不同视觉。"
+        :label="section.label"
+        :title="section.title"
+        :accent="section.accent"
+        :copy="section.copy"
       />
 
       <MetricStrip :metrics="concertMetrics" />
 
       <div v-if="upcomingConcerts.length" class="next-up" aria-labelledby="next-up-title" v-reveal>
         <div class="next-up-head">
-          <span id="next-up-title" class="next-up-label">NEXT UP</span>
-          <span class="next-up-note">现实时间</span>
+          <span id="next-up-title" class="next-up-label">{{ section.nextUp }}</span>
+          <span class="next-up-note">{{ section.realTime }}</span>
         </div>
         <div class="next-up-list">
           <a
@@ -104,7 +109,6 @@ function preloadItem(item: Concert) {
 
     <AlbumWall />
 
-    <!-- 按年份分组 -->
     <section
       v-for="(year, yearIndex) in sortedYears"
       :key="year"
@@ -113,8 +117,8 @@ function preloadItem(item: Concert) {
     >
       <div class="group-header" v-reveal>
         <span class="group-year">{{ year }}</span>
-        <p class="group-mood">{{ concertMoods[year as keyof typeof concertMoods] || '' }}</p>
-        <span class="group-count">{{ concertGroups[year]?.length ?? 0 }} 场</span>
+        <p class="group-mood">{{ concertMoods[year] || '' }}</p>
+        <span class="group-count">{{ concertGroups[year]?.length ?? 0 }} {{ section.showUnit }}</span>
       </div>
 
       <div class="concert-list">
@@ -123,7 +127,7 @@ function preloadItem(item: Concert) {
           :key="item.id"
           :id="`concert-${item.id}`"
           class="concert-row"
-          :class="{ upcoming: isConcertUpcoming(item, concertState.now) }"
+          :class="{ upcoming: isUpcoming(item) }"
           v-reveal
           @mouseenter="preloadItem(item)"
           @focusin="preloadItem(item)"
@@ -139,7 +143,7 @@ function preloadItem(item: Concert) {
             <button
               class="poster-open"
               type="button"
-              :aria-label="`打开 ${item.artist} ${item.tour} 海报档案`"
+              :aria-label="`${messages.lightbox.openArchive}: ${item.artist} ${item.tour}`"
               @click="openLightbox(item, carouselIndexes[item.id] || 0, $event)"
             >
                 <Transition name="poster-fade" mode="out-in">
@@ -147,7 +151,7 @@ function preloadItem(item: Concert) {
                     <source :srcset="thumbnailUrl(currentImageName(item))" type="image/webp">
                     <img
                       :src="originalImageUrl(currentImageName(item))"
-                      :alt="`${item.artist} ${item.tour} 海报`"
+                      :alt="`${item.artist} ${item.tour} ${messages.lightbox.posterAlt}`"
                       :width="item.land ? 640 : 480"
                       :height="item.land ? 360 : 640"
                       loading="lazy"
@@ -156,18 +160,18 @@ function preloadItem(item: Concert) {
                   </picture>
                 </Transition>
               <span class="poster-hint" aria-hidden="true">
-                <span>打开档案</span><b>＋</b>
+                <span>{{ section.posterArchive }}</span><b>＋</b>
               </span>
             </button>
             <div v-if="item.images.length > 1" class="carousel-controls">
-              <button type="button" aria-label="上一张" @click.stop="moveCarousel(item, -1)">←</button>
+              <button type="button" :aria-label="messages.common.previous" @click.stop="moveCarousel(item, -1)">←</button>
               <span>{{ (carouselIndexes[item.id] || 0) + 1 }} / {{ item.images.length }}</span>
-              <button type="button" aria-label="下一张" @click.stop="moveCarousel(item, 1)">→</button>
+              <button type="button" :aria-label="messages.common.next" @click.stop="moveCarousel(item, 1)">→</button>
             </div>
           </div>
           <div class="concert-info">
-            <span class="concert-status" :class="{ upcoming: isConcertUpcoming(item, concertState.now) }">
-              {{ isConcertUpcoming(item, concertState.now) ? 'UPCOMING · 待相见' : 'ATTENDED · 已赴约' }}
+            <span class="concert-status" :class="{ upcoming: isUpcoming(item) }">
+              {{ isUpcoming(item) ? section.upcoming : section.attended }}
             </span>
             <span class="concert-venue">{{ item.venue }}</span>
             <h3>{{ item.artist }}</h3>

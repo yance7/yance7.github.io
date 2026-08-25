@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onUnmounted, ref } from 'vue'
-import { albums } from '../data'
+import { getLocalizedAlbumSection, getLocalizedAlbums } from '../data/locales'
+import { useLocale } from '../i18n'
 import type { Album } from '../data/types'
 import { albumCoverFallback, albumCoverSrcset, albumCoverWebp } from '../utils/albumMedia'
 import { getAlbumNavigationIndex } from '../utils/albumNavigation'
@@ -8,6 +9,9 @@ import { loadImage } from '../utils/imagePreload'
 import { useAlbumSpotlight } from '../composables/useAlbumSpotlight'
 import SectionHeading from './SectionHeading.vue'
 
+const { locale, messages } = useLocale()
+const albums = getLocalizedAlbums(locale.value)
+const section = getLocalizedAlbumSection(locale.value)
 const total = albums.length
 const spotlightSizes = '(min-width: 1180px) 36vw, (min-width: 768px) 42vw, 82vw'
 const gridElement = ref<HTMLElement | null>(null)
@@ -25,7 +29,7 @@ const wallStyle = computed(() => ({
 }))
 const selectedPosition = computed(() => `${formatIndex(spotlight.state.value.selected)} / ${String(total).padStart(2, '0')}`)
 const liveAnnouncement = computed(() => (
-  `已选择 ${selectedAlbum.value.artist}，《${selectedAlbum.value.title}》，${selectedAlbum.value.year} 年，${formatLabel(selectedAlbum.value)}`
+  `${messages.value.albums.selected}: ${selectedAlbum.value.artist}, ${selectedAlbum.value.title}, ${selectedAlbum.value.year}, ${formatLabel(selectedAlbum.value)}`
 ))
 
 function formatIndex(index: number) {
@@ -33,7 +37,7 @@ function formatIndex(index: number) {
 }
 
 function formatLabel(album: Album) {
-  return album.format === 'ep' ? 'EP' : 'ALBUM'
+  return album.format === 'ep' ? messages.value.albums.ep : messages.value.albums.album
 }
 
 function setTileRef(element: unknown, index: number) {
@@ -133,20 +137,20 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section id="album-frequencies" class="album-wall-section content" aria-label="专辑收藏墙">
+  <section id="album-frequencies" class="album-wall-section content" :aria-label="messages.albums.collection">
     <SectionHeading
       no="02"
-      label="ALBUM FREQUENCIES"
-      :title="`${total} 张唱片`"
-      accent="八种声音坐标"
-      copy="把熟悉的封面排进同一面墙，在一次次选择里重访华语流行的不同年代。"
+      :label="section.label"
+      :title="`${total} ${section.title}`"
+      :accent="section.accent"
+      :copy="section.copy"
     />
 
     <div class="album-wall" :style="wallStyle">
       <div class="album-stage-layout">
         <div class="album-spotlight">
           <div class="album-spotlight-head">
-            <span class="album-kicker">NOW SPINNING</span>
+            <span class="album-kicker">{{ messages.albums.nowSpinning }}</span>
             <span class="album-index">{{ selectedPosition }}</span>
           </div>
 
@@ -174,7 +178,7 @@ onUnmounted(() => {
                     >
                     <img
                       :src="albumCoverFallback(spotlightAlbum.cover)"
-                      :alt="`${spotlightAlbum.artist}《${spotlightAlbum.title}》专辑封面`"
+                      :alt="`${spotlightAlbum.artist} ${spotlightAlbum.title} ${messages.albums.album} ${messages.lightbox.posterAlt}`"
                       width="1200"
                       height="1200"
                       loading="eager"
@@ -196,11 +200,11 @@ onUnmounted(() => {
               </p>
 
               <div class="album-actions">
-                <div class="album-nav" aria-label="专辑切换控制">
-                  <button type="button" aria-label="上一张专辑" @click="moveAlbum(-1)">
+                <div class="album-nav" :aria-label="messages.albums.navigation">
+                  <button type="button" :aria-label="messages.albums.previous" @click="moveAlbum(-1)">
                     <span aria-hidden="true">←</span>
                   </button>
-                  <button type="button" aria-label="下一张专辑" @click="moveAlbum(1)">
+                  <button type="button" :aria-label="messages.albums.next" @click="moveAlbum(1)">
                     <span aria-hidden="true">→</span>
                   </button>
                 </div>
@@ -222,7 +226,7 @@ onUnmounted(() => {
           ref="gridElement"
           class="album-grid"
           role="listbox"
-          aria-label="选择一张专辑"
+          :aria-label="messages.albums.select"
         >
           <button
             v-for="(album, index) in albums"
@@ -233,7 +237,7 @@ onUnmounted(() => {
             :class="{ selected: spotlightState.selected === index }"
             type="button"
             role="option"
-            :aria-label="`${album.artist}《${album.title}》，${album.year} 年，${formatLabel(album)}`"
+            :aria-label="`${album.artist} ${album.title}, ${album.year}, ${formatLabel(album)}`"
             :aria-selected="spotlightState.selected === index"
             :aria-setsize="total"
             :aria-posinset="index + 1"
@@ -257,7 +261,7 @@ onUnmounted(() => {
               <strong>{{ album.title }}</strong>
               <small>{{ album.artist }} · {{ album.year }}</small>
             </span>
-            <span v-if="spotlightState.selected === index" class="album-tile-selected" aria-hidden="true">NOW</span>
+            <span v-if="spotlightState.selected === index" class="album-tile-selected" aria-hidden="true">{{ messages.albums.selected }}</span>
           </button>
         </div>
       </div>

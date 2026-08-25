@@ -41,8 +41,6 @@ export interface UiMessages {
     progress: string
     returnTop: string
     current: string
-    previous: string
-    next: string
     goToSection: string
     read: string
   }
@@ -64,6 +62,17 @@ export interface UiMessages {
     source: string
     deployedAs: string
     liveProduct: string
+    project: string
+    projectNote: string
+    chapters: string
+    proofLinks: string
+    role: string
+    stack: string
+    single: string
+    copyCitation: string
+    copyInProgress: string
+    copied: string
+    copyFailed: string
   }
   actions: {
     selectedWork: string
@@ -79,6 +88,7 @@ export interface UiMessages {
   }
   home: {
     identity: string
+    researchLabel: string
     selectedWorkLabel: string
     productLabel: string
     researchToProduct: string
@@ -138,6 +148,8 @@ export interface UiMessages {
     profile: string
     researchRepos: string
     contact: string
+    archive: string
+    identity: string
   }
   error404: {
     kicker: string
@@ -145,6 +157,11 @@ export interface UiMessages {
     copy: string
     home: string
     research: string
+  }
+  loadError: {
+    title: string
+    copy: string
+    retry: string
   }
   status: Record<string, string>
   page: Record<PageKey, {

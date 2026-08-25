@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, nextTick, onMounted, ref, watch } from 'vue'
-import { isPageKey, pageMeta, pageRegistry } from './data'
+import { getLocalizedPageMeta, getLocalizedSections } from './data/locales'
+import { isPageKey } from './data'
+import { useLocale } from './i18n'
 import { useTheme } from './composables/useTheme'
 import { decodeHashTarget, retryAsync } from './utils/navigation'
 import { getPageLoader } from './pageLoaders'
@@ -22,6 +24,7 @@ const page = (() => {
   return isPageKey(candidate) ? candidate : undefined
 })()
 const { initTheme } = useTheme()
+const { locale, messages } = useLocale()
 
 const lightbox = ref<LightboxPayload | null>(null)
 type PageLoadState = 'loading' | 'ready' | 'error'
@@ -65,12 +68,12 @@ function handlePageResolved() {
 
 const isHome = page === 'home'
 const isError = !page
-const meta = computed(() => page ? pageMeta[page] : pageMeta.home)
+const meta = computed(() => page ? getLocalizedPageMeta(locale.value, page) : messages.value.page.home)
 
-const kicker = computed(() => (isError ? '404 / NOT FOUND' : meta.value.kicker))
-const heroTitle = computed(() => (isError ? '这一页走丢了' : meta.value.title))
-const heroCopy = computed(() => (isError ? '返回首页，重新选择一个方向。' : meta.value.copy))
-const heroCredit = computed(() => (isError ? null : meta.value.credit || null))
+const kicker = computed(() => (isError ? messages.value.error404.kicker : meta.value.kicker))
+const heroTitle = computed(() => (isError ? messages.value.error404.title : meta.value.title))
+const heroCopy = computed(() => (isError ? messages.value.error404.copy : meta.value.copy))
+const heroCredit = computed(() => (isError || !page ? null : getLocalizedPageMeta(locale.value, page).credit || null))
 
 const currentPage = pageLoader
   ? defineAsyncComponent({
@@ -79,7 +82,7 @@ const currentPage = pageLoader
       delay: 0
     })
   : NotFoundPage
-const pageSections = computed(() => page ? pageRegistry[page].sections : [])
+const pageSections = computed(() => page ? getLocalizedSections(locale.value, page) : [])
 
 function handleLightbox(data: LightboxPayload) { lightbox.value = data }
 function closeLightbox() { lightbox.value = null }
@@ -91,14 +94,14 @@ function moveLightbox(step: number) {
 </script>
 
 <template>
-  <div class="site-shell" :class="{ 'has-page-compass': pageSections.length }" :data-page-load-state="pageLoadState">
-    <a class="skip-link" href="#main">跳到主要内容</a>
+  <div class="site-shell" :class="{ 'has-page-compass': pageSections.length >= 2 }" :data-page-load-state="pageLoadState">
+    <a class="skip-link" href="#main">{{ messages.accessibility.skipToMain }}</a>
     <div class="ambient ambient-one"></div>
     <div class="ambient ambient-two"></div>
     <div class="grain"></div>
 
-    <aside class="page-tools" aria-label="页面阅读工具">
-      <PageCompass v-if="pageLoadState === 'ready' && pageSections.length" :sections="pageSections" />
+    <aside class="page-tools" :aria-label="messages.compass.label">
+      <PageCompass v-if="pageLoadState === 'ready' && pageSections.length >= 2" :sections="pageSections" />
     </aside>
 
     <SiteHeader :page="page" />

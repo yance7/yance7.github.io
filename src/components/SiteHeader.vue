@@ -1,10 +1,14 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { navItems } from '../data'
+import { computed, ref } from 'vue'
+import { getLocalizedNavItems } from '../data/locales'
+import { buildLocalizedPageHref, useLocale } from '../i18n'
 import ThemeOrbit from './ThemeOrbit.vue'
+import LocaleSwitcher from './LocaleSwitcher.vue'
 import { useModalDialog } from '../composables/useModalDialog'
 
 defineProps<{ page?: string }>()
+const { locale, messages } = useLocale()
+const navItems = computed(() => getLocalizedNavItems(locale.value))
 const menuVisible = ref(false)
 const menuActive = ref(false)
 const menuClose = ref<HTMLButtonElement | null>(null)
@@ -37,20 +41,20 @@ useModalDialog(menuActive, {
 
 <template>
   <header class="site-nav" :class="{ 'menu-open': menuVisible }">
-    <a class="wordmark" href="index.html" aria-label="返回首页">Yance<span>.</span></a>
+    <a class="wordmark" :href="buildLocalizedPageHref('home', locale)" :aria-label="messages.accessibility.home">Yance<span>.</span></a>
 
     <button
       class="menu-trigger"
       type="button"
       :aria-expanded="menuVisible"
       aria-controls="mobile-navigation"
-      :aria-label="menuVisible ? '关闭导航' : '打开导航'"
+      :aria-label="menuVisible ? messages.navigation.closeMenu : messages.navigation.openMenu"
       @click="toggleMenu"
     >
       <i></i><i></i><i></i>
     </button>
 
-    <nav class="nav-rail" :class="{ open: menuVisible }" aria-label="主导航">
+    <nav class="nav-rail" :class="{ open: menuVisible }" :aria-label="messages.navigation.main">
       <a
         v-for="(item, i) in navItems"
         :key="item.key"
@@ -61,24 +65,22 @@ useModalDialog(menuActive, {
         @click="closeMenu()"
       >
         <small class="nav-num">0{{ i + 1 }}</small>
-        <span class="nav-text">
-          <span class="nav-label">{{ item.label }}</span>
-          <small class="nav-en">{{ item.en }}</small>
-        </span>
+        <span class="nav-text"><span class="nav-label">{{ item.label }}</span></span>
         <small class="nav-desc">{{ item.desc }}</small>
       </a>
     </nav>
 
+    <LocaleSwitcher />
     <ThemeOrbit />
 
-    <div class="nav-status"><b></b><span>ONLINE / 2026</span></div>
+    <div class="nav-status"><b></b><span>{{ messages.common.online }} / 2026</span></div>
   </header>
 
   <Teleport to="body">
     <Transition name="mobile-menu" @after-leave="finishMenuLeave">
-      <div ref="menuOverlay" v-if="menuVisible" class="mobile-menu-overlay" role="dialog" aria-modal="true" aria-label="移动端导航" @click.self="closeMenu">
-        <button ref="menuClose" class="mobile-menu-close" type="button" aria-label="关闭导航" @click="closeMenu">×</button>
-        <nav id="mobile-navigation" class="mobile-menu" aria-label="移动端导航">
+      <div ref="menuOverlay" v-if="menuVisible" class="mobile-menu-overlay" role="dialog" aria-modal="true" :aria-label="messages.navigation.mobile" @click.self="closeMenu">
+        <button ref="menuClose" class="mobile-menu-close" type="button" :aria-label="messages.navigation.closeMenu" @click="closeMenu">×</button>
+        <nav id="mobile-navigation" class="mobile-menu" :aria-label="messages.navigation.mobile">
           <a
             v-for="(item, i) in navItems"
             :key="item.key"
@@ -90,7 +92,6 @@ useModalDialog(menuActive, {
           >
             <small class="mm-num">0{{ i + 1 }}</small>
             <span class="mm-label">{{ item.label }}</span>
-            <small class="mm-en">{{ item.en }}</small>
             <span class="mm-desc">{{ item.desc }}</span>
           </a>
         </nav>

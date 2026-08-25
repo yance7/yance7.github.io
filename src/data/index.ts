@@ -14,6 +14,7 @@ export * from './projects'
 export * from './concerts'
 export * from './albums'
 export * from './pageRegistry'
+export * from './locales'
 
 function latestUpdatedAt(items: Array<{ updatedAt: string }>, fallback: string) {
   return items.reduce((latest, item) => item.updatedAt > latest ? item.updatedAt : latest, fallback)

@@ -188,14 +188,25 @@ test('page compass unifies section navigation, reading progress, and return to t
   await page.setViewportSize({ width: 1200, height: 900 })
   await page.goto('/honors.html')
   const compass = page.locator('.page-compass')
+  const trigger = compass.locator('.page-compass-trigger')
+  const panel = compass.locator('.page-compass-panel')
   const archiveLink = compass.locator('.page-compass-link[href="#sec-honors-archive"]')
 
   await expect(compass).toBeVisible()
   await expect(compass.locator('.page-compass-link')).toHaveCount(2)
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false')
+  await expect(panel).toHaveAttribute('aria-hidden', 'true')
+  await expect(panel).toHaveAttribute('inert', '')
+  await expect(compass.locator('.page-compass-step')).toHaveCount(0)
+  await trigger.click()
+  await expect(trigger).toHaveAttribute('aria-expanded', 'true')
+  await expect(panel).not.toHaveAttribute('aria-hidden', 'true')
+  await expect(archiveLink).toBeVisible()
   await archiveLink.click()
   await expect(page).toHaveURL(/honors\.html#sec-honors-archive/)
   await expect(archiveLink).toHaveAttribute('aria-current', 'location')
-  await expect.poll(() => compass.locator('.page-compass-progress').getAttribute('aria-label')).toMatch(/\d+%/)
+  await expect(compass.locator('.page-compass-read strong')).toContainText(/\d+%/)
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false')
   const archiveSection = page.locator('#sec-honors-archive')
   const archiveAnchorOffset = await archiveSection.evaluate((element) => (
     Math.round(parseFloat(getComputedStyle(element).scrollMarginTop) || 0)
@@ -204,6 +215,7 @@ test('page compass unifies section navigation, reading progress, and return to t
     () => archiveSection.evaluate((element) => Math.round(element.getBoundingClientRect().top))
   ).toBe(archiveAnchorOffset)
 
+  await trigger.click()
   await compass.locator('.page-compass-top').click()
   await expect.poll(() => page.evaluate(() => Math.round(window.scrollY))).toBeLessThan(8)
   await expect.poll(() => page.evaluate(() => window.location.hash)).toBe('')
@@ -222,11 +234,14 @@ test('static metric surfaces do not advertise elevation on hover', async ({ page
   expect(after).toBe(before)
 })
 
-test('desktop PageCompass is the primary progress surface', async ({ page }) => {
+test('desktop PageCompass is a secondary numeric progress surface', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 })
   await page.goto('/research.html')
   await expect(page.locator('.page-compass')).toBeVisible()
-  await expect(page.locator('.scroll-progress')).toHaveCSS('opacity', '0')
+  await expect(page.locator('.scroll-progress')).toHaveCSS('opacity', '1')
+  await expect(page.locator('.page-compass-read')).toBeHidden()
+  await page.locator('.page-compass-trigger').click()
+  await expect(page.locator('.page-compass-read')).toBeVisible()
 })
 
 test('research timeline highlights the item in the reading zone', async ({ page }) => {
@@ -234,6 +249,7 @@ test('research timeline highlights the item in the reading zone', async ({ page 
   await page.goto('/research.html')
 
   const items = page.locator('.tl-item')
+  await expect(items.first()).toBeVisible()
   expect(await items.count()).toBeGreaterThanOrEqual(2)
 
   for (let index = 0; index < 2; index += 1) {
@@ -297,10 +313,19 @@ test('site navigation stays pinned and every compass destination clears it', asy
   for (const [route, destination] of destinations) {
     await page.goto(`/${route}`)
     const navigation = page.locator('.site-nav')
+    await expect(page.locator(destination)).toBeVisible({ timeout: 30000 })
     await page.evaluate(() => window.scrollTo({ top: 900, behavior: 'auto' }))
     await expect.poll(() => navigation.evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBe(0)
 
-    await page.locator(`.page-compass-link[href="${destination}"]`).click()
+    await page.locator('.page-compass-trigger').click()
+    const destinationLink = page.locator(`.page-compass-link[href="${destination}"]`)
+    await expect(destinationLink).toBeVisible()
+    const destinationBox = await destinationLink.boundingBox()
+    expect(destinationBox).not.toBeNull()
+    await page.mouse.click(
+      (destinationBox?.x ?? 0) + (destinationBox?.width ?? 0) / 2,
+      (destinationBox?.y ?? 0) + (destinationBox?.height ?? 0) / 2
+    )
     const navBottom = await navigation.evaluate((element) => element.getBoundingClientRect().bottom)
     await expect.poll(
       () => page.locator(destination).evaluate((element) => element.getBoundingClientRect().top),
@@ -321,7 +346,7 @@ test('direct deep links settle below the pinned navigation', async ({ page }) =>
 
 test('slow page chunks still settle deep links and compass state', async ({ page }) => {
   let requestCount = 0
-  await page.route('**/assets/vue/WorksPage-*.js', async (route) => {
+  await page.route(/\/(?:assets\/vue\/WorksPage-[^/]+\.js|src\/pages\/WorksPage\.vue)(?:\?.*)?$/, async (route) => {
     requestCount += 1
     await new Promise((resolve) => setTimeout(resolve, 5200))
     await route.continue()
@@ -336,7 +361,7 @@ test('slow page chunks still settle deep links and compass state', async ({ page
 
 test('failed page chunks render a controlled error without a reload loop', async ({ page }) => {
   let requestCount = 0
-  await page.route('**/assets/vue/WorksPage-*.js', async (route) => {
+  await page.route(/\/(?:assets\/vue\/WorksPage-[^/]+\.js|src\/pages\/WorksPage\.vue)(?:\?.*)?$/, async (route) => {
     requestCount += 1
     await route.abort('failed')
   })
@@ -394,7 +419,7 @@ test('signature pointer sheen stays static with reduced motion', async ({ page }
 })
 
 test('page compass exposes page-specific sections without covering narrow layouts', async ({ page }) => {
-  const expectations = pageEntries.map(({ htmlName, sections }) => [`${htmlName}.html`, sections.length] as const)
+  const expectations = pageEntries.map(({ htmlName, sectionIds }) => [`${htmlName}.html`, sectionIds.length] as const)
 
   for (const [route, sectionCount] of expectations) {
     await page.setViewportSize({ width: 390, height: 844 })
@@ -410,11 +435,27 @@ test('page compass exposes page-specific sections without covering narrow layout
     expect(layout.compassBottom).toBeLessThanOrEqual(844)
     expect(layout.footerPaddingBottom).toBeGreaterThanOrEqual(76)
 
-    const compactTargets = await page.locator('.page-compass button, .page-compass a').evaluateAll((elements) => elements.map((element) => {
+    const compactTargets = await page.locator('.page-compass-trigger').evaluateAll((elements) => elements.map((element) => {
       const bounds = element.getBoundingClientRect()
       return { width: bounds.width, height: bounds.height }
     }))
     compactTargets.forEach(({ width, height }) => {
+      expect(Math.round(width)).toBeGreaterThanOrEqual(44)
+      expect(Math.round(height)).toBeGreaterThanOrEqual(44)
+    })
+
+    await page.locator('.page-compass-trigger').click()
+    const expandedTargets = await page.locator('.page-compass button, .page-compass a').evaluateAll((elements) => elements
+      .filter((element) => {
+        const style = getComputedStyle(element)
+        const bounds = element.getBoundingClientRect()
+        return style.visibility !== 'hidden' && bounds.width > 0 && bounds.height > 0
+      })
+      .map((element) => {
+        const bounds = element.getBoundingClientRect()
+        return { width: bounds.width, height: bounds.height }
+      }))
+    expandedTargets.forEach(({ width, height }) => {
       expect(Math.round(width)).toBeGreaterThanOrEqual(44)
       expect(Math.round(height)).toBeGreaterThanOrEqual(44)
     })
@@ -433,25 +474,25 @@ test('mobile compass keeps focus priority inside a compact visual frame', async 
     await page.setViewportSize(viewport)
     await page.goto('/honors.html')
     const compass = page.locator('.page-compass')
+    const trigger = compass.locator('.page-compass-trigger')
+    const panel = compass.locator('.page-compass-panel')
 
-    if (viewport.width <= 760) {
-      await expect(compass).toHaveAttribute('data-mobile-state', 'quiet')
-      await page.evaluate(() => window.scrollTo({ top: 700, behavior: 'auto' }))
-      await expect.poll(() => compass.getAttribute('data-mobile-state'), { timeout: 2500 }).not.toBe('quiet')
-      await expect.poll(() => compass.getAttribute('data-mobile-state'), { timeout: 2500 }).toBe('visible')
-    } else {
-      await expect(compass).toHaveAttribute('data-mobile-state', 'visible')
-    }
+    await expect(trigger).toHaveAttribute('aria-expanded', 'false')
+    await expect(trigger).toBeVisible()
+    await trigger.focus()
+    await expect(trigger).toBeFocused()
+    await expect(trigger).toHaveAttribute('aria-expanded', 'true')
+    await expect(panel).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(trigger).toBeFocused()
+    await expect(trigger).toHaveAttribute('aria-expanded', 'false')
+    await expect(panel).toHaveAttribute('aria-hidden', 'true')
 
-    const topControl = compass.locator('.page-compass-top')
-    await topControl.focus()
-    await expect(topControl).toBeFocused()
-    await expect(compass).toHaveAttribute('data-mobile-state', 'visible')
-
-    if (viewport.width <= 760) {
-      await page.evaluate(() => window.scrollBy({ top: 120, behavior: 'auto' }))
-      await expect(compass).toHaveAttribute('data-mobile-state', 'visible')
-    }
+    await trigger.click()
+    await expect(panel).toBeVisible()
+    await compass.locator('.page-compass-link').last().click()
+    await expect(trigger).toHaveAttribute('aria-expanded', 'false')
+    await expect(panel).toHaveAttribute('inert', '')
 
     const geometry = await compass.evaluate((element) => {
       const rect = element.getBoundingClientRect()
@@ -466,12 +507,9 @@ test('mobile compass keeps focus priority inside a compact visual frame', async 
     expect(geometry.left).toBeGreaterThanOrEqual(0)
     expect(geometry.right).toBeLessThanOrEqual(viewport.width)
     expect(geometry.bottom).toBeLessThanOrEqual(viewport.height)
-    if (viewport.width <= 760) {
-      expect(geometry.width).toBeLessThanOrEqual(viewport.width - 24)
-      expect(geometry.height).toBeLessThanOrEqual(58)
-    }
+    if (viewport.width <= 760) expect(geometry.width).toBeLessThanOrEqual(viewport.width - 24)
 
-    const targets = await compass.locator('button, a').evaluateAll((elements) =>
+    const targets = await compass.locator('button:visible, a:visible').evaluateAll((elements) =>
       elements.map((element) => {
         const rect = element.getBoundingClientRect()
         return {

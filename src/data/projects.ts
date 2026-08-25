@@ -42,6 +42,4 @@ export const projects = [
   }
 ] satisfies Project[]
 
-export const featuredProjects = projects.filter((item) => item.id === 'fresheye')
-
 /* ---------- 演唱会记忆档案 ---------- */
