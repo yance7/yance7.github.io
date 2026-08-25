@@ -34,7 +34,11 @@
 .grain {
   position: fixed; inset: 0; pointer-events: none;
   opacity: var(--grain-opacity);
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E");
+  background-image:
+    radial-gradient(rgba(0, 0, 0, .2) .45px, transparent .55px),
+    radial-gradient(rgba(255, 255, 255, .12) .45px, transparent .55px);
+  background-position: 0 0, 2px 3px;
+  background-size: 5px 5px, 7px 7px;
   z-index: var(--z-base);
 }
 
@@ -73,7 +77,7 @@
 .wordmark:hover,
 .wordmark:focus-visible { color: var(--gold); transform: translateY(-1px); }
 .wordmark:hover span,
-.wordmark:focus-visible span { transform: translateY(-2px); }
+.wordmark:focus-visible span { transform: translateY(var(--motion-control-lift)); }
 .nav-rail { display: flex; align-items: center; gap: var(--space-5); margin-left: auto; }
 .nav-rail a {
   position: relative; display: flex; align-items: baseline; gap: 7px; padding: 8px 2px;
@@ -120,7 +124,7 @@
   border-radius: 50%; background: var(--control-bg); color: var(--ink); box-shadow: var(--control-shadow);
   font-family: var(--font-technical); font-size: 1.2rem; line-height: 1;
 }
-.mobile-menu-close:hover { border-color: var(--gold); background: var(--control-hover); color: var(--gold); transform: translateY(-2px); }
+.mobile-menu-close:hover { border-color: var(--gold); background: var(--control-hover); color: var(--gold); transform: translateY(var(--motion-control-lift)); }
 .mobile-menu {
   display: flex; flex-direction: column; gap: 0;
   width: 100%; max-width: 420px; padding: 0 32px;
@@ -147,9 +151,9 @@
   color: var(--ink);
   font-family: var(--font-prose); font-size: var(--text-xs); letter-spacing: var(--tracking-latin-meta);
   box-shadow: var(--control-shadow);
-  transition: background-color var(--dur-base), border-color var(--dur-base), box-shadow var(--dur-base), transform var(--dur-base) var(--ease-apple);
+  transition: none;
 }
-.theme-orbit:hover { border-color: var(--gold); background: var(--control-hover); transform: translateY(-2px); box-shadow: var(--interactive-shadow); }
+.theme-orbit:hover { border-color: var(--gold); background: var(--control-hover); transform: translateY(var(--motion-control-lift)); box-shadow: var(--interactive-shadow); }
 .orbit-track {
   position: relative; display: inline-flex; align-items: center; justify-content: space-between;
   width: 46px; height: 22px; padding: 0 5px; border-radius: var(--radius-pill); background: var(--line);
@@ -158,7 +162,7 @@
 .orbit-knob {
   position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%;
   background: var(--gold); box-shadow: 0 1px 6px rgba(0, 0, 0, .28);
-  transition: transform var(--dur-base) var(--ease-apple), background-color var(--dur-base);
+  transition: none;
 }
 .orbit-knob.dark { transform: translateX(24px); background: var(--violet); }
 
@@ -318,7 +322,7 @@
 .page-compass-top > span:not(.page-compass-top-tooltip) { font-size: .75rem; transform: translateY(1px); }
 .page-compass-top > small { font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: .02em; }
 .page-compass-top:hover,
-.page-compass-top:focus-visible { color: var(--gold); transform: translateY(-2px); }
+.page-compass-top:focus-visible { color: var(--gold); transform: translateY(var(--motion-control-lift)); }
 .page-compass-top-tooltip {
   position: absolute;
   inset-inline-end: calc(100% + var(--tooltip-offset));
@@ -346,7 +350,7 @@
   line-height: 1.2;
 }
 .page-compass-top-tooltip strong { font-size: var(--type-meta-size); letter-spacing: .1em; }
-.page-compass-top-tooltip small { color: var(--text-decorative); font-size: var(--text-micro); letter-spacing: .08em; }
+.page-compass-top-tooltip small { color: var(--tooltip-muted); font-size: var(--text-micro); letter-spacing: .08em; }
 .page-compass-current {
   display: grid;
   justify-items: center;
@@ -424,7 +428,7 @@
 .page-compass-tooltip small,
 .page-compass-tooltip strong,
 .page-compass-tooltip em { line-height: 1.2; }
-.page-compass-tooltip small { color: var(--text-decorative); font-size: var(--text-micro); letter-spacing: .08em; }
+.page-compass-tooltip small { color: var(--tooltip-muted); font-size: var(--text-micro); letter-spacing: .08em; }
 .page-compass-tooltip strong { font-size: var(--type-meta-size); font-weight: 600; letter-spacing: .08em; }
 .page-compass-tooltip em {
   grid-column: 2;
@@ -434,11 +438,16 @@
   letter-spacing: .12em;
   opacity: .68;
 }
+@media (min-width: 761px) {
+  .page-compass-link:focus-visible .page-compass-tooltip,
+  .page-compass-top:focus-visible .page-compass-top-tooltip {
+    opacity: 1;
+    transform: translate(0, -50%);
+  }
+}
 @media (hover: hover) and (pointer: fine) and (min-width: 761px) {
   .page-compass-link:hover .page-compass-tooltip,
-  .page-compass-link:focus-visible .page-compass-tooltip,
-  .page-compass-top:hover .page-compass-top-tooltip,
-  .page-compass-top:focus-visible .page-compass-top-tooltip {
+  .page-compass-top:hover .page-compass-top-tooltip {
     opacity: 1;
     transform: translate(0, -50%);
   }
@@ -603,7 +612,7 @@
   transition: transform var(--dur-base) var(--ease-spring), border-color var(--dur-base), background-color var(--dur-base), color var(--dur-base), box-shadow var(--dur-base);
 }
 .hero-action.primary { border-color: var(--action-fill); background: var(--action-fill); color: var(--accent-contrast); box-shadow: 0 8px 26px var(--glow-gold); }
-.hero-action:hover { transform: translateY(-2px); border-color: var(--gold); background: var(--control-hover); box-shadow: var(--interactive-shadow); }
+.hero-action:hover { transform: translateY(var(--motion-control-lift)); border-color: var(--gold); background: var(--control-hover); box-shadow: var(--interactive-shadow); }
 .hero-action.primary:hover { background: var(--button-hover); color: var(--accent-contrast); }
 .hero-action:active { transform: translateY(1px) scale(var(--motion-press-scale)); }
 .hero-action:not(.primary):active { background: var(--surface-pressed); }

@@ -313,7 +313,7 @@
   color: currentColor;
 }
 @media (hover: hover) and (pointer: fine) {
-  .sc-chapter[href]:hover { transform: translateY(-2px); }
+  .sc-chapter[href]:hover { transform: translateY(var(--motion-control-lift)); }
 }
 .sc-chapter[href]:active { transform: translateY(1px) scale(var(--motion-press-scale)); }
 @media (hover: hover) and (pointer: fine) {

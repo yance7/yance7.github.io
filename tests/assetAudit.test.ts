@@ -7,7 +7,8 @@ const root = process.cwd()
 describe('media release contracts', () => {
   it('reserves a stable responsive lightbox stage', () => {
     const components = readFileSync(resolve(root, 'src/styles/components.css'), 'utf8')
-    expect(components).toMatch(/\.lb-stage\s*\{[\s\S]*aspect-ratio:\s*4\s*\/\s*3/)
+    expect(components).toMatch(/\.lb-stage\s*\{[\s\S]*position:\s*absolute;[\s\S]*inset:\s*44px\s+44px\s+calc\(var\(--lb-meta-reserve\)\s*\+\s*44px\)/)
+    expect(components).toMatch(/\.lb-stage\s+img\s*\{[\s\S]*max-height:\s*min\(100%,/)
   })
 
   it('reports a clean asset metadata audit without changing files', () => {

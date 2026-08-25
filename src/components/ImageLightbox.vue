@@ -106,11 +106,7 @@ watch(() => [safeIndex.value, props.images[safeIndex.value]], () => {
         aria-label="演唱会海报大图"
         @click.self="closeLightbox"
       >
-        <div class="lb-meta-dock" aria-hidden="true">
-          <i class="lb-meta-blur lb-meta-blur--1"></i>
-          <i class="lb-meta-blur lb-meta-blur--2"></i>
-          <i class="lb-meta-blur lb-meta-blur--3"></i>
-        </div>
+        <div class="lb-meta-dock" aria-hidden="true"></div>
 
         <YanceButton ref="closeButton" class="lb-close" variant="quiet" size="icon" aria-label="关闭灯箱" @click="closeLightbox">
           ×

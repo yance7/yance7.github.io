@@ -65,7 +65,7 @@ const {
       </span>
     </button>
 
-    <div class="page-compass-current" aria-live="polite">
+    <div class="page-compass-current">
       <span>{{ formatCompassIndex(activeIndex, props.sections.length) }}</span>
       <strong>{{ activeSection?.shortLabel ?? activeSection?.label }}</strong>
     </div>

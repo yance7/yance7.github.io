@@ -8,7 +8,7 @@ const label = computed(() => props.labelOverride ?? statusLabels[props.status])
 </script>
 
 <template>
-  <span class="status-badge" :class="status">
+  <span class="status-badge" :class="status" :data-status="status">
     <i class="status-dot" aria-hidden="true"></i>
     <span>{{ label }}</span>
   </span>

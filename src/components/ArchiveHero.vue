@@ -41,7 +41,7 @@ const accessibleTitle = computed(() =>
             >{{ ch }}</span>
           </template>
         </h1>
-        <p class="hero-copy" v-reveal="{ delay: 180 }">{{ copy }}</p>
+        <p class="hero-copy">{{ copy }}</p>
         <p v-if="credit" class="lyric-credit" v-reveal="{ delay: 270 }">
           <b>{{ credit.artist }}</b>
           <i aria-hidden="true">/</i>

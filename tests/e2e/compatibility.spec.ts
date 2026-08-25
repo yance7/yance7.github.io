@@ -4,6 +4,11 @@ import { htmlPageEntries } from '../../src/data/pageRegistry'
 
 const archiveRoutes = htmlPageEntries.map(({ htmlName }) => `${htmlName}.html`)
 
+function expectTouchTarget(box: { width: number; height: number }, label: string) {
+  expect(Math.round(box.width), `${label} width`).toBeGreaterThanOrEqual(44)
+  expect(Math.round(box.height), `${label} height`).toBeGreaterThanOrEqual(44)
+}
+
 test('compatibility pages boot without horizontal overflow', async ({ page }) => {
   for (const route of archiveRoutes) {
     await page.goto(`/${route}`)
@@ -65,6 +70,37 @@ test('PageCompass exposes progress text and a single active chapter', async ({ p
   await expect(page.locator('.page-compass-link.active')).toHaveAttribute('aria-current', 'location')
 })
 
+test('coarse-pointer shared controls keep 44px touch targets', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-android-smoke', 'Android-specific coarse-pointer contract')
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/works.html')
+
+  for (const selector of ['.sc-actions .y-button', '.sc-proof-links .y-archive-link']) {
+    const box = await page.locator(selector).first().boundingBox()
+    expect(box, `${selector} geometry`).not.toBeNull()
+    expectTouchTarget(box!, selector)
+  }
+
+  await page.goto('/index.html')
+  await page.locator('.menu-trigger').click()
+  const closeButton = page.locator('.mobile-menu-close')
+  await expect(closeButton).toBeVisible()
+  const closeBox = await closeButton.boundingBox()
+  expect(closeBox, 'mobile menu close geometry').not.toBeNull()
+  expectTouchTarget(closeBox!, 'mobile menu close')
+  await closeButton.click()
+})
+
+test('keyboard PageCompass tooltips work with coarse pointer at desktop width', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-android-smoke', 'Android-specific coarse-pointer keyboard contract')
+  await page.setViewportSize({ width: 1024, height: 768 })
+  await page.goto('/research.html')
+
+  const link = page.locator('.page-compass-link').nth(1)
+  await link.focus()
+  await expect(page.locator('#compass-tip-sec-research-timeline')).toBeVisible()
+})
+
 test('compass stays inside the viewport and keeps touch targets usable', async ({ page }) => {
   for (const width of [320, 390, 768, 820, 1024, 1440]) {
     await page.setViewportSize({ width, height: 844 })
@@ -76,8 +112,7 @@ test('compass stays inside the viewport and keeps touch targets usable', async (
     if (width <= 1024) {
       const linkBox = await page.locator('.page-compass-link').first().boundingBox()
       expect(linkBox, `${width}px link geometry`).not.toBeNull()
-      expect(linkBox!.width, `${width}px link width`).toBeGreaterThanOrEqual(44)
-      expect(linkBox!.height, `${width}px link height`).toBeGreaterThanOrEqual(44)
+      expectTouchTarget(linkBox!, `${width}px link`)
     }
   }
 })
@@ -210,8 +245,23 @@ test('mobile menu typography follows the light-theme semantic text tokens', asyn
 test('touch carousel hover suppression follows the active theme control tokens', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/concerts.html')
+  const previousTheme = await page.locator('html').getAttribute('data-theme')
   await page.locator('.theme-orbit').click()
-  await page.waitForTimeout(420)
+  await expect.poll(() => page.locator('html').getAttribute('data-theme')).not.toBe(previousTheme)
+  await expect.poll(() => page.evaluate(() => {
+    const root = getComputedStyle(document.documentElement)
+    const button = document.querySelector<HTMLElement>('.carousel-controls button')!
+    const probe = document.createElement('span')
+    probe.style.backgroundColor = 'var(--media-control-bg)'
+    probe.style.borderColor = 'var(--media-control-border)'
+    document.body.append(probe)
+    const expectedBackground = getComputedStyle(probe).backgroundColor
+    const expectedBorder = getComputedStyle(probe).borderColor
+    probe.remove()
+    return getComputedStyle(button).backgroundColor === expectedBackground
+      && getComputedStyle(button).borderColor === expectedBorder
+      && root.getPropertyValue('--media-control-bg').trim() !== ''
+  })).toBe(true)
 
   const colors = await page.evaluate(() => {
     const root = getComputedStyle(document.documentElement)

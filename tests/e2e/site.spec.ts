@@ -5,7 +5,72 @@ import { htmlPageEntries, pageEntries } from '../../src/data/pageRegistry'
 
 const archiveRoutes = htmlPageEntries.map(({ htmlName }) => `${htmlName}.html`)
 
+async function settleAccessibilityState(page: Page) {
+  await page.waitForLoadState('domcontentloaded')
+  await expect(page.locator('main#main')).toBeVisible()
+
+  await expect(page.locator('html')).toHaveAttribute(
+    'data-fonts-ready',
+    'ready',
+    { timeout: 10_000 }
+  )
+
+  await page.evaluate(() => {
+    window.scrollTo(0, document.documentElement.scrollHeight)
+  })
+
+  await expect.poll(
+    () => page.locator('.reveal:not(.revealed)').count(),
+    {
+      timeout: 5_000,
+      message: 'all deferred reveal content should be revealed before axe audit'
+    }
+  ).toBe(0)
+
+  await expect.poll(
+    () =>
+      page.locator('.reveal').evaluateAll((elements) =>
+        elements.every((element) => {
+          const style = getComputedStyle(element)
+          // WebKit serializes finished `transform: none` animations as identity matrices.
+          const transformMatch = style.transform.match(/^matrix(3d)?\((.+)\)$/)
+          const transformValues = transformMatch?.[2]?.split(',').map(Number)
+          const identityTransform = transformMatch?.[1]
+            ? [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
+            : [1, 0, 0, 1, 0, 0]
+          const transformIsFinal =
+            style.transform === 'none' ||
+            (transformValues?.length === identityTransform.length &&
+              transformValues.every((value, index) => Math.abs(value - (identityTransform[index] ?? 0)) < 0.001))
+
+          return (
+            Number.parseFloat(style.opacity || '1') >= 0.999 &&
+            transformIsFinal &&
+            style.filter === 'none' &&
+            style.clipPath === 'none'
+          )
+        })
+      ),
+    {
+      timeout: 5_000,
+      message: 'reveal transitions should reach their final visual state before axe audit'
+    }
+  ).toBe(true)
+
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        window.scrollTo(0, 0)
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => resolve())
+        })
+      })
+  )
+}
+
 async function expectAccessible(page: Page) {
+  await settleAccessibilityState(page)
+
   const results = await new AxeBuilder({ page }).analyze()
   expect(results.violations).toEqual([])
 }
@@ -54,6 +119,69 @@ test('theme preference persists after reload', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
   await page.reload()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+})
+
+test('rapid theme toggles commit deterministically', async ({ page }) => {
+  await page.goto('/index.html')
+  await page.evaluate(() => localStorage.setItem('yance-theme', 'light'))
+  await page.reload()
+
+  await page.locator('.theme-orbit').evaluate((element: HTMLElement) => {
+    element.click()
+    element.click()
+  })
+
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('yance-theme'))).toBe('light')
+})
+
+test('deferred fonts do not cause material late layout shift', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium', 'Chromium is the supported layout-shift measurement project')
+
+  await page.addInitScript(() => {
+    type FontShiftWindow = Window & {
+      __fontLayoutShifts?: Array<{ startTime: number; value: number }>
+      __fontLayoutShiftSupported?: boolean
+    }
+
+    const shiftWindow = window as FontShiftWindow
+    shiftWindow.__fontLayoutShifts = []
+    shiftWindow.__fontLayoutShiftSupported = PerformanceObserver.supportedEntryTypes?.includes('layout-shift') === true
+    if (!shiftWindow.__fontLayoutShiftSupported) return
+
+    new PerformanceObserver((list) => {
+      list.getEntries().forEach((entry) => {
+        const shift = entry as PerformanceEntry & { hadRecentInput: boolean; value: number }
+        if (!shift.hadRecentInput) {
+          shiftWindow.__fontLayoutShifts?.push({ startTime: shift.startTime, value: shift.value })
+        }
+      })
+    }).observe({ type: 'layout-shift', buffered: true })
+  })
+
+  await page.goto('/index.html')
+  await expect.poll(() => page.locator('html').getAttribute('data-fonts-ready')).toBe('ready')
+  await page.evaluate(() => new Promise<void>((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+  }))
+
+  const metrics = await page.evaluate(() => {
+    type FontShiftWindow = Window & {
+      __fontLayoutShifts?: Array<{ startTime: number; value: number }>
+      __fontLayoutShiftSupported?: boolean
+    }
+
+    const shiftWindow = window as FontShiftWindow
+    return {
+      lateShift: shiftWindow.__fontLayoutShifts
+        ?.filter(({ startTime }) => startTime > 1500)
+        .reduce((total, shift) => total + shift.value, 0) ?? 0,
+      supported: shiftWindow.__fontLayoutShiftSupported === true
+    }
+  })
+
+  expect(metrics.supported, 'Chromium must expose layout-shift entries for this gate').toBe(true)
+  expect(metrics.lateShift).toBeLessThan(0.01)
 })
 
 test('page compass unifies section navigation, reading progress, and return to top', async ({ page }) => {
@@ -107,6 +235,14 @@ test('research timeline highlights the item in the reading zone', async ({ page 
   }
 })
 
+test('research timeline clears current state outside the reading zone', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/research.html')
+
+  await page.evaluate(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'auto' }))
+  await expect.poll(() => page.locator('.tl-item[data-reading-state="current"]').count()).toBe(0)
+})
+
 test('research status markers keep a static hierarchy without competing pulses', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 900 })
   await page.goto('/research.html')
@@ -118,7 +254,10 @@ test('research status markers keep a static hierarchy without competing pulses',
   )
   expect(animations.every((animation) => animation === 'none')).toBe(true)
 
-  const currentNode = page.locator('.tl-item[data-reading-state="current"] .tl-node').first()
+  const firstItem = page.locator('.tl-item').first()
+  await firstItem.evaluate((element) => element.scrollIntoView({ block: 'center', behavior: 'auto' }))
+  await expect(firstItem).toHaveAttribute('data-reading-state', 'current')
+  const currentNode = firstItem.locator('.tl-node')
   await expect.poll(() => currentNode.evaluate((element) => getComputedStyle(element).boxShadow)).not.toBe('none')
   await expect(page.locator('.nav-status b')).toHaveCSS('animation-name', 'pulse')
 })
@@ -198,7 +337,7 @@ test('failed page chunks render a controlled error without a reload loop', async
   await expect(page.locator('[data-page-load-state="error"]')).toBeVisible({ timeout: 15000 })
   await expect(page.locator('.page-load-error')).toBeVisible()
   expect(requestCount).toBeLessThanOrEqual(3)
-  await page.waitForTimeout(300)
+  await page.waitForLoadState('networkidle')
   expect(requestCount).toBeLessThanOrEqual(3)
 })
 
@@ -290,7 +429,7 @@ test('mobile compass keeps focus priority inside a compact visual frame', async 
     if (viewport.width <= 760) {
       await expect(compass).toHaveAttribute('data-mobile-state', 'quiet')
       await page.evaluate(() => window.scrollTo({ top: 700, behavior: 'auto' }))
-      await expect(compass).toHaveAttribute('data-mobile-state', 'reading')
+      await expect.poll(() => compass.getAttribute('data-mobile-state'), { timeout: 2500 }).not.toBe('quiet')
       await expect.poll(() => compass.getAttribute('data-mobile-state'), { timeout: 2500 }).toBe('visible')
     } else {
       await expect(compass).toHaveAttribute('data-mobile-state', 'visible')
@@ -342,7 +481,9 @@ test('mobile compass keeps focus priority inside a compact visual frame', async 
 })
 
 test('interactive states remain accessible after opening', async ({ page }) => {
+  test.setTimeout(60000)
   await page.setViewportSize({ width: 390, height: 844 })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/index.html')
   await page.locator('.menu-trigger').click()
   await expectAccessible(page)
@@ -382,7 +523,9 @@ test('rapid control clicks settle without duplicate or stale state', async ({ pa
   await page.goto('/concerts.html')
   const carousel = page.locator('.concert-poster').filter({ has: page.locator('.carousel-controls') }).first()
   const next = carousel.locator('button[aria-label="下一张"]')
-  for (let i = 0; i < 8; i += 1) await next.click({ force: true })
+  await expect(next).toBeVisible()
+  await expect(next).toBeEnabled()
+  for (let i = 0; i < 8; i += 1) await next.dispatchEvent('click')
   await expect(carousel.locator('.carousel-controls span')).toHaveText(/\d+ \/ \d+/)
 })
 

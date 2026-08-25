@@ -1,16 +1,43 @@
 import type { Directive, DirectiveBinding } from 'vue'
-import { getRevealMode } from '../utils/reveal'
+import { getRevealMode, isInInitialViewport } from '../utils/reveal'
 
 type RevealVariant = 'fade-up' | 'fade-left' | 'fade-right' | 'clip' | 'scale' | 'blur'
 type RevealValue = number | { delay?: number; variant?: RevealVariant }
 
-const tracked = new Set<HTMLElement>()
 let observer: IntersectionObserver | null = null
+let bottomResizeObserver: ResizeObserver | null = null
+let reachedDocumentEnd = false
+const documentEndBuffer = 240
 
 function revealElement(element: HTMLElement, currentObserver: IntersectionObserver) {
   element.classList.add('revealed')
   currentObserver.unobserve(element)
-  tracked.delete(element)
+}
+
+function isNearDocumentEnd() {
+  return window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - documentEndBuffer
+}
+
+function disconnectBottomFallback() {
+  window.removeEventListener('scroll', handleScroll)
+  bottomResizeObserver?.disconnect()
+  bottomResizeObserver = null
+}
+
+function revealRemainingAtDocumentEnd() {
+  if (reachedDocumentEnd || !isNearDocumentEnd()) return
+  reachedDocumentEnd = true
+
+  document.querySelectorAll<HTMLElement>('.reveal:not(.revealed)').forEach((element) => {
+    element.classList.add('revealed')
+    observer?.unobserve(element)
+  })
+  disconnectBottomFallback()
+}
+
+function handleScroll() {
+  if (reachedDocumentEnd || !isNearDocumentEnd()) return
+  revealRemainingAtDocumentEnd()
 }
 
 function getObserver() {
@@ -21,14 +48,14 @@ function getObserver() {
         const element = entry.target as HTMLElement
         revealElement(element, currentObserver)
       })
-
-      const viewportBottom = window.innerHeight
-      tracked.forEach((element) => {
-        if (element.getBoundingClientRect().top < viewportBottom) {
-          revealElement(element, currentObserver)
-        }
+    }, { threshold: 0.08, rootMargin: '0px 0px 120px 0px' })
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    if ('ResizeObserver' in window) {
+      bottomResizeObserver = new ResizeObserver(() => {
+        if (!reachedDocumentEnd && isNearDocumentEnd()) revealRemainingAtDocumentEnd()
       })
-    }, { threshold: 0.08, rootMargin: '0px 0px -60px 0px' })
+      bottomResizeObserver.observe(document.documentElement)
+    }
   }
   return observer
 }
@@ -57,14 +84,24 @@ const reveal: Directive<HTMLElement, RevealValue> = {
       return
     }
 
+    if (isInInitialViewport(element.getBoundingClientRect(), window.innerHeight)) {
+      revealImmediately(element)
+      return
+    }
+
+    if (reachedDocumentEnd) {
+      revealImmediately(element)
+      return
+    }
+
     const { delay, variant } = resolveValue(binding.value)
     element.dataset.revealVariant = variant
     element.style.transitionDelay = delay > 0 ? `${delay}ms` : ''
     element.classList.add('reveal')
 
     const currentObserver = getObserver()
-    tracked.add(element)
     currentObserver.observe(element)
+    revealRemainingAtDocumentEnd()
   },
 
   updated(element, binding: DirectiveBinding<RevealValue>) {
@@ -76,7 +113,6 @@ const reveal: Directive<HTMLElement, RevealValue> = {
 
   unmounted(element) {
     observer?.unobserve(element)
-    tracked.delete(element)
     element.style.removeProperty('transition-delay')
   }
 }

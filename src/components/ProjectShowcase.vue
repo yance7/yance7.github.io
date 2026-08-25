@@ -56,7 +56,6 @@ const chapterCount = computed(() => String(props.project.story.chapters.length).
             target="_blank"
             rel="noopener noreferrer"
             variant="primary"
-            v-magnetic="{ strength: 3.5 }"
           >
             ENTER PROJECT
             <template #trailing>→</template>
@@ -67,7 +66,6 @@ const chapterCount = computed(() => String(props.project.story.chapters.length).
             target="_blank"
             rel="noopener noreferrer"
             variant="secondary"
-            v-magnetic="{ strength: 3.5 }"
           >
             SOURCE CODE
             <template #trailing>→</template>

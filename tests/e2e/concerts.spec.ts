@@ -165,19 +165,21 @@ test('concert album wall selection and looping controls stay synchronized', asyn
 })
 
 test('concert album spotlight keeps a decoded cover during delayed rapid switching', async ({ page }) => {
+  let releaseTargetRequest!: () => void
+  const targetRequestGate = new Promise<void>((resolve) => {
+    releaseTargetRequest = resolve
+  })
   await page.route('**/assets/albums/thumbs/*.webp', async (route) => {
-    if (route.request().url().includes('jay-ye-hui-mei-') || route.request().url().includes('/albums/jay-ye-hui-mei.jpg')) {
-      await new Promise((resolve) => setTimeout(resolve, 1200))
-    }
+    if (route.request().url().includes('jay-ye-hui-mei-')) await targetRequestGate
     await route.continue()
   })
   await page.goto('/concerts.html')
   const wall = page.locator('.album-wall-section')
 
   await wall.locator('[data-album-id="jay-ye-hui-mei"]').click()
-  await page.waitForTimeout(240)
 
   await expect(wall.locator('.album-visual-slot')).toHaveAttribute('aria-busy', 'true')
+  await expect(wall.locator('.album-visual-slot')).toHaveAttribute('data-spotlight-state', 'loading')
   await expect(wall.locator('.album-cover-frame img[src$="jay-fantasy.jpg"]')).toHaveCount(1)
   const loadingVisual = await wall.locator('.album-visual-slot').evaluate((element) => {
     const pseudo = getComputedStyle(element, '::after')
@@ -189,32 +191,25 @@ test('concert album spotlight keeps a decoded cover during delayed rapid switchi
     }
   })
   expect(loadingVisual.reducedMotion).toBe(false)
-  expect(['loading', 'ready']).toContain(loadingVisual.state)
-  if (loadingVisual.state === 'loading') {
-    expect(loadingVisual.animationName).toMatch(/^album-loading-pulse-/)
-    expect(loadingVisual.backgroundImage).toMatch(/gradient/)
-  } else {
-    expect(loadingVisual.animationName).toBe('none')
-    expect(loadingVisual.backgroundImage).toBe('none')
-  }
+  expect(loadingVisual.state).toBe('loading')
+  expect(loadingVisual.animationName).toMatch(/^album-loading-pulse-/)
+  expect(loadingVisual.backgroundImage).toMatch(/gradient/)
 
-  const visibleCover = await wall.locator('.album-cover-frame').evaluateAll((frames) => frames
-    .map((frame) => {
-      const image = frame.querySelector('img')
-      return {
-        opacity: Number.parseFloat(getComputedStyle(frame).opacity),
-        decoded: !!image?.complete && image.naturalWidth > 0
-      }
-    })
-    .sort((left, right) => right.opacity - left.opacity)[0]?.decoded)
-  expect(visibleCover).toBe(true)
+  const preservedCover = wall.locator('.album-cover-frame:has(img[src$="jay-fantasy.jpg"])')
+  await expect(preservedCover).toHaveCount(1)
+  await expect.poll(() => preservedCover.locator('img').evaluate((image: HTMLImageElement) => (
+    image.complete && image.naturalWidth > 0
+  ))).toBe(true)
+  await expect.poll(() => preservedCover.evaluate((frame) => Number.parseFloat(getComputedStyle(frame).opacity))).toBeGreaterThan(0)
 
+  releaseTargetRequest()
   await expect.poll(() => wall.locator('.album-cover-frame img').evaluateAll((images) => (
     images as HTMLImageElement[]
   ).map((image) => image.currentSrc))).toEqual(
     expect.arrayContaining([expect.stringMatching(/jay-ye-hui-mei-(640|1200)\.webp$/)])
   )
   await expect(wall.locator('.album-visual-slot')).toHaveAttribute('aria-busy', 'false')
+  await expect(wall.locator('.album-visual-slot')).toHaveAttribute('data-spotlight-state', 'ready')
   await expect.poll(() => wall.locator('.album-visual-slot').evaluate((element) => getComputedStyle(element, '::after').animationName)).toBe('none')
 })
 
@@ -258,7 +253,6 @@ test('concert album spotlight commits the latest rapid selection only', async ({
   ).map((image) => image.currentSrc))).toEqual(
     expect.arrayContaining([expect.stringMatching(/jay-common-jasmine-orange-(640|1200)\.webp$/)])
   )
-  await page.waitForTimeout(600)
   await expect(wall.locator('.album-cover-frame img')).toHaveCount(1)
   await expect(wall.locator('.album-cover-frame img')).toHaveAttribute('src', /jay-common-jasmine-orange\.jpg$/)
 })
@@ -472,6 +466,7 @@ test('concert visual surfaces use theme semantics and shared motion cadence', as
   expect(light.controlsBackground).not.toBe(light.expectedBgTint)
 
   await page.locator('.theme-orbit').click()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
   const dark = await readVisualContract()
   expect(dark.theme).toBe('dark')
   expect(dark.stageSurface).toBe(dark.bgTint)

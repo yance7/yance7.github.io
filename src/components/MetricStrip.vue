@@ -4,13 +4,10 @@ import type { Metric } from '../data/types'
 
 const props = withDefaults(defineProps<{ metrics: Metric[]; large?: boolean }>(), { large: false })
 
-const displays = ref(props.metrics.map((m) => String(m.value)))
-const cards = ref<HTMLElement[]>([])
-const rafs = new Set<number>()
-let observers: IntersectionObserver[] = []
-
-function setCard(el: unknown, index: number) {
-  if (el instanceof Element) cards.value[index] = el as HTMLElement
+function prefersReducedMotion() {
+  return typeof window !== 'undefined'
+    && typeof window.matchMedia === 'function'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 }
 
 function parseValue(value: string) {
@@ -23,13 +20,48 @@ function parseValue(value: string) {
   }
 }
 
+function initialDisplay(value: string, reducedMotion: boolean) {
+  if (reducedMotion) return String(value)
+  const parsed = parseValue(value)
+  if (!parsed) return String(value)
+  return (0).toFixed(parsed.decimals) + parsed.suffix
+}
+
+const displays = ref(props.metrics.map((metric) => initialDisplay(metric.value, prefersReducedMotion())))
+const metricStrip = ref<HTMLElement | null>(null)
+const metricsReady = ref(false)
+const rafs = new Set<number>()
+let observer: IntersectionObserver | null = null
+const animatedIndexes = new Set<number>()
+const completedIndexes = new Set<number>()
+const visibleIndexes = new Set<number>()
+const observedIndexes = new Set<number>()
+let initialObservationComplete = false
+
+function markMetricsReadyIfComplete() {
+  if (!initialObservationComplete) return
+  if (!visibleIndexes.size || [...visibleIndexes].every((index) => completedIndexes.has(index))) {
+    metricsReady.value = true
+  }
+}
+
 function animateIndex(i: number) {
+  if (animatedIndexes.has(i)) return
+  animatedIndexes.add(i)
   const metric = props.metrics[i]
-  if (!metric) return
+  if (!metric) {
+    completedIndexes.add(i)
+    markMetricsReadyIfComplete()
+    return
+  }
   const parsed = parseValue(metric.value)
-  if (!parsed) return
+  if (!parsed) {
+    completedIndexes.add(i)
+    markMetricsReadyIfComplete()
+    return
+  }
   const start = performance.now()
-  const duration = 900
+  const duration = 650
   let currentRaf = 0
   const step = (now: number) => {
     rafs.delete(currentRaf)
@@ -39,43 +71,67 @@ function animateIndex(i: number) {
     if (t < 1) {
       currentRaf = requestAnimationFrame(step)
       rafs.add(currentRaf)
+      return
     }
+    completedIndexes.add(i)
+    markMetricsReadyIfComplete()
   }
   currentRaf = requestAnimationFrame(step)
   rafs.add(currentRaf)
 }
 
 onMounted(() => {
-  if (!('IntersectionObserver' in window)) return
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-  observers = cards.value.map((el, i) => {
-    if (!el) return null
-    const obs = new IntersectionObserver((entries) => {
-      if (entries.some((entry) => entry.isIntersecting)) {
-        animateIndex(i)
-        obs.disconnect()
-      }
-    }, { threshold: 0.3 })
-    obs.observe(el)
-    return obs
-  }).filter((observer): observer is IntersectionObserver => observer !== null)
+  const strip = metricStrip.value
+  if (!strip) return
+  if (prefersReducedMotion() || !('IntersectionObserver' in window)) {
+    displays.value = props.metrics.map((metric) => String(metric.value))
+    metricsReady.value = true
+    return
+  }
+
+  const cards = [...strip.querySelectorAll<HTMLElement>('[data-metric-index]')]
+  observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      const index = Number((entry.target as HTMLElement).dataset.metricIndex)
+      if (!Number.isInteger(index)) return
+      observedIndexes.add(index)
+      if (!entry.isIntersecting) return
+      visibleIndexes.add(index)
+      animateIndex(index)
+      observer?.unobserve(entry.target)
+    })
+    if (observedIndexes.size >= cards.length) {
+      initialObservationComplete = true
+      markMetricsReadyIfComplete()
+    }
+  }, { threshold: 0.3 })
+  cards.forEach((card) => observer?.observe(card))
+  if (!cards.length) {
+    initialObservationComplete = true
+    metricsReady.value = true
+  }
 })
 
 onUnmounted(() => {
   rafs.forEach((id) => cancelAnimationFrame(id))
   rafs.clear()
-  observers.forEach((obs) => obs.disconnect())
+  observer?.disconnect()
+  observer = null
+  animatedIndexes.clear()
+  completedIndexes.clear()
+  visibleIndexes.clear()
+  observedIndexes.clear()
+  initialObservationComplete = false
 })
 </script>
 
 <template>
-  <div class="metric-strip" :class="{ large }">
+  <div ref="metricStrip" class="metric-strip" :class="{ large }" :data-metrics-ready="metricsReady ? 'true' : 'false'" v-reveal>
     <div
       v-for="(m, i) in metrics"
       :key="m.label"
       class="metric-card"
-      :ref="(el) => setCard(el, i)"
-      v-reveal
+      :data-metric-index="i"
     >
       <b>{{ displays[i] ?? m.value }}</b>
       <span>{{ m.label }}</span>

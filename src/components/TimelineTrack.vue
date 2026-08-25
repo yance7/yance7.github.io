@@ -25,7 +25,10 @@ function toggleMethod(id: string) {
 }
 
 function updateCurrentItem() {
-  if (!readingTargets.size) return
+  if (!readingTargets.size) {
+    currentId.value = ''
+    return
+  }
   const readingLine = window.innerHeight * .38
   const closest = [...readingTargets]
     .map((target) => ({

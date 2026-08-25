@@ -73,54 +73,27 @@
   color: var(--ink);
   box-shadow: var(--control-shadow);
 }
-.y-button--ghost {
-  border-color: transparent;
-  background: transparent;
-  color: var(--ink);
-  box-shadow: none;
-}
 .y-button--quiet {
   border-color: var(--control-border);
   background: var(--control-bg);
   color: var(--ink);
   box-shadow: var(--control-shadow);
 }
-.y-button--archive {
-  min-height: var(--control-height-sm);
-  padding-inline: var(--space-3);
-  border-color: transparent;
-  background: transparent;
-  color: var(--muted);
-  font-family: var(--font-technical);
-  font-size: var(--text-xs);
-  font-weight: 500;
-  letter-spacing: var(--tracking-zh-meta);
-}
-
-.y-button:not(:disabled):hover {
+.y-button:not(:disabled):not([aria-disabled='true']):hover {
   transform: translateY(-1px);
 }
-.y-button--primary:not(:disabled):hover {
+.y-button--primary:not(:disabled):not([aria-disabled='true']):hover {
   border-color: var(--button-hover);
   background: var(--button-hover);
   box-shadow: 0 8px 24px var(--glow-gold);
 }
-.y-button--secondary:not(:disabled):hover,
-.y-button--quiet:not(:disabled):hover {
+.y-button--secondary:not(:disabled):not([aria-disabled='true']):hover,
+.y-button--quiet:not(:disabled):not([aria-disabled='true']):hover {
   border-color: var(--gold);
   background: var(--control-hover);
   color: var(--gold);
 }
-.y-button--ghost:not(:disabled):hover {
-  background: var(--control-hover);
-  color: var(--gold);
-}
-.y-button--archive:not(:disabled):hover {
-  border-color: var(--aqua);
-  background: var(--surface-tint);
-  color: var(--ink);
-}
-.y-button:active:not(:disabled) { transform: translateY(1px) scale(var(--motion-press-scale)); }
+.y-button:active:not(:disabled):not([aria-disabled='true']) { transform: translateY(1px) scale(var(--motion-press-scale)); }
 .y-button:focus-visible { box-shadow: var(--focus-ring); }
 .y-button:disabled,
 .y-button[aria-disabled='true'] { cursor: not-allowed; opacity: .58; }
@@ -132,13 +105,13 @@
   transition: transform var(--dur-fast) var(--ease-out);
 }
 @media (hover: hover) and (pointer: fine) {
-  .y-button:not(:disabled):hover .y-button__trailing { transform: translateX(3px); }
+  .y-button:not(:disabled):not([aria-disabled='true']):hover .y-button__trailing { transform: translateX(3px); }
   .y-archive-link:hover > span:last-child { transform: translateX(3px); }
 }
 
 @media (pointer: coarse) {
-  .y-button--icon,
-  .y-button--quiet { min-height: 44px; }
+  .y-button,
+  .y-archive-link { min-height: 44px; }
   .y-button--icon { width: 44px; }
 }
 
@@ -151,28 +124,19 @@
     box-shadow: none;
   }
   .y-archive-link:hover > span:last-child { transform: none; }
-  .y-button:not(:disabled):hover { transform: none; }
-  .y-button--primary:not(:disabled):hover {
+  .y-button:not(:disabled):not([aria-disabled='true']):hover { transform: none; }
+  .y-button--primary:not(:disabled):not([aria-disabled='true']):hover {
     border-color: var(--action-fill);
     background: var(--action-fill);
     box-shadow: 0 6px 18px var(--glow-gold);
   }
-  .y-button--secondary:not(:disabled):hover,
-  .y-button--quiet:not(:disabled):hover {
+  .y-button--secondary:not(:disabled):not([aria-disabled='true']):hover,
+  .y-button--quiet:not(:disabled):not([aria-disabled='true']):hover {
     border-color: var(--control-border);
     background: var(--control-bg);
     color: var(--ink);
   }
-  .y-button--ghost:not(:disabled):hover {
-    background: transparent;
-    color: var(--ink);
-  }
-  .y-button--archive:not(:disabled):hover {
-    border-color: transparent;
-    background: transparent;
-    color: var(--muted);
-  }
-  .y-button:not(:disabled):hover .y-button__trailing { transform: none; }
+  .y-button:not(:disabled):not([aria-disabled='true']):hover .y-button__trailing { transform: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -181,9 +145,9 @@
   .y-button,
   .y-button__leading,
   .y-button__trailing { transition-duration: .01ms; }
-  .y-button:not(:disabled):hover,
-  .y-button:active:not(:disabled) { transform: none; }
-  .y-button:not(:disabled):hover .y-button__trailing { transform: none; }
+  .y-button:not(:disabled):not([aria-disabled='true']):hover,
+  .y-button:active:not(:disabled):not([aria-disabled='true']) { transform: none; }
+  .y-button:not(:disabled):not([aria-disabled='true']):hover .y-button__trailing { transform: none; }
   .y-archive-link:hover,
   .y-archive-link:hover > span:last-child,
   .y-archive-link:active { transform: none; }

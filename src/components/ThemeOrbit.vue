@@ -1,17 +1,14 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import { useTheme } from '../composables/useTheme'
 const { theme, toggleTheme } = useTheme()
-const btn = ref<HTMLButtonElement | null>(null)
 
 function onToggle() {
-  toggleTheme(btn.value)
+  toggleTheme()
 }
 </script>
 
 <template>
   <button
-    ref="btn"
     class="theme-orbit"
     :class="theme"
     type="button"

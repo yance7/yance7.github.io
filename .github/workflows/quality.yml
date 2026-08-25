@@ -3,7 +3,15 @@ name: Quality Audit
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
+    inputs:
+      update_visual_snapshots:
+        description: 'Regenerate Linux visual baselines for manual review'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -49,17 +57,25 @@ jobs:
       - name: Lighthouse interaction budget
         run: npm run lighthouse:interactions
       - name: Chromium browser and axe quality
-        run: npm run test:e2e -- --project=chromium --workers=4
+        run: npm run test:e2e -- --project=chromium --workers=4 --retries=0
       - name: WebKit site and axe quality
-        run: npm run test:e2e -- tests/e2e/site.spec.ts --project=webkit-mobile --workers=4
+        run: npm run test:e2e -- tests/e2e/site.spec.ts --project=webkit-mobile --workers=4 --retries=0
       - name: WebKit UI primitive quality
-        run: npm run test:e2e -- tests/e2e/ui-primitives.spec.ts --project=webkit-mobile --workers=4
+        run: npm run test:e2e -- tests/e2e/ui-primitives.spec.ts --project=webkit-mobile --workers=4 --retries=0
       - name: Chromium visual quality
-        run: npm run test:e2e -- --project=chromium-visual --workers=2
+        shell: bash
+        run: |
+          if [ "${{ inputs.update_visual_snapshots }}" = "true" ]; then
+            npm run test:e2e -- --project=chromium-visual --workers=2 --retries=0 --update-snapshots
+          else
+            npm run test:e2e -- --project=chromium-visual --workers=2 --retries=0
+          fi
       - name: Firefox compatibility quality
-        run: npm run test:e2e -- --project=firefox-desktop-smoke --workers=2
+        if: ${{ !cancelled() }}
+        run: npm run test:e2e -- --project=firefox-desktop-smoke --workers=2 --retries=0
       - name: Android compatibility quality
-        run: npm run test:e2e -- --project=chromium-android-smoke --workers=2
+        if: ${{ !cancelled() }}
+        run: npm run test:e2e -- --project=chromium-android-smoke --workers=2 --retries=0
       - name: Upload quality artifacts
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -70,3 +86,11 @@ jobs:
             test-results
             playwright-report
           if-no-files-found: ignore
+          include-hidden-files: true
+      - name: Upload refreshed visual baselines
+        if: ${{ inputs.update_visual_snapshots == true }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: linux-visual-snapshots
+          path: tests/e2e/visual-snapshots/chromium-visual/linux
+          if-no-files-found: error

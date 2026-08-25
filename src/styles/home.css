@@ -28,7 +28,7 @@
 .world-left { display: flex; align-items: center; gap: 16px; }
 .world-no { font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: var(--tracking-latin-wide); color: var(--gold); }
 .world-icon { font-size: 24px; color: var(--dim); transition: transform var(--dur-base) var(--ease-spring), color var(--dur-base); }
-.world-card:is(:hover, :focus-visible) .world-icon { transform: translateY(-2px); color: var(--gold); }
+.world-card:is(:hover, :focus-visible) .world-icon { transform: translateY(var(--motion-control-lift)); color: var(--gold); }
 .world-center strong { font-family: var(--font-editorial); font-size: 1.8rem; font-weight: 400; display: block; }
 .world-center em { font-family: var(--font-editorial); font-style: italic; font-size: .95rem; color: var(--dim); }
 .world-center p { margin: 6px 0 0; color: var(--muted); font-size: var(--text-sm); max-width: var(--w-editorial); }
@@ -157,7 +157,7 @@
 .beyond-activity small { margin-top: 3px; color: var(--dim); font-family: var(--font-technical); font-size: var(--type-meta-size); }
 .beyond-links { display: flex; gap: var(--space-5); flex-wrap: wrap; margin-top: var(--space-5); }
 .beyond-links a { color: var(--gold); font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: var(--tracking-latin-meta); transition: color var(--dur-fast), transform var(--dur-fast) var(--ease-apple); }
-.beyond-links a:hover { color: var(--aqua); transform: translateY(-2px); }
+.beyond-links a:hover { color: var(--aqua); transform: translateY(var(--motion-control-lift)); }
 .leadership-grid {
   display: grid; grid-template-columns: repeat(2, 1fr); grid-auto-rows: 1fr; gap: 14px;
 }

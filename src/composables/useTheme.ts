@@ -7,7 +7,8 @@ const THEME_KEY = 'yance-theme'
 const theme = ref<Theme>('light')
 let systemMedia: MediaQueryList | null = null
 let systemListenerAttached = false
-let activeRipple: HTMLElement | null = null
+let themeApplyTimer: number | null = null
+let themeTransitionFrame: number | null = null
 
 function systemTheme(): Theme {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
@@ -15,55 +16,43 @@ function systemTheme(): Theme {
 
 function setTheme(value: Theme) {
   theme.value = value
+  applyThemeDocument(value)
+}
+
+function applyThemeDocument(value: Theme) {
   document.documentElement.dataset.theme = value
 
   const meta = document.querySelector('meta[name="theme-color"]')
   if (meta) meta.setAttribute('content', value === 'dark' ? THEME_COLORS.dark : THEME_COLORS.light)
 }
 
-function applyTheme(value: Theme, rippleEl: HTMLElement | null = null) {
-  setTheme(value)
-
+function applyTheme(value: Theme) {
   try {
     localStorage.setItem(THEME_KEY, value)
   } catch { /* 隐私模式下静默失败 */ }
 
-  if (
-    rippleEl &&
-    !window.matchMedia('(prefers-reduced-motion: reduce)').matches &&
-    !window.matchMedia('(pointer: coarse)').matches
-  ) {
-    window.setTimeout(() => {
-      if (!rippleEl.isConnected) return
-      activeRipple?.remove()
-      const rect = rippleEl.getBoundingClientRect()
-      const cx = rect.left + rect.width / 2
-      const cy = rect.top + rect.height / 2
-      const maxDim = Math.max(
-        Math.hypot(cx, cy),
-        Math.hypot(window.innerWidth - cx, cy),
-        Math.hypot(cx, window.innerHeight - cy),
-        Math.hypot(window.innerWidth - cx, window.innerHeight - cy)
-      )
-      const ripple = document.createElement('div')
-      ripple.className = 'theme-ripple'
-      ripple.style.left = `${cx}px`
-      ripple.style.top = `${cy}px`
-      ripple.style.width = `${maxDim * 2.4}px`
-      ripple.style.height = `${maxDim * 2.4}px`
-      document.body.appendChild(ripple)
-      activeRipple = ripple
-      requestAnimationFrame(() => ripple.classList.add('active'))
-      window.setTimeout(() => {
-        ripple.remove()
-        if (activeRipple === ripple) activeRipple = null
-      }, 800)
-    }, 0)
-  }
+  theme.value = value
+  if (themeApplyTimer !== null) window.clearTimeout(themeApplyTimer)
+  document.documentElement.dataset.themeChanging = 'true'
+  themeApplyTimer = window.setTimeout(() => {
+    themeApplyTimer = null
+    applyThemeDocument(value)
+    deferThemeTransitionRestore()
+  }, 0)
 }
 
-function toggleTheme(rippleEl: HTMLElement | null = null) {
-  applyTheme(theme.value === 'light' ? 'dark' : 'light', rippleEl)
+function toggleTheme() {
+  applyTheme(theme.value === 'light' ? 'dark' : 'light')
+}
+
+function deferThemeTransitionRestore() {
+  if (themeTransitionFrame !== null) window.cancelAnimationFrame(themeTransitionFrame)
+  themeTransitionFrame = window.requestAnimationFrame(() => {
+    themeTransitionFrame = window.requestAnimationFrame(() => {
+      themeTransitionFrame = null
+      delete document.documentElement.dataset.themeChanging
+    })
+  })
 }
 
 function initTheme() {

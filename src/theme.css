@@ -71,6 +71,7 @@
 
   /* 统一交互幅度 */
   --motion-lift: -3px;
+  --motion-control-lift: -1px;
   --motion-media-scale: 1.03;
   --motion-icon-shift: 4px;
   --motion-press-scale: .985;
@@ -158,6 +159,7 @@
   --gold-text: #8E5816;
   --action-fill: #8E5816;
   --aqua: #277E76;
+  --aqua-text: #236F68;
   --violet: #695F98;
   --focus: #8D5815;
   --accent-contrast: #FFFAF0;
@@ -171,6 +173,7 @@
   --control-shadow: 0 1px 2px rgba(35, 45, 42, .04), 0 5px 18px rgba(52, 63, 59, .06);
   --tooltip-bg: var(--ink);
   --tooltip-ink: var(--bg);
+  --tooltip-muted: #B6C1BC;
   --tooltip-shadow: var(--shadow-2);
   --status-neutral-bg: color-mix(in srgb, var(--surface-raised) 84%, transparent);
   --status-aqua-bg: color-mix(in srgb, var(--aqua) 9%, transparent);
@@ -235,7 +238,6 @@
   /* 材质 */
   --grain-opacity: .035;
   --grid-line: rgba(32, 35, 41, .04);
-  --ambient-blend: multiply;
 
   /* UI 元素 */
   --scrollbar: rgba(32, 35, 41, .22);
@@ -243,9 +245,6 @@
   --lb-bg: rgba(245, 242, 236, .96);
   --glass-border: rgba(255, 255, 255, .55);
   --glass-blur: 16px;
-
-  /* 主题切换扩散光 */
-  --ambient-color: rgba(255, 248, 230, .9);
 
   /* 等级色彩（荣誉卡片用） */
   --level-platinum: #8F601A;
@@ -287,6 +286,7 @@
   --gold-text: #E8B962;
   --action-fill: #E8B962;
   --aqua: #6DDED0;
+  --aqua-text: #6DDED0;
   --violet: #A698E6;
   --focus: #E8B962;
   --accent-contrast: #151616;
@@ -300,6 +300,7 @@
   --control-shadow: 0 1px 2px rgba(0, 0, 0, .2), 0 7px 22px rgba(0, 0, 0, .22);
   --tooltip-bg: var(--ink);
   --tooltip-ink: var(--bg);
+  --tooltip-muted: #646E74;
   --tooltip-shadow: var(--shadow-2);
   --status-neutral-bg: color-mix(in srgb, var(--surface-raised) 84%, transparent);
   --status-aqua-bg: color-mix(in srgb, var(--aqua) 9%, transparent);
@@ -364,7 +365,6 @@
   /* 材质 */
   --grain-opacity: .08;
   --grid-line: rgba(235, 238, 245, .03);
-  --ambient-blend: screen;
 
   /* UI 元素 */
   --scrollbar: rgba(235, 238, 245, .18);
@@ -372,9 +372,6 @@
   --lb-bg: rgba(5, 6, 10, .96);
   --glass-border: rgba(235, 238, 245, .12);
   --glass-blur: 18px;
-
-  /* 主题切换扩散光 */
-  --ambient-color: rgba(20, 30, 50, .95);
 
   /* 等级色彩（荣誉卡片用） */
   --level-platinum: #E8B962;
@@ -390,14 +387,6 @@
     var(--bg);
 }
 
-[data-theme='light'] .grain {
-  mix-blend-mode: multiply;
-  opacity: var(--grain-opacity);
-}
-
-[data-theme='light'] .ambient { opacity: .2; }
-[data-theme='light'] .carousel-controls { background: rgba(24, 28, 35, .74); }
-
 /* ---------- 暗色材质细节 ---------- */
 [data-theme='dark'] .site-shell {
   background:
@@ -408,11 +397,13 @@
     var(--bg);
 }
 
-[data-theme='dark'] .grain { opacity: var(--grain-opacity); }
+[data-theme='light'] .ambient { opacity: .2; }
+[data-theme='light'] .carousel-controls { background: rgba(24, 28, 35, .74); }
+
 [data-theme='dark'] .ambient { opacity: .72; }
 
 @media (max-width: 640px) {
-  [data-theme='light'] .grain, [data-theme='dark'] .grain { opacity: calc(var(--grain-opacity) * .5); }
+  .grain { opacity: calc(var(--grain-opacity) * .5); }
   [data-theme='light'] .ambient { opacity: .2; }
   [data-theme='dark'] .ambient { opacity: .45; }
 }
@@ -423,52 +414,16 @@
 .theme-orbit.dark .orbit-opt.sun { color: var(--dim); }
 .theme-orbit.dark .orbit-opt.moon { color: var(--violet); }
 
-/* ---------- 主题切换环境光扩散 ---------- */
-.theme-ripple {
-  position: fixed;
-  z-index: var(--z-toast);
-  pointer-events: none;
-  border-radius: 50%;
-  background: var(--ambient-color);
-  transform: translate(-50%, -50%) scale(0);
-  opacity: 0;
-  mix-blend-mode: var(--ambient-blend);
-}
-
-.theme-ripple.active {
-  animation: theme-ripple-expand var(--dur-page) var(--ease-out) forwards;
-}
-
-@media (pointer: coarse) {
-  .theme-ripple { display: none; }
+html[data-theme-changing],
+html[data-theme-changing] *,
+html[data-theme-changing] *::before,
+html[data-theme-changing] *::after {
+  transition: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .theme-ripple { display: none; }
-}
-
-@keyframes theme-ripple-expand {
-  0% {
-    transform: translate(-50%, -50%) scale(0);
-    opacity: .9;
+  .theme-orbit,
+  .orbit-knob {
+    transition-duration: .01ms;
   }
-  100% {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 0;
-  }
-}
-
-/* ---------- 全局主题颜色过渡 ---------- */
-body, .site-shell, .site-nav, .stat-cell, .ap-row, .tl-tag, .concert-info,
-.site-footer, .carousel-controls, .lightbox, .lb-meta, .current-research,
-.ap-panel, .concert-list, .research-timeline, .honor-card, .section-head,
-.archive-hero, .foot-tag, .foot-links a, .portal, .showcase, .scroll-bar,
-.honor-filter, .tl-method, .sc-dossier-head, .sc-body, .concert-group, .metric-card,
-.timeline-track, .status-badge, .media-ph, .now-active, .method-chip,
-.world-card, .education-row, .leadership-card, .activity-row, .tl-metrics,
-  .home-hero, .home-focus, .home-worlds, .home-beyond, .album-wall,
-  .hero-action, .wordmark, .foot-mark, .copy-citation {
-  transition-property: background, background-color, border-color, color, box-shadow, fill;
-  transition-duration: var(--dur-base);
-  transition-timing-function: var(--ease-soft);
 }

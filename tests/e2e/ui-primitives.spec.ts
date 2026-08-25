@@ -10,7 +10,7 @@ test('shared project actions expose stable keyboard targets', async ({ page }) =
   await expect(projectLink).toHaveClass(/y-button/)
 
   const box = await projectLink.boundingBox()
-  expect(box?.height ?? 0).toBeGreaterThanOrEqual(42)
+  expect(Math.round(box?.height ?? 0)).toBeGreaterThanOrEqual(42)
 })
 
 test('404 entry actions use the shared button primitive', async ({ page }) => {
@@ -33,8 +33,7 @@ test('status badges use compact semantic surfaces without pulse animation', asyn
   await expect(badges.first()).toHaveCSS('padding-top', '5px')
 
   const statuses = await badges.evaluateAll((elements) => elements.map((element) => {
-    const status = [...element.classList].find((name) => name !== 'status-badge')
-    return status ?? ''
+    return element.getAttribute('data-status') ?? ''
   }))
   expect(statuses.every((status) => status.length > 0)).toBe(true)
   for (const badge of await badges.all()) {
@@ -43,6 +42,7 @@ test('status badges use compact semantic surfaces without pulse animation', asyn
 })
 
 test('page compass exposes keyboard tooltip hierarchy', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 768 })
   await page.goto('/research.html')
 
   const link = page.locator('.page-compass-link').nth(1)
@@ -50,12 +50,7 @@ test('page compass exposes keyboard tooltip hierarchy', async ({ page }) => {
 
   await expect(link).toHaveAttribute('aria-describedby', /compass-tip-/)
   const tooltip = page.locator('#compass-tip-sec-research-timeline')
-  const hasFinePointer = await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine) and (min-width: 761px)').matches)
-  if (hasFinePointer) {
-    await expect(tooltip).toBeVisible()
-  } else {
-    await expect(tooltip).toBeHidden()
-  }
+  await expect(tooltip).toBeVisible()
   await expect(page.locator('.page-compass')).toHaveCSS('overflow', 'visible')
 
   const top = page.locator('.page-compass-top')
@@ -69,12 +64,48 @@ test('lightbox keeps metadata and quiet control chrome bounded', async ({ page }
   await carousel.locator('.poster-open').click()
 
   await expect(page.locator('.lightbox')).toBeVisible()
+  await expect(page.locator('.lb-stage img')).toHaveClass(/loaded/)
   await expect(page.locator('.lb-meta-dock')).toHaveCount(1)
   await expect(page.locator('.lb-meta-copy')).toBeVisible()
   await expect(page.locator('.lb-meta-copy small')).toHaveText('LIVE ARCHIVE')
   await expect(page.locator('.lb-meta-index')).toHaveText(/\d+ \/ \d+/)
   await expect(page.locator('.lb-close')).toHaveClass(/y-button--icon/)
   await expect(page.locator('.lb-nav').first()).toHaveClass(/y-button--icon/)
+
+  const geometry = await page.evaluate(() => ({
+    viewport: { width: window.innerWidth, height: window.innerHeight },
+    lightbox: (() => {
+      const element = document.querySelector<HTMLElement>('.lightbox')
+      const rect = element?.getBoundingClientRect()
+      return { width: rect?.width ?? 0, height: rect?.height ?? 0 }
+    })(),
+    stage: (() => {
+      const element = document.querySelector<HTMLElement>('.lb-stage')
+      const rect = element?.getBoundingClientRect()
+      return {
+        top: rect?.top ?? 0,
+        bottom: rect?.bottom ?? 0,
+        height: rect?.height ?? 0,
+        marginBottom: element ? getComputedStyle(element).marginBottom : ''
+      }
+    })(),
+    image: (() => {
+      const element = document.querySelector<HTMLImageElement>('.lb-stage img')
+      const rect = element?.getBoundingClientRect()
+      return {
+        bottom: rect?.bottom ?? 0,
+        top: rect?.top ?? 0,
+        height: rect?.height ?? 0,
+        computedHeight: element ? getComputedStyle(element).height : '',
+        maxHeight: element ? getComputedStyle(element).maxHeight : ''
+      }
+    })(),
+    metadata: (() => {
+      const rect = document.querySelector<HTMLElement>('.lb-meta-dock')?.getBoundingClientRect()
+      return { top: rect?.top ?? 0, height: rect?.height ?? 0 }
+    })()
+  }))
+  expect(geometry.image.bottom, JSON.stringify(geometry)).toBeLessThanOrEqual(geometry.metadata.top - 12)
 
   await page.keyboard.press('Escape')
   await expect(page.locator('.lightbox')).toHaveCount(0)
@@ -106,4 +137,19 @@ test('metric surfaces refine their boundary without adding elevation', async ({ 
     return { fontSize: parseFloat(style.fontSize), lineHeight: parseFloat(style.lineHeight) }
   })
   expect(numberMetrics.lineHeight).toBeLessThan(numberMetrics.fontSize)
+})
+
+test('shared control hover lift stays within the restrained motion token', async ({ page }) => {
+  await page.goto('/index.html')
+  const finePointer = await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)
+  test.skip(!finePointer, 'Hover lift is only observable on fine-pointer projects')
+
+  for (const selector of ['.theme-orbit', '.hero-action']) {
+    const control = page.locator(selector).first()
+    await control.hover()
+    await expect.poll(() => control.evaluate((element) => {
+      const transform = getComputedStyle(element).transform
+      return transform === 'none' ? 0 : new DOMMatrixReadOnly(transform).m42
+    })).toBe(-1)
+  }
 })

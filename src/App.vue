@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, nextTick, onMounted, ref, watch, type Component } from 'vue'
-import { isPageKey, pageMeta, pageRegistry, type PageKey } from './data'
+import { computed, defineAsyncComponent, nextTick, onMounted, ref, watch } from 'vue'
+import { isPageKey, pageMeta, pageRegistry } from './data'
 import { useTheme } from './composables/useTheme'
 import { decodeHashTarget, retryAsync } from './utils/navigation'
+import { getPageLoader } from './pageLoaders'
 
 import SiteHeader from './components/SiteHeader.vue'
 import ArchiveHero from './components/ArchiveHero.vue'
@@ -20,22 +21,12 @@ const page = (() => {
   const candidate = document.body.dataset.page
   return isPageKey(candidate) ? candidate : undefined
 })()
-const { theme, initTheme } = useTheme()
+const { initTheme } = useTheme()
 
 const lightbox = ref<LightboxPayload | null>(null)
 type PageLoadState = 'loading' | 'ready' | 'error'
-type PageLoader = () => Promise<{ default: Component }>
 
-const pageLoaders = {
-  home: () => import('./pages/HomePage.vue'),
-  academics: () => import('./pages/AcademicsPage.vue'),
-  honors: () => import('./pages/HonorsPage.vue'),
-  research: () => import('./pages/ResearchPage.vue'),
-  works: () => import('./pages/WorksPage.vue'),
-  concerts: () => import('./pages/ConcertsPage.vue')
-} satisfies Record<PageKey, PageLoader>
-
-const pageLoader: PageLoader | undefined = page ? pageLoaders[page] : undefined
+const pageLoader = page ? getPageLoader(page) : undefined
 const pageLoadState = ref<PageLoadState>(pageLoader ? 'loading' : 'ready')
 let hashScrolled = false
 
@@ -100,7 +91,7 @@ function moveLightbox(step: number) {
 </script>
 
 <template>
-  <div class="site-shell" :class="[`theme-${theme}`, { 'has-page-compass': pageSections.length }]" :data-page-load-state="pageLoadState">
+  <div class="site-shell" :class="{ 'has-page-compass': pageSections.length }" :data-page-load-state="pageLoadState">
     <a class="skip-link" href="#main">跳到主要内容</a>
     <div class="ambient ambient-one"></div>
     <div class="ambient ambient-two"></div>
