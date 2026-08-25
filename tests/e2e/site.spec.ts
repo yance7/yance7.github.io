@@ -326,7 +326,9 @@ test('site navigation stays pinned and every compass destination clears it', asy
     await expect.poll(() => navigation.evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBe(0)
 
     const trigger = page.locator('.page-compass-trigger')
-    await trigger.click()
+    await trigger.focus()
+    await expect(trigger).toBeFocused()
+    await page.keyboard.press('Enter')
     const destinationLink = page.locator(`.page-compass-link[href="${destination}"]`)
     await expect(destinationLink).toBeVisible()
     const destinationBox = await destinationLink.boundingBox()
