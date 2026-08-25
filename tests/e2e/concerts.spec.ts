@@ -7,6 +7,51 @@ async function expectAccessible(page: Page) {
   expect(results.violations).toEqual([])
 }
 
+type LightboxLifecycleState = {
+  exists: boolean
+  leaving: boolean
+  inert: boolean
+  overflow: string
+}
+
+async function settleThemeChange(page: Page) {
+  await expect.poll(
+    () => page.locator('html').getAttribute('data-theme-changing')
+  ).toBeNull()
+  await page.evaluate(
+    () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+  )
+}
+
+async function captureLightboxLeaveState(page: Page) {
+  return page.evaluate(() => new Promise<LightboxLifecycleState>((resolve, reject) => {
+    const lightbox = document.querySelector('.lightbox')
+    if (!lightbox) {
+      reject(new Error('lightbox should exist before Escape'))
+      return
+    }
+
+    const readState = (): LightboxLifecycleState => ({
+      exists: true,
+      leaving: lightbox.classList.contains('lightbox-leave-active'),
+      inert: document.querySelector('.site-shell')?.hasAttribute('inert') ?? false,
+      overflow: document.body.style.overflow
+    })
+
+    const observer = new MutationObserver(() => {
+      if (!lightbox.classList.contains('lightbox-leave-active')) return
+      observer.disconnect()
+      resolve(readState())
+    })
+    observer.observe(lightbox, { attributes: true, attributeFilter: ['class'] })
+
+    if (lightbox.classList.contains('lightbox-leave-active')) {
+      observer.disconnect()
+      resolve(readState())
+    }
+  }))
+}
+
 test('concert poster coalesces sheen and tilt into one layout read per frame', { tag: '@fine-pointer' }, async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium', 'Fine-pointer interaction is intentionally disabled on touch projects')
   await page.goto('/concerts.html')
@@ -411,15 +456,22 @@ test('lightbox keeps the background inert and locked until leave finishes', asyn
   await trigger.click()
   await expect(page.locator('.lightbox')).toBeVisible()
   await expect(page.locator('.lb-close')).toBeFocused()
-
-  await page.keyboard.press('Escape')
-  await expect(page.locator('.lightbox')).toBeVisible()
   await expect(page.locator('.site-shell')).toHaveAttribute('inert', '')
-  expect(await page.evaluate(() => document.body.style.overflow)).toBe('hidden')
+  await expect.poll(() => page.evaluate(() => document.body.style.overflow)).toBe('hidden')
+
+  const leaveStatePromise = captureLightboxLeaveState(page)
+  await page.keyboard.press('Escape')
+  const leaveState = await leaveStatePromise
+  expect(leaveState).toEqual({
+    exists: true,
+    leaving: true,
+    inert: true,
+    overflow: 'hidden'
+  })
 
   await expect(page.locator('.lightbox')).toHaveCount(0)
   await expect(page.locator('.site-shell')).not.toHaveAttribute('inert', '')
-  expect(await page.evaluate(() => document.body.style.overflow)).not.toBe('hidden')
+  await expect.poll(() => page.evaluate(() => document.body.style.overflow)).not.toBe('hidden')
   await expect(trigger).toBeFocused()
 })
 
@@ -467,6 +519,7 @@ test('concert visual surfaces use theme semantics and shared motion cadence', as
 
   await page.locator('.theme-orbit').click()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+  await settleThemeChange(page)
   const dark = await readVisualContract()
   expect(dark.theme).toBe('dark')
   expect(dark.stageSurface).toBe(dark.bgTint)
