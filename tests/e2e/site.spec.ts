@@ -321,7 +321,8 @@ test('site navigation stays pinned and every compass destination clears it', asy
     await page.evaluate(() => window.scrollTo({ top: 900, behavior: 'auto' }))
     await expect.poll(() => navigation.evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBe(0)
 
-    await page.locator('.page-compass-trigger').click()
+    const trigger = page.locator('.page-compass-trigger')
+    await trigger.click()
     const destinationLink = page.locator(`.page-compass-link[href="${destination}"]`)
     await expect(destinationLink).toBeVisible()
     const destinationBox = await destinationLink.boundingBox()
@@ -335,6 +336,7 @@ test('site navigation stays pinned and every compass destination clears it', asy
       () => page.locator(destination).evaluate((element) => element.getBoundingClientRect().top),
       { message: `${route}${destination}` }
     ).toBeGreaterThanOrEqual(navBottom + 12)
+    await expect(trigger).toBeFocused()
   }
 })
 
