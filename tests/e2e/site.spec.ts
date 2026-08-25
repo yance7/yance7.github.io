@@ -314,6 +314,7 @@ test('site navigation stays pinned and every compass destination clears it', asy
 
   for (const [route, destination] of destinations) {
     await page.goto(`/${route}`)
+    await page.mouse.move(0, 0)
     const navigation = page.locator('.site-nav')
     await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
     await expect(page.locator(destination)).toBeVisible({ timeout: 30000 })
