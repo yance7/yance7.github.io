@@ -57,14 +57,15 @@ function localeDevRewritePlugin(): Plugin {
   const localePrefixes = ['/en', '/zh-hk']
   const knownPages = new Set([...pageNames.map((name) => `${name}.html`), '404.html'])
 
-  function rewriteUrl(rawUrl: string) {
+  function rewriteUrl(rawUrl: string, localizedRoot = false) {
     const [rawPathname, query = ''] = rawUrl.split('?')
     const pathname = rawPathname ?? '/'
     const prefix = localePrefixes.find((candidate) => pathname === `${candidate}/` || pathname.startsWith(`${candidate}/`))
     if (!prefix) return null
     const suffix = pathname.slice(prefix.length).replace(/^\//, '')
     const page = suffix && knownPages.has(suffix) ? suffix : suffix ? '404.html' : 'index.html'
-    return `/${page}${query ? `?${query}` : ''}`
+    const target = localizedRoot ? `${prefix}/${page}` : `/${page}`
+    return `${target}${query ? `?${query}` : ''}`
   }
 
   return {
@@ -72,6 +73,13 @@ function localeDevRewritePlugin(): Plugin {
     configureServer(server) {
       server.middlewares.use((request, _response, next) => {
         const rewritten = rewriteUrl(request.url ?? '/')
+        if (rewritten) request.url = rewritten
+        next()
+      })
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use((request, _response, next) => {
+        const rewritten = rewriteUrl(request.url ?? '/', true)
         if (rewritten) request.url = rewritten
         next()
       })

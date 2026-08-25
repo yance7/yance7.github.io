@@ -52,4 +52,7 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
       - name: Browser release smoke
+        env:
+          PLAYWRIGHT_USE_PREVIEW: '1'
+          PLAYWRIGHT_OUTPUT_DIR: test-results/release-smoke
         run: npm run test:e2e -- --project=chromium --workers=1 --grep "all archive pages boot and expose the main landmark"

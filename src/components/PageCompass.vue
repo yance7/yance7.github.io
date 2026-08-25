@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { usePageCompass } from '../composables/usePageCompass'
 import type { PageCompassSection } from '../data/types'
 import { useLocale } from '../i18n'
@@ -17,62 +17,71 @@ const {
 } = usePageCompass(() => props.sections)
 const { messages } = useLocale()
 
+type CompassMode = 'closed' | 'transient' | 'pinned' | 'suppressed'
+
 const compassRef = ref<HTMLElement | null>(null)
 const triggerRef = ref<HTMLButtonElement | null>(null)
-const isPinned = ref(false)
-const isHovered = ref(false)
-const isFocusWithin = ref(false)
-const closedByEscape = ref(false)
-const suppressNextFocusOpen = ref(false)
-const isExpanded = computed(() => !closedByEscape.value && (isPinned.value || isHovered.value || isFocusWithin.value))
+const mode = ref<CompassMode>('closed')
+const pointerInside = ref(false)
+const focusInside = ref(false)
+const isExpanded = computed(() => mode.value === 'transient' || mode.value === 'pinned')
 
-function openByPointer() {
-  closedByEscape.value = false
-  isHovered.value = true
+function isHoverCapablePointer(event: PointerEvent) {
+  return event.pointerType !== 'touch'
+    && (event.pointerType === 'mouse' || window.matchMedia('(hover: hover)').matches)
 }
 
-function closeByPointer() {
-  isHovered.value = false
+function handlePointerEnter(event: PointerEvent) {
+  pointerInside.value = true
+  if (mode.value === 'closed' && isHoverCapablePointer(event)) mode.value = 'transient'
+}
+
+function handlePointerLeave() {
+  pointerInside.value = false
+  if (mode.value === 'transient' && !focusInside.value) mode.value = 'closed'
+  if (mode.value === 'suppressed' && !focusInside.value) mode.value = 'closed'
 }
 
 function handleFocusIn() {
-  if (suppressNextFocusOpen.value) suppressNextFocusOpen.value = false
-  else closedByEscape.value = false
-  isFocusWithin.value = true
+  focusInside.value = true
+  if (mode.value === 'closed') mode.value = 'transient'
 }
 
-function handleFocusOut() {
-  void nextTick(() => {
-    isFocusWithin.value = compassRef.value?.contains(document.activeElement) ?? false
-    if (!isFocusWithin.value && !closedByEscape.value) suppressNextFocusOpen.value = false
-  })
+function handleFocusOut(event: FocusEvent) {
+  const nextTarget = event.relatedTarget
+  focusInside.value = nextTarget instanceof Node && (compassRef.value?.contains(nextTarget) ?? false)
+  if (focusInside.value) return
+  if (mode.value === 'suppressed') {
+    if (nextTarget instanceof Node) mode.value = 'closed'
+    return
+  }
+  if (mode.value === 'transient' && !pointerInside.value) mode.value = 'closed'
 }
 
 function handleTriggerClick() {
-  closedByEscape.value = false
-  isPinned.value = !isPinned.value
+  mode.value = mode.value === 'pinned' ? 'closed' : 'pinned'
 }
 
-function closeCompass(focusTrigger = false) {
-  isPinned.value = false
-  isHovered.value = false
-  closedByEscape.value = true
-  if (focusTrigger) {
-    suppressNextFocusOpen.value = true
-    void nextTick(() => {
-      window.setTimeout(() => triggerRef.value?.focus(), 0)
-    })
-  }
+function closeCompass() {
+  mode.value = 'closed'
 }
 
-function handleSectionSelect(id: string) {
+function suppressCompass() {
+  mode.value = 'suppressed'
+  triggerRef.value?.focus({ preventScroll: true })
+}
+
+function handleSectionSelect(event: MouseEvent, id: string) {
+  event.preventDefault()
   selectSection(id)
-  closeCompass(true)
+  mode.value = 'suppressed'
+  window.location.hash = id
+  triggerRef.value?.focus({ preventScroll: true })
 }
 
 function handleReturnTop() {
   goTop()
-  closeCompass(true)
+  suppressCompass()
 }
 
 function handleDocumentPointerDown(event: PointerEvent) {
@@ -83,7 +92,7 @@ function handleDocumentPointerDown(event: PointerEvent) {
 function handleDocumentKeydown(event: KeyboardEvent) {
   if (event.key !== 'Escape' || !isExpanded.value) return
   event.preventDefault()
-  closeCompass(true)
+  suppressCompass()
 }
 
 onMounted(() => {
@@ -115,8 +124,8 @@ onUnmounted(() => {
     class="page-compass"
     :class="{ 'page-compass-expanded': isExpanded }"
     :aria-label="messages.compass.label"
-    @mouseenter="openByPointer"
-    @mouseleave="closeByPointer"
+    @pointerenter="handlePointerEnter"
+    @pointerleave="handlePointerLeave"
     @focusin="handleFocusIn"
     @focusout="handleFocusOut"
   >
@@ -154,7 +163,7 @@ onUnmounted(() => {
           :href="`#${section.id}`"
           :aria-label="`${messages.compass.goToSection}: ${section.label}`"
           :aria-current="activeId === section.id ? 'location' : undefined"
-          @click="handleSectionSelect(section.id)"
+          @click="handleSectionSelect($event, section.id)"
         >
           <span class="page-compass-link-index">{{ String(index + 1).padStart(2, '0') }}</span>
           <span class="page-compass-link-label">{{ section.label }}</span>

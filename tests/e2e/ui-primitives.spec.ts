@@ -42,7 +42,6 @@ test('status badges use compact semantic surfaces without pulse animation', asyn
 })
 
 test('page compass exposes a keyboard-expandable semantic panel', async ({ page }) => {
-  await page.setViewportSize({ width: 1024, height: 768 })
   await page.goto('/research.html')
 
   const compass = page.locator('.page-compass')

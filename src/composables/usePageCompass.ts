@@ -104,8 +104,7 @@ export function usePageCompass(sections: MaybeRefOrGetter<readonly PageCompassSe
       )
     }
 
-    window.scrollTo(0, 0)
-    window.requestAnimationFrame(() => window.scrollTo(0, 0))
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
   }
 
   function handleHashChange() {

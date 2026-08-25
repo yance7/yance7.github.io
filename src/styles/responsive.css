@@ -151,6 +151,12 @@
   .lb-nav:hover,
   .lb-close:hover { transform: none !important; }
   .hero-action:hover span { transform: none !important; }
+  .page-compass,
+  .page-compass-panel,
+  .page-compass-trigger-icon {
+    transition: none !important;
+    animation: none !important;
+  }
 }
 
 /* ===== Adaptive PageCompass / 閱讀羅盤 ===== */
@@ -195,15 +201,6 @@
 
 @media (max-width: 760px) and (orientation: landscape) and (max-height: 520px) {
   .page-compass { bottom: max(8px, env(safe-area-inset-bottom)); }
-}
-
-@media (max-width: 760px) and (prefers-reduced-motion: reduce) {
-  .page-compass,
-  .page-compass-panel,
-  .page-compass-trigger-icon {
-    transition-duration: .01ms;
-    transition-delay: 0s;
-  }
 }
 
 @media (forced-colors: active) {

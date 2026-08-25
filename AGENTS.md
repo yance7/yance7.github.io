@@ -56,3 +56,13 @@
 - Shared content is split into page-scoped modules under `src/data/`, with `src/data/index.ts` as the public entry and `src/data/types.ts` for core contracts.
 - Run `npm run typecheck` before committing Vue or data changes.
 - Run `npm run images:concerts` after adding or replacing concert posters.
+
+## Agent Feedback and Test Ownership
+
+- Use the fast lane for a focused change: run the smallest relevant unit or E2E test first, then `npm run typecheck` and the matching browser project. Run the full lane only after the focused lane is green.
+- PageCompass behavior belongs in `tests/e2e/page-compass-desktop.spec.ts` for Chromium and `webkit-desktop`, and in `tests/e2e/page-compass-mobile.spec.ts` for `webkit-mobile`. Shared semantic primitives remain in `tests/e2e/ui-primitives.spec.ts`; Firefox, Android, and visual projects cover compatibility and visual regressions.
+- Keep one independent behavior or route per E2E test. Use semantic locators and `locator.click()`; do not use coordinate clicks through `boundingBox()`. Wait for observable state, not arbitrary sleeps or timeout inflation.
+- Treat repeated focus, pointer, touch, and reduced-motion failures as state-machine or geometry issues. After three unsuccessful patch-and-rerun cycles, stop patching locally and refactor the interaction model or document the blocker with evidence. Do not update snapshots blindly.
+- CI browser tests must exercise the production artifact with `PLAYWRIGHT_USE_PREVIEW=1`. Keep each invocation's `PLAYWRIGHT_OUTPUT_DIR` isolated so traces and failure screenshots remain attributable to that run.
+- Preserve `trace: 'retain-on-failure'` and `screenshot: 'only-on-failure'` for Playwright runs. Before declaring a browser fix complete, run the focused PageCompass stress lane with `--repeat-each=10 --retries=0`, then the full quality gates.
+- Do not edit or commit files under `docs/handoff/` unless the user explicitly requests a handoff update. Keep generated `dist/` output uncommitted.
