@@ -300,7 +300,8 @@ test('research timeline removes breathing motion when reduced motion is enabled'
 })
 
 test('site navigation stays pinned and every compass destination clears it', async ({ page }) => {
-  test.setTimeout(60000)
+  // WebKit's mobile emulation is slow when it renders every page at a desktop-size viewport.
+  test.setTimeout(90000)
   await page.setViewportSize({ width: 1200, height: 900 })
   await page.emulateMedia({ reducedMotion: 'reduce' })
   const destinations = [
