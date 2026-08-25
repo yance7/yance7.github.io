@@ -130,7 +130,10 @@ test('metric surfaces refine their boundary without adding elevation', async ({ 
   await metric.hover()
 
   await expect(metric).toHaveCSS('transform', 'none')
-  const hasFinePointer = await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)
+  const hasFinePointer = await page.evaluate(() => (
+    window.matchMedia('(hover: hover) and (pointer: fine)').matches
+    && !window.matchMedia('(hover: none), (pointer: coarse)').matches
+  ))
   if (hasFinePointer) {
     await expect
       .poll(() => metric.evaluate((element) => getComputedStyle(element).boxShadow))
