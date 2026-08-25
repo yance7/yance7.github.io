@@ -196,9 +196,17 @@ test('page compass unifies section navigation, reading progress, and return to t
   await expect(page).toHaveURL(/honors\.html#sec-honors-archive/)
   await expect(archiveLink).toHaveAttribute('aria-current', 'location')
   await expect.poll(() => compass.locator('.page-compass-progress').getAttribute('aria-label')).toMatch(/\d+%/)
+  const archiveSection = page.locator('#sec-honors-archive')
+  const archiveAnchorOffset = await archiveSection.evaluate((element) => (
+    Math.round(parseFloat(getComputedStyle(element).scrollMarginTop) || 0)
+  ))
+  await expect.poll(
+    () => archiveSection.evaluate((element) => Math.round(element.getBoundingClientRect().top))
+  ).toBe(archiveAnchorOffset)
 
   await compass.locator('.page-compass-top').click()
   await expect.poll(() => page.evaluate(() => Math.round(window.scrollY))).toBeLessThan(8)
+  await expect.poll(() => page.evaluate(() => window.location.hash)).toBe('')
   await expect(compass.locator('.page-compass-link').first()).toHaveAttribute('aria-current', 'location')
   await expect(page.locator('.section-dots, .scroll-to-top')).toHaveCount(0)
 })

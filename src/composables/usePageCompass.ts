@@ -173,7 +173,17 @@ export function usePageCompass(sections: MaybeRefOrGetter<readonly PageCompassSe
     hashNavigationId = null
     hashNavigationSettled = false
     activeId.value = sectionList.value[0]?.id ?? ''
-    window.scrollTo({ top: 0, behavior: 'auto' })
+
+    if (window.location.hash) {
+      window.history.replaceState(
+        window.history.state,
+        '',
+        `${window.location.pathname}${window.location.search}`
+      )
+    }
+
+    window.scrollTo(0, 0)
+    window.requestAnimationFrame(() => window.scrollTo(0, 0))
   }
 
   function handleHashChange() {
