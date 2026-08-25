@@ -317,8 +317,12 @@ test('site navigation stays pinned and every compass destination clears it', asy
     await page.mouse.move(0, 0)
     const navigation = page.locator('.site-nav')
     await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+    await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready', { timeout: 10_000 })
     await expect(page.locator(destination)).toBeVisible({ timeout: 30000 })
     await page.evaluate(() => window.scrollTo({ top: 900, behavior: 'auto' }))
+    await page.evaluate(() => new Promise<void>((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+    }))
     await expect.poll(() => navigation.evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBe(0)
 
     const trigger = page.locator('.page-compass-trigger')
