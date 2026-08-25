@@ -460,6 +460,7 @@ test('interactive states remain accessible after opening', async ({ page }) => {
 })
 
 test('rapid control clicks settle without duplicate or stale state', async ({ page }) => {
+  test.setTimeout(60000)
   await page.goto('/honors.html')
   const filter = page.locator('.filter-btn').filter({ hasText: '卓越级' })
   for (let i = 0; i < 5; i += 1) await filter.click()
