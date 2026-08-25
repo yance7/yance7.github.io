@@ -31,12 +31,11 @@ const scenarios = [
           {
             name: 'page-compass',
             selector: '.page-compass-trigger',
-            run: async (page) => {
+            prepare: async (page) => {
               await page.hover('.page-compass-trigger')
               await page.waitForSelector('.page-compass-link:last-child', { visible: true })
-              await page.click('.page-compass-trigger')
-              await page.click('.page-compass-link:last-child')
-            }
+            },
+            run: (page) => page.click('.page-compass-link:last-child')
           }
         ]
       },
@@ -110,13 +109,10 @@ const scenarios = [
             prepare: async (page) => {
               await page.evaluate(() => window.scrollTo(0, Math.max(320, document.body.scrollHeight * .35)))
               await delay(450)
-            },
-            run: async (page) => {
               await page.hover('.page-compass-trigger')
               await page.waitForSelector('.page-compass-link:last-child', { visible: true })
-              await page.click('.page-compass-trigger')
-              await page.click('.page-compass-link:last-child')
-            }
+            },
+            run: (page) => page.click('.page-compass-link:last-child')
           }
         ]
       },
