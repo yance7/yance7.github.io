@@ -14,7 +14,7 @@ function onToggle() {
     class="theme-orbit"
     :class="theme"
     type="button"
-    :aria-label="theme === 'light' ? messages.theme.switchToDark : messages.theme.switchToLight"
+    :aria-label="`${theme === 'light' ? messages.theme.switchToDark : messages.theme.switchToLight}: ${theme === 'light' ? messages.theme.light : messages.theme.dark}`"
     :aria-pressed="theme === 'dark'"
     :title="theme === 'light' ? messages.theme.switchToDark : messages.theme.switchToLight"
     @click="onToggle"

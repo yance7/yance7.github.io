@@ -7,7 +7,7 @@ const { locale, messages } = useLocale()
 <template>
   <footer class="site-footer">
     <div class="foot-brand">
-      <a class="foot-mark" :href="buildLocalizedPageHref('home', locale)" :aria-label="messages.accessibility.footerHome">
+      <a class="foot-mark" :href="buildLocalizedPageHref('home', locale)" :aria-label="`${messages.accessibility.footerHome}: Yance. ${messages.footer.archive}`">
         <strong>Yance<span>.</span></strong>
         <small>{{ messages.footer.archive }}</small>
       </a>

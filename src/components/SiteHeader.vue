@@ -41,7 +41,7 @@ useModalDialog(menuActive, {
 
 <template>
   <header class="site-nav" :class="{ 'menu-open': menuVisible }">
-    <a class="wordmark" :href="buildLocalizedPageHref('home', locale)" :aria-label="messages.accessibility.home">Yance<span>.</span></a>
+    <a class="wordmark" :href="buildLocalizedPageHref('home', locale)" :aria-label="`${messages.accessibility.home}: Yance.`">Yance<span>.</span></a>
 
     <button
       class="menu-trigger"

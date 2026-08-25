@@ -31,7 +31,7 @@ const chapterCount = computed(() => String(props.project.story.chapters.length).
           :href="project.href"
           target="_blank"
           rel="noopener noreferrer"
-          :aria-label="`${messages.actions.enterProject}: ${project.title}`"
+          :aria-label="`${messages.actions.enterProject}: ${project.domain}`"
         >{{ project.domain }} <span aria-hidden="true">↗</span></a>
       </div>
     </header>

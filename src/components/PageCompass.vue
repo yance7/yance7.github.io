@@ -126,7 +126,7 @@ onUnmounted(() => {
       type="button"
       aria-controls="page-compass-panel"
       :aria-expanded="isExpanded"
-      :aria-label="isExpanded ? messages.compass.close : `${messages.compass.open}: ${activeSection?.label ?? ''}`"
+      :aria-label="`${isExpanded ? messages.compass.close : messages.compass.open}: ${formatCompassIndex(activeIndex, props.sections.length)} ${activeSection?.shortLabel ?? activeSection?.label ?? ''}`"
       @click="handleTriggerClick"
     >
       <span class="page-compass-trigger-index">{{ formatCompassIndex(activeIndex, props.sections.length) }}</span>

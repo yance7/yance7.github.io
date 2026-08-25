@@ -237,7 +237,7 @@ onUnmounted(() => {
             :class="{ selected: spotlightState.selected === index }"
             type="button"
             role="option"
-            :aria-label="`${album.artist} ${album.title}, ${album.year}, ${formatLabel(album)}`"
+            :aria-label="`${album.title} ${album.artist} · ${album.year}, ${formatLabel(album)}`"
             :aria-selected="spotlightState.selected === index"
             :aria-setsize="total"
             :aria-posinset="index + 1"

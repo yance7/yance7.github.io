@@ -21,11 +21,11 @@ function labelFor(target: Locale) {
   return messages.value.locale.en
 }
 
-function ariaLabelFor(target: Locale) {
-  if (target === locale.value) return `${messages.value.common.current}: ${labelFor(target)}`
-  if (target === 'zh-CN') return messages.value.locale.switchToZhCN
-  if (target === 'zh-HK') return messages.value.locale.switchToZhHK
-  return messages.value.locale.switchToEnglish
+function ariaLabelFor(target: Locale, visibleLabel = labelFor(target)) {
+  if (target === locale.value) return `${messages.value.common.current}: ${visibleLabel}`
+  if (target === 'zh-CN') return `${messages.value.locale.switchToZhCN}: ${visibleLabel}`
+  if (target === 'zh-HK') return `${messages.value.locale.switchToZhHK}: ${visibleLabel}`
+  return `${messages.value.locale.switchToEnglish}: ${visibleLabel}`
 }
 
 function choose(target: Locale) {
@@ -48,7 +48,7 @@ function choose(target: Locale) {
     </nav>
 
     <details class="locale-switcher-mobile">
-      <summary :aria-label="messages.locale.selector">
+      <summary :aria-label="`${messages.locale.selector}: ${localeRegistry[locale].shortLabel} / ${locale === 'en' ? messages.locale.zhCN : messages.locale.en}`">
         <span>{{ localeRegistry[locale].shortLabel }}</span>
         <span aria-hidden="true">/</span>
         <span>{{ locale === 'en' ? messages.locale.zhCN : messages.locale.en }}</span>
@@ -61,7 +61,7 @@ function choose(target: Locale) {
           :href="hrefFor(option.code)"
           :hreflang="option.htmlLang"
           :aria-current="locale === option.code ? 'page' : undefined"
-          :aria-label="ariaLabelFor(option.code)"
+          :aria-label="ariaLabelFor(option.code, option.nativeName)"
           @click="choose(option.code)"
         >{{ option.nativeName }}</a>
       </nav>

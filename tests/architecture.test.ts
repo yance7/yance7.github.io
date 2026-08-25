@@ -367,6 +367,26 @@ describe('shared UI correction contracts', () => {
     expect(responsive).toContain('@media (min-width: 761px) and (max-width: 1024px)')
     expect(responsive).toContain('@media (max-width: 760px)')
   })
+
+  it('keeps visible control labels inside accessible names and language links touchable', () => {
+    const locale = readFileSync(resolve(process.cwd(), 'src/components/LocaleSwitcher.vue'), 'utf8')
+    const header = readFileSync(resolve(process.cwd(), 'src/components/SiteHeader.vue'), 'utf8')
+    const footer = readFileSync(resolve(process.cwd(), 'src/components/SiteFooter.vue'), 'utf8')
+    const theme = readFileSync(resolve(process.cwd(), 'src/components/ThemeOrbit.vue'), 'utf8')
+    const compass = readFileSync(resolve(process.cwd(), 'src/components/PageCompass.vue'), 'utf8')
+    const album = readFileSync(resolve(process.cwd(), 'src/components/AlbumWall.vue'), 'utf8')
+    const project = readFileSync(resolve(process.cwd(), 'src/components/ProjectShowcase.vue'), 'utf8')
+    const shell = readFileSync(resolve(process.cwd(), 'src/styles/shell.css'), 'utf8')
+
+    expect(locale).toContain(':aria-label="`${messages.locale.selector}: ${localeRegistry[locale].shortLabel}')
+    expect(header).toContain(':aria-label="`${messages.accessibility.home}: Yance.`"')
+    expect(footer).toContain(':aria-label="`${messages.accessibility.footerHome}: Yance. ${messages.footer.archive}`"')
+    expect(theme).toContain(':aria-label="`${theme === \'light\' ? messages.theme.switchToDark : messages.theme.switchToLight}: ${theme === \'light\' ? messages.theme.light : messages.theme.dark}`"')
+    expect(compass).toContain('formatCompassIndex(activeIndex, props.sections.length)')
+    expect(album).toContain(':aria-label="`${album.title} ${album.artist} · ${album.year}, ${formatLabel(album)}`"')
+    expect(project).toContain(':aria-label="`${messages.actions.enterProject}: ${project.domain}`"')
+    expect(shell).toMatch(/\.locale-switcher-desktop a\s*\{[\s\S]*min-width: 24px;[\s\S]*min-height: 24px;/)
+  })
 })
 
 describe('lightbox depth contracts', () => {

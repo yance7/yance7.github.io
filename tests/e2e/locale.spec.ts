@@ -17,7 +17,7 @@ test('Simplified Chinese chrome is single-language and exposes the current local
   await expect(page.locator('.nav-rail .nav-label')).toHaveText(['首页', '学业', '荣誉', '研究', '作品', '演唱会'])
   await expect(page.locator('.nav-en')).toHaveCount(0)
   await expect((await openLocaleNav(page)).locator('a[aria-current="page"]')).toHaveAttribute('hreflang', 'zh-CN')
-  await expect(page.locator('.theme-orbit')).toHaveAttribute('aria-label', '切换到暗色主题')
+  await expect(page.locator('.theme-orbit')).toHaveAttribute('aria-label', '切换到暗色主题: 亮色')
 })
 
 test('Hong Kong Traditional Chinese localizes the core chrome', async ({ page }) => {
@@ -40,7 +40,7 @@ test('English chrome is localized without Chinese navigation fallbacks', async (
   await expect(page.locator('.nav-en')).toHaveCount(0)
   await expect(page.locator('.nav-rail')).not.toContainText('首页')
   await expect((await openLocaleNav(page)).locator('a[aria-current="page"]')).toHaveAttribute('hreflang', 'en')
-  await expect(page.locator('.theme-orbit')).toHaveAttribute('aria-label', 'Switch to dark theme')
+  await expect(page.locator('.theme-orbit')).toHaveAttribute('aria-label', 'Switch to dark theme: Light')
 })
 
 test('language switching preserves the current page and section hash', async ({ page }) => {
