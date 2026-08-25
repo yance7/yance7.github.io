@@ -42,6 +42,11 @@ test('home stage keeps its visual hierarchy across desktop and narrow screens', 
   for (const viewport of viewports) {
     await page.setViewportSize(viewport)
     await page.goto('/index.html')
+    await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+    await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready', { timeout: 10_000 })
+    await page.evaluate(() => new Promise<void>((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+    }))
     const layout = await page.evaluate(() => {
       const stage = document.querySelector('.home-stage')!.getBoundingClientRect()
       const title = document.querySelector('.home-stage-title')!.getBoundingClientRect()
