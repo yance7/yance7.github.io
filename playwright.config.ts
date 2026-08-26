@@ -36,7 +36,7 @@ export default defineConfig({
         isMobile: false,
         hasTouch: false
       },
-      testMatch: /(?:site|page-compass-desktop|ui-primitives)\.spec\.ts/
+      testMatch: /(?:site|page-compass-desktop|ui-primitives|english-layout)\.spec\.ts/
     },
     {
       name: 'webkit-mobile',

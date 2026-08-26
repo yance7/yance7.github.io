@@ -11,6 +11,7 @@
   content: ''; position: absolute; left: -5px; top: 32px;
   width: 9px; height: 9px; border-radius: 50%;
   background: var(--gold); box-shadow: 0 0 10px var(--glow-gold);
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast), background-color var(--dur-fast);
 }
 .education-row:hover { background: transparent; }
 .education-period {
@@ -18,6 +19,9 @@
   letter-spacing: var(--tracking-latin-meta); color: var(--gold); margin-bottom: 6px;
 }
 .education-name {
+  min-width: 0;
+  overflow-wrap: break-word;
+  transition: color var(--dur-fast);
   font-family: var(--font-editorial); font-size: 1.4rem; font-weight: 400;
   color: var(--ink); line-height: 1.3;
 }
@@ -40,15 +44,20 @@
   background: var(--surface-strong);
 }
 .ap-row {
-  display: grid; grid-template-columns: 54px 1fr 64px; align-items: center; gap: 16px;
+  display: grid; grid-template-columns: 54px minmax(0, 1fr) 64px; align-items: center; gap: 16px;
   padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--line);
   background: var(--surface-strong);
   transition: background-color var(--dur-base);
 }
 .ap-row:last-child { border-bottom: 0; }
 .ap-row:hover { background: var(--surface-strong); }
-.ap-no { font-family: var(--font-technical); font-size: var(--type-meta-size); color: var(--dim); }
-.ap-main { display: flex; flex-direction: column; gap: 2px; }
+.ap-no {
+  font-family: var(--font-technical); font-size: var(--type-meta-size); color: var(--dim);
+  transition: color var(--dur-fast);
+}
+.ap-main { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ap-main strong,
+.ap-main small { overflow-wrap: break-word; }
 .ap-main strong { font-family: var(--font-editorial); font-size: 1.25rem; font-weight: 400; }
 .ap-main small { font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: var(--tracking-zh-meta); color: var(--dim); }
 .ap-badge {
@@ -67,9 +76,45 @@
 .ap-row.pending .ap-badge > * { display: none; }
 .ap-row.pending:hover .ap-badge { border-color: var(--dim); box-shadow: none; }
 
+@media (hover: hover) and (pointer: fine) {
+  .education-row:hover {
+    background: linear-gradient(90deg, var(--accent-wash), transparent 72%);
+  }
+
+  .education-row:hover::before {
+    transform: scale(1.15);
+    box-shadow: 0 0 0 4px var(--glow-gold), 0 0 14px var(--glow-gold);
+  }
+
+  .education-row:hover .education-name { color: var(--gold-text); }
+
+  .ap-row:hover { background: var(--surface-hover); }
+  .ap-row:hover .ap-no { color: var(--gold); }
+  .ap-row:not(.pending):hover .ap-badge {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px var(--glow-gold);
+  }
+}
+
+@media (max-width: 640px) {
+  .ap-row {
+    grid-template-columns: 40px minmax(0, 1fr) 48px;
+    gap: 10px;
+  }
+}
+
 @media (hover: none), (pointer: coarse) {
   .education-row:hover:not(:focus-visible) { background: transparent; }
   .ap-row:hover:not(:focus-visible) { background: var(--surface-strong); }
   .ap-row:hover:not(:focus-visible) .ap-badge { border-color: var(--line); box-shadow: none; }
   .ap-row.pending:hover:not(:focus-visible) .ap-badge { border-color: var(--dim); box-shadow: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .education-row::before,
+  .education-name,
+  .ap-no,
+  .ap-badge {
+    transition: none !important;
+  }
 }

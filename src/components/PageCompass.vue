@@ -123,6 +123,7 @@ onUnmounted(() => {
     ref="compassRef"
     class="page-compass"
     :class="{ 'page-compass-expanded': isExpanded }"
+    :data-mode="mode"
     :aria-label="messages.compass.label"
     @pointerenter="handlePointerEnter"
     @pointerleave="handlePointerLeave"

@@ -138,7 +138,7 @@ function isUpcoming(item: Concert) {
           <div
             class="concert-poster"
             :class="{ land: item.land }"
-            v-pointer-sheen="{ tilt: 6 }"
+            v-pointer-sheen="{ tilt: 6, tiltExclude: '.carousel-controls' }"
           >
             <button
               class="poster-open"
