@@ -142,6 +142,98 @@ test('desktop PageCompass is a secondary numeric progress surface', async ({ pag
   await expect(page.locator('.page-compass-read')).toBeVisible()
 })
 
+test('desktop PageCompass exposes stable collapsed and expanded geometry', async ({ page }) => {
+  await page.goto('/en/research.html')
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+
+  const compass = page.locator('.page-compass')
+  const trigger = compass.locator('.page-compass-trigger')
+  const index = compass.locator('.page-compass-trigger-index')
+
+  await expect(compass).toHaveAttribute('data-mode', 'closed')
+
+  const collapsed = await compass.evaluate((element) => {
+    const rect = element.getBoundingClientRect()
+    return { width: rect.width, height: rect.height }
+  })
+
+  expect(collapsed.width).toBeGreaterThanOrEqual(104)
+  expect(collapsed.width).toBeLessThanOrEqual(124)
+
+  const indexGeometry = await index.evaluate((element) => {
+    const style = getComputedStyle(element)
+    const rect = element.getBoundingClientRect()
+    return {
+      whiteSpace: style.whiteSpace,
+      height: rect.height,
+      lineHeight: Number.parseFloat(style.lineHeight)
+    }
+  })
+
+  expect(indexGeometry.whiteSpace).toBe('nowrap')
+  expect(indexGeometry.height)
+    .toBeLessThanOrEqual(Math.ceil(indexGeometry.lineHeight) + 2)
+
+  await trigger.click()
+
+  await expect(compass).toHaveAttribute('data-mode', 'pinned')
+  await expect(trigger).toHaveAttribute('aria-expanded', 'true')
+
+  const expandedWidth = await compass.evaluate(
+    (element) => element.getBoundingClientRect().width
+  )
+
+  expect(expandedWidth).toBeGreaterThanOrEqual(260)
+  expect(expandedWidth).toBeLessThanOrEqual(300)
+})
+
+test('PageCompass visually exposes transient, pinned, and suppressed modes', async ({ page }) => {
+  await page.goto('/research.html')
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+
+  const compass = page.locator('.page-compass')
+  const trigger = compass.locator('.page-compass-trigger')
+
+  await expect(compass).toHaveAttribute('data-mode', 'closed')
+
+  await trigger.hover()
+
+  await expect(compass).toHaveAttribute('data-mode', 'transient')
+  await expect(trigger).toHaveAttribute('aria-expanded', 'true')
+
+  await trigger.click()
+
+  await expect(compass).toHaveAttribute('data-mode', 'pinned')
+
+  await page.locator('.archive-hero').hover()
+
+  await expect(compass).toHaveAttribute('data-mode', 'pinned')
+
+  await page.keyboard.press('Escape')
+
+  await expect(compass).toHaveAttribute('data-mode', 'suppressed')
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false')
+})
+
+test('expanded English PageCompass labels are readable without horizontal overflow', async ({ page }) => {
+  await page.goto('/en/research.html')
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+
+  await page.locator('.page-compass-trigger').click()
+
+  const labels = page.locator('.page-compass-link-label')
+
+  for (const label of await labels.all()) {
+    const geometry = await label.evaluate((element) => ({
+      scrollWidth: element.scrollWidth,
+      clientWidth: element.clientWidth
+    }))
+
+    expect(geometry.scrollWidth)
+      .toBeLessThanOrEqual(geometry.clientWidth + 1)
+  }
+})
+
 test('direct deep links settle below the pinned navigation', async ({ page }) => {
   await page.goto('/works.html#project-fresheye')
   await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')

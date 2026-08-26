@@ -50,3 +50,36 @@ test('touch pointer entry does not create a phantom hover-open', async ({ page }
   await expect(trigger).toHaveAttribute('aria-expanded', 'false')
   await expect(compass.locator('.page-compass-panel')).toHaveAttribute('inert', '')
 })
+
+test('mobile collapsed Compass keeps index on one line and retains an expansion affordance', async ({ page }) => {
+  await page.goto('/en/research.html')
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+
+  const compass = page.locator('.page-compass')
+  const index = compass.locator('.page-compass-trigger-index')
+  const icon = compass.locator('.page-compass-trigger-icon')
+
+  const width = await compass.evaluate(
+    (element) => element.getBoundingClientRect().width
+  )
+
+  expect(width).toBeGreaterThanOrEqual(88)
+  expect(width).toBeLessThanOrEqual(108)
+
+  await expect(icon).toBeVisible()
+
+  const lines = await index.evaluate((element) => {
+    const style = getComputedStyle(element)
+    const height = element.getBoundingClientRect().height
+    const lineHeight = Number.parseFloat(style.lineHeight)
+
+    return {
+      whiteSpace: style.whiteSpace,
+      height,
+      lineHeight
+    }
+  })
+
+  expect(lines.whiteSpace).toBe('nowrap')
+  expect(lines.height).toBeLessThanOrEqual(Math.ceil(lines.lineHeight) + 2)
+})
