@@ -4,8 +4,11 @@ import reveal from './directives/reveal'
 import magnetic from './directives/magnetic'
 import pointerSheen from './directives/pointerSheen'
 import { preloadPage } from './pageLoaders'
+import { initializeLocale, resolveLocaleFromPath } from './i18n'
 import './styles.css'
 import './theme.css'
+
+initializeLocale(resolveLocaleFromPath(window.location.pathname))
 
 const fontLoadTimeout = document.body.dataset.page === 'concerts' ? 0 : 2400
 

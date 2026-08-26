@@ -1,16 +1,22 @@
+<script setup lang="ts">
+import { buildLocalizedPageHref, useLocale } from '../i18n'
+
+const { locale, messages } = useLocale()
+</script>
+
 <template>
   <footer class="site-footer">
     <div class="foot-brand">
-      <a class="foot-mark" href="index.html" aria-label="返回个人档案首页">
+      <a class="foot-mark" :href="buildLocalizedPageHref('home', locale)" :aria-label="`${messages.accessibility.footerHome}: Yance. ${messages.footer.archive}`">
         <strong>Yance<span>.</span></strong>
-        <small>PERSONAL ARCHIVE / 2026</small>
+        <small>{{ messages.footer.archive }}</small>
       </a>
-      <span class="foot-tag">RESEARCHER / BUILDER / MUSIC LISTENER</span>
+      <span class="foot-tag">{{ messages.footer.identity }}</span>
     </div>
     <div class="foot-links">
-      <a href="https://github.com/yance7" target="_blank" rel="noopener noreferrer">PERSONAL PROFILE ↗</a>
-      <a href="https://github.com/yance7" target="_blank" rel="noopener noreferrer">RESEARCH REPOS ↗</a>
-      <a href="mailto:yance777@outlook.com">CONTACT ↗</a>
+      <a href="https://github.com/yance7" target="_blank" rel="noopener noreferrer">{{ messages.footer.profile }} ↗</a>
+      <a href="https://github.com/yance7" target="_blank" rel="noopener noreferrer">{{ messages.footer.researchRepos }} ↗</a>
+      <a href="mailto:yance777@outlook.com">{{ messages.footer.contact }} ↗</a>
     </div>
   </footer>
 </template>

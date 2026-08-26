@@ -5,6 +5,7 @@ import { useModalDialog } from '../composables/useModalDialog'
 import { sharedImagePreloader } from '../utils/imagePreload'
 import { clampLightboxIndex } from '../utils/lightbox'
 import YanceButton from './YanceButton.vue'
+import { useLocale } from '../i18n'
 
 const props = defineProps<{
   images: NonEmptyArray<string>
@@ -25,6 +26,7 @@ const closeButton = ref<{ focus: () => void } | null>(null)
 const isVisible = ref(true)
 const dialogActive = ref(true)
 const imagePreloader = sharedImagePreloader
+const { messages } = useLocale()
 const safeIndex = computed(() => clampLightboxIndex(props.index, props.images.length))
 
 function closeLightbox() {
@@ -103,16 +105,16 @@ watch(() => [safeIndex.value, props.images[safeIndex.value]], () => {
         role="dialog"
         aria-modal="true"
         :aria-busy="loading"
-        aria-label="演唱会海报大图"
+        :aria-label="messages.lightbox.gallery"
         @click.self="closeLightbox"
       >
         <div class="lb-meta-dock" aria-hidden="true"></div>
 
-        <YanceButton ref="closeButton" class="lb-close" variant="quiet" size="icon" aria-label="关闭灯箱" @click="closeLightbox">
+        <YanceButton ref="closeButton" class="lb-close" variant="quiet" size="icon" :aria-label="messages.lightbox.close" @click="closeLightbox">
           ×
         </YanceButton>
 
-      <YanceButton v-if="images.length > 1" class="lb-nav lb-prev" variant="quiet" size="icon" aria-label="上一张" @click="emit('prev')">
+      <YanceButton v-if="images.length > 1" class="lb-nav lb-prev" variant="quiet" size="icon" :aria-label="messages.lightbox.previous" @click="emit('prev')">
         ←
       </YanceButton>
 
@@ -120,7 +122,7 @@ watch(() => [safeIndex.value, props.images[safeIndex.value]], () => {
         <img
           :key="`${images[safeIndex]}-${retryKey}`"
           :src="images[safeIndex]"
-          :alt="meta ? `${meta.artist} · ${meta.tour} 海报大图` : '演唱会海报大图'"
+          :alt="meta ? `${meta.artist} · ${meta.tour} ${messages.lightbox.posterAlt}` : messages.lightbox.gallery"
           :class="{ loaded: !loading }"
           fetchpriority="high"
           decoding="async"
@@ -128,27 +130,27 @@ watch(() => [safeIndex.value, props.images[safeIndex.value]], () => {
           @error="onImgError"
         >
         <div v-if="loading" class="lb-loading" role="status" aria-live="polite">
-          <span class="sr-only">正在加载图片</span>
+          <span class="sr-only">{{ messages.lightbox.loading }}</span>
           <i aria-hidden="true"></i>
         </div>
         <div v-else-if="loadError" class="lb-error" role="alert">
-          <p>图片加载失败</p>
-          <YanceButton class="lb-retry" variant="quiet" size="sm" @click="retryImage">重试</YanceButton>
+          <p>{{ messages.lightbox.failed }}</p>
+          <YanceButton class="lb-retry" variant="quiet" size="sm" @click="retryImage">{{ messages.lightbox.retry }}</YanceButton>
         </div>
         <figcaption v-if="meta" class="lb-meta">
           <span class="lb-meta-copy">
-            <small>LIVE ARCHIVE</small>
+            <small>{{ messages.page.concerts.kicker }}</small>
             <strong>{{ meta.artist }}</strong>
             <span>{{ meta.tour }}</span>
           </span>
           <span class="lb-meta-index">{{ safeIndex + 1 }} / {{ images.length }}</span>
         </figcaption>
         <p class="sr-only" aria-live="polite">
-          {{ meta ? `${meta.artist} · ${meta.tour}` : '演唱会海报' }}，第 {{ safeIndex + 1 }} 张，共 {{ images.length }} 张
+          {{ meta ? `${meta.artist} · ${meta.tour}` : messages.lightbox.gallery }}{{ messages.lightbox.position(safeIndex + 1, images.length) }}
         </p>
       </figure>
 
-      <YanceButton v-if="images.length > 1" class="lb-nav lb-next" variant="quiet" size="icon" aria-label="下一张" @click="emit('next')">
+      <YanceButton v-if="images.length > 1" class="lb-nav lb-next" variant="quiet" size="icon" :aria-label="messages.lightbox.next" @click="emit('next')">
         →
       </YanceButton>
       </div>

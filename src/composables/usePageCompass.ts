@@ -1,41 +1,17 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, toValue, watch, type MaybeRefOrGetter } from 'vue'
 import { useScrollProgress } from './useScrollProgress'
 import type { PageCompassSection } from '../data/types'
-import {
-  chooseActiveSection,
-  MOBILE_COMPASS_SCROLL_DELTA,
-  MOBILE_COMPASS_TOP_THRESHOLD,
-  transitionMobileCompassState,
-  type CompassScrollState
-} from '../utils/pageCompass'
+import { chooseActiveSection } from '../utils/pageCompass'
 import { decodeHashTarget } from '../utils/navigation'
 
 export function usePageCompass(sections: MaybeRefOrGetter<readonly PageCompassSection[]>) {
   const sectionList = computed(() => toValue(sections))
   const { progress, percent } = useScrollProgress()
-  const initialMobileViewport = typeof window !== 'undefined'
-    && typeof window.matchMedia === 'function'
-    && window.matchMedia('(max-width: 760px)').matches
   const activeId = ref(sectionList.value[0]?.id ?? '')
-  const mobileViewport = ref(initialMobileViewport)
-  const mobileCompassState = ref<CompassScrollState>(initialMobileViewport ? 'quiet' : 'visible')
-  const mobileFocusWithin = ref(false)
-  // Focus visibility outranks scroll-driven hiding so keyboard users never lose the active control.
-  const mobileVisible = computed(() => (
-    !mobileViewport.value || mobileFocusWithin.value || mobileCompassState.value === 'visible'
-  ))
-  const mobileDataState = computed(() => mobileVisible.value ? 'visible' : mobileCompassState.value)
   const activeIndex = computed(() => Math.max(0, sectionList.value.findIndex((section) => section.id === activeId.value)))
   const activeSection = computed(() => sectionList.value[activeIndex.value] ?? sectionList.value[0])
-  const previousSection = computed(() => sectionList.value[activeIndex.value - 1])
-  const nextSection = computed(() => sectionList.value[activeIndex.value + 1])
-  const progressStyle = computed(() => ({ '--page-progress': `${percent.value * 3.6}deg` }))
 
   let observer: IntersectionObserver | null = null
-  let mobileQuery: MediaQueryList | null = null
-  let removeMobileQueryListener: (() => void) | null = null
-  let mobileIdleTimer: number | null = null
-  let lastScrollY = 0
   let mounted = false
   let hashNavigationId: string | null = null
   let hashNavigationSettled = false
@@ -56,6 +32,7 @@ export function usePageCompass(sections: MaybeRefOrGetter<readonly PageCompassSe
       const hashTargetIsInReadingWindow = hasTargetTop
         && targetTop! >= -24
         && targetTop! <= readingWindow
+
       if (!hashNavigationSettled) {
         if (hashTargetIsInReadingWindow) hashNavigationSettled = true
         activeId.value = hashNavigationId
@@ -100,66 +77,11 @@ export function usePageCompass(sections: MaybeRefOrGetter<readonly PageCompassSe
 
   function setupTargets() {
     if (!mounted) return
-    // Resolve the hash after async page content mounts, then observe the final section nodes.
     const hashTarget = decodeHashTarget(window.location.hash)
     hashNavigationId = hashTarget && sectionList.value.some((section) => section.id === hashTarget) ? hashTarget : null
     hashNavigationSettled = false
-    if (hashNavigationId) {
-      activeId.value = hashNavigationId
-    }
+    if (hashNavigationId) activeId.value = hashNavigationId
     void nextTick(observeTargets)
-  }
-
-  function clearMobileIdleTimer() {
-    if (mobileIdleTimer === null) return
-    window.clearTimeout(mobileIdleTimer)
-    mobileIdleTimer = null
-  }
-
-  function currentScrollY() {
-    return Math.max(0, window.scrollY || document.documentElement.scrollTop)
-  }
-
-  function releaseHashNavigation() {
-    if (!hashNavigationId) return
-    chooseFromVisibleEntries()
-  }
-
-  function scheduleMobileIdleReveal() {
-    clearMobileIdleTimer()
-    mobileIdleTimer = window.setTimeout(() => {
-      mobileIdleTimer = null
-      mobileCompassState.value = currentScrollY() <= MOBILE_COMPASS_TOP_THRESHOLD ? 'quiet' : 'visible'
-    }, 420)
-  }
-
-  function handleMobileScroll() {
-    const scrollY = currentScrollY()
-    releaseHashNavigation()
-    const nextState = transitionMobileCompassState({
-      state: mobileCompassState.value,
-      scrollTop: scrollY,
-      previousScrollTop: lastScrollY,
-      topThreshold: MOBILE_COMPASS_TOP_THRESHOLD,
-      directionThreshold: MOBILE_COMPASS_SCROLL_DELTA
-    })
-    lastScrollY = scrollY
-    if (!mobileViewport.value) return
-
-    mobileCompassState.value = nextState
-    if (scrollY > MOBILE_COMPASS_TOP_THRESHOLD) scheduleMobileIdleReveal()
-    else clearMobileIdleTimer()
-  }
-
-  function handleCompassFocusOut(event: FocusEvent) {
-    const currentTarget = event.currentTarget
-    const relatedTarget = event.relatedTarget
-    if (currentTarget instanceof HTMLElement && relatedTarget instanceof Node && currentTarget.contains(relatedTarget)) return
-    mobileFocusWithin.value = false
-  }
-
-  function handleCompassFocusIn() {
-    mobileFocusWithin.value = true
   }
 
   function selectSection(id: string) {
@@ -182,36 +104,15 @@ export function usePageCompass(sections: MaybeRefOrGetter<readonly PageCompassSe
       )
     }
 
-    window.scrollTo(0, 0)
-    window.requestAnimationFrame(() => window.scrollTo(0, 0))
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
   }
 
   function handleHashChange() {
     setupTargets()
   }
 
-  function syncMobileViewport(event?: MediaQueryListEvent) {
-    mobileViewport.value = event?.matches ?? mobileQuery?.matches ?? window.innerWidth <= 760
-    lastScrollY = currentScrollY()
-    clearMobileIdleTimer()
-    mobileCompassState.value = !mobileViewport.value || lastScrollY > MOBILE_COMPASS_TOP_THRESHOLD ? 'visible' : 'quiet'
-  }
-
-  function addMobileQueryListener(query: MediaQueryList) {
-    if (typeof query.addEventListener === 'function') {
-      query.addEventListener('change', syncMobileViewport)
-      return () => query.removeEventListener('change', syncMobileViewport)
-    }
-    query.addListener(syncMobileViewport)
-    return () => query.removeListener(syncMobileViewport)
-  }
-
   onMounted(() => {
     mounted = true
-    mobileQuery = window.matchMedia('(max-width: 760px)')
-    syncMobileViewport()
-    removeMobileQueryListener = addMobileQueryListener(mobileQuery)
-    window.addEventListener('scroll', handleMobileScroll, { passive: true })
     window.addEventListener('hashchange', handleHashChange)
     setupTargets()
   })
@@ -224,11 +125,7 @@ export function usePageCompass(sections: MaybeRefOrGetter<readonly PageCompassSe
   onUnmounted(() => {
     mounted = false
     disconnectTargets()
-    removeMobileQueryListener?.()
-    removeMobileQueryListener = null
-    window.removeEventListener('scroll', handleMobileScroll)
     window.removeEventListener('hashchange', handleHashChange)
-    clearMobileIdleTimer()
   })
 
   return {
@@ -236,16 +133,7 @@ export function usePageCompass(sections: MaybeRefOrGetter<readonly PageCompassSe
     percent,
     activeIndex,
     activeSection,
-    previousSection,
-    nextSection,
-    mobileState: mobileCompassState,
-    mobileViewport,
-    mobileVisible,
-    mobileDataState,
-    progressStyle,
     activeId,
-    handleCompassFocusIn,
-    handleCompassFocusOut,
     selectSection,
     goTop
   }

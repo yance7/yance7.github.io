@@ -2,8 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   chooseActiveSection,
   formatCompassIndex,
-  getScrollProgress,
-  transitionMobileCompassState
+  getScrollProgress
 } from '../src/utils/pageCompass'
 
 describe('page compass geometry and state helpers', () => {
@@ -17,13 +16,6 @@ describe('page compass geometry and state helpers', () => {
   it('formats compass indices with stable two-digit values', () => {
     expect(formatCompassIndex(0, 3)).toBe('01 / 03')
     expect(formatCompassIndex(2, 3)).toBe('03 / 03')
-  })
-
-  it('transitions the mobile compass through quiet, reading, and visible states', () => {
-    expect(transitionMobileCompassState({ state: 'quiet', scrollTop: 320, previousScrollTop: 0 })).toBe('reading')
-    expect(transitionMobileCompassState({ state: 'reading', scrollTop: 320, previousScrollTop: 320 })).toBe('reading')
-    expect(transitionMobileCompassState({ state: 'reading', scrollTop: 280, previousScrollTop: 320 })).toBe('visible')
-    expect(transitionMobileCompassState({ state: 'visible', scrollTop: 0, previousScrollTop: 280 })).toBe('quiet')
   })
 
   it('chooses the intersecting chapter nearest the reading anchor', () => {

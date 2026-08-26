@@ -81,7 +81,7 @@ for (const viewport of viewports) {
       expect(geometry.bodyWidth, `${entry.htmlName} body`).toBeLessThanOrEqual(geometry.viewportWidth)
 
       const compassLinks = page.locator('.page-compass-link')
-      await expect(compassLinks, `${entry.htmlName} compass sections`).toHaveCount(entry.sections.length)
+      await expect(compassLinks, `${entry.htmlName} compass sections`).toHaveCount(entry.sectionIds.length)
       if (entry.htmlName === '404') await expect(page.locator('.page-compass')).toHaveCount(0)
 
       if (viewport.width <= 844) {
@@ -116,9 +116,9 @@ test('section hashes clear the sticky navigation in portrait, landscape, and des
   for (const viewport of [viewports[2], viewports[4], viewports[9]]) {
     await page.setViewportSize(viewport)
     for (const entry of pageEntries) {
-      const section = entry.sections.at(-1)!
-      await page.goto(`/${entry.htmlName}.html#${section.id}`, { waitUntil: 'domcontentloaded', timeout: 60000 })
-      const target = page.locator(`#${section.id}`)
+      const sectionId = entry.sectionIds.at(-1)!
+      await page.goto(`/${entry.htmlName}.html#${sectionId}`, { waitUntil: 'domcontentloaded', timeout: 60000 })
+      const target = page.locator(`#${sectionId}`)
       await target.waitFor({ state: 'attached', timeout: 60000 })
       const placement = await target.evaluate((element) => {
         const header = document.querySelector<HTMLElement>('.site-nav')

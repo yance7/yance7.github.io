@@ -104,8 +104,7 @@ describe('archive design tokens', () => {
     expect(shell).not.toContain('padding: 5px 12px 5px 6px; border-radius: var(--radius-full);')
     expect(shell).toContain('padding: var(--space-3) var(--space-4); border: 1px solid var(--control-border); border-radius: var(--radius-pill);')
     expect(shell).not.toContain('padding: 11px 18px; border: 1px solid var(--control-border); border-radius: var(--radius-full);')
-    expect(responsive).toContain('padding: 5px 6px;\n    border-radius: var(--radius-pill);')
-    expect(responsive).not.toContain('padding: 5px 6px;\n    border-radius: var(--radius-full);')
+    expect(responsive).toContain('.page-compass-trigger {\n    min-height: 44px;\n    padding: 5px 6px;\n  }')
   })
 
   it('keeps important responsive labels at or above the public meta size', () => {

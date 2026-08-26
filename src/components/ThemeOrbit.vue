@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useTheme } from '../composables/useTheme'
+import { useLocale } from '../i18n'
 const { theme, toggleTheme } = useTheme()
+const { messages } = useLocale()
 
 function onToggle() {
   toggleTheme()
@@ -12,9 +14,9 @@ function onToggle() {
     class="theme-orbit"
     :class="theme"
     type="button"
-    :aria-label="theme === 'light' ? '切换到暗色主题' : '切换到亮色主题'"
+    :aria-label="`${theme === 'light' ? messages.theme.switchToDark : messages.theme.switchToLight}: ${theme === 'light' ? messages.theme.light : messages.theme.dark}`"
     :aria-pressed="theme === 'dark'"
-    :title="theme === 'light' ? '切换到暗色主题' : '切换到亮色主题'"
+    :title="theme === 'light' ? messages.theme.switchToDark : messages.theme.switchToLight"
     @click="onToggle"
   >
     <span class="orbit-track" aria-hidden="true">
@@ -22,6 +24,6 @@ function onToggle() {
       <span class="orbit-opt sun">☼</span>
       <span class="orbit-opt moon">☾</span>
     </span>
-    <span class="orbit-label">{{ theme === 'light' ? '亮色' : '暗色' }}</span>
+    <span class="orbit-label">{{ theme === 'light' ? messages.theme.light : messages.theme.dark }}</span>
   </button>
 </template>

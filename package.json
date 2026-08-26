@@ -10,7 +10,7 @@
   "packageManager": "npm@10.9.0",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm run sitemap && vite build && tsx scripts/generate-localized-pages.ts",
     "preview": "vite preview",
     "smoke": "tsx scripts/smoke-test.ts",
     "sitemap": "tsx scripts/generate-sitemap.ts",
@@ -28,7 +28,9 @@
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/noto-sans-hk": "^5.3.0",
     "@fontsource-variable/noto-sans-sc": "^5.3.0",
+    "@fontsource-variable/noto-serif-hk": "^5.3.0",
     "@fontsource-variable/noto-serif-sc": "^5.3.0",
     "@fontsource/ibm-plex-mono": "^5.3.0",
     "vue": "^3.5.40"

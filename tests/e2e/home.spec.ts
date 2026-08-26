@@ -42,6 +42,11 @@ test('home stage keeps its visual hierarchy across desktop and narrow screens', 
   for (const viewport of viewports) {
     await page.setViewportSize(viewport)
     await page.goto('/index.html')
+    await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+    await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready', { timeout: 10_000 })
+    await page.evaluate(() => new Promise<void>((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+    }))
     const layout = await page.evaluate(() => {
       const stage = document.querySelector('.home-stage')!.getBoundingClientRect()
       const title = document.querySelector('.home-stage-title')!.getBoundingClientRect()
@@ -66,6 +71,7 @@ test('home stage keeps its visual hierarchy across desktop and narrow screens', 
 
 test('home assigns distinct font roles to prose, display and technical metadata', async ({ page }) => {
   await page.goto('/index.html')
+  await expect(page.locator('.home-stage-title')).toHaveCount(1)
   await page.evaluate(() => document.fonts.ready)
   const fonts = await page.evaluate(() => {
     const read = (selector: string) => getComputedStyle(document.querySelector(selector)!).fontFamily
@@ -84,13 +90,15 @@ test('home assigns distinct font roles to prose, display and technical metadata'
   expect(fonts.action).toContain('Inter')
 
   await page.goto('/research.html')
+  await expect(page.locator('.tl-body h3').first()).toBeAttached()
+  await expect(page.locator('.tc-tool strong').first()).toBeAttached()
   await page.evaluate(() => document.fonts.ready)
   const researchFonts = await page.evaluate(() => {
     const read = (selector: string) => getComputedStyle(document.querySelector(selector)!).fontFamily
     return {
       title: read('.tl-body h3'),
       tool: read('.tc-tool strong'),
-      toolMeta: read('.tc-tool small')
+      toolMeta: read('.tc-group-head small')
     }
   })
   expect(researchFonts.title).toContain('Inter')

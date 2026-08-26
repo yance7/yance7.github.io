@@ -131,14 +131,8 @@ for (const theme of themes) {
       await page.goto('/research.html')
       await settlePage(page)
 
-      if (viewport.width <= 760) {
-        await page.evaluate(() => window.scrollTo({ top: 320, behavior: 'auto' }))
-        await expect(page.locator('.page-compass')).toHaveAttribute('data-mobile-state', 'visible')
-      } else {
-        const link = page.locator('.page-compass-link').nth(1)
-        await link.focus()
-        await expect(page.locator('#compass-tip-sec-research-timeline')).toBeVisible()
-      }
+      await page.locator('.page-compass-trigger').click()
+      await expect(page.locator('.page-compass-panel')).toBeVisible()
 
       if (viewport.width <= 760) {
         await expect(page.locator('.page-compass')).toHaveScreenshot(

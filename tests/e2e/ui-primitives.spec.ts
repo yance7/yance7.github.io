@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 test('shared project actions expose stable keyboard targets', async ({ page }) => {
   await page.goto('/works.html')
 
-  const projectLink = page.getByRole('link', { name: /ENTER PROJECT/i }).first()
+  const projectLink = page.locator('.sc-actions .y-button').first()
   await projectLink.focus()
 
   await expect(projectLink).toBeFocused()
@@ -41,21 +41,23 @@ test('status badges use compact semantic surfaces without pulse animation', asyn
   }
 })
 
-test('page compass exposes keyboard tooltip hierarchy', async ({ page }) => {
-  await page.setViewportSize({ width: 1024, height: 768 })
+test('page compass exposes a keyboard-expandable semantic panel', async ({ page }) => {
   await page.goto('/research.html')
 
-  const link = page.locator('.page-compass-link').nth(1)
-  await link.focus()
-
-  await expect(link).toHaveAttribute('aria-describedby', /compass-tip-/)
-  const tooltip = page.locator('#compass-tip-sec-research-timeline')
-  await expect(tooltip).toBeVisible()
+  const compass = page.locator('.page-compass')
+  const trigger = compass.locator('.page-compass-trigger')
+  const panel = compass.locator('.page-compass-panel')
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false')
+  await expect(panel).toHaveAttribute('aria-hidden', 'true')
+  await trigger.focus()
+  await expect(trigger).toBeFocused()
+  await expect(trigger).toHaveAttribute('aria-expanded', 'true')
+  await expect(panel).toBeVisible()
+  await expect(compass.locator('.page-compass-link').nth(1)).toBeVisible()
   await expect(page.locator('.page-compass')).toHaveCSS('overflow', 'visible')
-
-  const top = page.locator('.page-compass-top')
-  await expect(top).toHaveAttribute('aria-describedby', 'page-compass-top-tip')
-  await expect(page.locator('#page-compass-top-tip')).toHaveAttribute('role', 'tooltip')
+  await expect(compass.locator('.page-compass-step')).toHaveCount(0)
+  await page.keyboard.press('Escape')
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false')
 })
 
 test('lightbox keeps metadata and quiet control chrome bounded', async ({ page }) => {
@@ -67,7 +69,7 @@ test('lightbox keeps metadata and quiet control chrome bounded', async ({ page }
   await expect(page.locator('.lb-stage img')).toHaveClass(/loaded/)
   await expect(page.locator('.lb-meta-dock')).toHaveCount(1)
   await expect(page.locator('.lb-meta-copy')).toBeVisible()
-  await expect(page.locator('.lb-meta-copy small')).toHaveText('LIVE ARCHIVE')
+  await expect(page.locator('.lb-meta-copy small')).toHaveText('演唱会')
   await expect(page.locator('.lb-meta-index')).toHaveText(/\d+ \/ \d+/)
   await expect(page.locator('.lb-close')).toHaveClass(/y-button--icon/)
   await expect(page.locator('.lb-nav').first()).toHaveClass(/y-button--icon/)
@@ -121,14 +123,21 @@ test('archive proof links share one semantic primitive across works and research
 
 test('metric surfaces refine their boundary without adding elevation', async ({ page }) => {
   await page.goto('/academics.html')
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
   const metric = page.locator('.metric-card').first()
+  await expect(metric).toBeVisible()
   await metric.scrollIntoViewIfNeeded()
   await metric.hover()
 
   await expect(metric).toHaveCSS('transform', 'none')
-  const hasFinePointer = await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)
+  const hasFinePointer = await page.evaluate(() => (
+    window.matchMedia('(hover: hover) and (pointer: fine)').matches
+    && !window.matchMedia('(hover: none), (pointer: coarse)').matches
+  ))
   if (hasFinePointer) {
-    await expect(metric).toHaveCSS('box-shadow', /inset/)
+    await expect
+      .poll(() => metric.evaluate((element) => getComputedStyle(element).boxShadow))
+      .toMatch(/inset/)
   } else {
     await expect(metric).toHaveCSS('box-shadow', 'none')
   }

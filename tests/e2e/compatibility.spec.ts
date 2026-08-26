@@ -64,9 +64,9 @@ test('PageCompass exposes progress text and a single active chapter', async ({ p
   await page.goto('/works.html')
 
   await expect(page.locator('.scroll-progress')).toHaveAttribute('aria-valuetext', /阅读进度/)
-  await expect(page.locator('.page-compass-current span')).toHaveText('01 / 02')
+  await expect(page.locator('.page-compass-trigger-index')).toHaveText('01 / 02')
   await expect(page.locator('.page-compass-link.active')).toHaveCount(1)
-  await expect(page.locator('.page-compass-link.active > span:not(.page-compass-tooltip)')).toHaveText('01')
+  await expect(page.locator('.page-compass-link.active .page-compass-link-index')).toHaveText('01')
   await expect(page.locator('.page-compass-link.active')).toHaveAttribute('aria-current', 'location')
 })
 
@@ -91,14 +91,15 @@ test('coarse-pointer shared controls keep 44px touch targets', async ({ page }, 
   await closeButton.click()
 })
 
-test('keyboard PageCompass tooltips work with coarse pointer at desktop width', async ({ page }, testInfo) => {
+test('keyboard PageCompass expands the panel with a coarse pointer at desktop width', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium-android-smoke', 'Android-specific coarse-pointer keyboard contract')
   await page.setViewportSize({ width: 1024, height: 768 })
   await page.goto('/research.html')
 
+  await page.locator('.page-compass-trigger').focus()
   const link = page.locator('.page-compass-link').nth(1)
-  await link.focus()
-  await expect(page.locator('#compass-tip-sec-research-timeline')).toBeVisible()
+  await expect(link).toBeVisible()
+  await expect(page.locator('.page-compass-panel')).not.toHaveAttribute('aria-hidden', 'true')
 })
 
 test('compass stays inside the viewport and keeps touch targets usable', async ({ page }) => {
@@ -110,6 +111,7 @@ test('compass stays inside the viewport and keeps touch targets usable', async (
     expect(box!.x, `${width}px left edge`).toBeGreaterThanOrEqual(0)
     expect(box!.x + box!.width, `${width}px right edge`).toBeLessThanOrEqual(width)
     if (width <= 1024) {
+      await page.locator('.page-compass-trigger').click()
       const linkBox = await page.locator('.page-compass-link').first().boundingBox()
       expect(linkBox, `${width}px link geometry`).not.toBeNull()
       expectTouchTarget(linkBox!, `${width}px link`)
@@ -126,10 +128,14 @@ test('compass preserves reduced motion, keyboard navigation, and viewport change
   ))
   expect(transitionDuration).toBeLessThanOrEqual(0.00001)
 
+  const trigger = page.locator('.page-compass-trigger')
+  const panel = page.locator('.page-compass-panel')
+  await trigger.focus()
+  await expect(trigger).toHaveAttribute('aria-expanded', 'true')
+  await expect(panel).not.toHaveAttribute('inert', '')
   const fresheyeLink = page.locator('.page-compass-link[href="#project-fresheye"]')
-  await fresheyeLink.focus()
-  await expect(fresheyeLink).toBeFocused()
-  await page.keyboard.press('Enter')
+  await expect(fresheyeLink).toBeVisible()
+  await fresheyeLink.press('Enter')
   await expect(page).toHaveURL(/#project-fresheye$/)
 
   await page.setViewportSize({ width: 390, height: 844 })
@@ -140,54 +146,30 @@ test('compass preserves reduced motion, keyboard navigation, and viewport change
 test('mobile compass keeps numbered chapter controls legible', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/works.html')
-  await page.evaluate(() => window.scrollTo({ top: 320, behavior: 'auto' }))
-  await expect(page.locator('.page-compass')).toHaveAttribute('data-mobile-state', 'visible')
-  const firstIndex = page.locator('.page-compass-link').first().locator(':scope > span:not(.page-compass-tooltip)')
+  await page.locator('.page-compass-trigger').click()
+  const firstIndex = page.locator('.page-compass-link-index').first()
   await expect(firstIndex).toBeVisible()
   await expect(firstIndex).toHaveText('01')
 })
 
-test('mobile PageCompass follows reading direction without trapping focus', async ({ page }) => {
+test('mobile PageCompass uses a dismissible compact panel without trapping focus', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/index.html')
 
   const compass = page.locator('.page-compass')
-  await expect(compass).toHaveAttribute('data-mobile-state', 'quiet')
-  await expect(compass).toHaveAttribute('aria-hidden', 'true')
-  await expect(compass).toHaveAttribute('inert', '')
-  await expect(compass).toHaveCSS('visibility', 'hidden')
-  await expect(compass).toHaveCSS('pointer-events', 'none')
+  const trigger = compass.locator('.page-compass-trigger')
+  const panel = compass.locator('.page-compass-panel')
+  await trigger.click()
+  await expect(panel).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(trigger).toBeFocused()
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false')
 
-  await page.evaluate(() => {
-    window.scrollTo({ top: 320, behavior: 'auto' })
-    window.dispatchEvent(new Event('scroll'))
-  })
-  await expect.poll(() => compass.getAttribute('data-mobile-state'), { timeout: 300 }).toBe('reading')
-  await expect(compass).toHaveAttribute('aria-hidden', 'true')
-  await expect(compass).toHaveAttribute('inert', '')
-  await expect(compass).toHaveCSS('visibility', 'hidden')
-  await expect(compass).toHaveCSS('pointer-events', 'none')
-
-  await expect.poll(() => compass.getAttribute('data-mobile-state'), { timeout: 1200 }).toBe('visible')
-  await expect(compass).toHaveAttribute('data-mobile-state', 'visible')
-  await expect(compass).not.toHaveAttribute('aria-hidden', 'true')
-  await expect(compass).not.toHaveAttribute('inert', '')
-  await expect(compass).toHaveCSS('visibility', 'visible')
-  await expect(compass).toHaveCSS('pointer-events', 'auto')
-
-  const firstLink = compass.locator('.page-compass-link').first()
-  await firstLink.focus()
-  await expect(firstLink).toBeFocused()
-  await page.evaluate(() => {
-    window.scrollTo({ top: 620, behavior: 'auto' })
-    window.dispatchEvent(new Event('scroll'))
-  })
-  await expect(compass).toHaveAttribute('data-mobile-state', 'visible')
-  await expect(compass).not.toHaveAttribute('aria-hidden', 'true')
-
-  await page.locator('.menu-trigger').focus()
-  await expect(page.locator('.menu-trigger')).toBeFocused()
-  await expect.poll(() => compass.getAttribute('data-mobile-state'), { timeout: 300 }).toBe('reading')
+  await trigger.click()
+  await expect(panel).toBeVisible()
+  await page.locator('main#main').click({ position: { x: 12, y: 12 } })
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false')
+  await expect(panel).toHaveAttribute('aria-hidden', 'true')
 })
 
 test('compatibility menu, carousel, modal, and axe smoke remain usable', async ({ page }) => {
@@ -199,11 +181,12 @@ test('compatibility menu, carousel, modal, and axe smoke remain usable', async (
   await expect(page.locator('.mobile-menu-overlay')).toHaveCount(0)
 
   await page.goto('/concerts.html')
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
   const carousel = page.locator('.concert-poster').filter({ has: page.locator('.carousel-controls') }).first()
   const counter = carousel.locator('.carousel-controls span')
-  const before = await counter.textContent()
+  await expect(counter).toHaveText('1 / 2')
   await carousel.locator('button[aria-label="下一张"]').click()
-  await expect(counter).not.toHaveText(before || '')
+  await expect(counter).toHaveText('2 / 2')
 
   await page.locator('.concert-poster .poster-open').first().click()
   await expect(page.locator('.lightbox')).toBeVisible()
@@ -216,6 +199,9 @@ test('mobile menu typography follows the light-theme semantic text tokens', asyn
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/index.html')
   await page.locator('.menu-trigger').click()
+  await expect(page.locator('.mobile-menu .mm-num').first()).toBeVisible()
+  await expect(page.locator('.mobile-menu .mm-label').first()).toBeVisible()
+  await expect(page.locator('.mobile-menu .mm-desc').first()).toBeVisible()
 
   const colors = await page.evaluate(() => {
     const resolveColor = (variable: string) => {
@@ -229,16 +215,17 @@ test('mobile menu typography follows the light-theme semantic text tokens', asyn
 
     return {
       number: getComputedStyle(document.querySelector('.mobile-menu .mm-num')!).color,
-      english: getComputedStyle(document.querySelector('.mobile-menu .mm-en')!).color,
+      label: getComputedStyle(document.querySelector('.mobile-menu a:not(.active) .mm-label')!).color,
       description: getComputedStyle(document.querySelector('.mobile-menu .mm-desc')!).color,
       goldText: resolveColor('--gold-text'),
+      ink: resolveColor('--ink'),
       dim: resolveColor('--dim'),
       muted: resolveColor('--muted')
     }
   })
 
   expect(colors.number).toBe(colors.goldText)
-  expect(colors.english).toBe(colors.dim)
+  expect(colors.label).toBe(colors.ink)
   expect(colors.description).toBe(colors.muted)
 })
 

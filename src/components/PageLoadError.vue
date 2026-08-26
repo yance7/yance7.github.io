@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { useLocale } from '../i18n'
+
+const { messages } = useLocale()
+
 function reloadPage() {
   window.location.reload()
 }
@@ -7,9 +11,9 @@ function reloadPage() {
 <template>
   <section class="page-load-error" role="alert" aria-live="assertive">
     <span class="page-load-error-kicker">PAGE LOAD ERROR</span>
-    <h2>页面暂时无法加载</h2>
-    <p>当前页面资源没有完成加载，请刷新后重试。</p>
-    <button type="button" @click="reloadPage">重新加载</button>
+    <h2>{{ messages.loadError.title }}</h2>
+    <p>{{ messages.loadError.copy }}</p>
+    <button type="button" @click="reloadPage">{{ messages.loadError.retry }}</button>
   </section>
 </template>
 

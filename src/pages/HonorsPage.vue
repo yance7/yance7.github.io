@@ -1,26 +1,30 @@
 <script setup lang="ts">
 import '../styles/honors.css'
 import { ref, computed } from 'vue'
-import { honors, honorCategories, honorStats } from '../data'
+import { getLocalizedHonorCategories, getLocalizedHonorLevelLabels, getLocalizedHonorSections, getLocalizedHonorStats, getLocalizedHonors } from '../data/locales'
+import { useLocale } from '../i18n'
 import type { HonorLevel } from '../data/types'
 import SectionHeading from '../components/SectionHeading.vue'
 import MetricStrip from '../components/MetricStrip.vue'
 import ArchiveFilter from '../components/ArchiveFilter.vue'
 
 const activeCategory = ref<'all' | HonorLevel>('all')
+const { locale } = useLocale()
+const honors = computed(() => getLocalizedHonors(locale.value))
+const categories = computed(() => getLocalizedHonorCategories(locale.value))
+const levelLabel = computed(() => getLocalizedHonorLevelLabels(locale.value))
+const honorStats = computed(() => getLocalizedHonorStats(locale.value))
+const sections = computed(() => getLocalizedHonorSections(locale.value))
 
-const levelLabel: Record<HonorLevel, string> = {
-  peak: '领航级',
-  excellent: '卓越级',
-  emerging: '新锐级'
-}
-
-const categoryCounts: Record<'all' | HonorLevel, number> = { all: honors.length, peak: 0, excellent: 0, emerging: 0 }
-for (const honor of honors) categoryCounts[honor.level] += 1
+const categoryCounts = computed(() => {
+  const counts: Record<'all' | HonorLevel, number> = { all: honors.value.length, peak: 0, excellent: 0, emerging: 0 }
+  for (const honor of honors.value) counts[honor.level] += 1
+  return counts
+})
 
 const filteredHonors = computed(() => {
-  if (activeCategory.value === 'all') return honors
-  return honors.filter((h) => h.level === activeCategory.value)
+  if (activeCategory.value === 'all') return honors.value
+  return honors.value.filter((h) => h.level === activeCategory.value)
 })
 
 function setCategory(category: 'all' | HonorLevel) {
@@ -30,30 +34,28 @@ function setCategory(category: 'all' | HonorLevel) {
 
 <template>
   <div class="page-honors">
-    <!-- 01 · 统计条 -->
     <section id="sec-milestones" class="content">
       <SectionHeading
         no="01"
-        label="MILESTONES"
-        title="每一枚奖章，都是"
-        accent="向上的证据"
-        copy="奖项是坐标，不是终点；真正重要的是仍然保持向上的惯性。"
+        :label="sections.milestones.label"
+        :title="sections.milestones.title"
+        :accent="sections.milestones.accent"
+        :copy="sections.milestones.copy"
       />
       <MetricStrip :metrics="honorStats" />
     </section>
 
-    <!-- 02 · 时间轴奖项卡片 -->
     <section id="sec-honors-archive" class="content">
       <SectionHeading
         no="02"
-        label="ARCHIVE"
-        :title="`${honors.length} 枚`"
-        accent="坐标"
-        copy="按时间倒序排列，分为领航、卓越与新锐三档。"
+        :label="sections.archive.label"
+        :title="`${honors.length} ${sections.archive.titleSuffix}`"
+        :accent="sections.archive.accent"
+        :copy="sections.archive.copy"
       />
 
       <ArchiveFilter
-        :categories="honorCategories"
+        :categories="categories"
         :counts="categoryCounts"
         :active="activeCategory"
         @filter="setCategory"

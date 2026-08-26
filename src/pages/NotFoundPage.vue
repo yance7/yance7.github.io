@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import SectionHeading from '../components/SectionHeading.vue'
 import YanceButton from '../components/YanceButton.vue'
+import { buildLocalizedPageHref, useLocale } from '../i18n'
+
+const { locale, messages } = useLocale()
 </script>
 
 <template>
@@ -8,18 +11,18 @@ import YanceButton from '../components/YanceButton.vue'
     <section class="content error-content">
       <SectionHeading
         no="!"
-        label="SIGNAL LOST"
-        title="这一页，"
-        accent="走丢了"
-        copy="你访问的页面不存在，或者已经被移走。回到主页，重新选一间屋子走进去。"
+        :label="messages.error404.kicker"
+        :title="messages.error404.title"
+        accent=""
+        :copy="messages.error404.copy"
       />
       <div class="error-actions">
-        <YanceButton href="index.html" variant="primary" v-magnetic>
-          回到首页
+        <YanceButton :href="buildLocalizedPageHref('home', locale)" variant="primary" v-magnetic>
+          {{ messages.error404.home }}
           <template #trailing>→</template>
         </YanceButton>
-        <YanceButton href="research.html" variant="secondary" v-magnetic>
-          去看看研究
+        <YanceButton :href="buildLocalizedPageHref('research', locale)" variant="secondary" v-magnetic>
+          {{ messages.error404.research }}
           <template #trailing>→</template>
         </YanceButton>
       </div>

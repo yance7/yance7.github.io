@@ -1,8 +1,16 @@
 <script setup lang="ts">
 import '../styles/research.css'
-import { research, researchMethodGroups, researchMethods } from '../data'
+import { computed } from 'vue'
+import { getLocalizedResearch, getLocalizedResearchMethodGroups, getLocalizedResearchMethods, getLocalizedResearchSections } from '../data/locales'
+import { useLocale } from '../i18n'
 import SectionHeading from '../components/SectionHeading.vue'
 import TimelineTrack from '../components/TimelineTrack.vue'
+
+const { locale, messages } = useLocale()
+const research = computed(() => getLocalizedResearch(locale.value))
+const researchMethods = computed(() => getLocalizedResearchMethods(locale.value))
+const researchMethodGroups = computed(() => getLocalizedResearchMethodGroups(locale.value))
+const sections = computed(() => getLocalizedResearchSections(locale.value))
 </script>
 
 <template>
@@ -10,10 +18,10 @@ import TimelineTrack from '../components/TimelineTrack.vue'
     <section id="sec-research-timeline" class="content">
       <SectionHeading
         no="01"
-        label="RESEARCH"
-        title="研究"
-        accent="时间轴"
-        :copy="`${research.length} 个研究项目，按时间倒序呈现结果、论文、代码与产品证据。点击展开方法论，可以继续阅读完整的思考路径。`"
+        :label="sections.timeline.label"
+        :title="sections.timeline.title"
+        :accent="sections.timeline.accent"
+        :copy="sections.timeline.copy"
       />
       <TimelineTrack :items="research" />
     </section>
@@ -21,30 +29,30 @@ import TimelineTrack from '../components/TimelineTrack.vue'
     <section id="sec-toolchain" class="content">
       <SectionHeading
         no="02"
-        label="METHODS / WORKBENCH"
-        title="方法与"
-        accent="技术栈"
-        copy="我把研究拆成一条可复用的工作链：先定义问题，再用模型验证，最后把结果交付为可以打开的工具。"
+        :label="sections.toolchain.label"
+        :title="sections.toolchain.title"
+        :accent="sections.toolchain.accent"
+        :copy="sections.toolchain.copy"
       />
       <div class="toolchain-panel" v-reveal>
         <div class="toolchain-intro">
           <div>
-            <span class="tc-kicker">THE WORKBENCH</span>
-            <h3>从问题到可用结果</h3>
-            <p>模型、工程和实验不是三张清单，而是一条会反复回到问题本身的工作链。</p>
+            <span class="tc-kicker">{{ sections.toolchain.workbench }}</span>
+            <h3>{{ sections.toolchain.workbenchTitle }}</h3>
+            <p>{{ sections.toolchain.workbenchCopy }}</p>
           </div>
-          <div class="tc-count" aria-label="技术栈数量">
+          <div class="tc-count" :aria-label="messages.research.methodsLabel">
             <strong>{{ researchMethods.length }}</strong>
-            <span>TOOLS IN ROTATION</span>
+            <span>{{ messages.research.toolsInRotation }}</span>
           </div>
         </div>
 
-        <div class="toolchain-flow" aria-label="研究工作链">
-          <span><b>01</b> QUESTION</span>
+        <div class="toolchain-flow" :aria-label="sections.toolchain.flowLabel">
+          <span><b>01</b> {{ sections.toolchain.flow[0] }}</span>
           <i aria-hidden="true"></i>
-          <span><b>02</b> MODEL</span>
+          <span><b>02</b> {{ sections.toolchain.flow[1] }}</span>
           <i aria-hidden="true"></i>
-          <span><b>03</b> SHIP</span>
+          <span><b>03</b> {{ sections.toolchain.flow[2] }}</span>
         </div>
 
         <div class="toolchain-groups">
@@ -53,23 +61,22 @@ import TimelineTrack from '../components/TimelineTrack.vue'
               <span class="tc-group-no">0{{ i + 1 }}</span>
               <div>
                 <strong>{{ group.label }}</strong>
-                <small>{{ group.en }}</small>
+                <small>{{ group.label }}</small>
               </div>
-              <span class="tc-group-count">{{ group.items.length }} TOOLS</span>
+              <span class="tc-group-count">{{ group.items.length }} {{ messages.research.toolsCount }}</span>
             </div>
             <p>{{ group.description }}</p>
             <div class="tc-tools">
               <span v-for="tool in group.items" :key="tool.label" class="tc-tool">
                 <strong>{{ tool.label }}</strong>
-                <small>{{ tool.en }}</small>
               </span>
             </div>
           </section>
         </div>
 
         <div class="toolchain-foot">
-          <span><i></i> RESEARCH LOOP ACTIVE</span>
-          <span>QUESTION → EVIDENCE → PRODUCT</span>
+          <span><i></i> {{ sections.toolchain.footer[0] }}</span>
+          <span>{{ sections.toolchain.footer[1] }}</span>
         </div>
       </div>
     </section>

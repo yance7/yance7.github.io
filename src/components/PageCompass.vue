@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { usePageCompass } from '../composables/usePageCompass'
 import type { PageCompassSection } from '../data/types'
+import { useLocale } from '../i18n'
 import { formatCompassIndex } from '../utils/pageCompass'
 
 const props = defineProps<{ sections: readonly PageCompassSection[] }>()
@@ -10,25 +12,106 @@ const {
   activeId,
   activeIndex,
   activeSection,
-  previousSection,
-  nextSection,
-  mobileState,
-  mobileVisible,
-  mobileDataState,
-  progressStyle,
-  handleCompassFocusIn,
-  handleCompassFocusOut,
   selectSection,
   goTop
 } = usePageCompass(() => props.sections)
+const { messages } = useLocale()
+
+type CompassMode = 'closed' | 'transient' | 'pinned' | 'suppressed'
+
+const compassRef = ref<HTMLElement | null>(null)
+const triggerRef = ref<HTMLButtonElement | null>(null)
+const mode = ref<CompassMode>('closed')
+const pointerInside = ref(false)
+const focusInside = ref(false)
+const isExpanded = computed(() => mode.value === 'transient' || mode.value === 'pinned')
+
+function isHoverCapablePointer(event: PointerEvent) {
+  return event.pointerType !== 'touch'
+    && (event.pointerType === 'mouse' || window.matchMedia('(hover: hover)').matches)
+}
+
+function handlePointerEnter(event: PointerEvent) {
+  pointerInside.value = true
+  if (mode.value === 'closed' && isHoverCapablePointer(event)) mode.value = 'transient'
+}
+
+function handlePointerLeave() {
+  pointerInside.value = false
+  if (mode.value === 'transient' && !focusInside.value) mode.value = 'closed'
+  if (mode.value === 'suppressed' && !focusInside.value) mode.value = 'closed'
+}
+
+function handleFocusIn() {
+  focusInside.value = true
+  if (mode.value === 'closed') mode.value = 'transient'
+}
+
+function handleFocusOut(event: FocusEvent) {
+  const nextTarget = event.relatedTarget
+  focusInside.value = nextTarget instanceof Node && (compassRef.value?.contains(nextTarget) ?? false)
+  if (focusInside.value) return
+  if (mode.value === 'suppressed') {
+    if (nextTarget instanceof Node) mode.value = 'closed'
+    return
+  }
+  if (mode.value === 'transient' && !pointerInside.value) mode.value = 'closed'
+}
+
+function handleTriggerClick() {
+  mode.value = mode.value === 'pinned' ? 'closed' : 'pinned'
+}
+
+function closeCompass() {
+  mode.value = 'closed'
+}
+
+function suppressCompass() {
+  mode.value = 'suppressed'
+  triggerRef.value?.focus({ preventScroll: true })
+}
+
+function handleSectionSelect(event: MouseEvent, id: string) {
+  event.preventDefault()
+  selectSection(id)
+  mode.value = 'suppressed'
+  window.location.hash = id
+  triggerRef.value?.focus({ preventScroll: true })
+}
+
+function handleReturnTop() {
+  goTop()
+  suppressCompass()
+}
+
+function handleDocumentPointerDown(event: PointerEvent) {
+  const target = event.target
+  if (target instanceof Node && !compassRef.value?.contains(target)) closeCompass()
+}
+
+function handleDocumentKeydown(event: KeyboardEvent) {
+  if (event.key !== 'Escape' || !isExpanded.value) return
+  event.preventDefault()
+  suppressCompass()
+}
+
+onMounted(() => {
+  document.addEventListener('pointerdown', handleDocumentPointerDown)
+  document.addEventListener('keydown', handleDocumentKeydown)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('pointerdown', handleDocumentPointerDown)
+  document.removeEventListener('keydown', handleDocumentKeydown)
+})
 </script>
 
 <template>
   <div
     class="scroll-progress"
     role="progressbar"
-    aria-label="页面阅读进度"
-    :aria-valuetext="`页面阅读进度 ${percent}%`"
+    :aria-label="messages.compass.progress"
+    :aria-valuetext="`${messages.compass.progress} ${percent}%`"
     :aria-valuenow="percent"
     aria-valuemin="0"
     aria-valuemax="100"
@@ -37,78 +120,71 @@ const {
   </div>
 
   <nav
+    ref="compassRef"
     class="page-compass"
-    :class="{
-      'page-compass-quiet': !mobileVisible && mobileState === 'quiet',
-      'page-compass-reading': !mobileVisible && mobileState === 'reading'
-    }"
-    :data-mobile-state="mobileDataState"
-    :aria-hidden="mobileVisible ? undefined : 'true'"
-    :inert="!mobileVisible"
-    aria-label="页面章节罗盘"
-    @focusin="handleCompassFocusIn"
-    @focusout="handleCompassFocusOut"
+    :class="{ 'page-compass-expanded': isExpanded }"
+    :aria-label="messages.compass.label"
+    @pointerenter="handlePointerEnter"
+    @pointerleave="handlePointerLeave"
+    @focusin="handleFocusIn"
+    @focusout="handleFocusOut"
   >
     <button
-      class="page-compass-top page-compass-progress"
+      ref="triggerRef"
+      class="page-compass-trigger"
       type="button"
-      :style="progressStyle"
-      :aria-label="`回到顶部，当前阅读进度 ${percent}%`"
-      aria-describedby="page-compass-top-tip"
-      @click="goTop"
+      aria-controls="page-compass-panel"
+      :aria-expanded="isExpanded"
+      :aria-label="`${isExpanded ? messages.compass.close : messages.compass.open}: ${formatCompassIndex(activeIndex, props.sections.length)} ${activeSection?.shortLabel ?? activeSection?.label ?? ''}`"
+      @click="handleTriggerClick"
     >
-      <span aria-hidden="true">↑</span>
-      <small>{{ percent }}%</small>
-      <span id="page-compass-top-tip" class="page-compass-top-tooltip" role="tooltip">
-        <strong>RETURN TO TOP</strong>
-        <small>{{ percent }}% READ</small>
-      </span>
+      <span class="page-compass-trigger-index">{{ formatCompassIndex(activeIndex, props.sections.length) }}</span>
+      <strong class="page-compass-trigger-section">{{ activeSection?.shortLabel ?? activeSection?.label }}</strong>
+      <span class="page-compass-trigger-icon" aria-hidden="true">⌄</span>
     </button>
 
-    <div class="page-compass-current">
-      <span>{{ formatCompassIndex(activeIndex, props.sections.length) }}</span>
-      <strong>{{ activeSection?.shortLabel ?? activeSection?.label }}</strong>
-    </div>
+    <div
+      id="page-compass-panel"
+      class="page-compass-panel"
+      :aria-hidden="isExpanded ? undefined : 'true'"
+      :inert="!isExpanded"
+    >
+      <div class="page-compass-current">
+        <span>{{ messages.compass.current }}</span>
+        <strong>{{ activeSection?.label }}</strong>
+      </div>
 
-    <div class="page-compass-links">
-      <a
-        v-for="(section, index) in sections"
-        :key="section.id"
-        class="page-compass-link"
-        :class="{ active: activeId === section.id }"
-        :href="`#${section.id}`"
-        :aria-label="`前往章节：${section.label}`"
-        :aria-current="activeId === section.id ? 'location' : undefined"
-        :aria-describedby="`compass-tip-${section.id}`"
-        @click="selectSection(section.id)"
+      <div class="page-compass-links">
+        <a
+          v-for="(section, index) in sections"
+          :key="section.id"
+          class="page-compass-link"
+          :class="{ active: activeId === section.id }"
+          :href="`#${section.id}`"
+          :aria-label="`${messages.compass.goToSection}: ${section.label}`"
+          :aria-current="activeId === section.id ? 'location' : undefined"
+          @click="handleSectionSelect($event, section.id)"
+        >
+          <span class="page-compass-link-index">{{ String(index + 1).padStart(2, '0') }}</span>
+          <span class="page-compass-link-label">{{ section.label }}</span>
+          <span v-if="activeId === section.id" class="page-compass-link-current">{{ messages.compass.current }}</span>
+        </a>
+      </div>
+
+      <div class="page-compass-read" aria-live="polite">
+        <span>{{ messages.compass.progress }}</span>
+        <strong>{{ percent }}% {{ messages.compass.read }}</strong>
+      </div>
+
+      <button
+        class="page-compass-top"
+        type="button"
+        :aria-label="`${messages.compass.returnTop} · ${messages.compass.progress} ${percent}%`"
+        @click="handleReturnTop"
       >
-        <i aria-hidden="true"></i>
-        <span>{{ String(index + 1).padStart(2, '0') }}</span>
-        <span :id="`compass-tip-${section.id}`" class="page-compass-tooltip" role="tooltip">
-          <small>{{ String(index + 1).padStart(2, '0') }}</small>
-          <strong>{{ section.label }}</strong>
-          <em v-if="activeId === section.id">CURRENT</em>
-        </span>
-      </a>
-    </div>
-
-    <div class="page-compass-step">
-      <template v-if="previousSection">
-        <a
-          :href="`#${previousSection.id}`"
-          aria-label="上一章节"
-          @click="selectSection(previousSection.id)"
-        >←</a>
-      </template>
-      <span v-else class="page-compass-step-disabled" aria-hidden="true">←</span>
-      <template v-if="nextSection">
-        <a
-          :href="`#${nextSection.id}`"
-          aria-label="下一章节"
-          @click="selectSection(nextSection.id)"
-        >→</a>
-      </template>
-      <span v-else class="page-compass-step-disabled" aria-hidden="true">→</span>
+        <span aria-hidden="true">↑</span>
+        <span>{{ messages.compass.returnTop }}</span>
+      </button>
     </div>
   </nav>
 </template>

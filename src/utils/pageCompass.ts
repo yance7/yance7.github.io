@@ -1,18 +1,5 @@
 import { clampScrollProgress } from './scrollProgress'
 
-export type CompassScrollState = 'quiet' | 'reading' | 'visible'
-
-export const MOBILE_COMPASS_TOP_THRESHOLD = 16
-export const MOBILE_COMPASS_SCROLL_DELTA = 4
-
-export interface CompassScrollTransitionInput {
-  state: CompassScrollState
-  scrollTop: number
-  previousScrollTop: number
-  topThreshold?: number
-  directionThreshold?: number
-}
-
 export interface CompassSectionCandidate {
   id: string
   index: number
@@ -39,22 +26,6 @@ export function formatCompassIndex(index: number, total: number) {
 
   const safeIndex = Math.min(Math.max(0, Math.floor(finiteOr(index, 0))), safeTotal - 1)
   return `${String(safeIndex + 1).padStart(2, '0')} / ${String(safeTotal).padStart(2, '0')}`
-}
-
-export function transitionMobileCompassState({
-  state,
-  scrollTop,
-  previousScrollTop,
-  topThreshold = MOBILE_COMPASS_TOP_THRESHOLD,
-  directionThreshold = MOBILE_COMPASS_SCROLL_DELTA
-}: CompassScrollTransitionInput): CompassScrollState {
-  const current = Math.max(0, finiteOr(scrollTop, 0))
-  if (current <= topThreshold) return 'quiet'
-
-  const delta = current - finiteOr(previousScrollTop, current)
-  if (state === 'quiet' || delta > directionThreshold) return 'reading'
-  if (delta < -directionThreshold) return 'visible'
-  return state
 }
 
 export function chooseActiveSection(

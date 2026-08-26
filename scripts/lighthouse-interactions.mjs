@@ -30,7 +30,11 @@ const scenarios = [
         interactions: [
           {
             name: 'page-compass',
-            selector: '.page-compass-link:last-child',
+            selector: '.page-compass-trigger',
+            prepare: async (page) => {
+              await page.hover('.page-compass-trigger')
+              await page.waitForSelector('.page-compass-link:last-child', { visible: true })
+            },
             run: (page) => page.click('.page-compass-link:last-child')
           }
         ]
@@ -101,10 +105,12 @@ const scenarios = [
         interactions: [
           {
             name: 'page-compass',
-            selector: '.page-compass-link:last-child',
+            selector: '.page-compass-trigger',
             prepare: async (page) => {
               await page.evaluate(() => window.scrollTo(0, Math.max(320, document.body.scrollHeight * .35)))
               await delay(450)
+              await page.hover('.page-compass-trigger')
+              await page.waitForSelector('.page-compass-link:last-child', { visible: true })
             },
             run: (page) => page.click('.page-compass-link:last-child')
           }

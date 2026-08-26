@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { statusLabels } from '../data'
 import type { Status } from '../data/types'
+import { useLocale } from '../i18n'
 
 const props = defineProps<{ status: Status; labelOverride?: string }>()
-const label = computed(() => props.labelOverride ?? statusLabels[props.status])
+const { messages } = useLocale()
+const label = computed(() => props.labelOverride ?? messages.value.status[props.status])
 </script>
 
 <template>

@@ -60,13 +60,6 @@ export interface ResearchItem {
   updatedAt: string
 }
 
-export interface FeaturedResearch {
-  id: string
-  title: string
-  text: string
-  summaryMetrics: [Metric, Metric]
-}
-
 export interface ResearchMethod {
   label: string
   en: string
@@ -184,7 +177,6 @@ export interface Activity {
 export interface SiteNavItem {
   key: PageKey
   label: string
-  en: string
   href: string
   desc: string
 }
@@ -223,7 +215,6 @@ export interface World {
   key: PageKey
   no: string
   label: string
-  en: string
   icon: string
   href: string
   desc: string

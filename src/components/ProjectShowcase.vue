@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useLocale } from '../i18n'
 import StatusBadge from './StatusBadge.vue'
 import YanceButton from './YanceButton.vue'
 import type { Project } from '../data/types'
 
 const props = withDefaults(defineProps<{ project: Project; index?: number }>(), { index: 0 })
+const { messages } = useLocale()
 const projectNo = computed(() => String(props.index + 1).padStart(2, '0'))
 const chapterCount = computed(() => String(props.project.story.chapters.length).padStart(2, '0'))
 </script>
@@ -20,7 +22,7 @@ const chapterCount = computed(() => String(props.project.story.chapters.length).
   >
     <header class="sc-dossier-head">
       <div class="sc-file-code">
-        <span>PROJECT {{ projectNo }}</span>
+        <span>{{ messages.common.project }} {{ projectNo }}</span>
         <span>{{ project.discipline }}</span>
       </div>
       <div class="sc-head-status">
@@ -29,7 +31,7 @@ const chapterCount = computed(() => String(props.project.story.chapters.length).
           :href="project.href"
           target="_blank"
           rel="noopener noreferrer"
-          :aria-label="`打开 ${project.en} 网站`"
+          :aria-label="`${messages.actions.enterProject}: ${project.domain}`"
         >{{ project.domain }} <span aria-hidden="true">↗</span></a>
       </div>
     </header>
@@ -48,7 +50,7 @@ const chapterCount = computed(() => String(props.project.story.chapters.length).
       </div>
 
       <div class="sc-summary">
-        <span class="sc-meta-label">PROJECT NOTE</span>
+        <span class="sc-meta-label">{{ messages.common.projectNote }}</span>
         <p class="sc-desc">{{ project.description }}</p>
         <div class="sc-actions">
           <YanceButton
@@ -57,7 +59,7 @@ const chapterCount = computed(() => String(props.project.story.chapters.length).
             rel="noopener noreferrer"
             variant="primary"
           >
-            ENTER PROJECT
+            {{ messages.actions.enterProject }}
             <template #trailing>→</template>
           </YanceButton>
           <YanceButton
@@ -67,7 +69,7 @@ const chapterCount = computed(() => String(props.project.story.chapters.length).
             rel="noopener noreferrer"
             variant="secondary"
           >
-            SOURCE CODE
+            {{ messages.actions.sourceCode }}
             <template #trailing>→</template>
           </YanceButton>
         </div>
@@ -75,11 +77,11 @@ const chapterCount = computed(() => String(props.project.story.chapters.length).
     </div>
 
     <div class="sc-body">
-      <section class="sc-story" :aria-label="`${project.en} project story`">
+      <section class="sc-story" :aria-label="`${project.title} ${messages.accessibility.projectStory}`">
         <div class="sc-story-head">
           <div class="sc-story-ident">
             <span class="sc-meta-label">PROJECT STORY</span>
-            <span class="sc-story-count">{{ chapterCount }} CHAPTERS</span>
+            <span class="sc-story-count">{{ chapterCount }} {{ messages.common.chapters }}</span>
           </div>
           <p>{{ project.story.note }}</p>
         </div>
@@ -95,7 +97,7 @@ const chapterCount = computed(() => String(props.project.story.chapters.length).
             <span>{{ chapter.label }}</span>
             <strong>{{ chapter.title }}</strong>
             <p>{{ chapter.detail }}</p>
-            <small v-if="chapter.href">OPEN RESEARCH <span aria-hidden="true">→</span></small>
+            <small v-if="chapter.href">{{ messages.actions.openResearch }} <span aria-hidden="true">→</span></small>
           </component>
         </div>
 
@@ -110,7 +112,7 @@ const chapterCount = computed(() => String(props.project.story.chapters.length).
         </div>
 
         <div class="sc-proof-row">
-          <span class="sc-meta-label">PROOF / LINKS</span>
+          <span class="sc-meta-label">{{ messages.common.proofLinks }}</span>
           <div class="sc-proof-links">
             <a
               v-for="proof in project.story.proof"
@@ -130,11 +132,11 @@ const chapterCount = computed(() => String(props.project.story.chapters.length).
 
       <div class="sc-meta-row">
         <div class="sc-role">
-          <span class="sc-meta-label">ROLE</span>
+          <span class="sc-meta-label">{{ messages.common.role }}</span>
           <span>{{ project.role }}</span>
         </div>
         <div class="sc-stack">
-          <span class="sc-meta-label">STACK</span>
+          <span class="sc-meta-label">{{ messages.common.stack }}</span>
           <div class="sc-tags">
             <span v-for="tech in project.stack" :key="tech" class="sc-tag">{{ tech }}</span>
           </div>

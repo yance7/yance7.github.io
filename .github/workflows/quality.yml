@@ -23,6 +23,8 @@ concurrency:
 jobs:
   audit:
     runs-on: ubuntu-latest
+    env:
+      PLAYWRIGHT_USE_PREVIEW: '1'
     steps:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -57,12 +59,36 @@ jobs:
       - name: Lighthouse interaction budget
         run: npm run lighthouse:interactions
       - name: Chromium browser and axe quality
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: test-results/chromium
         run: npm run test:e2e -- --project=chromium --workers=4 --retries=0
-      - name: WebKit site and axe quality
+      - name: WebKit desktop PageCompass quality
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-compass
+        run: npm run test:e2e -- tests/e2e/page-compass-desktop.spec.ts --project=webkit-desktop --workers=4 --retries=0
+      - name: WebKit desktop site and axe quality
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-site
+        run: npm run test:e2e -- tests/e2e/site.spec.ts --project=webkit-desktop --workers=4 --retries=0
+      - name: WebKit desktop UI primitive quality
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-primitives
+        run: npm run test:e2e -- tests/e2e/ui-primitives.spec.ts --project=webkit-desktop --workers=4 --retries=0
+      - name: WebKit mobile PageCompass quality
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-compass
+        run: npm run test:e2e -- tests/e2e/page-compass-mobile.spec.ts --project=webkit-mobile --workers=4 --retries=0
+      - name: WebKit mobile site and axe quality
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-site
         run: npm run test:e2e -- tests/e2e/site.spec.ts --project=webkit-mobile --workers=4 --retries=0
-      - name: WebKit UI primitive quality
+      - name: WebKit mobile UI primitive quality
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-primitives
         run: npm run test:e2e -- tests/e2e/ui-primitives.spec.ts --project=webkit-mobile --workers=4 --retries=0
       - name: Chromium visual quality
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: test-results/visual
         shell: bash
         run: |
           if [ "${{ inputs.update_visual_snapshots }}" = "true" ]; then
@@ -72,9 +98,13 @@ jobs:
           fi
       - name: Firefox compatibility quality
         if: ${{ !cancelled() }}
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: test-results/firefox
         run: npm run test:e2e -- --project=firefox-desktop-smoke --workers=2 --retries=0
       - name: Android compatibility quality
         if: ${{ !cancelled() }}
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: test-results/android
         run: npm run test:e2e -- --project=chromium-android-smoke --workers=2 --retries=0
       - name: Upload quality artifacts
         if: always()

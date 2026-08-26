@@ -1,4 +1,4 @@
-import type { FeaturedResearch, ResearchItem, ResearchMethod, ResearchMethodGroup } from './types'
+import type { ResearchItem, ResearchMethod, ResearchMethodGroup } from './types'
 
 export const research = [
   {
@@ -201,22 +201,5 @@ export const researchMethodGroups = [
     items: researchMethods.filter((method) => method.cat === 'SCIENCE')
   }
 ] satisfies ResearchMethodGroup[]
-
-function toFeaturedResearch(item: ResearchItem): FeaturedResearch {
-  const metrics = item.metrics
-  if (!metrics || metrics.length < 2) {
-    throw new Error(`Featured research item ${item.id} needs two summary metrics`)
-  }
-  return {
-    id: item.id,
-    title: item.title,
-    text: item.text,
-    summaryMetrics: [metrics[0]!, metrics[1]!]
-  }
-}
-
-export const featuredResearch = research
-  .filter((item) => item.id === 'fishfreshnet-v2')
-  .map(toFeaturedResearch)
 
 /* ---------- 领导力 ---------- */

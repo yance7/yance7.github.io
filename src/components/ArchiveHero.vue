@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import type { HeroCredit } from '../data/types'
 import { splitLyricChars } from '../utils/typography'
+import { useLocale } from '../i18n'
 
 const props = withDefaults(defineProps<{
   page: string
@@ -18,6 +19,7 @@ const props = withDefaults(defineProps<{
   credit: null
 })
 const lyricChars = computed(() => splitLyricChars(props.title))
+const { messages } = useLocale()
 const accessibleTitle = computed(() =>
   props.error ? props.title : `「${props.title}」`
 )
@@ -48,7 +50,7 @@ const accessibleTitle = computed(() =>
           <span>「{{ credit.song }}」</span>
           <i aria-hidden="true">/</i>
           <span v-if="credit.album" class="lc-album">《{{ credit.album }}》</span>
-          <span v-else class="lc-album">单曲</span>
+          <span v-else class="lc-album">{{ messages.common.single }}</span>
         </p>
         <div class="hero-line" v-reveal="{ delay: 300 }"><span></span></div>
       </div>

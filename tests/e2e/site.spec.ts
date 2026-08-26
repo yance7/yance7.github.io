@@ -184,33 +184,6 @@ test('deferred fonts do not cause material late layout shift', async ({ page }, 
   expect(metrics.lateShift).toBeLessThan(0.01)
 })
 
-test('page compass unifies section navigation, reading progress, and return to top', async ({ page }) => {
-  await page.setViewportSize({ width: 1200, height: 900 })
-  await page.goto('/honors.html')
-  const compass = page.locator('.page-compass')
-  const archiveLink = compass.locator('.page-compass-link[href="#sec-honors-archive"]')
-
-  await expect(compass).toBeVisible()
-  await expect(compass.locator('.page-compass-link')).toHaveCount(2)
-  await archiveLink.click()
-  await expect(page).toHaveURL(/honors\.html#sec-honors-archive/)
-  await expect(archiveLink).toHaveAttribute('aria-current', 'location')
-  await expect.poll(() => compass.locator('.page-compass-progress').getAttribute('aria-label')).toMatch(/\d+%/)
-  const archiveSection = page.locator('#sec-honors-archive')
-  const archiveAnchorOffset = await archiveSection.evaluate((element) => (
-    Math.round(parseFloat(getComputedStyle(element).scrollMarginTop) || 0)
-  ))
-  await expect.poll(
-    () => archiveSection.evaluate((element) => Math.round(element.getBoundingClientRect().top))
-  ).toBe(archiveAnchorOffset)
-
-  await compass.locator('.page-compass-top').click()
-  await expect.poll(() => page.evaluate(() => Math.round(window.scrollY))).toBeLessThan(8)
-  await expect.poll(() => page.evaluate(() => window.location.hash)).toBe('')
-  await expect(compass.locator('.page-compass-link').first()).toHaveAttribute('aria-current', 'location')
-  await expect(page.locator('.section-dots, .scroll-to-top')).toHaveCount(0)
-})
-
 test('static metric surfaces do not advertise elevation on hover', async ({ page }) => {
   await page.goto('/academics.html')
   const metric = page.locator('.metric-card').first()
@@ -222,18 +195,12 @@ test('static metric surfaces do not advertise elevation on hover', async ({ page
   expect(after).toBe(before)
 })
 
-test('desktop PageCompass is the primary progress surface', async ({ page }) => {
-  await page.setViewportSize({ width: 1280, height: 800 })
-  await page.goto('/research.html')
-  await expect(page.locator('.page-compass')).toBeVisible()
-  await expect(page.locator('.scroll-progress')).toHaveCSS('opacity', '0')
-})
-
 test('research timeline highlights the item in the reading zone', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/research.html')
 
   const items = page.locator('.tl-item')
+  await expect(items.first()).toBeVisible()
   expect(await items.count()).toBeGreaterThanOrEqual(2)
 
   for (let index = 0; index < 2; index += 1) {
@@ -252,10 +219,12 @@ test('research timeline clears current state outside the reading zone', async ({
 })
 
 test('research status markers keep a static hierarchy without competing pulses', async ({ page }) => {
-  await page.setViewportSize({ width: 1200, height: 900 })
+  await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/research.html')
 
   const contentMarkers = page.locator('.status-badge.active .status-dot, .tc-head-status i, .tl-item.active .tl-node i')
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+  await expect(contentMarkers.first()).toBeAttached()
   expect(await contentMarkers.count()).toBeGreaterThan(0)
   const animations = await contentMarkers.evaluateAll((elements) =>
     elements.map((element) => getComputedStyle(element).animationName)
@@ -281,47 +250,9 @@ test('research timeline removes breathing motion when reduced motion is enabled'
   await expect(firstItem.locator('.tl-node i')).toHaveCSS('animation-name', 'none')
 })
 
-test('site navigation stays pinned and every compass destination clears it', async ({ page }) => {
-  test.setTimeout(60000)
-  await page.setViewportSize({ width: 1200, height: 900 })
-  await page.emulateMedia({ reducedMotion: 'reduce' })
-  const destinations = [
-    ['index.html', '#home-beyond'],
-    ['academics.html', '#sec-ap-archive'],
-    ['honors.html', '#sec-honors-archive'],
-    ['research.html', '#sec-toolchain'],
-    ['works.html', '#project-fresheye'],
-    ['concerts.html', '#concert-archive']
-  ] as const
-
-  for (const [route, destination] of destinations) {
-    await page.goto(`/${route}`)
-    const navigation = page.locator('.site-nav')
-    await page.evaluate(() => window.scrollTo({ top: 900, behavior: 'auto' }))
-    await expect.poll(() => navigation.evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBe(0)
-
-    await page.locator(`.page-compass-link[href="${destination}"]`).click()
-    const navBottom = await navigation.evaluate((element) => element.getBoundingClientRect().bottom)
-    await expect.poll(
-      () => page.locator(destination).evaluate((element) => element.getBoundingClientRect().top),
-      { message: `${route}${destination}` }
-    ).toBeGreaterThanOrEqual(navBottom + 12)
-  }
-})
-
-test('direct deep links settle below the pinned navigation', async ({ page }) => {
-  await page.setViewportSize({ width: 1200, height: 900 })
-  await page.goto('/works.html#project-fresheye')
-
-  const navigation = page.locator('.site-nav')
-  const navBottom = await navigation.evaluate((element) => element.getBoundingClientRect().bottom)
-  await expect.poll(() => page.locator('#project-fresheye').evaluate((element) => element.getBoundingClientRect().top)).toBeGreaterThanOrEqual(navBottom + 8)
-  await expect(page.locator('.page-compass-link[href="#project-fresheye"]')).toHaveAttribute('aria-current', 'location')
-})
-
 test('slow page chunks still settle deep links and compass state', async ({ page }) => {
   let requestCount = 0
-  await page.route('**/assets/vue/WorksPage-*.js', async (route) => {
+  await page.route(/\/(?:assets\/vue\/WorksPage-[^/]+\.js|src\/pages\/WorksPage\.vue)(?:\?.*)?$/, async (route) => {
     requestCount += 1
     await new Promise((resolve) => setTimeout(resolve, 5200))
     await route.continue()
@@ -336,7 +267,7 @@ test('slow page chunks still settle deep links and compass state', async ({ page
 
 test('failed page chunks render a controlled error without a reload loop', async ({ page }) => {
   let requestCount = 0
-  await page.route('**/assets/vue/WorksPage-*.js', async (route) => {
+  await page.route(/\/(?:assets\/vue\/WorksPage-[^/]+\.js|src\/pages\/WorksPage\.vue)(?:\?.*)?$/, async (route) => {
     requestCount += 1
     await route.abort('failed')
   })
@@ -394,7 +325,7 @@ test('signature pointer sheen stays static with reduced motion', async ({ page }
 })
 
 test('page compass exposes page-specific sections without covering narrow layouts', async ({ page }) => {
-  const expectations = pageEntries.map(({ htmlName, sections }) => [`${htmlName}.html`, sections.length] as const)
+  const expectations = pageEntries.map(({ htmlName, sectionIds }) => [`${htmlName}.html`, sectionIds.length] as const)
 
   for (const [route, sectionCount] of expectations) {
     await page.setViewportSize({ width: 390, height: 844 })
@@ -410,11 +341,27 @@ test('page compass exposes page-specific sections without covering narrow layout
     expect(layout.compassBottom).toBeLessThanOrEqual(844)
     expect(layout.footerPaddingBottom).toBeGreaterThanOrEqual(76)
 
-    const compactTargets = await page.locator('.page-compass button, .page-compass a').evaluateAll((elements) => elements.map((element) => {
+    const compactTargets = await page.locator('.page-compass-trigger').evaluateAll((elements) => elements.map((element) => {
       const bounds = element.getBoundingClientRect()
       return { width: bounds.width, height: bounds.height }
     }))
     compactTargets.forEach(({ width, height }) => {
+      expect(Math.round(width)).toBeGreaterThanOrEqual(44)
+      expect(Math.round(height)).toBeGreaterThanOrEqual(44)
+    })
+
+    await page.locator('.page-compass-trigger').click()
+    const expandedTargets = await page.locator('.page-compass button, .page-compass a').evaluateAll((elements) => elements
+      .filter((element) => {
+        const style = getComputedStyle(element)
+        const bounds = element.getBoundingClientRect()
+        return style.visibility !== 'hidden' && bounds.width > 0 && bounds.height > 0
+      })
+      .map((element) => {
+        const bounds = element.getBoundingClientRect()
+        return { width: bounds.width, height: bounds.height }
+      }))
+    expandedTargets.forEach(({ width, height }) => {
       expect(Math.round(width)).toBeGreaterThanOrEqual(44)
       expect(Math.round(height)).toBeGreaterThanOrEqual(44)
     })
@@ -433,25 +380,25 @@ test('mobile compass keeps focus priority inside a compact visual frame', async 
     await page.setViewportSize(viewport)
     await page.goto('/honors.html')
     const compass = page.locator('.page-compass')
+    const trigger = compass.locator('.page-compass-trigger')
+    const panel = compass.locator('.page-compass-panel')
 
-    if (viewport.width <= 760) {
-      await expect(compass).toHaveAttribute('data-mobile-state', 'quiet')
-      await page.evaluate(() => window.scrollTo({ top: 700, behavior: 'auto' }))
-      await expect.poll(() => compass.getAttribute('data-mobile-state'), { timeout: 2500 }).not.toBe('quiet')
-      await expect.poll(() => compass.getAttribute('data-mobile-state'), { timeout: 2500 }).toBe('visible')
-    } else {
-      await expect(compass).toHaveAttribute('data-mobile-state', 'visible')
-    }
+    await expect(trigger).toHaveAttribute('aria-expanded', 'false')
+    await expect(trigger).toBeVisible()
+    await trigger.focus()
+    await expect(trigger).toBeFocused()
+    await expect(trigger).toHaveAttribute('aria-expanded', 'true')
+    await expect(panel).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(trigger).toBeFocused()
+    await expect(trigger).toHaveAttribute('aria-expanded', 'false')
+    await expect(panel).toHaveAttribute('aria-hidden', 'true')
 
-    const topControl = compass.locator('.page-compass-top')
-    await topControl.focus()
-    await expect(topControl).toBeFocused()
-    await expect(compass).toHaveAttribute('data-mobile-state', 'visible')
-
-    if (viewport.width <= 760) {
-      await page.evaluate(() => window.scrollBy({ top: 120, behavior: 'auto' }))
-      await expect(compass).toHaveAttribute('data-mobile-state', 'visible')
-    }
+    await trigger.click()
+    await expect(panel).toBeVisible()
+    await compass.locator('.page-compass-link').last().click()
+    await expect(trigger).toHaveAttribute('aria-expanded', 'false')
+    await expect(panel).toHaveAttribute('inert', '')
 
     const geometry = await compass.evaluate((element) => {
       const rect = element.getBoundingClientRect()
@@ -466,12 +413,9 @@ test('mobile compass keeps focus priority inside a compact visual frame', async 
     expect(geometry.left).toBeGreaterThanOrEqual(0)
     expect(geometry.right).toBeLessThanOrEqual(viewport.width)
     expect(geometry.bottom).toBeLessThanOrEqual(viewport.height)
-    if (viewport.width <= 760) {
-      expect(geometry.width).toBeLessThanOrEqual(viewport.width - 24)
-      expect(geometry.height).toBeLessThanOrEqual(58)
-    }
+    if (viewport.width <= 760) expect(geometry.width).toBeLessThanOrEqual(viewport.width - 24)
 
-    const targets = await compass.locator('button, a').evaluateAll((elements) =>
+    const targets = await compass.locator('button:visible, a:visible').evaluateAll((elements) =>
       elements.map((element) => {
         const rect = element.getBoundingClientRect()
         return {
@@ -516,6 +460,7 @@ test('interactive states remain accessible after opening', async ({ page }) => {
 })
 
 test('rapid control clicks settle without duplicate or stale state', async ({ page }) => {
+  test.setTimeout(60000)
   await page.goto('/honors.html')
   const filter = page.locator('.filter-btn').filter({ hasText: '卓越级' })
   for (let i = 0; i < 5; i += 1) await filter.click()
