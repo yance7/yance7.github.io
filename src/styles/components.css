@@ -36,6 +36,19 @@
   .section-head h2 { word-break: auto-phrase; }
 }
 
+html[data-locale='en'] .section-head h2,
+html[data-locale='en'] .section-copy {
+  overflow-wrap: break-word;
+}
+
+html[data-locale='en'] .section-head h2 {
+  text-wrap: balance;
+}
+
+html[data-locale='en'] .section-copy {
+  text-wrap: pretty;
+}
+
 /* ===== 状态徽章 ===== */
 .status-badge {
   display: inline-flex; align-items: center; gap: 6px;

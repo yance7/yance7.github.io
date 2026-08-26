@@ -47,7 +47,9 @@ describe('English content hygiene', () => {
       const sections = getLocalizedSections('en', page.key)
 
       expect(
-        sections.every((section) => section.shortLabel.length <= 12)
+        sections.every((section) => (
+          (section.shortLabel ?? section.label).length <= 12
+        ))
       ).toBe(true)
     }
   })

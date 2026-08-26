@@ -78,12 +78,12 @@ export const research = [
       tag: 'IEEE XPLORE'
     },
     citation: `@INPROCEEDINGS{11605650,
-  author={Yan, Ce},
-  booktitle={2026 3rd International Conference on Image Processing and Artificial Intelligence (ICIPAI)},
-  title={FishFreshNetV1: A Lightweight and Explainable Framework Based on Attention Mechanism for Fish Freshness Assessment},
-  year={2026},
-  pages={379-383},
-  doi={10.1109/ICIPAI70034.2026.11605650}
+author={Yan, Ce},
+booktitle={2026 3rd International Conference on Image Processing and Artificial Intelligence (ICIPAI)},
+title={FishFreshNetV1: A Lightweight and Explainable Framework Based on Attention Mechanism for Fish Freshness Assessment},
+year={2026},
+pages={379-383},
+doi={10.1109/ICIPAI70034.2026.11605650}
 }`,
     metrics: [
       { value: '99.23%', label: '准确率', note: 'MFED · paper result' },
@@ -141,13 +141,13 @@ export const research = [
       tag: 'OPEN ACCESS'
     },
     citation: `@article{bioconf202623702029,
-  author={Yan, Ce},
-  title={不同外源增强剂对玉米生长的影响与机制研究},
-  journal={BIO Web of Conferences},
-  volume={237},
-  pages={02029},
-  year={2026},
-  doi={10.1051/bioconf/202623702029}
+author={Yan, Ce},
+title={不同外源增强剂对玉米生长的影响与机制研究},
+journal={BIO Web of Conferences},
+volume={237},
+pages={02029},
+year={2026},
+doi={10.1051/bioconf/202623702029}
 }`,
     metrics: [
       { value: '102.9%', label: '生物量增长' },

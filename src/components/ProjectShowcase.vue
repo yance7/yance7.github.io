@@ -6,9 +6,14 @@ import YanceButton from './YanceButton.vue'
 import type { Project } from '../data/types'
 
 const props = withDefaults(defineProps<{ project: Project; index?: number }>(), { index: 0 })
-const { messages } = useLocale()
+const { locale, messages } = useLocale()
 const projectNo = computed(() => String(props.index + 1).padStart(2, '0'))
 const chapterCount = computed(() => String(props.project.story.chapters.length).padStart(2, '0'))
+const secondaryWordmark = computed(() => (
+  locale.value === 'en'
+    ? ''
+    : props.project.en
+))
 </script>
 
 <template>
@@ -43,7 +48,10 @@ const chapterCount = computed(() => String(props.project.story.chapters.length).
           <p class="sc-overline">{{ project.discipline }}</p>
           <h3>
             <span>{{ project.title }}</span>
-            <small class="sc-wordmark">{{ project.en }}</small>
+            <small
+              v-if="secondaryWordmark"
+              class="sc-wordmark"
+            >{{ secondaryWordmark }}</small>
           </h3>
           <p class="sc-value">{{ project.value }}</p>
         </div>

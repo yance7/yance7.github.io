@@ -41,7 +41,7 @@
 .honor-list-leave-active { pointer-events: none; }
 .honor-list-move { transition: transform var(--dur-base) var(--ease-out); }
 .honor-card {
-  position: relative; display: grid; grid-template-columns: 120px 1fr;
+  position: relative; display: grid; grid-template-columns: 120px minmax(0, 1fr);
   gap: var(--space-5); padding: var(--space-5) var(--space-6); overflow: hidden;
   border: 1px solid var(--line); background: var(--surface);
   border-radius: var(--radius-card); box-shadow: var(--shadow-1);
@@ -87,7 +87,7 @@
   transition: box-shadow var(--dur-base) var(--ease-soft);
 }
 .honor-card:hover .honor-level-dot { box-shadow: 0 0 16px currentColor; }
-.honor-content { display: flex; flex-direction: column; gap: 8px; }
+.honor-content { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
 .honor-level-tag {
   display: inline-flex; align-self: flex-start;
   font-family: var(--font-technical); font-size: var(--text-xs); letter-spacing: var(--tracking-latin-wide);
@@ -97,11 +97,11 @@
 }
 .honor-content h3 {
   margin: 0; font-family: var(--font-editorial); font-size: 1.35rem; font-weight: 400;
-  color: var(--ink); line-height: 1.4;
+  color: var(--ink); line-height: 1.4; overflow-wrap: break-word;
 }
 .honor-org {
   font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: .08em;
-  color: var(--dim); text-transform: uppercase;
+  color: var(--dim); text-transform: uppercase; overflow-wrap: break-word;
 }
 .disclosure-mark {
   display: inline-grid;
@@ -118,7 +118,7 @@
 
 /* ===== 荣誉页面级响应式补丁 ===== */
 @media (max-width: 900px) {
-  .honor-card { grid-template-columns: 100px 1fr; gap: var(--space-5); padding: var(--space-5); }
+  .honor-card { grid-template-columns: 100px minmax(0, 1fr); gap: var(--space-5); padding: var(--space-5); }
 }
 @media (max-width: 640px) {
   .honor-card { grid-template-columns: 1fr; gap: var(--space-3); padding: var(--space-5); }

@@ -61,7 +61,7 @@ const sections = computed(() => getLocalizedResearchSections(locale.value))
               <span class="tc-group-no">0{{ i + 1 }}</span>
               <div>
                 <strong>{{ group.label }}</strong>
-                <small>{{ group.label }}</small>
+                <small>{{ locale === 'en' ? group.en : group.label }}</small>
               </div>
               <span class="tc-group-count">{{ group.items.length }} {{ messages.research.toolsCount }}</span>
             </div>
