@@ -195,6 +195,32 @@ test('compatibility menu, carousel, modal, and axe smoke remain usable', async (
   await expect(page.locator('.lightbox')).toHaveCount(0)
 })
 
+test('Firefox carousel controls keep the poster geometry stable while hovered', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'firefox-desktop-smoke', 'Firefox-specific pointer geometry proof')
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/concerts.html')
+
+  const carousel = page.locator('.concert-poster').filter({ has: page.locator('.carousel-controls') }).first()
+  const next = carousel.locator('button[aria-label="下一张"]')
+  await carousel.scrollIntoViewIfNeeded()
+  const before = await carousel.evaluate((element) => {
+    const style = getComputedStyle(element)
+    return {
+      rotateX: style.getPropertyValue('--rx').trim(),
+      rotateY: style.getPropertyValue('--ry').trim()
+    }
+  })
+
+  await next.hover()
+  await expect.poll(() => carousel.evaluate((element) => {
+    const style = getComputedStyle(element)
+    return {
+      rotateX: style.getPropertyValue('--rx').trim(),
+      rotateY: style.getPropertyValue('--ry').trim()
+    }
+  })).toEqual(before)
+})
+
 test('mobile menu typography follows the light-theme semantic text tokens', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/index.html')

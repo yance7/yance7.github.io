@@ -3,6 +3,7 @@ import { getPointerSheenPosition, type PointerSheenBounds } from '../utils/point
 
 interface PointerSheenOptions {
   tilt?: number
+  tiltExclude?: string
 }
 
 const cleanups = new WeakMap<HTMLElement, () => void>()
@@ -26,6 +27,7 @@ const pointerSheen: Directive<HTMLElement, PointerSheenOptions | undefined> = {
     ) return
 
     const tilt = Math.min(Math.max(binding.value?.tilt ?? 0, 0), 6)
+    const tiltExclude = binding.value?.tiltExclude
     let frame = 0
     let bounds: PointerSheenBounds | null = null
     const invalidateBounds = () => { bounds = null }
@@ -38,11 +40,17 @@ const pointerSheen: Directive<HTMLElement, PointerSheenOptions | undefined> = {
         element.style.setProperty('--pointer-x', `${x.toFixed(1)}%`)
         element.style.setProperty('--pointer-y', `${y.toFixed(1)}%`)
         element.style.setProperty('--pointer-active', '1')
-        if (tilt > 0) {
+        const tiltExcluded = tiltExclude
+          && event.target instanceof Element
+          && event.target.closest(tiltExclude)
+        if (tilt > 0 && !tiltExcluded) {
           const horizontal = x / 100 - .5
           const vertical = y / 100 - .5
           element.style.setProperty('--rx', `${(-vertical * tilt).toFixed(2)}deg`)
           element.style.setProperty('--ry', `${(horizontal * tilt).toFixed(2)}deg`)
+        } else {
+          element.style.removeProperty('--rx')
+          element.style.removeProperty('--ry')
         }
       })
     }
