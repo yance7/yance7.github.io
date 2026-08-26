@@ -56,7 +56,12 @@ const sections = computed(() => getLocalizedResearchSections(locale.value))
         </div>
 
         <div class="toolchain-groups">
-          <section v-for="(group, i) in researchMethodGroups" :key="group.id" class="toolchain-group">
+          <section
+            v-for="(group, i) in researchMethodGroups"
+            :key="group.id"
+            class="toolchain-group"
+            v-reveal="{ delay: i * 60 }"
+          >
             <div class="tc-group-head">
               <span class="tc-group-no">0{{ i + 1 }}</span>
               <div>
