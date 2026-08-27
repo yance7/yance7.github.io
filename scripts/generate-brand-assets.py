@@ -160,9 +160,12 @@ def main() -> None:
                 f'Brand asset set drifted. Expected {expected_names}, found {actual_names}.'
             )
         for name in expected_names:
-            expected = (generated / name).read_bytes()
-            actual = (OUTPUT / name).read_bytes()
-            if actual != expected:
+            with Image.open(generated / name) as expected_image, Image.open(OUTPUT / name) as actual_image:
+                expected_image.load()
+                actual_image.load()
+                expected_rgba = expected_image.convert('RGBA')
+                actual_rgba = actual_image.convert('RGBA')
+            if expected_rgba.size != actual_rgba.size or expected_rgba.tobytes() != actual_rgba.tobytes():
                 raise SystemExit(f'Brand asset drifted from source: {name}')
     print('brand assets: committed files match the selected master source')
 
