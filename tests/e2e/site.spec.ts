@@ -75,6 +75,74 @@ async function expectAccessible(page: Page) {
   expect(results.violations).toEqual([])
 }
 
+test('brand mark links header and footer back to the localized home page', async ({ page }) => {
+  await page.goto('/en/research.html')
+
+  const headerBrand = page.locator('.site-nav .wordmark')
+  const footerBrand = page.locator('.site-footer .foot-mark')
+
+  await expect(headerBrand).toHaveAttribute('href', '/en/')
+  await expect(headerBrand).toHaveAttribute('aria-label', /Yance\./)
+  await expect(headerBrand.locator('.brand-mark')).toHaveAttribute('aria-hidden', 'true')
+  await expect(headerBrand.locator('.brand-mark-image')).toBeVisible()
+  await expect(headerBrand.locator('.brand-mark-image')).toHaveAttribute('alt', '')
+  await expect(headerBrand.locator('.brand-mark-image')).toHaveAttribute('loading', 'eager')
+  await expect(headerBrand.locator('.brand-mark-image')).toHaveAttribute('fetchpriority', 'high')
+
+  const headerBox = await headerBrand.boundingBox()
+  expect(headerBox, 'header brand hit area').not.toBeNull()
+  expect(Math.round(headerBox?.width ?? 0), 'header brand width').toBeGreaterThanOrEqual(44)
+  expect(Math.round(headerBox?.height ?? 0), 'header brand height').toBeGreaterThanOrEqual(44)
+
+  await page.evaluate(() => {
+    window.scrollTo(0, document.documentElement.scrollHeight)
+  })
+
+  await expect(footerBrand).toBeVisible()
+  await expect(footerBrand).toHaveAttribute('href', '/en/')
+  await expect(footerBrand.locator('.brand-mark-image')).toBeVisible()
+  await expect(footerBrand.locator('.brand-mark-image')).toHaveAttribute('loading', 'lazy')
+  await expect(footerBrand.locator('.brand-mark-image')).toHaveAttribute('fetchpriority', 'low')
+})
+
+test('brand mark preserves zh-HK localized home navigation', async ({ page }) => {
+  await page.goto('/zh-hk/research.html')
+
+  await expect(page.locator('.site-nav .wordmark')).toHaveAttribute('href', '/zh-hk/')
+})
+
+test('brand mark preserves root locale home navigation', async ({ page }) => {
+  await page.goto('/research.html')
+
+  await expect(page.locator('.site-nav .wordmark')).toHaveAttribute('href', '/')
+})
+
+test('simplified brand icons are wired for browser shells and PWA metadata', async ({ page }) => {
+  await page.goto('/en/research.html')
+
+  await expect(page.locator('link[rel="icon"][sizes="16x16"]')).toHaveAttribute(
+    'href',
+    '/assets/brand/favicon-16.png'
+  )
+  await expect(page.locator('link[rel="icon"][sizes="32x32"]')).toHaveAttribute(
+    'href',
+    '/assets/brand/favicon-32.png'
+  )
+  await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute(
+    'href',
+    '/assets/brand/yance-icon-180.png'
+  )
+
+  const manifest = await page.evaluate(async () => {
+    const response = await fetch('/assets/site.webmanifest')
+    return response.json() as Promise<{ icons: Array<{ src: string; purpose: string; sizes: string; type: string }> }>
+  })
+  expect(manifest.icons).toEqual([
+    { src: '/assets/brand/yance-icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+    { src: '/assets/brand/yance-icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+  ])
+})
+
 test('all archive pages boot and expose the main landmark', async ({ page }) => {
   for (const route of archiveRoutes) {
     await page.goto(`/${route}`)

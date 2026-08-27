@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { buildLocalizedPageHref, useLocale } from '../i18n'
+import BrandMark from './BrandMark.vue'
 
 const { locale, messages } = useLocale()
 </script>
@@ -8,8 +9,11 @@ const { locale, messages } = useLocale()
   <footer class="site-footer">
     <div class="foot-brand">
       <a class="foot-mark" :href="buildLocalizedPageHref('home', locale)" :aria-label="`${messages.accessibility.footerHome}: Yance. ${messages.footer.archive}`">
-        <strong>Yance<span>.</span></strong>
-        <small>{{ messages.footer.archive }}</small>
+        <BrandMark variant="footer" />
+        <span class="foot-mark-copy">
+          <strong>Yance.</strong>
+          <small>{{ messages.footer.archive }}</small>
+        </span>
       </a>
       <span class="foot-tag">{{ messages.footer.identity }}</span>
     </div>
