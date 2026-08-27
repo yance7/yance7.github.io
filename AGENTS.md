@@ -40,6 +40,8 @@
 
 - Git history uses concise Chinese summaries led by an action verb: `新增`, `修复`, `优化`, `重构`, `更新`, `移除`, `集成`.
 - Example: `修复Service Worker缓存导致页面元素丢失`.
+- New branches use `codex/<type>/<short-kebab-topic>`, where `<type>` is one of `feat`, `fix`, `refactor`, `chore`, `docs`, or `test`; `main` is reserved for the release baseline.
+- Existing branches with older names are historical references and should not be used as the starting point for new work.
 - PRs: one logical change per PR; describe what changed and why, include before/after screenshots for UI work, and note which pages were verified.
 - GitHub Pages is deployed by `.github/workflows/pages.yml`; do not commit generated `dist/` output.
 
