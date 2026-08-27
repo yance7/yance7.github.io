@@ -11,9 +11,9 @@ test('home leads with the quiet editorial stage', async ({ page }) => {
   await expect(page.locator('.home-stage-actions')).toBeVisible()
 })
 
-test('home keeps the Yance wordmark at both archive anchors', async ({ page }) => {
+test('home keeps the Yance brand mark at both archive anchors', async ({ page }) => {
   await page.goto('/index.html')
-  await expect(page.locator('header .wordmark')).toHaveText('Yance.')
+  await expect(page.locator('header .wordmark .brand-mark-image')).toBeVisible()
   await expect(page.locator('.foot-mark')).toContainText('Yance.')
 })
 

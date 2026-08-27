@@ -85,9 +85,15 @@
 
 @media (max-width: 420px) {
   .site-nav { padding-top: max(16px, env(safe-area-inset-top)); }
-  .wordmark { font-size: 1.75rem; }
   .archive-hero { padding-inline: max(var(--w-pad), env(safe-area-inset-left)) max(var(--w-pad), env(safe-area-inset-right)); }
   .hero-action { width: 100%; justify-content: space-between; }
+}
+
+@media (max-width: 760px) {
+  .wordmark { flex-basis: 44px; width: 44px; height: 44px; }
+  .brand-mark-header { width: 40px; height: 40px; }
+  .brand-mark-footer { width: 40px; height: 40px; }
+  .foot-brand { min-width: 0; }
 }
 
 /* Shared controls keep comfortable touch targets without owning page content. */
@@ -109,8 +115,9 @@
    remains intentionally visible so the same controls stay discoverable. */
 @media (hover: none), (pointer: coarse) {
   html { scroll-behavior: auto; }
-  .wordmark:hover:not(:focus-visible) { color: var(--ink); transform: none; }
-  .wordmark:hover:not(:focus-visible) span { transform: none; }
+  .wordmark:hover:not(:focus-visible) { transform: none; }
+  .wordmark:hover:not(:focus-visible) .brand-mark-image,
+  .foot-mark:hover:not(:focus-visible) .brand-mark-image { filter: none; }
   .nav-rail a:hover:not(:focus-visible) { color: var(--dim); }
   .nav-rail a:hover:not(:focus-visible)::after { transform: scaleX(0); }
   .mobile-menu-close:hover:not(:focus-visible) {
@@ -128,12 +135,20 @@
   .hero-action:hover:not(:focus-visible) span { transform: none; }
   .metric-card:hover:not(:focus-visible) { background: var(--surface-strong); transform: none; box-shadow: none; }
   .foot-mark:hover:not(:focus-visible) { color: var(--ink); transform: none; }
-  .foot-mark:hover:not(:focus-visible) strong span { transform: none; }
   .foot-links a:hover:not(:focus-visible) { color: var(--gold); transform: none; }
   .lb-nav:hover:not(:focus-visible), .lb-close:hover:not(:focus-visible) {
     background: var(--control-bg); border-color: var(--control-border); color: var(--ink); box-shadow: var(--control-shadow); transform: none;
   }
   .lb-retry:hover:not(:focus-visible) { border-color: var(--control-border); background: var(--control-bg); color: var(--text-primary); transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wordmark,
+  .foot-mark { transition: none; }
+  .wordmark:hover,
+  .foot-mark:hover { transform: none; }
+  .wordmark:hover .brand-mark-image,
+  .foot-mark:hover .brand-mark-image { filter: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
