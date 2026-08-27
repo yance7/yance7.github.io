@@ -4,6 +4,7 @@ import { getLocalizedNavItems } from '../data/locales'
 import { buildLocalizedPageHref, useLocale } from '../i18n'
 import ThemeOrbit from './ThemeOrbit.vue'
 import LocaleSwitcher from './LocaleSwitcher.vue'
+import BrandMark from './BrandMark.vue'
 import { useModalDialog } from '../composables/useModalDialog'
 
 defineProps<{ page?: string }>()
@@ -41,7 +42,9 @@ useModalDialog(menuActive, {
 
 <template>
   <header class="site-nav" :class="{ 'menu-open': menuVisible }">
-    <a class="wordmark" :href="buildLocalizedPageHref('home', locale)" :aria-label="`${messages.accessibility.home}: Yance.`">Yance<span>.</span></a>
+    <a class="wordmark brand-link" :href="buildLocalizedPageHref('home', locale)" :aria-label="`${messages.accessibility.home}: Yance.`">
+      <BrandMark variant="header" />
+    </a>
 
     <button
       class="menu-trigger"
