@@ -77,7 +77,7 @@ describe('critical rendering contracts', () => {
   })
 
   it('preloads the first concert album cover before the async page chunk mounts', () => {
-    const concertsHtml = readFileSync(resolve(process.cwd(), 'html-src/concerts.html'), 'utf8')
+    const concertsHtml = readFileSync(resolve(process.cwd(), 'html-src/concerts.html'), 'utf8').replace(/\r\n/g, '\n')
 
     expect(concertsHtml).toContain('<link\n    rel="preload"\n    as="image"')
     expect(concertsHtml).toContain('/assets/albums/thumbs/jay-fantasy-640.webp')

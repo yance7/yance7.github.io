@@ -14,7 +14,6 @@ describe('brand mark release contracts', () => {
       'yance-icon-180.png',
       'yance-icon-192.png',
       'yance-icon-512.png',
-      'yance-mark-master.png',
       'yance-mark-96.webp',
       'yance-mark-128.webp',
       'yance-mark-fallback.png'
@@ -37,6 +36,8 @@ describe('brand mark release contracts', () => {
     expect(footer).toContain('<BrandMark variant="footer" />')
     expect(footer).toContain('<strong>Yance.</strong>')
     expect(generator).toContain("SOURCE = ROOT / 'design-assets' / 'yance-brand-master.png'")
+    expect(generator).toContain("parser.add_argument('--check'")
+    expect(generator).toContain('committed files match the selected master source')
     expect(generator).toContain('make_simplified_icon')
     expect(generator).toContain("ICON_SIZES = (16, 32, 180, 192, 512)")
   })

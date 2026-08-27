@@ -1,3 +1,5 @@
+import argparse
+import tempfile
 from pathlib import Path
 
 from PIL import Image
@@ -120,8 +122,8 @@ def make_simplified_icon(size: int = 512) -> Image.Image:
     return image
 
 
-def main() -> None:
-    OUTPUT.mkdir(parents=True, exist_ok=True)
+def generate_assets(output: Path) -> None:
+    output.mkdir(parents=True, exist_ok=True)
 
     with Image.open(SOURCE) as source:
         if source.mode != 'RGBA':
@@ -129,16 +131,40 @@ def main() -> None:
         source.load()
         master = square_canvas(trim_alpha(source.copy()))
 
-    save_png(master, OUTPUT / 'yance-mark-master.png')
-
     for size in FULL_SIZES:
-        save_webp(resize(master, size), OUTPUT / f'yance-mark-{size}.webp')
+        save_webp(resize(master, size), output / f'yance-mark-{size}.webp')
 
-    save_png(resize(master, 128), OUTPUT / 'yance-mark-fallback.png')
+    save_png(resize(master, 128), output / 'yance-mark-fallback.png')
 
     icon = make_simplified_icon()
     for size in ICON_SIZES:
-        save_png(resize(icon, size), OUTPUT / f'yance-icon-{size}.png' if size >= 180 else OUTPUT / f'favicon-{size}.png')
+        save_png(resize(icon, size), output / f'yance-icon-{size}.png' if size >= 180 else output / f'favicon-{size}.png')
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description='Generate or verify Yance brand runtime assets.')
+    parser.add_argument('--check', action='store_true', help='verify committed assets match the selected master source')
+    args = parser.parse_args()
+
+    if not args.check:
+        generate_assets(OUTPUT)
+        return
+
+    with tempfile.TemporaryDirectory(prefix='yance-brand-assets-') as temp_dir:
+        generated = Path(temp_dir) / 'brand'
+        generate_assets(generated)
+        expected_names = sorted(path.name for path in generated.iterdir())
+        actual_names = sorted(path.name for path in OUTPUT.iterdir()) if OUTPUT.exists() else []
+        if actual_names != expected_names:
+            raise SystemExit(
+                f'Brand asset set drifted. Expected {expected_names}, found {actual_names}.'
+            )
+        for name in expected_names:
+            expected = (generated / name).read_bytes()
+            actual = (OUTPUT / name).read_bytes()
+            if actual != expected:
+                raise SystemExit(f'Brand asset drifted from source: {name}')
+    print('brand assets: committed files match the selected master source')
 
 
 if __name__ == '__main__':

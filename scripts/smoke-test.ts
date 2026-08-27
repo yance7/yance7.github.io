@@ -103,7 +103,6 @@ for (const asset of [
   'assets/brand/yance-mark-128.webp',
   'assets/brand/yance-mark-256.webp',
   'assets/brand/yance-mark-fallback.png',
-  'assets/brand/yance-mark-master.png',
   'assets/site.webmanifest',
   'assets/case/fresheye-og-cover.png',
   'assets/concerts',

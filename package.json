@@ -14,6 +14,8 @@
     "preview": "vite preview",
     "smoke": "tsx scripts/smoke-test.ts",
     "sitemap": "tsx scripts/generate-sitemap.ts",
+    "brand:assets": "python scripts/generate-brand-assets.py",
+    "brand:assets:check": "python scripts/generate-brand-assets.py --check",
     "lighthouse": "lhci autorun --config=.lighthouserc.json && lhci autorun --config=.lighthouserc.mobile.json",
     "lighthouse:interactions": "node scripts/lighthouse-interactions.mjs",
     "links": "tsx scripts/check-external-links.ts",
@@ -21,7 +23,7 @@
     "audit:assets": "python scripts/audit-assets.py",
     "typecheck": "vue-tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.test.json",
     "deadcode": "knip --include files,dependencies,unlisted,unresolved,exports,types --no-progress",
-    "check": "npm run lint && npm run typecheck && npm run deadcode && npm run unit && npm run sitemap && npm run build && npm run smoke",
+    "check": "npm run brand:assets:check && npm run lint && npm run typecheck && npm run deadcode && npm run unit && npm run sitemap && npm run build && npm run smoke",
     "lint": "eslint . --max-warnings=0",
     "unit": "vitest run",
     "test:e2e": "playwright test"
