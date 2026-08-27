@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 const root = process.cwd()
 
 describe('brand mark release contracts', () => {
-  it('keeps the selected source and generated runtime assets in the brand folders', () => {
+  it('keeps the selected full source and generated runtime assets in the brand folders', () => {
     expect(existsSync(resolve(root, 'design-assets/yance-brand-master.png'))).toBe(true)
 
     for (const asset of [
@@ -14,32 +14,62 @@ describe('brand mark release contracts', () => {
       'yance-icon-180.png',
       'yance-icon-192.png',
       'yance-icon-512.png',
+      'yance-mark-48.webp',
+      'yance-mark-64.webp',
       'yance-mark-96.webp',
       'yance-mark-128.webp',
+      'yance-mark-256.webp',
       'yance-mark-fallback.png'
     ]) {
       expect(existsSync(resolve(root, `public/assets/brand/${asset}`))).toBe(true)
     }
   })
 
-  it('routes both shell identity surfaces through the shared full-mark component', () => {
+  it('routes both shell identity surfaces through one shared navigation mark', () => {
     const component = readFileSync(resolve(root, 'src/components/BrandMark.vue'), 'utf8')
+    const componentStyles = readFileSync(resolve(root, 'src/styles/components.css'), 'utf8')
     const header = readFileSync(resolve(root, 'src/components/SiteHeader.vue'), 'utf8')
     const footer = readFileSync(resolve(root, 'src/components/SiteFooter.vue'), 'utf8')
     const generator = readFileSync(resolve(root, 'scripts/generate-brand-assets.py'), 'utf8')
 
-    expect(component).toContain("variant?: 'header' | 'footer'")
+    expect(component).toContain("variant?: 'header' | 'footer' | 'full'")
+    expect(component).toContain("tone?: 'brand' | 'mono'")
+    expect(component).toContain('class="brand-mark-svg"')
+    expect(component).toContain('focusable="false"')
+    for (const part of ['y', 'orbit', 'audio', 'neural']) {
+      expect(component).toContain(`data-brand-part="${part}"`)
+    }
+    const neuralGroup = component.match(/data-brand-part="neural"[^>]*>([\s\S]*?)<\/g>/)?.[1] ?? ''
+    expect((neuralGroup.match(/<circle/g) ?? []).length).toBeGreaterThanOrEqual(3)
+    expect((neuralGroup.match(/<circle/g) ?? []).length).toBeLessThanOrEqual(5)
+    expect(componentStyles).toContain('.brand-mark-mono')
+    expect(componentStyles).toContain('currentColor')
     expect(component).toContain('/assets/brand/yance-mark-96.webp')
-    expect(component).toContain(':loading="isHeader ? \'eager\' : \'lazy\'"')
-    expect(component).toContain(':fetchpriority="isHeader ? \'high\' : \'low\'"')
+    expect(component).toContain('isFull')
     expect(header).toContain('<BrandMark variant="header" />')
     expect(footer).toContain('<BrandMark variant="footer" />')
+    expect(header).not.toContain('/assets/brand/yance-mark-96.webp')
     expect(footer).toContain('<strong>Yance.</strong>')
     expect(generator).toContain("SOURCE = ROOT / 'design-assets' / 'yance-brand-master.png'")
     expect(generator).toContain("parser.add_argument('--check'")
     expect(generator).toContain('committed files match the selected master source')
     expect(generator).toContain('make_simplified_icon')
     expect(generator).toContain("ICON_SIZES = (16, 32, 180, 192, 512)")
+    expect(generator).toContain('actual_names != expected_names')
+    expect(generator).toContain('expected_rgba.tobytes() != actual_rgba.tobytes()')
+  })
+
+  it('keeps independent light and dark brand tokens and a real mono treatment', () => {
+    const component = readFileSync(resolve(root, 'src/components/BrandMark.vue'), 'utf8')
+    const theme = readFileSync(resolve(root, 'src/theme.css'), 'utf8')
+
+    for (const token of ['--brand-navy', '--brand-teal', '--brand-gold', '--brand-glow', '--brand-edge']) {
+      expect((theme.match(new RegExp(token, 'g')) ?? []).length).toBeGreaterThanOrEqual(2)
+    }
+    expect(theme).toContain("[data-theme='light']")
+    expect(theme).toContain("[data-theme='dark']")
+    expect(component).toContain('brand-mark-mono')
+    expect(component).toContain('tone')
   })
 
   it('publishes the simplified icon through every document shell and manifest purpose', () => {

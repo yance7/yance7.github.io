@@ -143,9 +143,38 @@ html[data-locale='en'] .section-copy {
 }
 .foot-brand { display: flex; align-items: center; gap: var(--space-4); }
 .foot-mark { display: flex; flex-direction: row; align-items: center; gap: 10px; min-width: 0; color: var(--ink); transition: color var(--dur-fast) var(--ease-soft), transform var(--dur-fast) var(--ease-out); }
-.brand-mark { display: inline-grid; place-items: center; flex: 0 0 auto; line-height: 0; pointer-events: none; }
+.brand-mark {
+  --brand-mark-y: var(--brand-navy);
+  --brand-mark-orbit: var(--brand-teal);
+  --brand-mark-audio: var(--brand-teal);
+  --brand-mark-accent: var(--brand-gold);
+  --brand-mark-edge: var(--brand-edge);
+  --brand-mark-neural: var(--brand-edge);
+  display: inline-grid; place-items: center; flex: 0 0 auto; line-height: 0; pointer-events: none;
+}
+.brand-mark-mono {
+  --brand-mark-y: currentColor;
+  --brand-mark-orbit: currentColor;
+  --brand-mark-audio: currentColor;
+  --brand-mark-accent: currentColor;
+  --brand-mark-edge: currentColor;
+  --brand-mark-neural: currentColor;
+}
 .brand-mark picture,
+.brand-mark-svg,
 .brand-mark-image { display: block; }
+.brand-mark-svg { width: 100%; height: 100%; overflow: visible; }
+.brand-mark-y-body { fill: var(--brand-mark-y); stroke: var(--brand-mark-edge); stroke-width: 2.5; }
+.brand-mark-y-left { fill: var(--brand-mark-accent); stroke: var(--brand-mark-edge); stroke-width: 1.25; }
+.brand-mark-y-right { fill: var(--brand-mark-orbit); stroke: var(--brand-mark-edge); stroke-width: 1.25; }
+.brand-mark-orbit-ring { stroke: var(--brand-mark-orbit); stroke-width: 3; opacity: .92; }
+.brand-mark-orbit-accent { stroke: var(--brand-mark-accent); stroke-width: 2.5; opacity: .9; }
+.brand-mark-audio-ribbon { stroke: var(--brand-mark-audio); stroke-width: 6; }
+.brand-mark-audio-wave { stroke: var(--brand-mark-accent); stroke-width: 2.8; }
+.brand-mark-neural-line { stroke: var(--brand-mark-neural); stroke-width: 1.8; opacity: .86; }
+.brand-mark-node { stroke: var(--brand-mark-edge); stroke-width: 1.4; }
+.brand-mark-node-gold { fill: var(--brand-mark-accent); }
+.brand-mark-node-teal { fill: var(--brand-mark-orbit); }
 .brand-mark-image { width: 100%; height: 100%; object-fit: contain; }
 .brand-mark-header { width: 44px; height: 44px; }
 .brand-mark-footer { width: 42px; height: 42px; }
