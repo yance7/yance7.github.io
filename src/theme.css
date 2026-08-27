@@ -193,6 +193,13 @@
   --focus-ring: 0 0 0 3px var(--bg), 0 0 0 5px var(--focus);
   --danger: #A54A3C;
 
+  /* 品牌身份层：独立于站点通用强调色，服务 Y / orbit / audio 识别。 */
+  --brand-navy: #082F4C;
+  --brand-teal: #176F74;
+  --brand-gold: #A5681E;
+  --brand-glow: rgba(39, 126, 118, .14);
+  --brand-edge: #16485E;
+
   --text-primary: var(--ink);
   --text-secondary: var(--muted);
   --text-tertiary: var(--dim);
@@ -319,6 +326,13 @@
   --compass-rail: color-mix(in srgb, var(--aqua) 48%, var(--line));
   --focus-ring: 0 0 0 3px var(--bg), 0 0 0 5px var(--focus);
   --danger: #F08B7E;
+
+  /* 暗色品牌处理：提高 teal/gold，同时让 navy 与深色背景保持边界。 */
+  --brand-navy: #123D5E;
+  --brand-teal: #6DDED0;
+  --brand-gold: #F0C36F;
+  --brand-glow: rgba(109, 222, 208, .18);
+  --brand-edge: #A9E5D9;
 
   --text-primary: var(--ink);
   --text-secondary: var(--muted);

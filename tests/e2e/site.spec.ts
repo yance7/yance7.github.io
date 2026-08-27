@@ -140,10 +140,12 @@ test('brand mark links header and footer back to the localized home page', async
   await expect(headerBrand).toHaveAttribute('href', '/en/')
   await expect(headerBrand).toHaveAttribute('aria-label', /Yance\./)
   await expect(headerBrand.locator('.brand-mark')).toHaveAttribute('aria-hidden', 'true')
-  await expect(headerBrand.locator('.brand-mark-image')).toBeVisible()
-  await expect(headerBrand.locator('.brand-mark-image')).toHaveAttribute('alt', '')
-  await expect(headerBrand.locator('.brand-mark-image')).toHaveAttribute('loading', 'eager')
-  await expect(headerBrand.locator('.brand-mark-image')).toHaveAttribute('fetchpriority', 'high')
+  await expect(headerBrand.locator('.brand-mark-svg')).toBeVisible()
+  await expect(headerBrand.locator('.brand-mark-image')).toHaveCount(0)
+  await expect(headerBrand.locator('[data-brand-part="y"]')).toHaveCount(1)
+  await expect(headerBrand.locator('[data-brand-part="orbit"]')).toHaveCount(1)
+  await expect(headerBrand.locator('[data-brand-part="audio"]')).toHaveCount(1)
+  await expect(headerBrand.locator('[data-brand-part="neural"]')).toHaveCount(1)
 
   const headerBox = await headerBrand.boundingBox()
   expect(headerBox, 'header brand hit area').not.toBeNull()
@@ -156,9 +158,86 @@ test('brand mark links header and footer back to the localized home page', async
 
   await expect(footerBrand).toBeVisible()
   await expect(footerBrand).toHaveAttribute('href', '/en/')
-  await expect(footerBrand.locator('.brand-mark-image')).toBeVisible()
-  await expect(footerBrand.locator('.brand-mark-image')).toHaveAttribute('loading', 'lazy')
-  await expect(footerBrand.locator('.brand-mark-image')).toHaveAttribute('fetchpriority', 'low')
+  await expect(footerBrand.locator('.brand-mark-svg')).toBeVisible()
+  await expect(footerBrand.locator('.brand-mark-image')).toHaveCount(0)
+})
+
+test('shared navigation mark keeps its identity across light and dark themes', async ({ page }) => {
+  await page.goto('/en/research.html')
+
+  for (const theme of ['light', 'dark']) {
+    await page.evaluate((value) => localStorage.setItem('yance-theme', value), theme)
+    await page.reload()
+
+    const mark = page.locator('.site-nav .brand-mark-svg')
+    await expect(mark).toBeVisible()
+    const geometry = await mark.evaluate((element) => {
+      const rect = element.getBoundingClientRect()
+      const y = element.querySelector('[data-brand-part="y"]')
+      const audio = element.querySelector('.brand-mark-audio-ribbon')
+      return {
+        width: rect.width,
+        height: rect.height,
+        yFill: y ? getComputedStyle(y).fill : '',
+        audioStroke: audio ? getComputedStyle(audio).stroke : ''
+      }
+    })
+    expect(geometry.width).toBeGreaterThanOrEqual(32)
+    expect(geometry.height).toBeGreaterThanOrEqual(32)
+    expect(geometry.yFill).not.toBe('none')
+    expect(geometry.audioStroke).not.toBe('none')
+  }
+})
+
+test('brand mark keeps header geometry across locales, themes, and supported viewports', async ({ page }) => {
+  const viewports = [
+    { width: 1200, height: 900 },
+    { width: 768, height: 1024 },
+    { width: 390, height: 844 }
+  ]
+  const routes = ['/research.html', '/zh-hk/research.html', '/en/research.html']
+
+  for (const viewport of viewports) {
+    await page.setViewportSize(viewport)
+    for (const route of routes) {
+      await page.goto(route)
+      for (const theme of ['light', 'dark']) {
+        await page.evaluate((value) => localStorage.setItem('yance-theme', value), theme)
+        await page.reload()
+
+        const brandLink = page.locator('.site-nav .wordmark')
+        const mark = brandLink.locator('.brand-mark-svg')
+        await expect(mark).toBeVisible()
+        await expect(page.locator('.site-footer .brand-mark-svg')).toBeAttached()
+        await expect(page.locator('html')).toHaveAttribute('data-theme', theme)
+
+        const geometry = await brandLink.evaluate((element) => {
+          const rect = element.getBoundingClientRect()
+          const svg = element.querySelector<SVGElement>('.brand-mark-svg')
+          return {
+            width: rect.width,
+            height: rect.height,
+            markWidth: svg?.getBoundingClientRect().width ?? 0,
+            markHeight: svg?.getBoundingClientRect().height ?? 0,
+            documentWidth: document.documentElement.scrollWidth,
+            viewportWidth: window.innerWidth
+          }
+        })
+
+        expect(geometry.width, `${route} ${theme} ${viewport.width}px hit area`).toBeGreaterThanOrEqual(44)
+        expect(geometry.height, `${route} ${theme} ${viewport.width}px hit area`).toBeGreaterThanOrEqual(44)
+        expect(geometry.markWidth).toBeGreaterThan(0)
+        expect(geometry.markHeight).toBeGreaterThan(0)
+        expect(geometry.documentWidth, `${route} ${theme} ${viewport.width}px overflow`).toBeLessThanOrEqual(geometry.viewportWidth)
+      }
+    }
+  }
+
+  await page.goto('/en/research.html')
+  const brandLink = page.locator('.site-nav .wordmark')
+  await brandLink.focus()
+  await expect(brandLink).toBeFocused()
+  await expect.poll(() => brandLink.evaluate((element) => getComputedStyle(element).boxShadow)).not.toBe('none')
 })
 
 test('brand mark preserves zh-HK localized home navigation', async ({ page }) => {
