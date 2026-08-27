@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
 const destinations = [
   ['index.html', '#home-beyond'],
@@ -11,6 +11,76 @@ const destinations = [
 
 type ScrollToCall = [{ top: number; left: number; behavior?: ScrollBehavior }] | [number, number]
 
+const PRECLICK_MIN_CLEARANCE = 140
+const PRECLICK_TARGET_RATIO = 0.65
+const PRECLICK_BOTTOM_CLEARANCE = 120
+const PRECLICK_EXTRA_ANCHOR_GAP = 20
+
+async function positionDestinationAwayFromAnchor(page: Page, destination: string) {
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready', { timeout: 10_000 })
+
+  const target = page.locator(destination)
+  const initialGeometry = await target.evaluate((element, options) => {
+    const navigation = document.querySelector<HTMLElement>('.site-nav')
+    if (!navigation) {
+      throw new Error('PageCompass geometry requires .site-nav')
+    }
+
+    const navigationBottom = navigation.getBoundingClientRect().bottom
+    const targetRect = element.getBoundingClientRect()
+    const currentScrollY = window.scrollY
+    const viewportHeight = window.innerHeight
+    const scrollHeight = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight)
+    const maxScrollY = Math.max(0, scrollHeight - viewportHeight)
+    const documentTop = currentScrollY + targetRect.top
+    const anchorOffset = Number.parseFloat(
+      getComputedStyle(document.documentElement).getPropertyValue('--anchor-offset')
+    ) || 0
+    const requiredClearance = Math.max(options.minimumClearance, anchorOffset + 12)
+    const desiredTargetTop = Math.max(
+      navigationBottom + requiredClearance + options.extraAnchorGap,
+      Math.min(viewportHeight * options.targetRatio, viewportHeight - options.bottomClearance)
+    )
+    const desiredScrollY = Math.min(
+      Math.max(documentTop - desiredTargetTop, 0),
+      maxScrollY
+    )
+
+    return { desiredScrollY }
+  }, {
+    minimumClearance: PRECLICK_MIN_CLEARANCE,
+    targetRatio: PRECLICK_TARGET_RATIO,
+    bottomClearance: PRECLICK_BOTTOM_CLEARANCE,
+    extraAnchorGap: PRECLICK_EXTRA_ANCHOR_GAP
+  })
+
+  await page.evaluate((scrollTop) => {
+    window.scrollTo({ top: scrollTop, left: 0, behavior: 'instant' })
+  }, initialGeometry.desiredScrollY)
+
+  const measuredGeometry = await target.evaluate((element, minimumClearance) => {
+    const navigation = document.querySelector<HTMLElement>('.site-nav')
+    if (!navigation) {
+      throw new Error('PageCompass geometry requires .site-nav')
+    }
+
+    const anchorOffset = Number.parseFloat(
+      getComputedStyle(document.documentElement).getPropertyValue('--anchor-offset')
+    ) || 0
+    return {
+      navBottom: navigation.getBoundingClientRect().bottom,
+      targetTop: element.getBoundingClientRect().top,
+      requiredClearance: Math.max(minimumClearance, anchorOffset + 12)
+    }
+  }, PRECLICK_MIN_CLEARANCE)
+
+  expect(measuredGeometry.targetTop, `${destination} must start away from the final anchor zone`)
+    .toBeGreaterThanOrEqual(measuredGeometry.navBottom + measuredGeometry.requiredClearance)
+
+  return { navBottom: measuredGeometry.navBottom }
+}
+
 test.beforeEach(async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 900 })
 })
@@ -18,18 +88,13 @@ test.beforeEach(async ({ page }) => {
 for (const [route, destination] of destinations) {
   test(`PageCompass navigation settles independently on ${route}`, async ({ page }) => {
     await page.goto(`/${route}`)
-    await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
-    await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready', { timeout: 10_000 })
-
-    const navigation = page.locator('.site-nav')
     const trigger = page.locator('.page-compass-trigger')
     const destinationLink = page.locator(`.page-compass-link[href="${destination}"]`)
-    await page.evaluate(() => window.scrollTo({ top: 900, left: 0, behavior: 'instant' }))
+    const { navBottom } = await positionDestinationAwayFromAnchor(page, destination)
     await trigger.focus()
     await expect(trigger).toHaveAttribute('aria-expanded', 'true')
     await expect(destinationLink).toBeVisible()
 
-    const navBottom = await navigation.evaluate((element) => element.getBoundingClientRect().bottom)
     await destinationLink.click()
     await expect.poll(
       () => page.locator(destination).evaluate((element) => element.getBoundingClientRect().top),

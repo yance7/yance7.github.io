@@ -5,6 +5,65 @@ import { htmlPageEntries, pageEntries } from '../../src/data/pageRegistry'
 
 const archiveRoutes = htmlPageEntries.map(({ htmlName }) => `${htmlName}.html`)
 
+const documentEndBuffer = 240
+const documentEndSettlementPasses = 3
+
+async function settleDocumentEnd(page: Page) {
+  let lastGeometry: {
+    scrollHeightBefore: number
+    scrollHeight: number
+    maxScrollY: number
+    scrollY: number
+    heightStable: boolean
+    positionSettled: boolean
+    nearDocumentEnd: boolean
+  } | null = null
+
+  for (let pass = 0; pass < documentEndSettlementPasses; pass += 1) {
+    const scrollHeightBefore = await page.evaluate(() => {
+      const { documentElement } = document
+      const maxScrollY = Math.max(0, documentElement.scrollHeight - window.innerHeight)
+      window.scrollTo({ top: maxScrollY, left: 0, behavior: 'instant' })
+      return documentElement.scrollHeight
+    })
+
+    await page.evaluate(
+      () =>
+        new Promise<void>((resolve) => {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => resolve())
+          })
+        })
+    )
+
+    lastGeometry = await page.evaluate(
+      ({ scrollHeightBefore: initialScrollHeight, buffer }) => {
+        const { documentElement } = document
+        const scrollHeight = documentElement.scrollHeight
+        const maxScrollY = Math.max(0, scrollHeight - window.innerHeight)
+        const scrollY = window.scrollY
+
+        return {
+          scrollHeightBefore: initialScrollHeight,
+          scrollHeight,
+          maxScrollY,
+          scrollY,
+          heightStable: scrollHeight === initialScrollHeight,
+          positionSettled: Math.abs(scrollY - maxScrollY) <= 1,
+          nearDocumentEnd: scrollY + window.innerHeight >= scrollHeight - buffer
+        }
+      },
+      { scrollHeightBefore, buffer: documentEndBuffer }
+    )
+
+    if (lastGeometry.heightStable && lastGeometry.positionSettled && lastGeometry.nearDocumentEnd) return
+  }
+
+  throw new Error(
+    `document-end reveal geometry did not settle after ${documentEndSettlementPasses} passes: ${JSON.stringify(lastGeometry)}`
+  )
+}
+
 async function settleAccessibilityState(page: Page) {
   await page.waitForLoadState('domcontentloaded')
   await expect(page.locator('main#main')).toBeVisible()
@@ -15,10 +74,7 @@ async function settleAccessibilityState(page: Page) {
     { timeout: 10_000 }
   )
 
-  await page.evaluate(() => {
-    window.scrollTo(0, document.documentElement.scrollHeight)
-  })
-
+  await settleDocumentEnd(page)
   await expect.poll(
     () => page.locator('.reveal:not(.revealed)').count(),
     {
