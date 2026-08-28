@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { HeroCredit } from '../data/types'
-import { splitLyricChars } from '../utils/typography'
+import { splitLyricTokens } from '../utils/typography'
 import { useLocale } from '../i18n'
 
 const props = withDefaults(defineProps<{
@@ -18,10 +18,10 @@ const props = withDefaults(defineProps<{
   copy: '',
   credit: null
 })
-const lyricChars = computed(() => splitLyricChars(props.title))
-const { messages } = useLocale()
+const { locale, messages } = useLocale()
+const lyricTokens = computed(() => splitLyricTokens(props.title, locale.value))
 const accessibleTitle = computed(() =>
-  props.error ? props.title : `「${props.title}」`
+  props.error || locale.value === 'en' ? props.title : `「${props.title}」`
 )
 </script>
 
@@ -35,12 +35,22 @@ const accessibleTitle = computed(() =>
           :class="{ 'hero-works-title': page === 'works' }"
           :aria-label="accessibleTitle"
         >
-          <template v-for="(ch, i) in lyricChars" :key="`${ch}-${i}`">
+          <template v-for="(token, tokenIndex) in lyricTokens" :key="`${token.type}-${token.text}-${tokenIndex}`">
+            <span v-if="token.type === 'space'" class="lyric-space" aria-hidden="true"></span>
+            <span v-else-if="token.type === 'word'" class="lyric-word" aria-hidden="true">
+              <span
+                v-for="(ch, charIndex) in token.text"
+                :key="`${ch}-${charIndex}`"
+                class="lyric-char"
+                :style="{ '--ci': token.animationStart + charIndex }"
+              >{{ ch }}</span>
+            </span>
             <span
+              v-else
               class="lyric-char"
-              :style="{ '--ci': i }"
+              :style="{ '--ci': token.animationStart }"
               aria-hidden="true"
-            >{{ ch }}</span>
+            >{{ token.text }}</span>
           </template>
         </h1>
         <p class="hero-copy">{{ copy }}</p>
