@@ -7,16 +7,43 @@ async function waitForReady(page: Page) {
 }
 
 async function scrollHeader(page: Page, top: number) {
+  const baseline = await page.locator('.site-nav-sentinel').evaluate((element) => ({
+    scrollY: window.scrollY,
+    sentinelTop: element.getBoundingClientRect().top
+  }))
+
   await page.evaluate((scrollTop) => {
     const root = document.documentElement
     const body = document.body
+    const previousRootBehavior = root.style.scrollBehavior
+    const previousBodyBehavior = body.style.scrollBehavior
 
     root.style.scrollBehavior = 'auto'
     body.style.scrollBehavior = 'auto'
     window.scrollTo({ top: scrollTop, left: 0, behavior: 'auto' })
-    root.scrollTop = scrollTop
-    body.scrollTop = scrollTop
+    root.style.scrollBehavior = previousRootBehavior
+    body.style.scrollBehavior = previousBodyBehavior
   }, top)
+
+  await expect.poll(() => page.locator('.site-nav-sentinel').evaluate((element, expected) => {
+    const scrollY = window.scrollY
+    const sentinelTop = element.getBoundingClientRect().top
+    const expectedSentinelTop = expected.sentinelTop - (expected.scrollTop - expected.initialScrollY)
+    return {
+      scrollY,
+      sentinelTop,
+      settled: Math.abs(scrollY - expected.scrollTop) <= 1
+        && Math.abs(sentinelTop - expectedSentinelTop) <= 1
+    }
+  }, {
+    initialScrollY: baseline.scrollY,
+    sentinelTop: baseline.sentinelTop,
+    scrollTop: top
+  })).toMatchObject({ settled: true })
+
+  await page.evaluate(() => new Promise<void>((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+  }))
 }
 
 async function expectFloatingSurface(page: Page) {
