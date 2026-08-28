@@ -8,8 +8,10 @@ async function waitForReady(page: Page) {
 
 async function scrollHeader(page: Page, top: number) {
   await page.evaluate((scrollTop) => {
-    window.scrollTo({ top: scrollTop, left: 0, behavior: 'instant' })
+    document.documentElement.scrollTop = scrollTop
+    document.body.scrollTop = scrollTop
   }, top)
+  await expect.poll(() => page.evaluate((scrollTop) => Math.abs(window.scrollY - scrollTop) <= 1, top)).toBe(true)
 }
 
 async function expectFloatingSurface(page: Page) {
