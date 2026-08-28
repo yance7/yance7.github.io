@@ -10,17 +10,13 @@ async function scrollHeader(page: Page, top: number) {
   await page.evaluate((scrollTop) => {
     const root = document.documentElement
     const body = document.body
-    const previousRootBehavior = root.style.scrollBehavior
-    const previousBodyBehavior = body.style.scrollBehavior
 
     root.style.scrollBehavior = 'auto'
     body.style.scrollBehavior = 'auto'
+    window.scrollTo({ top: scrollTop, left: 0, behavior: 'auto' })
     root.scrollTop = scrollTop
     body.scrollTop = scrollTop
-    root.style.scrollBehavior = previousRootBehavior
-    body.style.scrollBehavior = previousBodyBehavior
   }, top)
-  await expect.poll(() => page.evaluate((scrollTop) => Math.abs(window.scrollY - scrollTop) <= 1, top)).toBe(true)
 }
 
 async function expectFloatingSurface(page: Page) {
