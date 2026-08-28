@@ -7,6 +7,7 @@ async function waitForReady(page: Page) {
 }
 
 async function scrollHeader(page: Page, top: number) {
+  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready', { timeout: 10_000 })
   const baseline = await page.locator('.site-nav-sentinel').evaluate((element) => ({
     scrollY: window.scrollY,
     sentinelTop: element.getBoundingClientRect().top
