@@ -11,19 +11,50 @@ const routes = [
 ] as const
 
 const viewports = [
-  { name: 'desktop', width: 1200, height: 900 },
-  { name: 'tablet', width: 768, height: 1024 },
-  { name: 'mobile', width: 390, height: 844 }
+  { name: 'narrow', width: 320, height: 844 },
+  { name: 'mobile', width: 390, height: 844 },
+  { name: 'tablet', width: 768, height: 900 },
+  { name: 'desktop', width: 1024, height: 900 },
+  { name: 'wide', width: 1440, height: 900 }
 ] as const
 
 async function expectNoDocumentOverflow(page: Page) {
   const geometry = await page.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
-    clientWidth: document.documentElement.clientWidth
+    bodyScrollWidth: document.body.scrollWidth,
+    clientWidth: document.documentElement.clientWidth,
+    viewportWidth: window.innerWidth
   }))
 
   expect(geometry.scrollWidth)
-    .toBeLessThanOrEqual(geometry.clientWidth + 1)
+    .toBeLessThanOrEqual(geometry.viewportWidth + 1)
+  expect(geometry.bodyScrollWidth)
+    .toBeLessThanOrEqual(geometry.viewportWidth + 1)
+}
+
+async function expectEnglishLayoutSurfacesInsideViewport(page: Page) {
+  const violations = await page.evaluate(() => {
+    const selectors = [
+      '.hero-title',
+      '.section-head h2',
+      '.site-nav',
+      '.site-footer',
+      '.page-compass',
+      '.metric-card',
+      '.filter-btn',
+      '.tl-item',
+      '.showcase'
+    ]
+
+    return selectors.flatMap((selector) => [...document.querySelectorAll<HTMLElement>(selector)]
+      .filter((element) => {
+        const rect = element.getBoundingClientRect()
+        return rect.width > 0 && (rect.left < -1 || rect.right > window.innerWidth + 1)
+      })
+      .map((element) => ({ selector, text: element.textContent?.trim().slice(0, 80) })))
+  })
+
+  expect(violations).toEqual([])
 }
 
 for (const viewport of viewports) {
@@ -40,6 +71,7 @@ for (const viewport of viewports) {
         .toHaveAttribute('data-page-load-state', 'ready')
 
       await expectNoDocumentOverflow(page)
+      await expectEnglishLayoutSurfacesInsideViewport(page)
     })
   }
 }
@@ -51,6 +83,34 @@ test('English section title preserves semantic spacing around accent text', asyn
 
   await expect(heading)
     .toHaveText('Turning research into something usable')
+})
+
+test('English archive hero keeps words intact and gives spaces visual width', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/en/academics.html')
+
+  const hero = page.locator('.hero-title.hero-lyric')
+  await expect(hero).toHaveAttribute('aria-label', 'Academic record')
+
+  const geometry = await hero.evaluate((element) => {
+    const words = [...element.querySelectorAll<HTMLElement>('.lyric-word')]
+    const spaces = [...element.querySelectorAll<HTMLElement>('.lyric-space')]
+    const wordLines = words.map((word) => {
+      const characterLines = [...word.querySelectorAll<HTMLElement>('.lyric-char')]
+        .map((character) => Math.round(character.getBoundingClientRect().top))
+      return new Set(characterLines).size
+    })
+
+    return {
+      words: words.map((word) => word.textContent),
+      spaceWidths: spaces.map((space) => space.getBoundingClientRect().width),
+      wordLines
+    }
+  })
+
+  expect(geometry.words).toEqual(['Academic', 'record'])
+  expect(geometry.spaceWidths.every((width) => width > 0)).toBe(true)
+  expect(geometry.wordLines).toEqual([1, 1])
 })
 
 test('English research method groups do not duplicate the same label', async ({ page }) => {

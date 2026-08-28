@@ -41,7 +41,7 @@ export default defineConfig({
     {
       name: 'webkit-mobile',
       use: { ...devices['iPhone 13'], browserName: 'webkit' },
-      testMatch: /(?:site|page-compass-mobile|ui-primitives)\.spec\.ts/
+      testMatch: /(?:site|page-compass-mobile|ui-primitives|english-layout)\.spec\.ts/
     },
     { name: 'chromium-visual', use: { ...devices['Desktop Chrome'] }, testMatch: /visual-matrix\.spec\.ts/ },
     { name: 'firefox-desktop-smoke', use: { ...devices['Desktop Firefox'] }, testMatch: /compatibility\.spec\.ts/ },

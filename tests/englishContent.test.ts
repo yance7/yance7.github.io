@@ -1,11 +1,28 @@
 import { describe, expect, it } from 'vitest'
 import { pageEntries } from '../src/data/pageRegistry'
 import {
+  getLocalizedAlbumSection,
+  getLocalizedAlbums,
   getLocalizedAcademics,
+  getLocalizedCommunity,
+  getLocalizedConcertSection,
+  getLocalizedConcerts,
+  getLocalizedHonorCategories,
+  getLocalizedHonorLevelLabels,
+  getLocalizedHonorSections,
+  getLocalizedHonorStats,
   getLocalizedHonors,
+  getLocalizedHomeCopy,
+  getLocalizedNavItems,
+  getLocalizedPageMeta,
+  getLocalizedProjectSection,
   getLocalizedProjects,
   getLocalizedResearch,
-  getLocalizedSections
+  getLocalizedResearchMethodGroups,
+  getLocalizedResearchMethods,
+  getLocalizedResearchSections,
+  getLocalizedSections,
+  getLocalizedWorlds
 } from '../src/data/locales'
 import { uiMessages } from '../src/i18n'
 
@@ -24,10 +41,28 @@ function collectStrings(value: unknown): string[] {
 describe('English content hygiene', () => {
   const englishSources = [
     uiMessages.en,
+    ...pageEntries.map(({ key }) => getLocalizedPageMeta('en', key)),
+    getLocalizedNavItems('en'),
+    ...pageEntries.map(({ key }) => getLocalizedSections('en', key)),
+    getLocalizedWorlds('en'),
+    getLocalizedHomeCopy('en'),
     getLocalizedAcademics('en'),
     getLocalizedHonors('en'),
+    getLocalizedHonorCategories('en'),
+    getLocalizedHonorLevelLabels('en'),
+    getLocalizedHonorSections('en'),
+    getLocalizedHonorStats('en'),
     getLocalizedResearch('en'),
-    getLocalizedProjects('en')
+    getLocalizedResearchMethods('en'),
+    getLocalizedResearchMethodGroups('en'),
+    getLocalizedResearchSections('en'),
+    getLocalizedProjects('en'),
+    getLocalizedProjectSection('en'),
+    getLocalizedAlbums('en'),
+    getLocalizedAlbumSection('en'),
+    getLocalizedConcerts('en'),
+    getLocalizedConcertSection('en'),
+    getLocalizedCommunity('en')
   ]
 
   it('does not use leading or trailing whitespace as a layout hack', () => {
@@ -52,5 +87,12 @@ describe('English content hygiene', () => {
         ))
       ).toBe(true)
     }
+  })
+
+  it('keeps the archive hero titles word-separated in source copy', () => {
+    expect([
+      getLocalizedPageMeta('en', 'academics').title,
+      getLocalizedPageMeta('en', 'honors').title
+    ]).toEqual(['Academic record', 'Selected honors'])
   })
 })
