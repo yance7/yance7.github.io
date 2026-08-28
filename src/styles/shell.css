@@ -82,7 +82,7 @@
 @media (hover: hover) and (pointer: fine) {
   .wordmark:hover { transform: translateY(var(--motion-control-lift)); }
   .wordmark:hover .brand-mark-image {
-    filter: saturate(1.06) brightness(1.04);
+    filter: var(--brand-mark-hover-filter);
   }
 }
 .nav-rail { display: flex; align-items: center; gap: var(--space-5); margin-left: auto; }
