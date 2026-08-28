@@ -57,12 +57,63 @@
   transition: transform .1s linear;
 }
 /* ===== 顶部导航 ===== */
+.site-nav-sentinel {
+  position: absolute;
+  top: var(--nav-trigger-offset);
+  left: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
 .site-nav {
   position: sticky; top: 0; z-index: var(--z-nav);
-  display: flex; align-items: center; gap: var(--space-5);
-  max-width: var(--w-wide); margin: 0 auto; padding: calc(var(--space-5) - 4px) var(--w-pad);
-  border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--bg) 88%, transparent);
-  backdrop-filter: blur(16px);
+  width: 100%; height: var(--nav-shell-height);
+  margin: 0;
+  pointer-events: none;
+}
+.site-nav-surface {
+  display: flex; align-items: center; gap: clamp(12px, 1.7vw, 24px);
+  width: min(100%, var(--w-wide)); height: 100%; margin: 0 auto;
+  padding-inline: max(var(--w-pad), env(safe-area-inset-left)) max(var(--w-pad), env(safe-area-inset-right));
+  border-bottom: 1px solid var(--line);
+  background: var(--nav-resting-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  pointer-events: auto;
+  transition:
+    width var(--nav-floating-transition),
+    height var(--nav-floating-transition),
+    padding var(--nav-floating-transition),
+    border-radius var(--nav-floating-transition),
+    background-color var(--nav-floating-transition),
+    border-color var(--nav-floating-transition),
+    box-shadow var(--nav-floating-transition),
+    transform var(--nav-floating-transition),
+    gap var(--nav-floating-transition);
+}
+.site-nav[data-header-state='floating'] .site-nav-surface {
+  width: min(calc(100% - 2 * var(--nav-floating-inline)), var(--nav-floating-max-width));
+  height: calc(100% - var(--nav-floating-top) - var(--nav-floating-bottom));
+  padding-inline: var(--nav-floating-padding);
+  border: 1px solid var(--nav-floating-border);
+  border-radius: var(--nav-floating-radius);
+  background: var(--nav-floating-bg);
+  box-shadow: var(--nav-floating-shadow);
+  backdrop-filter: blur(var(--nav-floating-blur)) saturate(var(--nav-floating-saturate));
+  transform: translateY(var(--nav-floating-top));
+  gap: var(--nav-floating-gap);
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .site-nav-surface { backdrop-filter: none; }
+}
+@media (forced-colors: active) {
+  .site-nav-surface,
+  .site-nav[data-header-state='floating'] .site-nav-surface {
+    background: Canvas;
+    border-color: CanvasText;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
 }
 .wordmark {
   display: inline-flex;
@@ -86,9 +137,11 @@
   }
 }
 .nav-rail { display: flex; align-items: center; gap: var(--space-5); margin-left: auto; }
+.site-nav[data-header-state='floating'] .nav-rail { gap: var(--nav-floating-gap); }
 .nav-rail a {
   position: relative; display: flex; align-items: baseline; gap: 7px; padding: 8px 2px;
   color: var(--dim); font-size: var(--text-sm);
+  white-space: nowrap;
   transition: color var(--dur-base) var(--ease-soft);
 }
 .nav-rail a::after {

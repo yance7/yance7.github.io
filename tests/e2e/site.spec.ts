@@ -237,7 +237,6 @@ test('brand mark keeps header geometry across locales, themes, and supported vie
     }
   }
 
-  await page.goto('/en/research.html')
   const brandLink = page.locator('.site-nav .wordmark')
   await brandLink.focus()
   await expect(brandLink).toBeFocused()

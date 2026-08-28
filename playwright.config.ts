@@ -36,12 +36,12 @@ export default defineConfig({
         isMobile: false,
         hasTouch: false
       },
-      testMatch: /(?:site|page-compass-desktop|ui-primitives|english-layout)\.spec\.ts/
+      testMatch: /(?:site|page-compass-desktop|ui-primitives|english-layout|adaptive-header)\.spec\.ts/
     },
     {
       name: 'webkit-mobile',
       use: { ...devices['iPhone 13'], browserName: 'webkit' },
-      testMatch: /(?:site|page-compass-mobile|ui-primitives|english-layout)\.spec\.ts/
+      testMatch: /(?:site|page-compass-mobile|ui-primitives|english-layout|adaptive-header)\.spec\.ts/
     },
     { name: 'chromium-visual', use: { ...devices['Desktop Chrome'] }, testMatch: /visual-matrix\.spec\.ts/ },
     { name: 'firefox-desktop-smoke', use: { ...devices['Desktop Firefox'] }, testMatch: /compatibility\.spec\.ts/ },

@@ -77,6 +77,21 @@
   --motion-press-scale: .985;
   --anchor-offset: 138px;
 
+  /* 自适应导航：外壳尺寸稳定，内层只做可逆的视觉形变。 */
+  --nav-shell-height: 80px;
+  --nav-shell-height-mobile: 68px;
+  --nav-trigger-offset: 60px;
+  --nav-floating-top: 8px;
+  --nav-floating-bottom: 8px;
+  --nav-floating-inline: 16px;
+  --nav-floating-max-width: 1180px;
+  --nav-floating-radius: 28px;
+  --nav-floating-blur: 18px;
+  --nav-floating-saturate: 120%;
+  --nav-floating-gap: clamp(12px, 1.4vw, 20px);
+  --nav-floating-padding: clamp(16px, 2.5vw, 32px);
+  --nav-floating-transition: .28s cubic-bezier(.2, .8, .2, 1);
+
   /* 基础间距刻度 */
   --space-1: 4px;
   --space-2: 8px;
@@ -199,6 +214,11 @@
   --brand-gold: #A5681E;
   --brand-glow: rgba(39, 126, 118, .14);
   --brand-edge: #16485E;
+
+  --nav-resting-bg: color-mix(in srgb, var(--bg) 92%, transparent);
+  --nav-floating-bg: color-mix(in srgb, var(--surface-strong) 80%, var(--bg) 20%);
+  --nav-floating-border: color-mix(in srgb, var(--line-strong) 74%, var(--gold) 26%);
+  --nav-floating-shadow: 0 10px 30px rgba(52, 63, 59, .12), 0 2px 8px rgba(52, 63, 59, .06);
 
   --text-primary: var(--ink);
   --text-secondary: var(--muted);
@@ -333,6 +353,11 @@
   --brand-gold: #F0C36F;
   --brand-glow: rgba(109, 222, 208, .18);
   --brand-edge: #A9E5D9;
+
+  --nav-resting-bg: color-mix(in srgb, var(--bg) 88%, transparent);
+  --nav-floating-bg: color-mix(in srgb, var(--surface-strong) 82%, var(--bg-deep) 18%);
+  --nav-floating-border: color-mix(in srgb, var(--line-strong) 74%, var(--aqua) 26%);
+  --nav-floating-shadow: 0 12px 32px rgba(0, 0, 0, .32), 0 2px 8px rgba(0, 0, 0, .22);
 
   --text-primary: var(--ink);
   --text-secondary: var(--muted);
