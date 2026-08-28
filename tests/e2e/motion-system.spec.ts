@@ -47,8 +47,12 @@ test('Academics education rows expose emphasis without becoming controls', async
 
 test('Academics AP rows emphasize their result without shifting layout', async ({ page }) => {
   await page.goto('/academics.html')
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
 
   const row = page.locator('.ap-row').first()
+  await row.scrollIntoViewIfNeeded()
+  await expect(row).toHaveClass(/revealed/)
+  await expect(row).toHaveCSS('transform', 'none')
   const initialBackground = await row.evaluate((element) => getComputedStyle(element).backgroundColor)
   const initialNumberColor = await row.locator('.ap-no').evaluate((element) => getComputedStyle(element).color)
 
