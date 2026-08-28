@@ -124,6 +124,7 @@ test('archive proof links share one semantic primitive across works and research
 test('metric surfaces refine their boundary without adding elevation', async ({ page }) => {
   await page.goto('/academics.html')
   await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+  await expect(page.locator('.metric-strip')).toHaveAttribute('data-metrics-ready', 'true')
   const metric = page.locator('.metric-card').first()
   await expect(metric).toBeVisible()
   await metric.scrollIntoViewIfNeeded()

@@ -6,14 +6,17 @@ import ThemeOrbit from './ThemeOrbit.vue'
 import LocaleSwitcher from './LocaleSwitcher.vue'
 import BrandMark from './BrandMark.vue'
 import { useModalDialog } from '../composables/useModalDialog'
+import { useAdaptiveHeader } from '../composables/useAdaptiveHeader'
 
 defineProps<{ page?: string }>()
 const { locale, messages } = useLocale()
 const navItems = computed(() => getLocalizedNavItems(locale.value))
 const menuVisible = ref(false)
 const menuActive = ref(false)
+const menuTrigger = ref<HTMLButtonElement | null>(null)
 const menuClose = ref<HTMLButtonElement | null>(null)
 const menuOverlay = ref<HTMLElement | null>(null)
+const { headerState, sentinelRef } = useAdaptiveHeader()
 
 function closeMenu() {
   menuVisible.value = false
@@ -24,6 +27,7 @@ function toggleMenu() {
     closeMenu()
     return
   }
+  menuTrigger.value?.focus({ preventScroll: true })
   menuActive.value = true
   menuVisible.value = true
 }
@@ -41,42 +45,47 @@ useModalDialog(menuActive, {
 </script>
 
 <template>
-  <header class="site-nav" :class="{ 'menu-open': menuVisible }">
-    <a class="wordmark brand-link" :href="buildLocalizedPageHref('home', locale)" :aria-label="`${messages.accessibility.home}: Yance.`">
-      <BrandMark variant="header" />
-    </a>
+  <div ref="sentinelRef" class="site-nav-sentinel" aria-hidden="true"></div>
 
-    <button
-      class="menu-trigger"
-      type="button"
-      :aria-expanded="menuVisible"
-      aria-controls="mobile-navigation"
-      :aria-label="menuVisible ? messages.navigation.closeMenu : messages.navigation.openMenu"
-      @click="toggleMenu"
-    >
-      <i></i><i></i><i></i>
-    </button>
-
-    <nav class="nav-rail" :class="{ open: menuVisible }" :aria-label="messages.navigation.main">
-      <a
-        v-for="(item, i) in navItems"
-        :key="item.key"
-        :href="item.href"
-        :class="{ active: page === item.key }"
-        :aria-current="page === item.key ? 'page' : undefined"
-        :style="{ '--di': i }"
-        @click="closeMenu()"
-      >
-        <small class="nav-num">0{{ i + 1 }}</small>
-        <span class="nav-text"><span class="nav-label">{{ item.label }}</span></span>
-        <small class="nav-desc">{{ item.desc }}</small>
+  <header class="site-nav" :class="{ 'menu-open': menuVisible }" :data-header-state="headerState">
+    <div class="site-nav-surface">
+      <a class="wordmark brand-link" :href="buildLocalizedPageHref('home', locale)" :aria-label="`${messages.accessibility.home}: Yance.`">
+        <BrandMark variant="header" />
       </a>
-    </nav>
 
-    <LocaleSwitcher />
-    <ThemeOrbit />
+      <button
+        ref="menuTrigger"
+        class="menu-trigger"
+        type="button"
+        :aria-expanded="menuVisible"
+        aria-controls="mobile-navigation"
+        :aria-label="menuVisible ? messages.navigation.closeMenu : messages.navigation.openMenu"
+        @click="toggleMenu"
+      >
+        <i></i><i></i><i></i>
+      </button>
 
-    <div class="nav-status"><b></b><span>{{ messages.common.online }} / 2026</span></div>
+      <nav class="nav-rail" :class="{ open: menuVisible }" :aria-label="messages.navigation.main">
+        <a
+          v-for="(item, i) in navItems"
+          :key="item.key"
+          :href="item.href"
+          :class="{ active: page === item.key }"
+          :aria-current="page === item.key ? 'page' : undefined"
+          :style="{ '--di': i }"
+          @click="closeMenu()"
+        >
+          <small class="nav-num">0{{ i + 1 }}</small>
+          <span class="nav-text"><span class="nav-label">{{ item.label }}</span></span>
+          <small class="nav-desc">{{ item.desc }}</small>
+        </a>
+      </nav>
+
+      <LocaleSwitcher />
+      <ThemeOrbit />
+
+      <div class="nav-status"><b></b><span>{{ messages.common.online }} / 2026</span></div>
+    </div>
   </header>
 
   <Teleport to="body">

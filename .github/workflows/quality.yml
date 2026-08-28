@@ -68,6 +68,10 @@ jobs:
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-compass
         run: npm run test:e2e -- tests/e2e/page-compass-desktop.spec.ts --project=webkit-desktop --workers=4 --retries=0
+      - name: WebKit desktop adaptive header quality
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-header
+        run: npm run test:e2e -- tests/e2e/adaptive-header.spec.ts --project=webkit-desktop --workers=4 --retries=0
       - name: WebKit desktop site and axe quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-site
@@ -80,6 +84,10 @@ jobs:
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-compass
         run: npm run test:e2e -- tests/e2e/page-compass-mobile.spec.ts --project=webkit-mobile --workers=4 --retries=0
+      - name: WebKit mobile adaptive header quality
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-header
+        run: npm run test:e2e -- tests/e2e/adaptive-header.spec.ts --project=webkit-mobile --workers=4 --retries=0
       - name: WebKit mobile site and axe quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-site
