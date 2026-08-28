@@ -117,7 +117,7 @@
   html { scroll-behavior: auto; }
   .wordmark:hover:not(:focus-visible) { transform: none; }
   .wordmark:hover:not(:focus-visible) .brand-mark-image,
-  .foot-mark:hover:not(:focus-visible) .brand-mark-image { filter: none; }
+  .foot-mark:hover:not(:focus-visible) .brand-mark-image { filter: var(--brand-mark-filter); }
   .nav-rail a:hover:not(:focus-visible) { color: var(--dim); }
   .nav-rail a:hover:not(:focus-visible)::after { transform: scaleX(0); }
   .mobile-menu-close:hover:not(:focus-visible) {
@@ -148,7 +148,7 @@
   .wordmark:hover,
   .foot-mark:hover { transform: none; }
   .wordmark:hover .brand-mark-image,
-  .foot-mark:hover .brand-mark-image { filter: none; }
+  .foot-mark:hover .brand-mark-image { filter: var(--brand-mark-filter); }
 }
 
 @media (prefers-reduced-motion: reduce) {

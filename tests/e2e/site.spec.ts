@@ -140,12 +140,11 @@ test('brand mark links header and footer back to the localized home page', async
   await expect(headerBrand).toHaveAttribute('href', '/en/')
   await expect(headerBrand).toHaveAttribute('aria-label', /Yance\./)
   await expect(headerBrand.locator('.brand-mark')).toHaveAttribute('aria-hidden', 'true')
-  await expect(headerBrand.locator('.brand-mark-svg')).toBeVisible()
-  await expect(headerBrand.locator('.brand-mark-image')).toHaveCount(0)
-  await expect(headerBrand.locator('[data-brand-part="y"]')).toHaveCount(1)
-  await expect(headerBrand.locator('[data-brand-part="orbit"]')).toHaveCount(1)
-  await expect(headerBrand.locator('[data-brand-part="audio"]')).toHaveCount(1)
-  await expect(headerBrand.locator('[data-brand-part="neural"]')).toHaveCount(1)
+  await expect(headerBrand.locator('.brand-mark-image')).toBeVisible()
+  await expect(headerBrand.locator('.brand-mark picture source[type="image/webp"]')).toHaveAttribute('srcset', /yance-mark-96\.webp[\s\S]*yance-mark-128\.webp/)
+  await expect(headerBrand.locator('.brand-mark-image')).toHaveAttribute('src', '/assets/brand/yance-mark-fallback.png')
+  await expect(headerBrand.locator('.brand-mark-svg')).toHaveCount(0)
+  await expect(headerBrand.locator('[data-brand-part]')).toHaveCount(0)
 
   const headerBox = await headerBrand.boundingBox()
   expect(headerBox, 'header brand hit area').not.toBeNull()
@@ -158,8 +157,8 @@ test('brand mark links header and footer back to the localized home page', async
 
   await expect(footerBrand).toBeVisible()
   await expect(footerBrand).toHaveAttribute('href', '/en/')
-  await expect(footerBrand.locator('.brand-mark-svg')).toBeVisible()
-  await expect(footerBrand.locator('.brand-mark-image')).toHaveCount(0)
+  await expect(footerBrand.locator('.brand-mark-image')).toBeVisible()
+  await expect(footerBrand.locator('.brand-mark-image')).toHaveAttribute('src', '/assets/brand/yance-mark-fallback.png')
 })
 
 test('shared navigation mark keeps its identity across light and dark themes', async ({ page }) => {
@@ -169,23 +168,24 @@ test('shared navigation mark keeps its identity across light and dark themes', a
     await page.evaluate((value) => localStorage.setItem('yance-theme', value), theme)
     await page.reload()
 
-    const mark = page.locator('.site-nav .brand-mark-svg')
+    const mark = page.locator('.site-nav .brand-mark-image')
     await expect(mark).toBeVisible()
     const geometry = await mark.evaluate((element) => {
       const rect = element.getBoundingClientRect()
-      const y = element.querySelector('[data-brand-part="y"]')
-      const audio = element.querySelector('.brand-mark-audio-ribbon')
+      const image = element as HTMLImageElement
       return {
         width: rect.width,
         height: rect.height,
-        yFill: y ? getComputedStyle(y).fill : '',
-        audioStroke: audio ? getComputedStyle(audio).stroke : ''
+        naturalWidth: image.naturalWidth,
+        naturalHeight: image.naturalHeight,
+        currentSrc: image.currentSrc
       }
     })
     expect(geometry.width).toBeGreaterThanOrEqual(32)
     expect(geometry.height).toBeGreaterThanOrEqual(32)
-    expect(geometry.yFill).not.toBe('none')
-    expect(geometry.audioStroke).not.toBe('none')
+    expect(geometry.naturalWidth).toBeGreaterThan(0)
+    expect(geometry.naturalHeight).toBeGreaterThan(0)
+    expect(geometry.currentSrc).toMatch(/yance-mark-(96|128)\.webp|yance-mark-fallback\.png/)
   }
 })
 
@@ -206,19 +206,21 @@ test('brand mark keeps header geometry across locales, themes, and supported vie
         await page.reload()
 
         const brandLink = page.locator('.site-nav .wordmark')
-        const mark = brandLink.locator('.brand-mark-svg')
+        const mark = brandLink.locator('.brand-mark-image')
         await expect(mark).toBeVisible()
-        await expect(page.locator('.site-footer .brand-mark-svg')).toBeAttached()
+        await expect(page.locator('.site-footer .brand-mark-image')).toBeAttached()
         await expect(page.locator('html')).toHaveAttribute('data-theme', theme)
 
         const geometry = await brandLink.evaluate((element) => {
           const rect = element.getBoundingClientRect()
-          const svg = element.querySelector<SVGElement>('.brand-mark-svg')
+          const image = element.querySelector<HTMLImageElement>('.brand-mark-image')
           return {
             width: rect.width,
             height: rect.height,
-            markWidth: svg?.getBoundingClientRect().width ?? 0,
-            markHeight: svg?.getBoundingClientRect().height ?? 0,
+            markWidth: image?.getBoundingClientRect().width ?? 0,
+            markHeight: image?.getBoundingClientRect().height ?? 0,
+            naturalWidth: image?.naturalWidth ?? 0,
+            naturalHeight: image?.naturalHeight ?? 0,
             documentWidth: document.documentElement.scrollWidth,
             viewportWidth: window.innerWidth
           }
@@ -228,6 +230,8 @@ test('brand mark keeps header geometry across locales, themes, and supported vie
         expect(geometry.height, `${route} ${theme} ${viewport.width}px hit area`).toBeGreaterThanOrEqual(44)
         expect(geometry.markWidth).toBeGreaterThan(0)
         expect(geometry.markHeight).toBeGreaterThan(0)
+        expect(geometry.naturalWidth).toBeGreaterThan(0)
+        expect(geometry.naturalHeight).toBeGreaterThan(0)
         expect(geometry.documentWidth, `${route} ${theme} ${viewport.width}px overflow`).toBeLessThanOrEqual(geometry.viewportWidth)
       }
     }
@@ -252,7 +256,7 @@ test('brand mark preserves root locale home navigation', async ({ page }) => {
   await expect(page.locator('.site-nav .wordmark')).toHaveAttribute('href', '/')
 })
 
-test('simplified brand icons are wired for browser shells and PWA metadata', async ({ page }) => {
+test('canonical brand icons are wired for browser shells and PWA metadata', async ({ page }) => {
   await page.goto('/en/research.html')
 
   await expect(page.locator('link[rel="icon"][sizes="16x16"]')).toHaveAttribute(

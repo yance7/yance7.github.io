@@ -13,7 +13,11 @@ test('home leads with the quiet editorial stage', async ({ page }) => {
 
 test('home keeps the Yance brand mark at both archive anchors', async ({ page }) => {
   await page.goto('/index.html')
-  await expect(page.locator('header .wordmark .brand-mark-svg')).toBeVisible()
+  const mark = page.locator('header .wordmark .brand-mark-image')
+  await expect(mark).toBeVisible()
+  await expect(mark).toHaveAttribute('width', '128')
+  await expect(mark).toHaveAttribute('height', '128')
+  await expect(page.locator('header .wordmark source[type="image/webp"]')).toHaveAttribute('srcset', /yance-mark-96\.webp/)
   await expect(page.locator('.foot-mark')).toContainText('Yance.')
 })
 
