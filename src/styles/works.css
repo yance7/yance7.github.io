@@ -3,11 +3,6 @@
   display: grid;
   gap: clamp(28px, 4vw, 48px);
 }
-.showcase-list:has(> .showcase:only-child) {
-  width: min(100%, var(--w-data));
-  max-width: var(--w-data);
-  margin-inline: auto;
-}
 
 .showcase {
   --pointer-x: 50%; --pointer-y: 50%; --pointer-active: 0;

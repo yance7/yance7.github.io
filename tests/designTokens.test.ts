@@ -78,7 +78,7 @@ describe('archive design tokens', () => {
     expect(works).toContain('font-family: var(--font-editorial)')
     expect(works).toContain('font-family: var(--font-technical)')
     expect(works).toContain('max-width: var(--w-editorial)')
-    expect(works).toContain('max-width: var(--w-data)')
+    expect(works).not.toContain('.showcase-list:has(> .showcase:only-child)')
   })
 
   it('preserves reduced-motion handling in the public stylesheet contract', () => {
