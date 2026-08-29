@@ -32,15 +32,74 @@ type PageLoadState = 'loading' | 'ready' | 'error'
 const pageLoader = page ? getPageLoader(page) : undefined
 const pageLoadState = ref<PageLoadState>(pageLoader ? 'loading' : 'ready')
 let hashScrolled = false
+const initialHash = document.documentElement.dataset.initialHash || window.location.hash
+
+function restoreInitialHash() {
+  if (!initialHash || window.location.hash === initialHash) return
+  window.history.replaceState(
+    window.history.state,
+    '',
+    `${window.location.pathname}${window.location.search}${initialHash}`
+  )
+}
+
+function findHorizontalScroller(target: HTMLElement) {
+  const markedScroller = target.closest<HTMLElement>('[data-horizontal-scroll]')
+  if (markedScroller) return markedScroller
+
+  let ancestor = target.parentElement
+  while (ancestor && ancestor !== document.body) {
+    const style = getComputedStyle(ancestor)
+    if (/auto|scroll|overlay/.test(style.overflowX)) return ancestor
+    ancestor = ancestor.parentElement
+  }
+  return null
+}
+
+function scrollTargetVertically(target: HTMLElement) {
+  const scrollMarginTop = Number.parseFloat(getComputedStyle(target).scrollMarginTop) || 0
+  window.scrollTo({
+    top: window.scrollY + target.getBoundingClientRect().top - scrollMarginTop,
+    left: window.scrollX,
+    behavior: 'auto'
+  })
+}
+
+function findHashTarget(id: string) {
+  return document.getElementById(id)
+    ?? Array.from(document.querySelectorAll<HTMLElement>('[data-anchor-id]'))
+      .find((candidate) => candidate.dataset.anchorId === id)
+    ?? null
+}
 
 function scrollToHashTarget() {
-  if (hashScrolled || !window.location.hash) return
-  const id = decodeHashTarget(window.location.hash)
-  if (!id) return
-  const target = document.getElementById(id)
-  if (!target) return
-  target.scrollIntoView({ block: 'start' })
+  if (hashScrolled || !initialHash) return
+  const id = decodeHashTarget(initialHash)
+  if (!id) {
+    restoreInitialHash()
+    hashScrolled = true
+    return
+  }
+  const target = findHashTarget(id)
+  if (!target) {
+    restoreInitialHash()
+    hashScrolled = true
+    return
+  }
+  target.dataset.hashTarget = 'true'
+
+  const horizontalScroller = findHorizontalScroller(target)
+  if (!horizontalScroller) {
+    target.scrollIntoView({ block: 'start', behavior: 'auto' })
+  } else {
+    const targetRect = target.getBoundingClientRect()
+    const scrollerRect = horizontalScroller.getBoundingClientRect()
+    const isHorizontallyVisible = targetRect.left >= scrollerRect.left && targetRect.right <= scrollerRect.right
+    if (isHorizontallyVisible) scrollTargetVertically(target)
+    else target.scrollIntoView({ block: 'start', inline: 'start', behavior: 'auto' })
+  }
   hashScrolled = true
+  restoreInitialHash()
 }
 
 onMounted(() => {
@@ -62,8 +121,11 @@ async function loadPage() {
   }
 }
 
-function handlePageResolved() {
-  if (pageLoadState.value === 'loading') pageLoadState.value = 'ready'
+async function handlePageResolved() {
+  if (pageLoadState.value !== 'loading') return
+  await nextTick()
+  scrollToHashTarget()
+  pageLoadState.value = 'ready'
 }
 
 const isHome = page === 'home'

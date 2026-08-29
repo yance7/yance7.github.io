@@ -9,7 +9,7 @@ import { getLocalizedSeo } from './src/data/seo.ts'
 const rootDir = dirname(fileURLToPath(import.meta.url))
 const htmlRoot = resolve(rootDir, 'html-src')
 const pageNames = htmlPageEntries.map(({ htmlName }) => htmlName)
-const THEME_BOOTSTRAP_HASH = 'sha256-y7EL9Xc/k62MXHBAGMMmFCVHtvaQtVrg2x2vQiYUZls='
+const THEME_BOOTSTRAP_HASH = 'sha256-qitwqlI10vu96/QuP/2uODumC43vvFpscxk/zXDGK2o='
 
 const htmlInputs = Object.fromEntries(
   pageNames.map((name) => [name, resolve(rootDir, 'html-src', `${name}.html`)])
