@@ -131,6 +131,11 @@ async function expectAccessible(page: Page) {
   expect(results.violations).toEqual([])
 }
 
+async function prepareMobileReducedMotion(page: Page) {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+}
+
 test('brand mark links header and footer back to the localized home page', async ({ page }) => {
   await page.goto('/en/research.html')
 
@@ -638,31 +643,43 @@ test('mobile compass keeps focus priority inside a compact visual frame', async 
   }
 })
 
-test('interactive states remain accessible after opening', async ({ page }) => {
-  test.setTimeout(60000)
-  await page.setViewportSize({ width: 390, height: 844 })
-  await page.emulateMedia({ reducedMotion: 'reduce' })
+test('mobile menu remains accessible after opening', async ({ page }) => {
+  await prepareMobileReducedMotion(page)
   await page.goto('/index.html')
   await page.locator('.menu-trigger').click()
   await expectAccessible(page)
   await page.locator('.mobile-menu-close').click()
+})
 
+test('honors page remains accessible after loading', async ({ page }) => {
+  await prepareMobileReducedMotion(page)
   await page.goto('/honors.html')
   await expect(page.locator('.honor-card').first()).toBeVisible()
   await expectAccessible(page)
+})
 
+test('research method disclosure remains accessible after opening', async ({ page }) => {
+  await prepareMobileReducedMotion(page)
   await page.goto('/research.html')
   await page.locator('.method-toggle').first().click()
   await expectAccessible(page)
+})
 
+test('works page remains accessible after loading', async ({ page }) => {
+  await prepareMobileReducedMotion(page)
   await page.goto('/works.html')
   await expectAccessible(page)
+})
 
+test('concert lightbox remains accessible after opening', async ({ page }) => {
+  await prepareMobileReducedMotion(page)
   await page.goto('/concerts.html')
   await page.locator('.poster-open').first().click()
   await expect(page.locator('.lightbox')).toBeVisible()
   await expectAccessible(page)
   await page.keyboard.press('Escape')
+  await expect(page.locator('.lightbox')).toHaveCount(0)
+  await expect(page.locator('.poster-open').first()).toBeFocused()
 })
 
 test('rapid control clicks settle without duplicate or stale state', async ({ page }) => {
