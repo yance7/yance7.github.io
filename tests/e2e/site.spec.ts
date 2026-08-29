@@ -442,7 +442,7 @@ test('research status markers keep a static hierarchy without competing pulses',
   await expect(firstItem).toHaveAttribute('data-reading-state', 'current')
   const currentNode = firstItem.locator('.tl-node')
   await expect.poll(() => currentNode.evaluate((element) => getComputedStyle(element).boxShadow)).not.toBe('none')
-  await expect(page.locator('.nav-status b')).toHaveCSS('animation-name', 'pulse')
+  await expect(page.locator('.nav-status')).toHaveCount(0)
 })
 
 test('research timeline removes breathing motion when reduced motion is enabled', async ({ page }) => {

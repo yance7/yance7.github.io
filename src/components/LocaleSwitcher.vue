@@ -2,10 +2,15 @@
 import { computed } from 'vue'
 import { buildLocalizedPageHref, localeRegistry, resolvePageFromPath, type Locale, useLocale } from '../i18n'
 import { rememberLocale } from '../i18n/useLocale'
+import { createDocumentPrefetcher } from '../utils/documentPrefetch'
 
 const { locale, messages } = useLocale()
-const options = Object.values(localeRegistry)
+const localeOrder: Locale[] = ['zh-CN', 'zh-HK', 'en']
+const options = localeOrder.map((code) => localeRegistry[code])
 const currentPage = computed(() => resolvePageFromPath(window.location.pathname))
+const prefetchDocument = typeof document !== 'undefined' && typeof window !== 'undefined'
+  ? createDocumentPrefetcher(document, window.location.href)
+  : null
 
 function hrefFor(target: Locale) {
   const page = currentPage.value ?? 'home'
@@ -31,11 +36,16 @@ function ariaLabelFor(target: Locale, visibleLabel = labelFor(target)) {
 function choose(target: Locale) {
   rememberLocale(target)
 }
+
+function prefetchFor(target: Locale) {
+  if (target === locale.value) return
+  prefetchDocument?.(hrefFor(target))
+}
 </script>
 
 <template>
   <div class="locale-switcher">
-    <nav class="locale-switcher-desktop" :aria-label="messages.locale.selector">
+    <nav class="locale-switcher-desktop" :aria-label="messages.locale.selector" :data-current-locale="locale">
       <a
         v-for="option in options"
         :key="option.code"
@@ -43,6 +53,8 @@ function choose(target: Locale) {
         :hreflang="option.htmlLang"
         :aria-current="locale === option.code ? 'page' : undefined"
         :aria-label="ariaLabelFor(option.code)"
+        @pointerenter="prefetchFor(option.code)"
+        @focus="prefetchFor(option.code)"
         @click="choose(option.code)"
       >{{ labelFor(option.code) }}</a>
     </nav>
@@ -62,6 +74,8 @@ function choose(target: Locale) {
           :hreflang="option.htmlLang"
           :aria-current="locale === option.code ? 'page' : undefined"
           :aria-label="ariaLabelFor(option.code, option.nativeName)"
+          @pointerenter="prefetchFor(option.code)"
+          @focus="prefetchFor(option.code)"
           @click="choose(option.code)"
         >{{ option.nativeName }}</a>
       </nav>

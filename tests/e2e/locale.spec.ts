@@ -2,9 +2,13 @@ import { expect, test, type Page } from '@playwright/test'
 
 async function openLocaleNav(page: Page) {
   const desktop = page.locator('.locale-switcher-desktop')
-  if (await desktop.isVisible()) return desktop
+  if ((page.viewportSize()?.width ?? 1280) > 640) {
+    await expect(desktop).toBeVisible()
+    return desktop
+  }
 
   const mobile = page.locator('.locale-switcher-mobile')
+  await expect(mobile).toBeVisible()
   if (await mobile.getAttribute('open') === null) await mobile.locator('summary').click()
   return mobile.locator('nav')
 }
@@ -70,6 +74,60 @@ test('theme preference survives a full locale navigation', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
   await page.reload()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+})
+
+test('desktop locale orbit exposes three real language anchors and one active segment', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('/en/research.html?tab=tools#sec-toolchain')
+  const control = page.locator('.locale-switcher-desktop')
+
+  await expect(control).toBeVisible()
+  await expect(control.locator('a')).toHaveCount(3)
+  await expect(control).toHaveAttribute('data-current-locale', 'en')
+  await expect(control.locator('a[aria-current="page"]')).toHaveAttribute('hreflang', 'en')
+  await expect(control.locator('a[hreflang="zh-CN"]')).toHaveAttribute('href', '/research.html?tab=tools#sec-toolchain')
+  await expect(control.locator('a[hreflang="zh-HK"]')).toHaveAttribute('href', '/zh-hk/research.html?tab=tools#sec-toolchain')
+})
+
+test('locale intent registers one same-origin prefetch without intercepting the anchor', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('/en/research.html')
+  const target = page.locator('.locale-switcher-desktop a[hreflang="zh-HK"]')
+
+  await target.hover()
+  await expect.poll(() => page.locator('link[rel="prefetch"]').evaluateAll((links) => links
+    .map((link) => (link as HTMLLinkElement).href)
+    .some((href) => /\/zh-hk\/research\.html(?:$|[?#])/.test(href))))
+    .toBe(true)
+  await target.focus()
+  await expect(page.locator('link[rel="prefetch"]')).toHaveCount(1)
+  await page.locator('.locale-switcher-desktop a[hreflang="en"]').focus()
+  await expect(page.locator('link[rel="prefetch"]')).toHaveCount(1)
+})
+
+test('mobile locale pill keeps three real links inside narrow viewports', async ({ page }) => {
+  for (const width of [320, 390, 640]) {
+    await page.setViewportSize({ width, height: 844 })
+    await page.goto('/en/research.html?tab=tools#sec-toolchain')
+
+    const mobile = page.locator('.locale-switcher-mobile')
+    await expect(mobile).toBeVisible()
+    const summary = mobile.locator('summary')
+    const summaryBox = await summary.boundingBox()
+    expect(summaryBox?.width ?? 0, `${width}px locale summary width`).toBeGreaterThanOrEqual(44)
+    expect(summaryBox?.height ?? 0, `${width}px locale summary height`).toBeGreaterThanOrEqual(44)
+
+    if (await mobile.getAttribute('open') === null) await summary.click()
+    await expect(mobile.locator('nav')).toBeVisible()
+    await expect(mobile.locator('nav a')).toHaveCount(3)
+    await expect(mobile.locator('nav a[aria-current="page"]')).toHaveAttribute('hreflang', 'en')
+
+    const geometry = await page.evaluate(() => ({
+      documentWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth
+    }))
+    expect(geometry.documentWidth, `${width}px mobile document overflow`).toBeLessThanOrEqual(geometry.viewportWidth)
+  }
 })
 
 test('localized not-found pages keep the locale and return to that home', async ({ page }) => {
