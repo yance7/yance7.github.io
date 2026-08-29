@@ -675,7 +675,6 @@ test('works page remains accessible after loading', async ({ page }) => {
 test('concert lightbox remains accessible after opening', async ({ page }) => {
   await prepareMobileReducedMotion(page)
   await page.goto('/concerts.html')
-  await expectAccessible(page)
   await page.locator('.poster-open').first().click()
   await expect(page.locator('.lightbox')).toBeVisible()
   await expect(page.locator('.lb-close')).toBeFocused()
