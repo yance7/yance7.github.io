@@ -52,7 +52,11 @@ test('Academics AP rows emphasize their result without shifting layout', async (
 
   const row = page.locator('.ap-row').first()
   await row.evaluate((element) => {
-    element.scrollIntoView({ behavior: 'instant', block: 'center', inline: 'nearest' })
+    const html = document.documentElement
+    const previousScrollBehavior = html.style.scrollBehavior
+    html.style.scrollBehavior = 'auto'
+    element.scrollIntoView({ behavior: 'auto', block: 'center', inline: 'nearest' })
+    html.style.scrollBehavior = previousScrollBehavior
   })
   await expect(row).toHaveClass(/revealed/)
   await expect(row).toHaveCSS('transform', 'none')
