@@ -201,8 +201,8 @@
     padding-bottom: max(92px, calc(76px + env(safe-area-inset-bottom)));
   }
   .page-compass {
-    --compass-collapsed-width: 96px;
-    --compass-expanded-width: 360px;
+    --compass-collapsed-width: clamp(116px, 29vw, 124px);
+    --compass-expanded-width: clamp(286px, calc(100vw - 24px), 336px);
 
     top: auto;
     right: 12px;
@@ -214,6 +214,10 @@
     max-height: none;
     border-radius: var(--radius-pill);
     transform: none;
+  }
+  html[data-locale='en'] .page-compass {
+    --compass-collapsed-width: clamp(120px, 31vw, 132px);
+    --compass-expanded-width: clamp(300px, calc(100vw - 24px), 336px);
   }
   .page-compass-expanded {
     width: min(

@@ -393,8 +393,8 @@
 
 /* ===== Adaptive PageCompass ===== */
 .page-compass {
-  --compass-collapsed-width: 112px;
-  --compass-expanded-width: 280px;
+  --compass-collapsed-width: clamp(116px, 9vw, 128px);
+  --compass-expanded-width: clamp(286px, 22vw, 320px);
 
   position: fixed;
   right: max(12px, calc((100vw - var(--w-wide)) / 2 - 76px));
@@ -418,6 +418,10 @@
     box-shadow var(--dur-base),
     background-color var(--dur-base);
   transform: translateY(-50%);
+}
+html[data-locale='en'] .page-compass {
+  --compass-collapsed-width: clamp(124px, 9.5vw, 136px);
+  --compass-expanded-width: clamp(300px, 23vw, 336px);
 }
 @supports (height: 100dvh) {
   .page-compass {
