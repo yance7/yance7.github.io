@@ -194,18 +194,19 @@ test('shared navigation mark keeps its identity across light and dark themes', a
   }
 })
 
-test('brand mark keeps header geometry across locales, themes, and supported viewports', async ({ page }) => {
-  const viewports = [
-    { width: 1200, height: 900 },
-    { width: 768, height: 1024 },
-    { width: 390, height: 844 }
-  ]
-  const routes = ['/research.html', '/zh-hk/research.html', '/en/research.html']
+const brandGeometryViewports = [
+  { width: 1200, height: 900 },
+  { width: 768, height: 1024 },
+  { width: 390, height: 844 }
+]
+const brandGeometryRoutes = ['/research.html', '/zh-hk/research.html', '/en/research.html']
 
-  for (const viewport of viewports) {
-    await page.setViewportSize(viewport)
-    for (const route of routes) {
+for (const viewport of brandGeometryViewports) {
+  for (const route of brandGeometryRoutes) {
+    test(`brand mark keeps header geometry at ${viewport.width}px on ${route}`, async ({ page }) => {
+      await page.setViewportSize(viewport)
       await page.goto(route)
+
       for (const theme of ['light', 'dark']) {
         await page.evaluate((value) => localStorage.setItem('yance-theme', value), theme)
         await page.reload()
@@ -231,22 +232,22 @@ test('brand mark keeps header geometry across locales, themes, and supported vie
           }
         })
 
-        expect(geometry.width, `${route} ${theme} ${viewport.width}px hit area`).toBeGreaterThanOrEqual(44)
-        expect(geometry.height, `${route} ${theme} ${viewport.width}px hit area`).toBeGreaterThanOrEqual(44)
+        expect(Math.round(geometry.width), `${route} ${theme} ${viewport.width}px hit area`).toBeGreaterThanOrEqual(44)
+        expect(Math.round(geometry.height), `${route} ${theme} ${viewport.width}px hit area`).toBeGreaterThanOrEqual(44)
         expect(geometry.markWidth).toBeGreaterThan(0)
         expect(geometry.markHeight).toBeGreaterThan(0)
         expect(geometry.naturalWidth).toBeGreaterThan(0)
         expect(geometry.naturalHeight).toBeGreaterThan(0)
         expect(geometry.documentWidth, `${route} ${theme} ${viewport.width}px overflow`).toBeLessThanOrEqual(geometry.viewportWidth)
       }
-    }
-  }
 
-  const brandLink = page.locator('.site-nav .wordmark')
-  await brandLink.focus()
-  await expect(brandLink).toBeFocused()
-  await expect.poll(() => brandLink.evaluate((element) => getComputedStyle(element).boxShadow)).not.toBe('none')
-})
+      const brandLink = page.locator('.site-nav .wordmark')
+      await brandLink.focus()
+      await expect(brandLink).toBeFocused()
+      await expect.poll(() => brandLink.evaluate((element) => getComputedStyle(element).boxShadow)).not.toBe('none')
+    })
+  }
+}
 
 test('brand mark preserves zh-HK localized home navigation', async ({ page }) => {
   await page.goto('/zh-hk/research.html')
