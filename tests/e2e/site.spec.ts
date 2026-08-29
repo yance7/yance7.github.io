@@ -124,8 +124,8 @@ async function settleAccessibilityState(page: Page) {
   )
 }
 
-async function expectAccessible(page: Page) {
-  await settleAccessibilityState(page)
+async function expectAccessible(page: Page, options: { settle?: boolean } = {}) {
+  if (options.settle !== false) await settleAccessibilityState(page)
 
   const results = await new AxeBuilder({ page }).analyze()
   expect(results.violations).toEqual([])
@@ -675,9 +675,11 @@ test('works page remains accessible after loading', async ({ page }) => {
 test('concert lightbox remains accessible after opening', async ({ page }) => {
   await prepareMobileReducedMotion(page)
   await page.goto('/concerts.html')
+  await expectAccessible(page)
   await page.locator('.poster-open').first().click()
   await expect(page.locator('.lightbox')).toBeVisible()
-  await expectAccessible(page)
+  await expect(page.locator('.lb-close')).toBeFocused()
+  await expectAccessible(page, { settle: false })
   await page.keyboard.press('Escape')
   await expect(page.locator('.lightbox')).toHaveCount(0)
   await expect(page.locator('.poster-open').first()).toBeFocused()
