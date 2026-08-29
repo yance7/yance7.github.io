@@ -385,7 +385,8 @@ describe('shared UI correction contracts', () => {
     expect(compass).toContain('formatCompassIndex(activeIndex, props.sections.length)')
     expect(album).toContain(':aria-label="`${album.title} ${album.artist} · ${album.year}, ${formatLabel(album)}`"')
     expect(project).toContain(':aria-label="`${messages.actions.enterProject}: ${project.domain}`"')
-    expect(shell).toMatch(/\.locale-switcher-desktop a\s*\{[\s\S]*min-width: 24px;[\s\S]*min-height: 24px;/)
+    expect(shell).toMatch(/\.locale-switcher-desktop\s*\{[\s\S]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/)
+    expect(shell).toMatch(/\.locale-switcher-desktop a\s*\{[\s\S]*min-height: 28px;/)
   })
 })
 

@@ -49,21 +49,11 @@ useModalDialog(menuActive, {
 
   <header class="site-nav" :class="{ 'menu-open': menuVisible }" :data-header-state="headerState">
     <div class="site-nav-surface">
-      <a class="wordmark brand-link" :href="buildLocalizedPageHref('home', locale)" :aria-label="`${messages.accessibility.home}: Yance.`">
-        <BrandMark variant="header" />
-      </a>
-
-      <button
-        ref="menuTrigger"
-        class="menu-trigger"
-        type="button"
-        :aria-expanded="menuVisible"
-        aria-controls="mobile-navigation"
-        :aria-label="menuVisible ? messages.navigation.closeMenu : messages.navigation.openMenu"
-        @click="toggleMenu"
-      >
-        <i></i><i></i><i></i>
-      </button>
+      <div class="site-nav-brand">
+        <a class="wordmark brand-link" :href="buildLocalizedPageHref('home', locale)" :aria-label="`${messages.accessibility.home}: Yance.`">
+          <BrandMark variant="header" />
+        </a>
+      </div>
 
       <nav class="nav-rail" :class="{ open: menuVisible }" :aria-label="messages.navigation.main">
         <a
@@ -81,10 +71,22 @@ useModalDialog(menuActive, {
         </a>
       </nav>
 
-      <LocaleSwitcher />
-      <ThemeOrbit />
+      <div class="site-nav-controls">
+        <LocaleSwitcher />
+        <ThemeOrbit />
 
-      <div class="nav-status"><b></b><span>{{ messages.common.online }} / 2026</span></div>
+        <button
+          ref="menuTrigger"
+          class="menu-trigger"
+          type="button"
+          :aria-expanded="menuVisible"
+          aria-controls="mobile-navigation"
+          :aria-label="menuVisible ? messages.navigation.closeMenu : messages.navigation.openMenu"
+          @click="toggleMenu"
+        >
+          <i></i><i></i><i></i>
+        </button>
+      </div>
     </div>
   </header>
 

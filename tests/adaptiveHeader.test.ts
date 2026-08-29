@@ -52,3 +52,21 @@ describe('adaptive header source contracts', () => {
     expect(shell).not.toMatch(/transition:\s*all/)
   })
 })
+
+describe('header locale orbit contracts', () => {
+  it('declares grouped header regions and locale intent hooks', () => {
+    const header = readFileSync(resolve(root, 'src/components/SiteHeader.vue'), 'utf8')
+    const locale = readFileSync(resolve(root, 'src/components/LocaleSwitcher.vue'), 'utf8')
+    const shell = readFileSync(resolve(root, 'src/styles/shell.css'), 'utf8')
+
+    expect(header.match(/class="site-nav-brand"/g)).toHaveLength(1)
+    expect(header.match(/class="site-nav-controls"/g)).toHaveLength(1)
+    expect(header).not.toContain('nav-status')
+    expect(locale).toContain('data-current-locale')
+    expect(locale).toContain('@pointerenter')
+    expect(locale).toContain('@focus')
+    expect(locale).toContain('createDocumentPrefetcher')
+    expect(shell).toContain('grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr)')
+    expect(shell).toMatch(/\.locale-switcher-desktop a:focus-visible\s*\{[\s\S]*outline: 2px solid Highlight;/)
+  })
+})

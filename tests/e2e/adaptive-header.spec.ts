@@ -155,6 +155,45 @@ test('English navigation stays inside the viewport across desktop widths', async
   }
 })
 
+test('desktop header uses centered navigation and a right-hand control group', async ({ page }) => {
+  for (const width of [1440, 1024, 768]) {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto('/en/research.html')
+    await waitForReady(page)
+
+    const geometry = await page.evaluate(() => {
+      const surface = document.querySelector<HTMLElement>('.site-nav-surface')
+      const nav = document.querySelector<HTMLElement>('.nav-rail')
+      const brand = document.querySelector<HTMLElement>('.site-nav-brand')
+      const controls = document.querySelector<HTMLElement>('.site-nav-controls')
+      if (!surface || !nav || !brand || !controls) throw new Error('header groups are incomplete')
+      const surfaceRect = surface.getBoundingClientRect()
+      const navRect = nav.getBoundingClientRect()
+      const brandRect = brand.getBoundingClientRect()
+      const controlsRect = controls.getBoundingClientRect()
+      return {
+        surfaceCenter: surfaceRect.left + surfaceRect.width / 2,
+        navCenter: navRect.left + navRect.width / 2,
+        brandLeft: brandRect.left,
+        brandRight: brandRect.right,
+        navLeft: navRect.left,
+        navRight: navRect.right,
+        controlsLeft: controlsRect.left,
+        controlsRight: controlsRect.right,
+        surfaceRight: surfaceRect.right
+      }
+    })
+
+    expect(geometry.navCenter, `${width}px nav center`).toBeCloseTo(geometry.surfaceCenter, 0)
+    expect(Math.abs(geometry.navCenter - geometry.surfaceCenter), `${width}px nav centering`).toBeLessThanOrEqual(4)
+    expect(geometry.brandLeft, `${width}px brand position`).toBeGreaterThanOrEqual(0)
+    expect(geometry.brandRight, `${width}px brand/nav collision`).toBeLessThanOrEqual(geometry.navLeft)
+    expect(geometry.navRight, `${width}px nav/control collision`).toBeLessThanOrEqual(geometry.controlsLeft)
+    expect(geometry.controlsRight, `${width}px controls position`).toBeLessThanOrEqual(geometry.surfaceRight)
+    await expect(page.locator('.nav-status')).toHaveCount(0)
+  }
+})
+
 test('floating header preserves light and dark themes and reduced-motion state changes', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 900 })
   await page.emulateMedia({ reducedMotion: 'reduce' })
