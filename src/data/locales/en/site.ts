@@ -23,7 +23,7 @@ export const siteCopy = {
     honors: [{ id: 'sec-milestones', label: 'Milestones', shortLabel: 'Milestones' }, { id: 'sec-honors-archive', label: 'Honors archive', shortLabel: 'Archive' }],
     research: [{ id: 'sec-research-timeline', label: 'Research timeline', shortLabel: 'Research' }, { id: 'sec-toolchain', label: 'Methods and tools', shortLabel: 'Methods' }],
     works: [{ id: 'works-overview', label: 'Released worlds', shortLabel: 'Works' }, { id: 'project-fresheye', label: 'FreshEye', shortLabel: 'FreshEye' }],
-    concerts: [{ id: 'concerts-overview', label: 'Live archive', shortLabel: 'Live' }, { id: 'album-frequencies', label: 'Album wall', shortLabel: 'Albums' }, { id: 'concert-archive', label: 'Concert archive', shortLabel: 'Posters' }]
+    concerts: [{ id: 'concerts-overview', label: 'Live archive', shortLabel: 'Live' }, { id: 'concert-archive', label: 'Concert archive', shortLabel: 'Posters' }, { id: 'album-frequencies', label: 'Album wall', shortLabel: 'Albums' }]
   },
   worlds: {
     academics: { no: '01', label: 'Academics', icon: '✦', desc: 'Coursework, standardized tests, and AP results—the readable record of sustained work.', accent: 'aqua' },

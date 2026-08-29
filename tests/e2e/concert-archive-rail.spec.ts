@@ -23,12 +23,18 @@ async function gotoConcerts(page: Page, hash = '') {
   await page.goto(`/concerts.html${hash}`)
 }
 
+async function gotoConcertRoute(page: Page, path: string) {
+  await page.clock.setFixedTime(FIXED_NOW)
+  await page.goto(path)
+}
+
 test('attended concert archive renders every past show in one horizontal rail', async ({ page }) => {
   await gotoConcerts(page)
 
   const archive = page.locator('#concert-archive')
   const rail = archive.locator('.concert-archive-rail')
   await expect(rail).toBeVisible()
+  await expect(page.locator('.page-concerts > #concerts-overview + #concert-archive + #album-frequencies')).toHaveCount(1)
 
   const ids = await rail.locator('.concert-rail-card').evaluateAll((cards) => (
     cards.map((card) => card.getAttribute('data-concert-id'))
@@ -41,8 +47,7 @@ test('attended concert archive renders every past show in one horizontal rail', 
   await expect(rail).toHaveCSS('scroll-snap-type', /x mandatory/)
 })
 
-test('concert archive keeps normal wheel native and maps Shift+wheel horizontally', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name === 'webkit-mobile', 'Touch viewports use native swipe instead of Shift+wheel.')
+test('concert archive keeps normal wheel native and maps Shift+wheel horizontally', async ({ page }) => {
   await gotoConcerts(page)
   const rail = page.locator('.concert-archive-rail')
 
@@ -181,8 +186,7 @@ test('concert archive buttons use instant scrolling when motion is reduced', asy
   }
 })
 
-test('concert archive exposes native horizontal scrolling on touch viewports', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'webkit-mobile', 'Native swipe is covered by the mobile WebKit project.')
+test('concert archive exposes a native horizontal scrolling contract', async ({ page }) => {
   await gotoConcerts(page)
 
   const rail = page.locator('.concert-archive-rail')
@@ -216,25 +220,34 @@ test('concert archive preserves poster carousel and lightbox interactions', asyn
   await expect(page.locator('.lightbox')).toHaveCount(0)
 })
 
-test('concert archive stays inside the viewport across representative widths', async ({ page }) => {
-  for (const width of [390, 768, 1024, 1440]) {
-    await page.setViewportSize({ width, height: 900 })
-    await gotoConcerts(page)
-    await expect(page.locator('.concert-archive-rail')).toBeVisible()
-    const layout = await page.evaluate(() => {
-      const rail = document.querySelector<HTMLElement>('.concert-archive-rail')!
-      return {
-        documentWidth: document.documentElement.scrollWidth,
-        bodyWidth: document.body.scrollWidth,
-        viewportWidth: window.innerWidth,
-        railWidth: rail.getBoundingClientRect().width,
-        railScrollWidth: rail.scrollWidth
-      }
-    })
+const concertRoutes = [
+  { locale: 'zh-CN', path: '/concerts.html' },
+  { locale: 'zh-HK', path: '/zh-hk/concerts.html' },
+  { locale: 'en', path: '/en/concerts.html' }
+]
 
-    expect(layout.documentWidth, `document at ${width}px`).toBeLessThanOrEqual(layout.viewportWidth)
-    expect(layout.bodyWidth, `body at ${width}px`).toBeLessThanOrEqual(layout.viewportWidth)
-    expect(layout.railWidth).toBeLessThanOrEqual(layout.viewportWidth)
-    expect(layout.railScrollWidth).toBeGreaterThan(layout.railWidth)
+for (const route of concertRoutes) {
+  for (const width of [390, 768, 1024, 1440]) {
+    test(`concert archive stays inside the viewport: ${route.locale} ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 })
+      await gotoConcertRoute(page, route.path)
+      await expect(page.locator('html')).toHaveAttribute('data-locale', route.locale)
+      await expect(page.locator('.concert-archive-rail')).toBeVisible()
+      const layout = await page.evaluate(() => {
+        const rail = document.querySelector<HTMLElement>('.concert-archive-rail')!
+        return {
+          documentWidth: document.documentElement.scrollWidth,
+          bodyWidth: document.body.scrollWidth,
+          viewportWidth: window.innerWidth,
+          railWidth: rail.getBoundingClientRect().width,
+          railScrollWidth: rail.scrollWidth
+        }
+      })
+
+      expect(layout.documentWidth, `${route.locale} document at ${width}px`).toBeLessThanOrEqual(layout.viewportWidth)
+      expect(layout.bodyWidth, `${route.locale} body at ${width}px`).toBeLessThanOrEqual(layout.viewportWidth)
+      expect(layout.railWidth).toBeLessThanOrEqual(layout.viewportWidth)
+      expect(layout.railScrollWidth).toBeGreaterThan(layout.railWidth)
+    })
   }
-})
+}

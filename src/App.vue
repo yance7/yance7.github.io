@@ -35,12 +35,15 @@ let hashScrolled = false
 const initialHash = document.documentElement.dataset.initialHash || window.location.hash
 
 function restoreInitialHash() {
-  if (!initialHash || window.location.hash === initialHash) return
-  window.history.replaceState(
-    window.history.state,
-    '',
-    `${window.location.pathname}${window.location.search}${initialHash}`
-  )
+  if (!initialHash) return
+  if (window.location.hash !== initialHash) {
+    window.history.replaceState(
+      window.history.state,
+      '',
+      `${window.location.pathname}${window.location.search}${initialHash}`
+    )
+  }
+  delete document.documentElement.dataset.initialHash
 }
 
 function findHorizontalScroller(target: HTMLElement) {
@@ -63,6 +66,14 @@ function scrollTargetVertically(target: HTMLElement) {
     left: window.scrollX,
     behavior: 'auto'
   })
+}
+
+function scrollTargetHorizontally(target: HTMLElement, scroller: HTMLElement) {
+  const targetRect = target.getBoundingClientRect()
+  const scrollerRect = scroller.getBoundingClientRect()
+  const maxScrollLeft = Math.max(0, scroller.scrollWidth - scroller.clientWidth)
+  const targetScrollLeft = scroller.scrollLeft + targetRect.left - scrollerRect.left
+  scroller.scrollLeft = Math.max(0, Math.min(maxScrollLeft, targetScrollLeft))
 }
 
 function findHashTarget(id: string) {
@@ -96,7 +107,10 @@ function scrollToHashTarget() {
     const scrollerRect = horizontalScroller.getBoundingClientRect()
     const isHorizontallyVisible = targetRect.left >= scrollerRect.left && targetRect.right <= scrollerRect.right
     if (isHorizontallyVisible) scrollTargetVertically(target)
-    else target.scrollIntoView({ block: 'start', inline: 'start', behavior: 'auto' })
+    else {
+      scrollTargetHorizontally(target, horizontalScroller)
+      scrollTargetVertically(target)
+    }
   }
   hashScrolled = true
   restoreInitialHash()

@@ -75,8 +75,6 @@ function formatNextDate(date: string) {
       </div>
     </section>
 
-    <AlbumWall />
-
     <section id="concert-archive" class="content concert-group">
       <div class="group-header" v-reveal>
         <span class="group-year">LIVE</span>
@@ -85,5 +83,7 @@ function formatNextDate(date: string) {
       </div>
       <ConcertArchiveRail :concerts="attendedConcerts" :section="section" @open-lightbox="forwardLightbox" />
     </section>
+
+    <AlbumWall />
   </div>
 </template>

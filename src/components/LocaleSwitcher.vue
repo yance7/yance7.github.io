@@ -16,7 +16,7 @@ function hrefFor(target: Locale) {
   const page = currentPage.value ?? 'home'
   return buildLocalizedPageHref(page, target, {
     search: currentPage.value ? window.location.search : '',
-    hash: currentPage.value ? window.location.hash : ''
+    hash: currentPage.value ? (window.location.hash || document.documentElement.dataset.initialHash || '') : ''
   })
 }
 

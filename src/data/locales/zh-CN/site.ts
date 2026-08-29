@@ -42,8 +42,8 @@ export const siteCopy = {
     ],
     concerts: [
       { id: 'concerts-overview', label: '现场档案', shortLabel: '现场' },
-      { id: 'album-frequencies', label: '专辑收藏墙', shortLabel: '专辑' },
-      { id: 'concert-archive', label: '演唱会档案', shortLabel: '海报' }
+      { id: 'concert-archive', label: '演唱会档案', shortLabel: '海报' },
+      { id: 'album-frequencies', label: '专辑收藏墙', shortLabel: '专辑' }
     ]
   },
   worlds: {

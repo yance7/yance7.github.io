@@ -57,6 +57,10 @@ async function settlePage(page: Page) {
 }
 
 async function settleConcertVisualState(page: Page) {
+  await page.locator('#concert-archive').scrollIntoViewIfNeeded()
+  await expect.poll(() => page.locator('#concert-archive .concert-rail-card').first().evaluate((card) => (
+    card.classList.contains('revealed')
+  ))).toBe(true)
   await page.locator('#album-frequencies').scrollIntoViewIfNeeded()
   await expect.poll(() => page.locator('.album-tile img').evaluateAll((images) => {
     const imageElements = images as HTMLImageElement[]
