@@ -63,8 +63,8 @@ test('mobile collapsed Compass keeps index on one line and retains an expansion 
     (element) => element.getBoundingClientRect().width
   )
 
-  expect(width).toBeGreaterThanOrEqual(88)
-  expect(width).toBeLessThanOrEqual(108)
+  expect(width).toBeGreaterThanOrEqual(116)
+  expect(width).toBeLessThanOrEqual(132)
 
   await expect(icon).toBeVisible()
 

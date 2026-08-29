@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { usePageCompass } from '../composables/usePageCompass'
+import { usePageCompassDisclosure } from '../composables/usePageCompassDisclosure'
 import type { PageCompassSection } from '../data/types'
 import { useLocale } from '../i18n'
 import { formatCompassIndex } from '../utils/pageCompass'
@@ -16,65 +17,39 @@ const {
   goTop
 } = usePageCompass(() => props.sections)
 const { messages } = useLocale()
-
-type CompassMode = 'closed' | 'transient' | 'pinned' | 'suppressed'
+const {
+  mode,
+  isExpanded,
+  handlePointerEnter,
+  handlePointerLeave,
+  handleFocusIn: updateFocusIn,
+  handleFocusOut: updateFocusOut,
+  handleTriggerPointerDown,
+  handleTriggerClick,
+  closeCompass,
+  suppressCompass: setSuppressed
+} = usePageCompassDisclosure()
 
 const compassRef = ref<HTMLElement | null>(null)
 const triggerRef = ref<HTMLButtonElement | null>(null)
-const mode = ref<CompassMode>('closed')
-const pointerInside = ref(false)
-const focusInside = ref(false)
-const isExpanded = computed(() => mode.value === 'transient' || mode.value === 'pinned')
-
-function isHoverCapablePointer(event: PointerEvent) {
-  return event.pointerType !== 'touch'
-    && (event.pointerType === 'mouse' || window.matchMedia('(hover: hover)').matches)
-}
-
-function handlePointerEnter(event: PointerEvent) {
-  pointerInside.value = true
-  if (mode.value === 'closed' && isHoverCapablePointer(event)) mode.value = 'transient'
-}
-
-function handlePointerLeave() {
-  pointerInside.value = false
-  if (mode.value === 'transient' && !focusInside.value) mode.value = 'closed'
-  if (mode.value === 'suppressed' && !focusInside.value) mode.value = 'closed'
-}
-
-function handleFocusIn() {
-  focusInside.value = true
-  if (mode.value === 'closed') mode.value = 'transient'
-}
 
 function handleFocusOut(event: FocusEvent) {
-  const nextTarget = event.relatedTarget
-  focusInside.value = nextTarget instanceof Node && (compassRef.value?.contains(nextTarget) ?? false)
-  if (focusInside.value) return
-  if (mode.value === 'suppressed') {
-    if (nextTarget instanceof Node) mode.value = 'closed'
-    return
-  }
-  if (mode.value === 'transient' && !pointerInside.value) mode.value = 'closed'
-}
-
-function handleTriggerClick() {
-  mode.value = mode.value === 'pinned' ? 'closed' : 'pinned'
-}
-
-function closeCompass() {
-  mode.value = 'closed'
+  const nextTarget = event.relatedTarget instanceof Node ? event.relatedTarget : null
+  updateFocusOut(
+    Boolean(nextTarget && compassRef.value?.contains(nextTarget)),
+    Boolean(nextTarget)
+  )
 }
 
 function suppressCompass() {
-  mode.value = 'suppressed'
+  setSuppressed()
   triggerRef.value?.focus({ preventScroll: true })
 }
 
 function handleSectionSelect(event: MouseEvent, id: string) {
   event.preventDefault()
   selectSection(id)
-  mode.value = 'suppressed'
+  setSuppressed()
   window.location.hash = id
   triggerRef.value?.focus({ preventScroll: true })
 }
@@ -127,7 +102,7 @@ onUnmounted(() => {
     :aria-label="messages.compass.label"
     @pointerenter="handlePointerEnter"
     @pointerleave="handlePointerLeave"
-    @focusin="handleFocusIn"
+    @focusin="updateFocusIn"
     @focusout="handleFocusOut"
   >
     <button
@@ -137,6 +112,7 @@ onUnmounted(() => {
       aria-controls="page-compass-panel"
       :aria-expanded="isExpanded"
       :aria-label="`${isExpanded ? messages.compass.close : messages.compass.open}: ${formatCompassIndex(activeIndex, props.sections.length)} ${activeSection?.shortLabel ?? activeSection?.label ?? ''}`"
+      @pointerdown="handleTriggerPointerDown"
       @click="handleTriggerClick"
     >
       <span class="page-compass-trigger-index">{{ formatCompassIndex(activeIndex, props.sections.length) }}</span>

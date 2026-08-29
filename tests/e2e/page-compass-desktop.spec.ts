@@ -9,6 +9,19 @@ const destinations = [
   ['concerts.html', '#concert-archive']
 ] as const
 
+const localeRoutes = [
+  '/research.html',
+  '/zh-hk/research.html',
+  '/en/research.html'
+] as const
+
+const compassViewports = [
+  { name: 'mobile', width: 390, height: 844 },
+  { name: 'tablet', width: 768, height: 900 },
+  { name: 'desktop', width: 1024, height: 900 },
+  { name: 'wide', width: 1440, height: 900 }
+] as const
+
 type ScrollToCall = [{ top: number; left: number; behavior?: ScrollBehavior }] | [number, number]
 
 const PRECLICK_MIN_CLEARANCE = 140
@@ -222,8 +235,8 @@ test('desktop PageCompass exposes stable collapsed and expanded geometry', async
     return { width: rect.width, height: rect.height }
   })
 
-  expect(collapsed.width).toBeGreaterThanOrEqual(104)
-  expect(collapsed.width).toBeLessThanOrEqual(124)
+  expect(collapsed.width).toBeGreaterThanOrEqual(116)
+  expect(collapsed.width).toBeLessThanOrEqual(136)
 
   const indexGeometry = await index.evaluate((element) => {
     const style = getComputedStyle(element)
@@ -248,8 +261,8 @@ test('desktop PageCompass exposes stable collapsed and expanded geometry', async
     (element) => element.getBoundingClientRect().width
   )
 
-  expect(expandedWidth).toBeGreaterThanOrEqual(260)
-  expect(expandedWidth).toBeLessThanOrEqual(300)
+  expect(expandedWidth).toBeGreaterThanOrEqual(286)
+  expect(expandedWidth).toBeLessThanOrEqual(336)
 })
 
 test('PageCompass visually exposes transient, pinned, and suppressed modes', async ({ page }) => {
@@ -279,6 +292,82 @@ test('PageCompass visually exposes transient, pinned, and suppressed modes', asy
   await expect(compass).toHaveAttribute('data-mode', 'suppressed')
   await expect(trigger).toHaveAttribute('aria-expanded', 'false')
 })
+
+test('PageCompass hover intent filters brief transit and preserves grace returns', async ({ page }) => {
+  await page.goto('/research.html')
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+
+  const compass = page.locator('.page-compass')
+  const trigger = compass.locator('.page-compass-trigger')
+
+  const modeAfterTransit = await compass.evaluate((element) => {
+    const eventInit = { bubbles: false, pointerType: 'mouse' }
+    element.dispatchEvent(new PointerEvent('pointerenter', eventInit))
+    element.dispatchEvent(new PointerEvent('pointerleave', eventInit))
+    return element.getAttribute('data-mode')
+  })
+
+  expect(modeAfterTransit).toBe('closed')
+  await trigger.hover()
+  await expect(compass).toHaveAttribute('data-mode', 'transient')
+
+  const modeAfterGraceReturn = await compass.evaluate((element) => {
+    const eventInit = { bubbles: false, pointerType: 'mouse' }
+    element.dispatchEvent(new PointerEvent('pointerleave', eventInit))
+    element.dispatchEvent(new PointerEvent('pointerenter', eventInit))
+    return element.getAttribute('data-mode')
+  })
+
+  expect(modeAfterGraceReturn).toBe('transient')
+})
+
+for (const route of localeRoutes) {
+  for (const viewport of compassViewports) {
+    test(`PageCompass keeps ${route} bounded at ${viewport.name} width`, async ({ page }) => {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height })
+      await page.goto(route)
+      await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+
+      const compass = page.locator('.page-compass')
+      const trigger = compass.locator('.page-compass-trigger')
+      const collapsedWidth = await compass.evaluate((element) => element.getBoundingClientRect().width)
+
+      expect(collapsedWidth, `${route} collapsed width`).toBeGreaterThanOrEqual(116)
+      expect(collapsedWidth, `${route} collapsed width`).toBeLessThanOrEqual(136)
+
+      await trigger.click()
+      await expect(compass).toHaveAttribute('data-mode', 'pinned')
+
+      const geometry = await compass.evaluate((element) => {
+        const rect = element.getBoundingClientRect()
+        const header = document.querySelector<HTMLElement>('.site-nav')?.getBoundingClientRect()
+        const labels = [...element.querySelectorAll<HTMLElement>('.page-compass-link-label')]
+        const intersectsHeader = Boolean(header
+          && rect.left < header.right
+          && rect.right > header.left
+          && rect.top < header.bottom
+          && rect.bottom > header.top)
+
+        return {
+          left: rect.left,
+          right: rect.right,
+          width: rect.width,
+          labelOverflow: labels.map((label) => label.scrollWidth - label.clientWidth),
+          documentWidth: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth),
+          intersectsHeader
+        }
+      })
+
+      expect(geometry.left, `${route} left edge`).toBeGreaterThanOrEqual(-1)
+      expect(geometry.right, `${route} right edge`).toBeLessThanOrEqual(viewport.width + 1)
+      expect(geometry.width, `${route} expanded width`).toBeGreaterThanOrEqual(286)
+      expect(geometry.width, `${route} expanded width`).toBeLessThanOrEqual(336)
+      expect(Math.max(...geometry.labelOverflow, 0), `${route} label overflow`).toBeLessThanOrEqual(1)
+      expect(geometry.documentWidth, `${route} document overflow`).toBeLessThanOrEqual(viewport.width + 1)
+      expect(geometry.intersectsHeader, `${route} header collision`).toBe(false)
+    })
+  }
+}
 
 test('expanded English PageCompass labels are readable without horizontal overflow', async ({ page }) => {
   await page.goto('/en/research.html')

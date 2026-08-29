@@ -48,9 +48,16 @@ test('Academics education rows expose emphasis without becoming controls', async
 test('Academics AP rows emphasize their result without shifting layout', async ({ page }) => {
   await page.goto('/academics.html')
   await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready', { timeout: 10_000 })
 
   const row = page.locator('.ap-row').first()
-  await row.scrollIntoViewIfNeeded()
+  await row.evaluate((element) => {
+    const html = document.documentElement
+    const previousScrollBehavior = html.style.scrollBehavior
+    html.style.scrollBehavior = 'auto'
+    element.scrollIntoView({ behavior: 'auto', block: 'center', inline: 'nearest' })
+    html.style.scrollBehavior = previousScrollBehavior
+  })
   await expect(row).toHaveClass(/revealed/)
   await expect(row).toHaveCSS('transform', 'none')
   const initialBackground = await row.evaluate((element) => getComputedStyle(element).backgroundColor)
