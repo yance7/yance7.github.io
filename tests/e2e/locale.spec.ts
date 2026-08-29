@@ -116,16 +116,26 @@ test('mobile locale pill keeps three real links inside narrow viewports', async 
     const summaryBox = await summary.boundingBox()
     expect(summaryBox?.width ?? 0, `${width}px locale summary width`).toBeGreaterThanOrEqual(44)
     expect(summaryBox?.height ?? 0, `${width}px locale summary height`).toBeGreaterThanOrEqual(44)
+    await expect(summary.locator('span')).toHaveCount(2)
+    await expect(summary.locator('span')).toHaveText(['EN', '⌄'])
 
     if (await mobile.getAttribute('open') === null) await summary.click()
     await expect(mobile.locator('nav')).toBeVisible()
     await expect(mobile.locator('nav a')).toHaveCount(3)
     await expect(mobile.locator('nav a[aria-current="page"]')).toHaveAttribute('hreflang', 'en')
 
+    const popoverRect = await mobile.locator('nav').evaluate((element) => {
+      const { left, right } = element.getBoundingClientRect()
+      return { left, right }
+    })
     const geometry = await page.evaluate(() => ({
+      bodyWidth: document.body.getBoundingClientRect().width,
       documentWidth: document.documentElement.scrollWidth,
       viewportWidth: document.documentElement.clientWidth
     }))
+    expect(popoverRect.left, `${width}px locale popover left edge`).toBeGreaterThanOrEqual(0)
+    expect(popoverRect.right, `${width}px locale popover right edge`).toBeLessThanOrEqual(geometry.viewportWidth)
+    expect(geometry.bodyWidth, `${width}px mobile body overflow`).toBeLessThanOrEqual(geometry.viewportWidth)
     expect(geometry.documentWidth, `${width}px mobile document overflow`).toBeLessThanOrEqual(geometry.viewportWidth)
   }
 })

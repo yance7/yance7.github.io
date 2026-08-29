@@ -224,6 +224,20 @@
   box-shadow: var(--focus-ring);
 }
 .locale-switcher-mobile { display: none; }
+@media (forced-colors: active) {
+  .locale-switcher-desktop {
+    background: Canvas;
+    border-color: CanvasText;
+    box-shadow: none;
+  }
+  .locale-switcher-desktop::before { background: Highlight; }
+  .locale-switcher-desktop a[aria-current='page'] { color: HighlightText; }
+  .locale-switcher-desktop a:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+    box-shadow: none;
+  }
+}
 
 /* ===== 移动端全屏菜单 ===== */
 .mobile-menu-overlay {

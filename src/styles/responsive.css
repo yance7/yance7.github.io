@@ -1,9 +1,16 @@
 /* ===== 共享响应式外壳与组件 ===== */
+@media (max-width: 1024px) and (min-width: 641px) {
+  .nav-rail { gap: var(--space-3); }
+  .nav-rail a .nav-num { display: none; }
+}
+
 @media (max-width: 900px) {
   .theme-orbit { min-height: 44px; }
   .site-nav-controls { gap: 8px; }
+  .locale-switcher-desktop { min-width: 116px; }
   .theme-orbit .orbit-label { display: none; }
-  .nav-rail { gap: var(--space-3); }
+  .nav-rail { gap: var(--space-1); }
+  .nav-rail a { font-size: var(--text-xs); padding-inline: 0; }
   .nav-rail a .nav-en { display: none; }
   .nav-rail a .nav-num { display: none; }
   .hero-inner { grid-template-columns: 1fr; }

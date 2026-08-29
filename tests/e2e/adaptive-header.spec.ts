@@ -175,6 +175,10 @@ test('desktop header uses centered navigation and a right-hand control group', a
         surfaceCenter: surfaceRect.left + surfaceRect.width / 2,
         navCenter: navRect.left + navRect.width / 2,
         brandLeft: brandRect.left,
+        brandRight: brandRect.right,
+        navLeft: navRect.left,
+        navRight: navRect.right,
+        controlsLeft: controlsRect.left,
         controlsRight: controlsRect.right,
         surfaceRight: surfaceRect.right
       }
@@ -183,6 +187,8 @@ test('desktop header uses centered navigation and a right-hand control group', a
     expect(geometry.navCenter, `${width}px nav center`).toBeCloseTo(geometry.surfaceCenter, 0)
     expect(Math.abs(geometry.navCenter - geometry.surfaceCenter), `${width}px nav centering`).toBeLessThanOrEqual(4)
     expect(geometry.brandLeft, `${width}px brand position`).toBeGreaterThanOrEqual(0)
+    expect(geometry.brandRight, `${width}px brand/nav collision`).toBeLessThanOrEqual(geometry.navLeft)
+    expect(geometry.navRight, `${width}px nav/control collision`).toBeLessThanOrEqual(geometry.controlsLeft)
     expect(geometry.controlsRight, `${width}px controls position`).toBeLessThanOrEqual(geometry.surfaceRight)
     await expect(page.locator('.nav-status')).toHaveCount(0)
   }

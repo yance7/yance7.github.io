@@ -67,5 +67,6 @@ describe('header locale orbit contracts', () => {
     expect(locale).toContain('@focus')
     expect(locale).toContain('createDocumentPrefetcher')
     expect(shell).toContain('grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr)')
+    expect(shell).toMatch(/\.locale-switcher-desktop a:focus-visible\s*\{[\s\S]*outline: 2px solid Highlight;/)
   })
 })

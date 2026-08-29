@@ -60,10 +60,8 @@ function prefetchFor(target: Locale) {
     </nav>
 
     <details class="locale-switcher-mobile">
-      <summary :aria-label="`${messages.locale.selector}: ${localeRegistry[locale].shortLabel} / ${locale === 'en' ? messages.locale.zhCN : messages.locale.en}`">
+      <summary :aria-label="`${messages.locale.selector}: ${localeRegistry[locale].shortLabel}`">
         <span>{{ localeRegistry[locale].shortLabel }}</span>
-        <span aria-hidden="true">/</span>
-        <span>{{ locale === 'en' ? messages.locale.zhCN : messages.locale.en }}</span>
         <span aria-hidden="true">⌄</span>
       </summary>
       <nav :aria-label="messages.locale.selector">
