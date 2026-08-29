@@ -164,16 +164,6 @@ export function getLocalizedConcertSection(locale: Locale) {
   return content(locale).concerts.section
 }
 
-export function getLocalizedConcertGroups(locale: Locale) {
-  return getLocalizedConcerts(locale).reduce<Record<string, Concert[]>>((groups, item) => {
-    const year = item.date.split('-')[0]
-    if (!year) return groups
-    const group = groups[year] ?? (groups[year] = [])
-    group.push(item)
-    return groups
-  }, {})
-}
-
 export function getLocalizedConcertState(locale: Locale, now = new Date()): {
   now: Date
   upcoming: Concert[]

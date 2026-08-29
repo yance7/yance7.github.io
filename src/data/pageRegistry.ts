@@ -51,7 +51,7 @@ const registry = {
     changefreq: 'monthly',
     priority: '0.7',
     ogImage: 'assets/og-concerts.png',
-    sectionIds: ['concerts-overview', 'album-frequencies', 'concert-archive']
+    sectionIds: ['concerts-overview', 'concert-archive', 'album-frequencies']
   }
 } as const
 

@@ -8,6 +8,16 @@ import { initializeLocale, resolveLocaleFromPath } from './i18n'
 import './styles.css'
 import './theme.css'
 
+const initialHash = document.documentElement.dataset.initialHash || window.location.hash
+if (initialHash) document.documentElement.dataset.initialHash = initialHash
+if (initialHash && window.location.hash) {
+  window.history.replaceState(
+    window.history.state,
+    '',
+    `${window.location.pathname}${window.location.search}`
+  )
+}
+
 initializeLocale(resolveLocaleFromPath(window.location.pathname))
 
 const fontLoadTimeout = document.body.dataset.page === 'concerts' ? 0 : 2400

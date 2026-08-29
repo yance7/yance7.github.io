@@ -11,7 +11,7 @@ const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)))
 const PORT = Number(process.env.PLAYWRIGHT_PORT ?? 4174)
 const BASE_URL = `http://127.0.0.1:${PORT}`
 const INP_BUDGET = 200
-const concertPosterSelector = '.concert-row:has(.carousel-controls)'
+const concertPosterSelector = '.concert-rail-card:has(.carousel-controls)'
 
 const scenarios = [
   {
@@ -55,10 +55,10 @@ const scenarios = [
           },
           {
             name: 'lightbox-open',
-            selector: '.concert-row:has(.carousel-controls) .poster-open',
+            selector: '.concert-rail-card:has(.carousel-controls) .poster-open',
             prepare: warmLightbox,
             run: async (page) => {
-              await page.click('.concert-row:has(.carousel-controls) .poster-open')
+              await page.click('.concert-rail-card:has(.carousel-controls) .poster-open')
               await page.waitForSelector('.lightbox')
             }
           },
@@ -132,10 +132,10 @@ const scenarios = [
           },
           {
             name: 'lightbox-open',
-            selector: '.concert-row:has(.carousel-controls) .poster-open',
+            selector: '.concert-rail-card:has(.carousel-controls) .poster-open',
             prepare: warmLightbox,
             run: async (page) => {
-              await page.click('.concert-row:has(.carousel-controls) .poster-open')
+              await page.click('.concert-rail-card:has(.carousel-controls) .poster-open')
               await page.waitForSelector('.lightbox')
             }
           },

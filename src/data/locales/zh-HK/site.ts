@@ -23,7 +23,7 @@ export const siteCopy = {
     honors: [{ id: 'sec-milestones', label: '榮譽里程碑', shortLabel: '里程碑' }, { id: 'sec-honors-archive', label: '榮譽檔案', shortLabel: '檔案' }],
     research: [{ id: 'sec-research-timeline', label: '研究時間軸', shortLabel: '研究' }, { id: 'sec-toolchain', label: '方法與技術棧', shortLabel: '方法' }],
     works: [{ id: 'works-overview', label: '已發佈作品', shortLabel: '作品' }, { id: 'project-fresheye', label: 'FreshEye', shortLabel: 'FreshEye' }],
-    concerts: [{ id: 'concerts-overview', label: '現場檔案', shortLabel: '現場' }, { id: 'album-frequencies', label: '專輯收藏牆', shortLabel: '專輯' }, { id: 'concert-archive', label: '演唱會檔案', shortLabel: '海報' }]
+    concerts: [{ id: 'concerts-overview', label: '現場檔案', shortLabel: '現場' }, { id: 'concert-archive', label: '演唱會檔案', shortLabel: '海報' }, { id: 'album-frequencies', label: '專輯收藏牆', shortLabel: '專輯' }]
   },
   worlds: {
     academics: { no: '01', label: '學業', icon: '✦', desc: 'GPA、標化考試與 AP 成績，是努力留下的可讀痕跡。', accent: 'aqua' },

@@ -128,9 +128,9 @@ html[data-locale='en'] .section-copy {
   border-color: color-mix(in srgb, var(--aqua) 55%, var(--line));
   animation: target-pulse .6s var(--ease-out) both;
 }
-.honor-card, .tl-item, .concert-row { scroll-margin-top: var(--anchor-offset); }
+.honor-card, .tl-item, .concert-rail-card { scroll-margin-top: var(--anchor-offset); }
 .tl-item:target .tl-node i { background: var(--aqua); box-shadow: 0 0 0 6px var(--glow-aqua); }
-.concert-row:target { background: linear-gradient(90deg, var(--surface-tint), transparent); box-shadow: inset 3px 0 var(--aqua); }
+.concert-rail-card[data-hash-target] { background: linear-gradient(90deg, var(--surface-tint), transparent); box-shadow: inset 3px 0 var(--aqua), var(--shadow-1); }
 @keyframes target-pulse {
   0% { box-shadow: 0 0 0 0 var(--glow-aqua), var(--shadow-1); }
   100% { box-shadow: 0 0 0 5px transparent, var(--shadow-1); }

@@ -34,7 +34,7 @@
     type="image/webp"
     fetchpriority="high"
   >
-  <script>try { const saved = localStorage.getItem('yance-theme'); const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches; if (saved === 'dark' || (!saved && systemDark)) document.documentElement.dataset.theme = 'dark' } catch (e) {}</script>
+  <script>try { const saved = localStorage.getItem('yance-theme'); const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches; if (saved === 'dark' || (!saved && systemDark)) document.documentElement.dataset.theme = 'dark'; const initialHash = window.location.hash; if (initialHash) { document.documentElement.dataset.initialHash = initialHash; window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}`) } } catch (e) {}</script>
   <script type="module" src="../src/main.ts"></script>
 </head>
 <body data-page="concerts" data-locale="zh-CN">
