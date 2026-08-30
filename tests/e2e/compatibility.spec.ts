@@ -184,8 +184,12 @@ test('compatibility menu, carousel, modal, and axe smoke remain usable', async (
   await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
   const carousel = page.locator('.concert-poster').filter({ has: page.locator('.carousel-controls') }).first()
   const counter = carousel.locator('.carousel-controls span')
+  const next = carousel.locator('button[aria-label="下一张"]')
+  await carousel.scrollIntoViewIfNeeded()
+  await expect(carousel.locator('xpath=..')).toHaveClass(/revealed/)
+  await next.scrollIntoViewIfNeeded()
   await expect(counter).toHaveText('1 / 2')
-  await carousel.locator('button[aria-label="下一张"]').click()
+  await next.click()
   await expect(counter).toHaveText('2 / 2')
 
   await page.locator('.concert-poster .poster-open').first().click()
@@ -203,6 +207,8 @@ test('Firefox carousel controls keep the poster geometry stable while hovered', 
   const carousel = page.locator('.concert-poster').filter({ has: page.locator('.carousel-controls') }).first()
   const next = carousel.locator('button[aria-label="下一张"]')
   await carousel.scrollIntoViewIfNeeded()
+  await expect(carousel.locator('xpath=..')).toHaveClass(/revealed/)
+  await next.scrollIntoViewIfNeeded()
   const before = await carousel.evaluate((element) => {
     const style = getComputedStyle(element)
     return {
