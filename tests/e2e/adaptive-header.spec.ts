@@ -73,6 +73,126 @@ async function expectFloatingSurface(page: Page) {
     .toBeGreaterThanOrEqual(24)
 }
 
+async function waitForFloatingSurfaceSettled(page: Page) {
+  const surface = page.locator('.site-nav-surface')
+
+  await expect.poll(() => surface.evaluate((element) => element.getBoundingClientRect().width))
+    .toBeLessThanOrEqual(1162)
+  await expect.poll(() => surface.evaluate((element) => element.getBoundingClientRect().height))
+    .toBeLessThanOrEqual(61)
+  await expect.poll(() => page.locator('.wordmark').evaluate((element) => element.getBoundingClientRect().width))
+    .toBe(44)
+  await expect.poll(() => page.locator('.brand-mark-header').evaluate((element) => element.getBoundingClientRect().width))
+    .toBe(40)
+}
+
+test('floating header uses translucent glass, compact geometry, and stable brand spacing', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('/en/research.html')
+  await waitForReady(page)
+  await scrollHeader(page, 260)
+  await expect.poll(() => page.locator('.site-nav-surface').evaluate((element) => element.getBoundingClientRect().height))
+    .toBeLessThanOrEqual(61)
+  await expect.poll(() => page.locator('.site-nav-surface').evaluate((element) => {
+    const surface = element.getBoundingClientRect()
+    const brandMark = element.querySelector<HTMLElement>('.brand-mark-header')?.getBoundingClientRect()
+    return brandMark ? brandMark.top - surface.top : 0
+  })).toBeGreaterThanOrEqual(9)
+  await expect.poll(() => page.locator('.site-nav-surface').evaluate((element) => element.getBoundingClientRect().width))
+    .toBeLessThanOrEqual(1162)
+
+  const readSurfaceMetrics = () => page.locator('.site-nav-surface').evaluate((element) => {
+    const surface = element.getBoundingClientRect()
+    const wordmark = element.querySelector<HTMLElement>('.wordmark')?.getBoundingClientRect()
+    const brandMark = element.querySelector<HTMLElement>('.brand-mark-header')?.getBoundingClientRect()
+    const navLink = element.querySelector<HTMLElement>('.nav-rail a')
+    const style = getComputedStyle(element)
+    const parseAlpha = (color: string) => {
+      const rgba = color.match(/rgba?\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\)/)
+      if (rgba?.[1]) return Number.parseFloat(rgba[1])
+      const colorFunction = color.match(/\/\s*([\d.]+)\s*\)?$/)
+      return colorFunction?.[1] ? Number.parseFloat(colorFunction[1]) : 1
+    }
+
+    if (!wordmark || !brandMark || !navLink) throw new Error('floating header metrics are incomplete')
+    return {
+      background: style.backgroundColor,
+      backgroundToken: style.getPropertyValue('--nav-floating-bg').trim(),
+      alpha: parseAlpha(style.backgroundColor),
+      backdropFilter: style.backdropFilter,
+      surfaceHeight: surface.height,
+      surfaceWidth: surface.width,
+      wordmarkLeftGap: wordmark.left - surface.left,
+      brandTopGap: brandMark.top - surface.top,
+      brandBottomGap: surface.bottom - brandMark.bottom,
+      wordmarkWidth: wordmark.width,
+      wordmarkHeight: wordmark.height,
+      brandMarkWidth: brandMark.width,
+      brandMarkHeight: brandMark.height,
+      navColorTransition: Number.parseFloat(getComputedStyle(navLink).transitionDuration),
+      navUnderlineTransition: Number.parseFloat(getComputedStyle(navLink, '::after').transitionDuration)
+    }
+  })
+
+  const light = await readSurfaceMetrics()
+  expect(light.backgroundToken).toMatch(/(?:250|#fafbf9)/i)
+  expect(light.alpha).toBeGreaterThanOrEqual(.91)
+  expect(light.alpha).toBeLessThanOrEqual(.93)
+  expect(light.backdropFilter).toContain('blur(18px)')
+  expect(light.backdropFilter).toMatch(/saturate\((?:120%|1\.2)\)/)
+  expect(light.surfaceHeight).toBeGreaterThanOrEqual(59)
+  expect(light.surfaceHeight).toBeLessThanOrEqual(61)
+  expect(light.surfaceWidth).toBeLessThanOrEqual(1162)
+  expect(light.wordmarkLeftGap).toBeGreaterThanOrEqual(20)
+  expect(light.wordmarkLeftGap).toBeLessThanOrEqual(26)
+  expect(light.brandTopGap).toBeGreaterThanOrEqual(9)
+  expect(light.brandTopGap).toBeLessThanOrEqual(11)
+  expect(light.brandBottomGap).toBeGreaterThanOrEqual(9)
+  expect(light.brandBottomGap).toBeLessThanOrEqual(11)
+  expect(light.wordmarkWidth).toBe(44)
+  expect(light.wordmarkHeight).toBe(44)
+  expect(light.brandMarkWidth).toBe(40)
+  expect(light.brandMarkHeight).toBe(40)
+  expect(light.navColorTransition).toBeGreaterThanOrEqual(.16)
+  expect(light.navColorTransition).toBeLessThanOrEqual(.22)
+  expect(light.navUnderlineTransition).toBeGreaterThanOrEqual(.16)
+  expect(light.navUnderlineTransition).toBeLessThanOrEqual(.22)
+
+  await page.locator('.theme-orbit').click()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+  const dark = await readSurfaceMetrics()
+  expect(dark.backgroundToken).toMatch(/(?:14|#0e161b)/i)
+  expect(dark.alpha).toBeGreaterThanOrEqual(.89)
+  expect(dark.alpha).toBeLessThanOrEqual(.91)
+})
+
+test('floating header hover and focus preserve navigation geometry', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('/en/research.html')
+  await waitForReady(page)
+  await scrollHeader(page, 260)
+  await waitForFloatingSurfaceSettled(page)
+
+  const link = page.locator('.nav-rail a').first()
+  const readGeometry = () => link.evaluate((element) => {
+    const rect = element.getBoundingClientRect()
+    return { left: rect.left, top: rect.top, width: rect.width, height: rect.height }
+  })
+
+  const resting = await readGeometry()
+  await link.hover()
+  const hovered = await readGeometry()
+  await link.focus()
+  const focused = await readGeometry()
+
+  for (const state of [hovered, focused]) {
+    expect(state.width).toBe(resting.width)
+    expect(state.height).toBe(resting.height)
+    expect(Math.abs(state.left - resting.left)).toBeLessThanOrEqual(.5)
+    expect(Math.abs(state.top - resting.top)).toBeLessThanOrEqual(.5)
+  }
+})
+
 test('desktop header morphs in place and reverses without changing outer geometry', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto('/en/research.html')

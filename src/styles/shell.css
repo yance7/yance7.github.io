@@ -120,6 +120,8 @@
 }
 .site-nav-brand {
   grid-column: 1;
+  display: flex;
+  align-items: center;
   min-width: 0;
   justify-self: start;
 }
@@ -132,7 +134,23 @@
   height: 48px;
   border-radius: 50%;
   color: inherit;
-  transition: transform var(--dur-fast) var(--ease-out);
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    flex-basis var(--nav-floating-transition),
+    width var(--nav-floating-transition),
+    height var(--nav-floating-transition);
+}
+.site-nav[data-header-state='floating'] .wordmark {
+  flex-basis: 44px;
+  width: 44px;
+  height: 44px;
+}
+.wordmark .brand-mark-header {
+  transition: width var(--nav-floating-transition), height var(--nav-floating-transition);
+}
+.site-nav[data-header-state='floating'] .brand-mark-header {
+  width: 40px;
+  height: 40px;
 }
 .wordmark:focus-visible {
   outline: none;
@@ -157,13 +175,13 @@
   position: relative; display: flex; align-items: baseline; gap: 7px; padding: 8px 2px;
   color: var(--dim); font-size: var(--text-sm);
   white-space: nowrap;
-  transition: color var(--dur-base) var(--ease-soft);
+  transition: color var(--dur-fast) var(--ease-soft);
 }
 .nav-rail a::after {
   content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
   background: var(--gold);
   transform: scaleX(0); transform-origin: left;
-  transition: transform var(--dur-base) var(--ease-apple);
+  transition: transform var(--dur-fast) var(--ease-apple);
 }
 .nav-rail a:hover::after, .nav-rail a.active::after { transform: scaleX(1); }
   .nav-rail a .nav-num { font-family: var(--font-technical); font-size: var(--text-xs); color: var(--gold); opacity: .75; }

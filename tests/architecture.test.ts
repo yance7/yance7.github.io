@@ -45,7 +45,7 @@ describe('critical rendering contracts', () => {
   })
 
   it('loads the bundled font stylesheet after the initial app mount', () => {
-    const main = readFileSync(resolve(process.cwd(), 'src/main.ts'), 'utf8')
+    const main = readFileSync(resolve(process.cwd(), 'src/main.ts'), 'utf8').replace(/\r\n/g, '\n')
 
     expect(main).not.toContain("import './fonts.css'")
     expect(main).toContain("document.documentElement.dataset.fontsReady = 'loading'")
