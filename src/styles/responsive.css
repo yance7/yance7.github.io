@@ -160,7 +160,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .site-nav-surface,
   .wordmark,
+  .wordmark .brand-mark-header,
   .foot-mark { transition: none; }
   .wordmark:hover,
   .foot-mark:hover { transform: none; }
