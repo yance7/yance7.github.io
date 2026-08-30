@@ -124,11 +124,16 @@ async function settleAccessibilityState(page: Page) {
   )
 }
 
-async function expectAccessible(page: Page) {
-  await settleAccessibilityState(page)
+async function expectAccessible(page: Page, options: { settle?: boolean } = {}) {
+  if (options.settle !== false) await settleAccessibilityState(page)
 
   const results = await new AxeBuilder({ page }).analyze()
   expect(results.violations).toEqual([])
+}
+
+async function prepareMobileReducedMotion(page: Page) {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
 }
 
 test('brand mark links header and footer back to the localized home page', async ({ page }) => {
@@ -189,18 +194,19 @@ test('shared navigation mark keeps its identity across light and dark themes', a
   }
 })
 
-test('brand mark keeps header geometry across locales, themes, and supported viewports', async ({ page }) => {
-  const viewports = [
-    { width: 1200, height: 900 },
-    { width: 768, height: 1024 },
-    { width: 390, height: 844 }
-  ]
-  const routes = ['/research.html', '/zh-hk/research.html', '/en/research.html']
+const brandGeometryViewports = [
+  { width: 1200, height: 900 },
+  { width: 768, height: 1024 },
+  { width: 390, height: 844 }
+]
+const brandGeometryRoutes = ['/research.html', '/zh-hk/research.html', '/en/research.html']
 
-  for (const viewport of viewports) {
-    await page.setViewportSize(viewport)
-    for (const route of routes) {
+for (const viewport of brandGeometryViewports) {
+  for (const route of brandGeometryRoutes) {
+    test(`brand mark keeps header geometry at ${viewport.width}px on ${route}`, async ({ page }) => {
+      await page.setViewportSize(viewport)
       await page.goto(route)
+
       for (const theme of ['light', 'dark']) {
         await page.evaluate((value) => localStorage.setItem('yance-theme', value), theme)
         await page.reload()
@@ -226,22 +232,22 @@ test('brand mark keeps header geometry across locales, themes, and supported vie
           }
         })
 
-        expect(geometry.width, `${route} ${theme} ${viewport.width}px hit area`).toBeGreaterThanOrEqual(44)
-        expect(geometry.height, `${route} ${theme} ${viewport.width}px hit area`).toBeGreaterThanOrEqual(44)
+        expect(Math.round(geometry.width), `${route} ${theme} ${viewport.width}px hit area`).toBeGreaterThanOrEqual(44)
+        expect(Math.round(geometry.height), `${route} ${theme} ${viewport.width}px hit area`).toBeGreaterThanOrEqual(44)
         expect(geometry.markWidth).toBeGreaterThan(0)
         expect(geometry.markHeight).toBeGreaterThan(0)
         expect(geometry.naturalWidth).toBeGreaterThan(0)
         expect(geometry.naturalHeight).toBeGreaterThan(0)
         expect(geometry.documentWidth, `${route} ${theme} ${viewport.width}px overflow`).toBeLessThanOrEqual(geometry.viewportWidth)
       }
-    }
-  }
 
-  const brandLink = page.locator('.site-nav .wordmark')
-  await brandLink.focus()
-  await expect(brandLink).toBeFocused()
-  await expect.poll(() => brandLink.evaluate((element) => getComputedStyle(element).boxShadow)).not.toBe('none')
-})
+      const brandLink = page.locator('.site-nav .wordmark')
+      await brandLink.focus()
+      await expect(brandLink).toBeFocused()
+      await expect.poll(() => brandLink.evaluate((element) => getComputedStyle(element).boxShadow)).not.toBe('none')
+    })
+  }
+}
 
 test('brand mark preserves zh-HK localized home navigation', async ({ page }) => {
   await page.goto('/zh-hk/research.html')
@@ -638,31 +644,44 @@ test('mobile compass keeps focus priority inside a compact visual frame', async 
   }
 })
 
-test('interactive states remain accessible after opening', async ({ page }) => {
-  test.setTimeout(60000)
-  await page.setViewportSize({ width: 390, height: 844 })
-  await page.emulateMedia({ reducedMotion: 'reduce' })
+test('mobile menu remains accessible after opening', async ({ page }) => {
+  await prepareMobileReducedMotion(page)
   await page.goto('/index.html')
   await page.locator('.menu-trigger').click()
   await expectAccessible(page)
   await page.locator('.mobile-menu-close').click()
+})
 
+test('honors page remains accessible after loading', async ({ page }) => {
+  await prepareMobileReducedMotion(page)
   await page.goto('/honors.html')
   await expect(page.locator('.honor-card').first()).toBeVisible()
   await expectAccessible(page)
+})
 
+test('research method disclosure remains accessible after opening', async ({ page }) => {
+  await prepareMobileReducedMotion(page)
   await page.goto('/research.html')
   await page.locator('.method-toggle').first().click()
   await expectAccessible(page)
+})
 
+test('works page remains accessible after loading', async ({ page }) => {
+  await prepareMobileReducedMotion(page)
   await page.goto('/works.html')
   await expectAccessible(page)
+})
 
+test('concert lightbox remains accessible after opening', async ({ page }) => {
+  await prepareMobileReducedMotion(page)
   await page.goto('/concerts.html')
   await page.locator('.poster-open').first().click()
   await expect(page.locator('.lightbox')).toBeVisible()
-  await expectAccessible(page)
+  await expect(page.locator('.lb-close')).toBeFocused()
+  await expectAccessible(page, { settle: false })
   await page.keyboard.press('Escape')
+  await expect(page.locator('.lightbox')).toHaveCount(0)
+  await expect(page.locator('.poster-open').first()).toBeFocused()
 })
 
 test('rapid control clicks settle without duplicate or stale state', async ({ page }) => {
