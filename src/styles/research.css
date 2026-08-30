@@ -1,6 +1,9 @@
 /* ===== 研究 · 方法与技术栈 ===== */
 .toolchain-panel {
-  max-width: var(--w-data);
+  width: 100%;
+  max-width: none;
+  margin-inline: auto;
+  box-sizing: border-box;
   border: 1px solid var(--line); border-radius: var(--radius-card);
   background: var(--surface);
   box-shadow: var(--shadow-1);
@@ -218,7 +221,7 @@
 .toolchain-foot i { display: inline-block; width: 6px; height: 6px; margin-right: 7px; border-radius: 50%; background: var(--aqua); box-shadow: 0 0 9px var(--glow-aqua); }
 
 /* ===== 研究 · 时间轴 ===== */
-.timeline-track { position: relative; max-width: var(--w-data); padding-left: 8px; }
+.timeline-track { position: relative; width: 100%; max-width: none; margin-inline: auto; padding-left: 8px; box-sizing: border-box; }
 .tl-rail {
   position: absolute; left: 118px; top: 14px; bottom: 14px; width: 1px;
   background: var(--line);
@@ -359,6 +362,11 @@
 .tl-foot {
   display: flex; align-items: flex-end; justify-content: space-between;
   gap: 16px; flex-wrap: wrap; margin-top: 18px;
+}
+@media (min-width: 761px) {
+  /* Keep timeline actions outside the fixed PageCompass hit area. */
+  .tl-foot { padding-right: clamp(132px, 10vw, 144px); }
+  html[data-locale='en'] .tl-foot { padding-right: clamp(140px, 10.5vw, 152px); }
 }
 .tl-foot-meta { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .tl-org { font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: var(--tracking-zh-meta); color: var(--dim); }
