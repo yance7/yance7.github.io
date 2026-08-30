@@ -412,7 +412,7 @@
 /* ===== Adaptive PageCompass ===== */
 .page-compass {
   --compass-collapsed-width: clamp(116px, 9vw, 128px);
-  --compass-expanded-width: clamp(286px, 22vw, 320px);
+  --compass-expanded-width: clamp(252px, 19vw, 280px);
 
   position: fixed;
   right: max(12px, calc((100vw - var(--w-wide)) / 2 - 76px));
@@ -439,7 +439,7 @@
 }
 html[data-locale='en'] .page-compass {
   --compass-collapsed-width: clamp(124px, 9.5vw, 136px);
-  --compass-expanded-width: clamp(300px, 23vw, 336px);
+  --compass-expanded-width: clamp(268px, 20vw, 296px);
 }
 @supports (height: 100dvh) {
   .page-compass {
@@ -573,9 +573,9 @@ html[data-locale='en'] .page-compass {
 .page-compass-links { display: grid; gap: 2px; }
 .page-compass-link {
   display: grid;
-  grid-template-columns: 28px minmax(0, 1fr) auto;
+  grid-template-columns: 24px minmax(0, 1fr) 6px;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   min-height: 44px;
   height: auto;
   padding: 5px 7px;
@@ -609,12 +609,11 @@ html[data-locale='en'] .page-compass {
   white-space: normal;
 }
 .page-compass-link-current {
-  color: var(--gold);
-  font-family: var(--font-technical);
-  font-size: var(--text-micro);
-  letter-spacing: .08em;
-  line-height: 1.2;
-  text-transform: uppercase;
+  width: 6px;
+  height: 6px;
+  justify-self: center;
+  border-radius: 50%;
+  background: var(--gold);
 }
 .page-compass-read {
   display: flex;
