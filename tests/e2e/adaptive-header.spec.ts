@@ -73,6 +73,19 @@ async function expectFloatingSurface(page: Page) {
     .toBeGreaterThanOrEqual(24)
 }
 
+async function waitForFloatingSurfaceSettled(page: Page) {
+  const surface = page.locator('.site-nav-surface')
+
+  await expect.poll(() => surface.evaluate((element) => element.getBoundingClientRect().width))
+    .toBeLessThanOrEqual(1162)
+  await expect.poll(() => surface.evaluate((element) => element.getBoundingClientRect().height))
+    .toBeLessThanOrEqual(61)
+  await expect.poll(() => page.locator('.wordmark').evaluate((element) => element.getBoundingClientRect().width))
+    .toBe(44)
+  await expect.poll(() => page.locator('.brand-mark-header').evaluate((element) => element.getBoundingClientRect().width))
+    .toBe(40)
+}
+
 test('floating header uses translucent glass, compact geometry, and stable brand spacing', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto('/en/research.html')
@@ -158,6 +171,7 @@ test('floating header hover and focus preserve navigation geometry', async ({ pa
   await page.goto('/en/research.html')
   await waitForReady(page)
   await scrollHeader(page, 260)
+  await waitForFloatingSurfaceSettled(page)
 
   const link = page.locator('.nav-rail a').first()
   const readGeometry = () => link.evaluate((element) => {
