@@ -204,7 +204,7 @@
   }
   .page-compass {
     --compass-collapsed-width: clamp(116px, 29vw, 124px);
-    --compass-expanded-width: clamp(286px, calc(100vw - 24px), 336px);
+    --compass-expanded-width: clamp(272px, calc(100vw - 24px), 312px);
 
     top: auto;
     right: 12px;
@@ -219,7 +219,7 @@
   }
   html[data-locale='en'] .page-compass {
     --compass-collapsed-width: clamp(120px, 31vw, 132px);
-    --compass-expanded-width: clamp(300px, calc(100vw - 24px), 336px);
+    --compass-expanded-width: clamp(288px, calc(100vw - 24px), 324px);
   }
   .page-compass-expanded {
     width: min(
@@ -249,8 +249,8 @@
 }
 
 @media (max-width: 340px) {
-  .page-compass { right: 12px; }
-  .page-compass-expanded { width: calc(100vw - 24px); }
+  .page-compass { right: max(2px, calc(12px - (100vw - 100%) + .25px)); }
+  .page-compass-expanded { width: calc(100vw - 24.25px); }
 }
 
 @media (max-width: 760px) and (orientation: landscape) and (max-height: 520px) {
@@ -270,5 +270,5 @@
     background: Highlight;
     color: HighlightText;
   }
-  .page-compass-link-current { color: HighlightText; }
+  .page-compass-link-current { background: Highlight; }
 }

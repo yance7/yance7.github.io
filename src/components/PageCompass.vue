@@ -144,7 +144,11 @@ onUnmounted(() => {
         >
           <span class="page-compass-link-index">{{ String(index + 1).padStart(2, '0') }}</span>
           <span class="page-compass-link-label">{{ section.label }}</span>
-          <span v-if="activeId === section.id" class="page-compass-link-current">{{ messages.compass.current }}</span>
+          <span
+            v-if="activeId === section.id"
+            class="page-compass-link-current"
+            aria-hidden="true"
+          ></span>
         </a>
       </div>
 

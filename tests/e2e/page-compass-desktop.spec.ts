@@ -10,17 +10,67 @@ const destinations = [
 ] as const
 
 const localeRoutes = [
+  '/',
+  '/academics.html',
+  '/honors.html',
   '/research.html',
+  '/works.html',
+  '/concerts.html',
+  '/zh-hk/',
+  '/zh-hk/academics.html',
+  '/zh-hk/honors.html',
   '/zh-hk/research.html',
-  '/en/research.html'
+  '/zh-hk/works.html',
+  '/zh-hk/concerts.html',
+  '/en/',
+  '/en/academics.html',
+  '/en/honors.html',
+  '/en/research.html',
+  '/en/works.html',
+  '/en/concerts.html'
 ] as const
 
 const compassViewports = [
-  { name: 'mobile', width: 390, height: 844 },
-  { name: 'tablet', width: 768, height: 900 },
-  { name: 'desktop', width: 1024, height: 900 },
+  { name: 'tablet', width: 1024, height: 900 },
   { name: 'wide', width: 1440, height: 900 }
 ] as const
+
+const representativeRoutes = [
+  '/research.html',
+  '/zh-hk/research.html',
+  '/en/research.html',
+  '/works.html',
+  '/zh-hk/works.html',
+  '/en/works.html',
+  '/concerts.html',
+  '/zh-hk/concerts.html',
+  '/en/concerts.html'
+] as const
+
+const representativeViewports = [
+  { name: 'narrow', width: 320, height: 844 },
+  { name: 'mobile', width: 390, height: 844 },
+  { name: 'tablet', width: 768, height: 900 }
+] as const
+
+function expectedExpandedWidth(route: string, viewportWidth: number) {
+  const english = route.startsWith('/en/')
+  if (viewportWidth <= 760) {
+    const minimum = english ? 288 : 272
+    const maximum = english ? 324 : 312
+    return {
+      exact: Math.min(Math.max(viewportWidth - 24, minimum), maximum),
+      minimum,
+      maximum
+    }
+  }
+
+  return {
+    exact: null,
+    minimum: english ? 268 : 252,
+    maximum: english ? 296 : 280
+  }
+}
 
 type ScrollToCall = [{ top: number; left: number; behavior?: ScrollBehavior }] | [number, number]
 
@@ -261,8 +311,8 @@ test('desktop PageCompass exposes stable collapsed and expanded geometry', async
     (element) => element.getBoundingClientRect().width
   )
 
-  expect(expandedWidth).toBeGreaterThanOrEqual(286)
-  expect(expandedWidth).toBeLessThanOrEqual(336)
+  expect(expandedWidth).toBeGreaterThanOrEqual(268)
+  expect(expandedWidth).toBeLessThanOrEqual(296)
 })
 
 test('PageCompass visually exposes transient, pinned, and suppressed modes', async ({ page }) => {
@@ -360,14 +410,80 @@ for (const route of localeRoutes) {
 
       expect(geometry.left, `${route} left edge`).toBeGreaterThanOrEqual(-1)
       expect(geometry.right, `${route} right edge`).toBeLessThanOrEqual(viewport.width + 1)
-      expect(geometry.width, `${route} expanded width`).toBeGreaterThanOrEqual(286)
-      expect(geometry.width, `${route} expanded width`).toBeLessThanOrEqual(336)
+      const widthRange = expectedExpandedWidth(route, viewport.width)
+      expect(geometry.width, `${route} expanded width`).toBeGreaterThanOrEqual(widthRange.minimum)
+      expect(geometry.width, `${route} expanded width`).toBeLessThanOrEqual(widthRange.maximum)
       expect(Math.max(...geometry.labelOverflow, 0), `${route} label overflow`).toBeLessThanOrEqual(1)
       expect(geometry.documentWidth, `${route} document overflow`).toBeLessThanOrEqual(viewport.width + 1)
       expect(geometry.intersectsHeader, `${route} header collision`).toBe(false)
     })
   }
 }
+
+for (const route of representativeRoutes) {
+  test(`PageCompass keeps ${route} compact at representative narrow widths`, async ({ page }) => {
+    for (const viewport of representativeViewports) {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height })
+      await page.goto(route)
+      await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+
+      const compass = page.locator('.page-compass')
+      await compass.locator('.page-compass-trigger').click()
+      await expect(compass).toHaveAttribute('data-mode', 'pinned')
+
+      const geometry = await compass.evaluate((element) => {
+        const rect = element.getBoundingClientRect()
+        const labels = [...element.querySelectorAll<HTMLElement>('.page-compass-link-label')]
+        return {
+          left: rect.left,
+          right: rect.right,
+          width: rect.width,
+          labelOverflow: labels.map((label) => label.scrollWidth - label.clientWidth),
+          documentWidth: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth)
+        }
+      })
+      const widthRange = expectedExpandedWidth(route, viewport.width)
+
+      if (widthRange.exact !== null) {
+        expect(Math.abs(geometry.width - widthRange.exact), `${route} ${viewport.name} expanded width`).toBeLessThanOrEqual(1)
+      }
+      expect(geometry.width, `${route} ${viewport.name} minimum width`).toBeGreaterThanOrEqual(widthRange.minimum)
+      expect(geometry.width, `${route} ${viewport.name} maximum width`).toBeLessThanOrEqual(widthRange.maximum)
+      expect(geometry.left, `${route} ${viewport.name} left edge`).toBeGreaterThanOrEqual(12)
+      expect(geometry.right, `${route} ${viewport.name} right edge`).toBeLessThanOrEqual(viewport.width - 12)
+      expect(Math.max(...geometry.labelOverflow, 0), `${route} ${viewport.name} label overflow`).toBeLessThanOrEqual(1)
+      expect(geometry.documentWidth, `${route} ${viewport.name} document overflow`).toBeLessThanOrEqual(viewport.width + 1)
+    }
+  })
+}
+
+test('active PageCompass row uses an icon-only semantic current marker', async ({ page }) => {
+  await page.goto('/en/research.html')
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+  await page.locator('.page-compass-trigger').click()
+
+  const activeRow = page.locator('.page-compass-link[aria-current="location"]')
+  const marker = activeRow.locator('.page-compass-link-current')
+  await expect(activeRow).toHaveCount(1)
+  await expect(marker).toHaveAttribute('aria-hidden', 'true')
+  await expect(marker).toHaveText('')
+
+  const geometry = await marker.evaluate((element) => {
+    const rect = element.getBoundingClientRect()
+    const style = getComputedStyle(element)
+    return {
+      width: rect.width,
+      height: rect.height,
+      borderRadius: Number.parseFloat(style.borderTopLeftRadius)
+    }
+  })
+
+  expect(geometry.width).toBeGreaterThanOrEqual(5)
+  expect(geometry.width).toBeLessThanOrEqual(7)
+  expect(geometry.height).toBeGreaterThanOrEqual(5)
+  expect(geometry.height).toBeLessThanOrEqual(7)
+  expect(geometry.borderRadius).toBeGreaterThanOrEqual(2.5)
+})
 
 test('expanded English PageCompass labels are readable without horizontal overflow', async ({ page }) => {
   await page.goto('/en/research.html')

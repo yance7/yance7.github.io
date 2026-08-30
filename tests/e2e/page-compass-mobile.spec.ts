@@ -83,3 +83,38 @@ test('mobile collapsed Compass keeps index on one line and retains an expansion 
   expect(lines.whiteSpace).toBe('nowrap')
   expect(lines.height).toBeLessThanOrEqual(Math.ceil(lines.lineHeight) + 2)
 })
+
+test('mobile expanded Compass keeps language-aware width and edge clearance', async ({ page }) => {
+  const routes = [
+    { path: '/research.html', width: 312 },
+    { path: '/zh-hk/research.html', width: 312 },
+    { path: '/en/research.html', width: 324 }
+  ] as const
+
+  for (const route of routes) {
+    await page.goto(route.path)
+    await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+
+    const compass = page.locator('.page-compass')
+    await compass.locator('.page-compass-trigger').click()
+    await expect(compass).toHaveAttribute('data-mode', 'pinned')
+
+    const geometry = await compass.evaluate((element) => {
+      const rect = element.getBoundingClientRect()
+      const labels = [...element.querySelectorAll<HTMLElement>('.page-compass-link-label')]
+      return {
+        left: rect.left,
+        right: rect.right,
+        width: rect.width,
+        labelOverflow: labels.map((label) => label.scrollWidth - label.clientWidth),
+        documentWidth: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth)
+      }
+    })
+
+    expect(Math.abs(geometry.width - route.width)).toBeLessThanOrEqual(1)
+    expect(geometry.left).toBeGreaterThanOrEqual(12)
+    expect(geometry.right).toBeLessThanOrEqual(378)
+    expect(Math.max(...geometry.labelOverflow, 0)).toBeLessThanOrEqual(1)
+    expect(geometry.documentWidth).toBeLessThanOrEqual(391)
+  }
+})
