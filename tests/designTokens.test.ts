@@ -107,8 +107,7 @@ describe('archive design tokens', () => {
     expect(shell).not.toContain('padding: 5px 12px 5px 6px; border-radius: var(--radius-full);')
     expect(shell).toContain('padding: var(--space-3) var(--space-4); border: 1px solid var(--control-border); border-radius: var(--radius-pill);')
     expect(shell).not.toContain('padding: 11px 18px; border: 1px solid var(--control-border); border-radius: var(--radius-full);')
-    expect(responsive).toContain('grid-template-areas: "index icon";')
-    expect(responsive).toContain('min-height: 48px;')
+    expect(responsive).not.toContain('grid-template-areas: "index icon";')
   })
 
   it('keeps important responsive labels at or above the public meta size', () => {
@@ -124,13 +123,14 @@ describe('archive design tokens', () => {
     expect(pageStyles).not.toMatch(/letter-spacing:\s*\.06em/)
   })
 
-  it('keeps viewport-unit fallback declarations explicit and non-duplicated', () => {
-    const compassBlock = shell.match(/\.page-compass\s*\{([\s\S]*?)\n\}/)?.[1] ?? ''
-    expect(compassBlock.match(/\btop:/g)?.length).toBe(1)
-    expect(compassBlock.match(/\bmax-height:/g)?.length).toBe(1)
-    expect(shell).toContain('@supports (height: 100dvh)')
-    expect(shell).toContain('top: 50dvh;')
-    expect(shell).toContain('max-height: calc(100dvh - 32px);')
+  it('keeps the reading progress surface fixed, thin, and transform-driven', () => {
+    const component = read('src/components/ScrollProgress.vue')
+    expect(component).toContain('role="progressbar"')
+    expect(component).toContain(':style="{ transform: `scaleX(${progress})` }"')
+    expect(shell).toContain('.scroll-progress')
+    expect(shell).toContain('height: 2px')
+    expect(shell).toContain('pointer-events: none')
+    expect(shell).toContain('transform-origin: left')
   })
 
   it('does not use oversized tracking for ordinary metadata labels', () => {

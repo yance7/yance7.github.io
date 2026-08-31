@@ -39,7 +39,6 @@ async function expectEnglishLayoutSurfacesInsideViewport(page: Page) {
       '.section-head h2',
       '.site-nav',
       '.site-footer',
-      '.page-compass',
       '.metric-card',
       '.filter-btn',
       '.tl-item',

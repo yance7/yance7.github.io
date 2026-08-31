@@ -21,8 +21,6 @@ const viewports = [
 const criticalTouchTargetSelector = [
   '.menu-trigger',
   '.theme-orbit',
-  '.page-compass button',
-  '.page-compass a',
   '.carousel-controls button',
   '.album-nav button',
   '.album-tile',
@@ -80,9 +78,9 @@ for (const viewport of viewports) {
       expect(geometry.documentWidth, `${entry.htmlName} document`).toBeLessThanOrEqual(geometry.viewportWidth)
       expect(geometry.bodyWidth, `${entry.htmlName} body`).toBeLessThanOrEqual(geometry.viewportWidth)
 
-      const compassLinks = page.locator('.page-compass-link')
-      await expect(compassLinks, `${entry.htmlName} compass sections`).toHaveCount(entry.sectionIds.length)
-      if (entry.htmlName === '404') await expect(page.locator('.page-compass')).toHaveCount(0)
+      const readingProgress = page.locator('.scroll-progress')
+      if (entry.htmlName === '404') await expect(readingProgress).toHaveCount(0)
+      else await expect(readingProgress).toHaveRole('progressbar')
 
       if (viewport.width <= 844) {
         const undersizedTargets = await page.locator(criticalTouchTargetSelector).evaluateAll((elements) => elements

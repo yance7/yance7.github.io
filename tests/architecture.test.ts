@@ -2,7 +2,6 @@ import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
 import { htmlPageEntries, isPageKey, pageEntries, pageRegistry } from '../src/data/pageRegistry'
-import { getLocalizedSections } from '../src/data/locales'
 import { getConcertState } from '../src/data/concerts'
 import { useAlbumSpotlight } from '../src/composables/useAlbumSpotlight'
 import { createImagePreloader, type PreloadImage } from '../src/utils/imagePreload'
@@ -20,14 +19,9 @@ describe('page registry', () => {
     expect(pageRegistry.concerts.sectionIds).toContain('album-frequencies')
     expect('nav' in pageRegistry.research).toBe(false)
     expect('sections' in pageRegistry.academics).toBe(false)
-    expect(getLocalizedSections('en', 'academics').map((section) => section.shortLabel)).toEqual(['Education', 'Scores', 'AP'])
-    expect(getLocalizedSections('en', 'honors').map((section) => section.shortLabel)).toEqual(['Milestones', 'Archive'])
-    expect(getLocalizedSections('en', 'research').map((section) => section.shortLabel)).toEqual(['Research', 'Methods'])
-    const shortLabels = pageEntries.reduce<string[]>((labels, entry) => {
-      getLocalizedSections('en', entry.key).forEach((section) => labels.push(section.shortLabel ?? ''))
-      return labels
-    }, [])
-    expect(shortLabels.every((label) => label.length > 0 && label.length <= 12)).toBe(true)
+    expect(pageRegistry.academics.sectionIds).toEqual(['sec-education', 'sec-scoreboard', 'sec-ap-archive'])
+    expect(pageRegistry.honors.sectionIds).toEqual(['sec-milestones', 'sec-honors-archive'])
+    expect(pageEntries.every((entry) => entry.sectionIds.length >= 2)).toBe(true)
     expect(isPageKey('research')).toBe(true)
     expect(isPageKey('missing')).toBe(false)
   })
@@ -302,9 +296,8 @@ describe('page stylesheet boundaries', () => {
     expect(playwrightConfig).toContain('visual-matrix\\.spec\\.ts')
     expect(playwrightConfig).toContain("snapshotPathTemplate: '{testDir}/visual-snapshots/{projectName}/{platform}/{testFilePath}/{arg}{ext}'")
     expect(visualSpec).toContain('toHaveScreenshot')
-    expect(visualSpec).toContain('if (viewport.width <= 760)')
-    expect(visualSpec).toContain('clip: {')
     expect(visualSpec).toContain('page.screenshot')
+    expect(playwrightConfig).toContain('scroll-progress')
   })
 })
 
@@ -348,7 +341,7 @@ describe('shared UI correction contracts', () => {
     const status = readFileSync(resolve(process.cwd(), 'src/components/StatusBadge.vue'), 'utf8')
     const primitives = readFileSync(resolve(process.cwd(), 'src/styles/primitives.css'), 'utf8')
     const theme = readFileSync(resolve(process.cwd(), 'src/theme.css'), 'utf8')
-    const compass = readFileSync(resolve(process.cwd(), 'src/components/PageCompass.vue'), 'utf8')
+    const scrollProgress = readFileSync(resolve(process.cwd(), 'src/components/ScrollProgress.vue'), 'utf8')
     const shell = readFileSync(resolve(process.cwd(), 'src/styles/shell.css'), 'utf8')
     const responsive = readFileSync(resolve(process.cwd(), 'src/styles/responsive.css'), 'utf8')
 
@@ -361,10 +354,10 @@ describe('shared UI correction contracts', () => {
     expect(theme).toContain('--tooltip-muted:')
     expect(theme).toContain('--motion-control-lift:')
     expect(status).toContain(':data-status="status"')
-    expect(compass).toContain('class="page-compass-read" aria-live="polite"')
-    expect(shell).toContain('.page-compass-link:focus-visible,')
-    expect(shell).toContain('.page-compass-top:focus-visible')
-    expect(responsive).toContain('@media (min-width: 761px) and (max-width: 1024px)')
+    expect(scrollProgress).toContain('role="progressbar"')
+    expect(scrollProgress).toContain('messages.accessibility.readingProgress')
+    expect(shell).toContain('.scroll-progress')
+    expect(shell).toContain('height: 2px')
     expect(responsive).toContain('@media (max-width: 760px)')
   })
 
@@ -373,7 +366,6 @@ describe('shared UI correction contracts', () => {
     const header = readFileSync(resolve(process.cwd(), 'src/components/SiteHeader.vue'), 'utf8')
     const footer = readFileSync(resolve(process.cwd(), 'src/components/SiteFooter.vue'), 'utf8')
     const theme = readFileSync(resolve(process.cwd(), 'src/components/ThemeOrbit.vue'), 'utf8')
-    const compass = readFileSync(resolve(process.cwd(), 'src/components/PageCompass.vue'), 'utf8')
     const album = readFileSync(resolve(process.cwd(), 'src/components/AlbumWall.vue'), 'utf8')
     const project = readFileSync(resolve(process.cwd(), 'src/components/ProjectShowcase.vue'), 'utf8')
     const shell = readFileSync(resolve(process.cwd(), 'src/styles/shell.css'), 'utf8')
@@ -382,7 +374,6 @@ describe('shared UI correction contracts', () => {
     expect(header).toContain(':aria-label="`${messages.accessibility.home}: Yance.`"')
     expect(footer).toContain(':aria-label="`${messages.accessibility.footerHome}: Yance. ${messages.footer.archive}`"')
     expect(theme).toContain(':aria-label="`${theme === \'light\' ? messages.theme.switchToDark : messages.theme.switchToLight}: ${theme === \'light\' ? messages.theme.light : messages.theme.dark}`"')
-    expect(compass).toContain('formatCompassIndex(activeIndex, props.sections.length)')
     expect(album).toContain(':aria-label="`${album.title} ${album.artist} · ${album.year}, ${formatLabel(album)}`"')
     expect(project).toContain(':aria-label="`${messages.actions.enterProject}: ${project.domain}`"')
     expect(shell).toMatch(/\.locale-switcher-desktop\s*\{[\s\S]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/)

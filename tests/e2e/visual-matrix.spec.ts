@@ -121,46 +121,7 @@ for (const viewport of viewports) {
   }
 }
 
-const pageCompassViewports = [
-  { name: '320x568', width: 320, height: 568 },
-  { name: '1024x768', width: 1024, height: 768 },
-  { name: '1440x900', width: 1440, height: 900 }
-] as const
-
 for (const theme of themes) {
-  for (const viewport of pageCompassViewports) {
-    test(`captures ${theme} PageCompass at ${viewport.name}`, async ({ page }) => {
-      await page.setViewportSize({ width: viewport.width, height: viewport.height })
-      await installTheme(page, theme)
-      await page.goto('/research.html')
-      await settlePage(page)
-
-      await page.locator('.page-compass-trigger').click()
-      await expect(page.locator('.page-compass-panel')).toBeVisible()
-
-      if (viewport.width <= 760) {
-        await expect(page.locator('.page-compass')).toHaveScreenshot(
-          `${theme}-page-compass-${viewport.name}.png`,
-          componentScreenshotOptions
-        )
-      } else {
-        const clipWidth = Math.min(360, viewport.width)
-        await expect(page).toHaveScreenshot(
-          `${theme}-page-compass-${viewport.name}.png`,
-          {
-            ...componentScreenshotOptions,
-            clip: {
-              x: viewport.width - clipWidth,
-              y: 0,
-              width: clipWidth,
-              height: viewport.height
-            }
-          }
-        )
-      }
-    })
-  }
-
   test(`captures ${theme} Lightbox landscape portrait and mobile states`, async ({ page }) => {
     await installTheme(page, theme)
     await page.setViewportSize({ width: 1440, height: 900 })

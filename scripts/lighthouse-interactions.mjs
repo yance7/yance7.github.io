@@ -26,16 +26,15 @@ const scenarios = [
         ]
       },
       {
-        page: 'research.html',
+        page: 'honors.html',
         interactions: [
           {
-            name: 'page-compass',
-            selector: '.page-compass-trigger',
-            prepare: async (page) => {
-              await page.hover('.page-compass-trigger')
-              await page.waitForSelector('.page-compass-link:last-child', { visible: true })
-            },
-            run: (page) => page.click('.page-compass-link:last-child')
+            name: 'honor-filter',
+            selector: '[data-honor-filter="peak"]',
+            run: async (page) => {
+              await page.click('[data-honor-filter="peak"]')
+              await page.waitForFunction(() => document.querySelectorAll('.honor-card').length === 4)
+            }
           }
         ]
       },
@@ -101,18 +100,15 @@ const scenarios = [
         ]
       },
       {
-        page: 'research.html',
+        page: 'honors.html',
         interactions: [
           {
-            name: 'page-compass',
-            selector: '.page-compass-trigger',
-            prepare: async (page) => {
-              await page.evaluate(() => window.scrollTo(0, Math.max(320, document.body.scrollHeight * .35)))
-              await delay(450)
-              await page.hover('.page-compass-trigger')
-              await page.waitForSelector('.page-compass-link:last-child', { visible: true })
-            },
-            run: (page) => page.click('.page-compass-link:last-child')
+            name: 'honor-filter',
+            selector: '[data-honor-filter="peak"]',
+            run: async (page) => {
+              await page.click('[data-honor-filter="peak"]')
+              await page.waitForFunction(() => document.querySelectorAll('.honor-card').length === 4)
+            }
           }
         ]
       },

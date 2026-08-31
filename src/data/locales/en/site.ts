@@ -17,14 +17,6 @@ export const siteCopy = {
     works: { label: 'Works', desc: 'Deployed projects' },
     concerts: { label: 'Concerts', desc: 'Live music archive' }
   },
-  sections: {
-    home: [{ id: 'selected-work', label: 'Selected work', shortLabel: 'Work' }, { id: 'home-worlds', label: 'Five worlds', shortLabel: 'Worlds' }, { id: 'home-beyond', label: 'Beyond the lab', shortLabel: 'Beyond' }],
-    academics: [{ id: 'sec-education', label: 'Education', shortLabel: 'Education' }, { id: 'sec-scoreboard', label: 'Scoreboard', shortLabel: 'Scores' }, { id: 'sec-ap-archive', label: 'AP archive', shortLabel: 'AP' }],
-    honors: [{ id: 'sec-milestones', label: 'Milestones', shortLabel: 'Milestones' }, { id: 'sec-honors-archive', label: 'Honors archive', shortLabel: 'Archive' }],
-    research: [{ id: 'sec-research-timeline', label: 'Research timeline', shortLabel: 'Research' }, { id: 'sec-toolchain', label: 'Methods and tools', shortLabel: 'Methods' }],
-    works: [{ id: 'works-overview', label: 'Released worlds', shortLabel: 'Works' }, { id: 'project-fresheye', label: 'FreshEye', shortLabel: 'FreshEye' }],
-    concerts: [{ id: 'concerts-overview', label: 'Live archive', shortLabel: 'Live' }, { id: 'concert-archive', label: 'Concert archive', shortLabel: 'Posters' }, { id: 'album-frequencies', label: 'Album wall', shortLabel: 'Albums' }]
-  },
   worlds: {
     academics: { no: '01', label: 'Academics', icon: '✦', desc: 'Coursework, standardized tests, and AP results—the readable record of sustained work.', accent: 'aqua' },
     honors: { no: '02', label: 'Honors', icon: '❖', desc: 'Awards mark the route; the useful signal is the habit of continuing upward.', accent: 'violet' },

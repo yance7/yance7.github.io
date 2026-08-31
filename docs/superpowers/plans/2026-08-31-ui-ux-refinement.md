@@ -43,7 +43,7 @@
 - [x] **Step 4: Add coordinates before filtering.** Map `{ ...honor, coordinate: index + 1 }`, filter that collection, render `String(honor.coordinate).padStart(2, '0')`, and add `:data-honor-filter="cat.key"` while preserving `aria-pressed`.
 - [x] **Step 5: Replace the scattered-card visual model with one bordered archive ledger.** Use desktop columns `56px 104px minmax(0, 1fr) max-content`; use a coordinate column, date, content, and quiet level label. Keep pointer sheen but remove glowing dots, interactive semantics, pointer cursor, sticky touch hover, and reduced-motion movement.
 - [x] **Step 6: Add focused Chromium coverage** for 13 records, Peak coordinates, non-interactive cards, filter hooks, light/dark themes, and 320/390/768/1024/1440 no-overflow checks.
-- [ ] **Step 7: Run the R1 fast lane, `npm run check`, inspect visual diffs, commit `优化荣誉坐标档案与修正奖项信息`, push the branch, and create PR #33.** Wait for PR CI, Quality, and Pages green before merging.
+- [x] **Step 7: Run the R1 fast lane, `npm run check`, inspect visual diffs, commit `优化荣誉坐标档案与修正奖项信息`, push the branch, and create PR #33.** Wait for PR CI, Quality, and Pages green before merging.
 
 ---
 
@@ -65,13 +65,13 @@
 - Consumes: `useScrollProgress()` and `getScrollProgress(scrollTop, scrollHeight, viewportHeight)`.
 - Produces: a top-level `ScrollProgress` progressbar on normal pages with localized label and `aria-valuenow` in 0–100.
 
-- [ ] **Step 1: Write failing ScrollProgress tests and update absence assertions.** Cover top/middle/bottom values, finite clamping, localized label, and no PageCompass residue.
-- [ ] **Step 2: Run the focused unit tests and confirm failure** against the old PageCompass utility/component contract.
-- [ ] **Step 3: Move `getScrollProgress` into `src/utils/scrollProgress.ts`** beside `clampScrollProgress`; update `useScrollProgress.ts` without changing its RAF, resize, visualViewport, or ResizeObserver lifecycle.
-- [ ] **Step 4: Create `ScrollProgress.vue`** with fixed 2px progressbar semantics and a child bar using `transform: scaleX()` and `transform-origin: left`; render it from `App.vue` only for normal content pages.
-- [ ] **Step 5: Remove PageCompass imports/rendering/state/styles/copy/types** while retaining `pageRegistry.sectionIds`, section IDs, hash scrolling, Header behavior, and Research content width.
-- [ ] **Step 6: Replace Lighthouse interaction with `honor-filter`** using `honors.html`, `[data-honor-filter="peak"]`, and `.honor-card` count 4; add `scroll-progress.spec.ts` for desktop/mobile and all locales.
-- [ ] **Step 7: Delete only dedicated PageCompass snapshots and inspect all expected full-page diffs** for Linux/Windows, light/dark, 320×568, 1024×768, and 1440×900.
+- [x] **Step 1: Write failing ScrollProgress tests and update absence assertions.** Cover top/middle/bottom values, finite clamping, localized label, and no PageCompass residue.
+- [x] **Step 2: Run the focused unit tests and confirm failure** against the old PageCompass utility/component contract.
+- [x] **Step 3: Move `getScrollProgress` into `src/utils/scrollProgress.ts`** beside `clampScrollProgress`; update `useScrollProgress.ts` without changing its RAF, resize, visualViewport, or ResizeObserver lifecycle.
+- [x] **Step 4: Create `ScrollProgress.vue`** with fixed 2px progressbar semantics and a child bar using `transform: scaleX()` and `transform-origin: left`; render it from `App.vue` only for normal content pages.
+- [x] **Step 5: Remove PageCompass imports/rendering/state/styles/copy/types** while retaining `pageRegistry.sectionIds`, section IDs, hash scrolling, Header behavior, and Research content width.
+- [x] **Step 6: Replace Lighthouse interaction with `honor-filter`** using `honors.html`, `[data-honor-filter="peak"]`, and `.honor-card` count 4; add `scroll-progress.spec.ts` for desktop/mobile and all locales.
+- [x] **Step 7: Delete only dedicated PageCompass snapshots and inspect all expected full-page diffs** for Linux/Windows, light/dark, 320×568, 1024×768, and 1440×900.
 - [ ] **Step 8: Run the exact residue scan, full quality gates, commit `移除PageCompass并保留阅读进度`, push, and create PR #34.** The scan must produce no output:
 
 ```powershell

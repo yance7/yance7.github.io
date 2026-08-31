@@ -34,18 +34,9 @@ export interface UiMessages {
     switchToZhHK: string
     switchToEnglish: string
   }
-  compass: {
-    label: string
-    open: string
-    close: string
-    progress: string
-    returnTop: string
-    current: string
-    goToSection: string
-    read: string
-  }
   accessibility: {
     skipToMain: string
+    readingProgress: string
     home: string
     footerHome: string
     liveProduct: string

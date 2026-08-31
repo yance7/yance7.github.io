@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, nextTick, onMounted, ref, watch } from 'vue'
-import { getLocalizedPageMeta, getLocalizedSections } from './data/locales'
+import { getLocalizedPageMeta } from './data/locales'
 import { isPageKey } from './data'
 import { useLocale } from './i18n'
 import { useTheme } from './composables/useTheme'
@@ -12,7 +12,7 @@ import ArchiveHero from './components/ArchiveHero.vue'
 import HomeHero from './components/HomeHero.vue'
 import SiteFooter from './components/SiteFooter.vue'
 import ImageLightbox from './components/ImageLightbox.vue'
-import PageCompass from './components/PageCompass.vue'
+import ScrollProgress from './components/ScrollProgress.vue'
 import PageLoadError from './components/PageLoadError.vue'
 
 import NotFoundPage from './pages/NotFoundPage.vue'
@@ -158,8 +158,6 @@ const currentPage = pageLoader
       delay: 0
     })
   : NotFoundPage
-const pageSections = computed(() => page ? getLocalizedSections(locale.value, page) : [])
-
 function handleLightbox(data: LightboxPayload) { lightbox.value = data }
 function closeLightbox() { lightbox.value = null }
 function moveLightbox(step: number) {
@@ -170,19 +168,17 @@ function moveLightbox(step: number) {
 </script>
 
 <template>
-  <div class="site-shell" :class="{ 'has-page-compass': pageSections.length >= 2 }" :data-page-load-state="pageLoadState">
+  <div class="site-shell" :data-page-load-state="pageLoadState">
     <a class="skip-link" href="#main">{{ messages.accessibility.skipToMain }}</a>
     <div class="ambient ambient-one"></div>
     <div class="ambient ambient-two"></div>
     <div class="grain"></div>
 
-    <aside class="page-tools" :aria-label="messages.compass.label">
-      <PageCompass v-if="pageLoadState === 'ready' && pageSections.length >= 2" :sections="pageSections" />
-    </aside>
-
     <SiteHeader :page="page" />
 
     <main id="main">
+      <ScrollProgress v-if="page" />
+
       <HomeHero
         v-if="isHome"
         :kicker="kicker"

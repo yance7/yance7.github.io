@@ -7,7 +7,7 @@ import {
   stripLocalePrefix,
   uiMessages
 } from '../src/i18n'
-import { getLocalizedConcerts, getLocalizedHonors, getLocalizedNavItems, getLocalizedProjects, getLocalizedResearch, getLocalizedSections } from '../src/data/locales'
+import { getLocalizedConcerts, getLocalizedHonors, getLocalizedNavItems, getLocalizedProjects, getLocalizedResearch } from '../src/data/locales'
 import { pageRegistry } from '../src/data/pageRegistry'
 import { buildLocalizedCanonicalUrl, getLocalizedSeo, localizedSitemapEntries } from '../src/data/seo'
 
@@ -91,16 +91,12 @@ describe('stable registry and localized content contracts', () => {
     expect(ids('en')).toEqual(ids('zh-CN'))
   })
 
-  it('provides one-language navigation and complete section labels', () => {
+  it('provides one-language navigation and stable section IDs', () => {
     expect(getLocalizedNavItems('zh-CN').map((item) => item.label)).toEqual(['首页', '学业', '荣誉', '研究', '作品', '演唱会'])
     expect(getLocalizedNavItems('zh-HK').map((item) => item.label)).toEqual(['首頁', '學業', '榮譽', '研究', '作品', '演唱會'])
     expect(getLocalizedNavItems('en').map((item) => item.label)).toEqual(['Home', 'Academics', 'Honors', 'Research', 'Works', 'Concerts'])
 
-    for (const locale of ['zh-CN', 'zh-HK', 'en'] as const) {
-      const sections = getLocalizedSections(locale, 'research')
-      expect(sections.map((section) => section.id)).toEqual(pageRegistry.research.sectionIds)
-      expect(sections.every((section) => section.label && section.shortLabel)).toBe(true)
-    }
+    expect(pageRegistry.research.sectionIds).toEqual(['sec-research-timeline', 'sec-toolchain'])
   })
 })
 

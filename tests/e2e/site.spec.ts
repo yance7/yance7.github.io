@@ -462,7 +462,7 @@ test('research timeline removes breathing motion when reduced motion is enabled'
   await expect(firstItem.locator('.tl-node i')).toHaveCSS('animation-name', 'none')
 })
 
-test('slow page chunks still settle deep links and compass state', async ({ page }) => {
+test('slow page chunks still settle deep links', async ({ page }) => {
   let requestCount = 0
   await page.route(/\/(?:assets\/vue\/WorksPage-[^/]+\.js|src\/pages\/WorksPage\.vue)(?:\?.*)?$/, async (route) => {
     requestCount += 1
@@ -474,7 +474,6 @@ test('slow page chunks still settle deep links and compass state', async ({ page
   await expect(page.locator('#project-fresheye')).toBeVisible({ timeout: 30000 })
   expect(requestCount).toBeGreaterThan(0)
   await expect.poll(() => page.locator('#project-fresheye').evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBeGreaterThanOrEqual(12)
-  await expect(page.locator('.page-compass-link[href="#project-fresheye"]')).toHaveAttribute('aria-current', 'location')
 })
 
 test('failed page chunks render a controlled error without a reload loop', async ({ page }) => {
@@ -536,112 +535,18 @@ test('signature pointer sheen stays static with reduced motion', async ({ page }
   await expect(surface).toHaveCSS('--pointer-y', '50%')
 })
 
-test('page compass exposes page-specific sections without covering narrow layouts', async ({ page }) => {
-  const expectations = pageEntries.map(({ htmlName, sectionIds }) => [`${htmlName}.html`, sectionIds.length] as const)
-
-  for (const [route, sectionCount] of expectations) {
+test('page registry section IDs remain deep-link targets', async ({ page }) => {
+  for (const { htmlName, sectionIds } of pageEntries) {
     await page.setViewportSize({ width: 390, height: 844 })
-    await page.goto(`/${route}`)
-    await expect(page.locator('.page-compass-link')).toHaveCount(sectionCount)
-    const layout = await page.evaluate(() => ({
-      viewport: window.innerWidth,
-      document: document.documentElement.scrollWidth,
-      compassBottom: document.querySelector('.page-compass')!.getBoundingClientRect().bottom,
-      footerPaddingBottom: parseFloat(getComputedStyle(document.querySelector('.site-footer')!).paddingBottom)
-    }))
-    expect(layout.document).toBeLessThanOrEqual(layout.viewport)
-    expect(layout.compassBottom).toBeLessThanOrEqual(844)
-    expect(layout.footerPaddingBottom).toBeGreaterThanOrEqual(76)
+    await page.goto(`/${htmlName}.html`)
 
-    const compactTargets = await page.locator('.page-compass-trigger').evaluateAll((elements) => elements.map((element) => {
-      const bounds = element.getBoundingClientRect()
-      return { width: bounds.width, height: bounds.height }
-    }))
-    compactTargets.forEach(({ width, height }) => {
-      expect(Math.round(width)).toBeGreaterThanOrEqual(44)
-      expect(Math.round(height)).toBeGreaterThanOrEqual(44)
-    })
-
-    await page.locator('.page-compass-trigger').click()
-    const expandedTargets = await page.locator('.page-compass button, .page-compass a').evaluateAll((elements) => elements
-      .filter((element) => {
-        const style = getComputedStyle(element)
-        const bounds = element.getBoundingClientRect()
-        return style.visibility !== 'hidden' && bounds.width > 0 && bounds.height > 0
-      })
-      .map((element) => {
-        const bounds = element.getBoundingClientRect()
-        return { width: bounds.width, height: bounds.height }
-      }))
-    expandedTargets.forEach(({ width, height }) => {
-      expect(Math.round(width)).toBeGreaterThanOrEqual(44)
-      expect(Math.round(height)).toBeGreaterThanOrEqual(44)
-    })
+    for (const sectionId of sectionIds) {
+      await expect(page.locator(`#${sectionId}`), `${htmlName} #${sectionId}`).toHaveCount(1)
+    }
   }
 
   await page.goto('/404.html')
-  await expect(page.locator('.page-compass')).toHaveCount(0)
-})
-
-test('mobile compass keeps focus priority inside a compact visual frame', async ({ page }) => {
-  for (const viewport of [
-    { width: 320, height: 568 },
-    { width: 390, height: 844 },
-    { width: 844, height: 390 }
-  ]) {
-    await page.setViewportSize(viewport)
-    await page.goto('/honors.html')
-    const compass = page.locator('.page-compass')
-    const trigger = compass.locator('.page-compass-trigger')
-    const panel = compass.locator('.page-compass-panel')
-
-    await expect(trigger).toHaveAttribute('aria-expanded', 'false')
-    await expect(trigger).toBeVisible()
-    await trigger.focus()
-    await expect(trigger).toBeFocused()
-    await expect(trigger).toHaveAttribute('aria-expanded', 'true')
-    await expect(panel).toBeVisible()
-    await page.keyboard.press('Escape')
-    await expect(trigger).toBeFocused()
-    await expect(trigger).toHaveAttribute('aria-expanded', 'false')
-    await expect(panel).toHaveAttribute('aria-hidden', 'true')
-
-    await trigger.click()
-    await expect(panel).toBeVisible()
-    await compass.locator('.page-compass-link').last().click()
-    await expect(trigger).toHaveAttribute('aria-expanded', 'false')
-    await expect(panel).toHaveAttribute('inert', '')
-
-    const geometry = await compass.evaluate((element) => {
-      const rect = element.getBoundingClientRect()
-      return {
-        left: rect.left,
-        right: rect.right,
-        bottom: rect.bottom,
-        width: rect.width,
-        height: rect.height
-      }
-    })
-    expect(geometry.left).toBeGreaterThanOrEqual(0)
-    expect(geometry.right).toBeLessThanOrEqual(viewport.width)
-    expect(geometry.bottom).toBeLessThanOrEqual(viewport.height)
-    if (viewport.width <= 760) expect(geometry.width).toBeLessThanOrEqual(viewport.width - 24)
-
-    const targets = await compass.locator('button:visible, a:visible').evaluateAll((elements) =>
-      elements.map((element) => {
-        const rect = element.getBoundingClientRect()
-        return {
-          label: element.getAttribute('aria-label') ?? element.textContent?.trim() ?? element.tagName,
-          width: rect.width,
-          height: rect.height
-        }
-      })
-    )
-    expect(
-      targets.every(({ width, height }) => Math.round(width) >= 44 && Math.round(height) >= 44),
-      `${viewport.width}×${viewport.height} targets: ${JSON.stringify(targets)}`
-    ).toBe(true)
-  }
+  await expect(page.locator('.scroll-progress')).toHaveCount(0)
 })
 
 test('mobile menu remains accessible after opening', async ({ page }) => {

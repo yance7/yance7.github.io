@@ -24,7 +24,6 @@ describe('adaptive header source contracts', () => {
     expect(composable).toContain('IntersectionObserver')
     expect(composable).toContain('observer?.disconnect()')
     expect(composable).not.toContain("addEventListener('scroll'")
-    expect(composable).not.toContain('usePageCompass')
     expect(composable).not.toContain('useTheme')
   })
 
