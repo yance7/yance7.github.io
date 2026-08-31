@@ -11,7 +11,7 @@ export const honorsCopy = {
   },
   entities: {
     'ai-innovation-2026-third': { title: '9th National Youth AI Innovation Challenge · Third Prize', org: 'National Youth AI Innovation Challenge' },
-    'trae-ai-2026-top-300': { title: 'TRAE AI Creative Competition · Top 300', org: 'Approximately 14,000 entrants' },
+    'trae-ai-2026-top-350': { title: 'TRAE AI Creativity Competition · Top 350', org: 'Approximately 14,000 submissions' },
     'ukcho-2026-gold': { title: 'UK Chemistry Olympiad (UKChO) · Global Gold Award', org: 'UK Chemistry Olympiad' },
     'usabo-2026-silver': { title: 'USA Biology Olympiad (USABO) · Global Silver Award', org: 'USA Biology Olympiad' },
     'ccc-2026-national-bronze': { title: 'Canadian Chemistry Contest (CCC) · National Bronze Award', org: 'Canadian Chemistry Contest' },

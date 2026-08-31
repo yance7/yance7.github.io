@@ -22,9 +22,14 @@ const categoryCounts = computed(() => {
   return counts
 })
 
+const honorsWithCoordinate = computed(() => honors.value.map((honor, index) => ({
+  ...honor,
+  coordinate: index + 1
+})))
+
 const filteredHonors = computed(() => {
-  if (activeCategory.value === 'all') return honors.value
-  return honors.value.filter((h) => h.level === activeCategory.value)
+  if (activeCategory.value === 'all') return honorsWithCoordinate.value
+  return honorsWithCoordinate.value.filter((h) => h.level === activeCategory.value)
 })
 
 function setCategory(category: 'all' | HonorLevel) {
@@ -68,17 +73,16 @@ function setCategory(category: 'all' | HonorLevel) {
           class="honor-card"
           :class="h.level"
           :id="`honor-${h.id}`"
+          v-pointer-sheen
           v-reveal="{ delay: i * 60 }"
         >
-          <div class="honor-date-col">
-            <span class="honor-date">{{ h.date }}</span>
-            <span class="honor-level-dot" aria-hidden="true"></span>
-          </div>
+          <span class="honor-coordinate" aria-hidden="true">{{ String(h.coordinate).padStart(2, '0') }}</span>
+          <time class="honor-date" :datetime="h.date.replace('.', '-')">{{ h.date }}</time>
           <div class="honor-content">
-            <span class="honor-level-tag">{{ levelLabel[h.level] }}</span>
             <h3>{{ h.title }}</h3>
             <span class="honor-org">{{ h.org }}</span>
           </div>
+          <span class="honor-level-tag">{{ levelLabel[h.level] }}</span>
         </article>
       </TransitionGroup>
     </section>

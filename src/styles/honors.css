@@ -24,10 +24,15 @@
 }
 .filter-btn.active .filter-count { background: var(--bg); color: var(--ink); }
 
-/* ===== 荣誉 · 时间轴奖项卡片 ===== */
+/* ===== 荣誉 · 坐标档案台账 ===== */
 .honor-timeline {
-  position: relative; padding-left: 8px;
-  display: flex; flex-direction: column; gap: 14px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
 }
 .honor-list-enter-active,
 .honor-list-leave-active {
@@ -41,93 +46,152 @@
 .honor-list-leave-active { pointer-events: none; }
 .honor-list-move { transition: transform var(--dur-base) var(--ease-out); }
 .honor-card {
-  position: relative; display: grid; grid-template-columns: 120px minmax(0, 1fr);
-  gap: var(--space-5); padding: var(--space-5) var(--space-6); overflow: hidden;
-  border: 1px solid var(--line); background: var(--surface);
-  border-radius: var(--radius-card); box-shadow: var(--shadow-1);
-  transition: transform var(--dur-base) var(--ease-apple), border-color var(--dur-base), background-color var(--dur-base), box-shadow var(--dur-base);
+  --pointer-x: 50%;
+  --pointer-y: 50%;
+  --pointer-active: 0;
+  --honor-accent: var(--level-silver);
+  position: relative;
+  display: grid;
+  grid-template-columns: 56px 104px minmax(0, 1fr) max-content;
+  grid-template-areas: 'coordinate date content level';
+  align-items: center;
+  gap: var(--space-5);
+  min-width: 0;
+  padding: var(--space-5) var(--space-6);
+  overflow: hidden;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--honor-accent);
+  cursor: default;
+  transform: translateY(0);
+  transition: transform var(--dur-base) var(--ease-apple), background-color var(--dur-base), box-shadow var(--dur-base);
 }
+.honor-card:last-child { border-bottom: 0; }
 .honor-card::before {
-  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
-  background: currentColor; transition: width var(--dur-base) var(--ease-apple);
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 1;
+  width: 2px;
+  background: var(--honor-accent);
+  transition: width var(--dur-base) var(--ease-apple);
 }
-.honor-card:hover { border-color: currentColor; background: var(--surface-hover); box-shadow: var(--interactive-shadow); transform: none; }
-.honor-card:hover::before { width: 6px; }
-.honor-card.peak { color: var(--level-platinum); }
-.honor-card.excellent { color: var(--level-gold); }
-.honor-card.emerging { color: var(--level-silver); }
+.honor-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(300px circle at var(--pointer-x) var(--pointer-y), color-mix(in srgb, var(--honor-accent) 9%, transparent), transparent 68%);
+  opacity: calc(var(--pointer-active) * .65);
+  transition: opacity var(--dur-fast);
+}
+.honor-card > * { position: relative; z-index: 1; }
+.honor-card:hover {
+  background: var(--surface-hover);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--honor-accent) 24%, transparent);
+  transform: translateY(-1px);
+}
+.honor-card:hover::before { width: 4px; }
+.honor-card.peak { --honor-accent: var(--level-platinum); }
+.honor-card.excellent { --honor-accent: var(--level-gold); }
+.honor-card.emerging { --honor-accent: var(--level-silver); }
 @keyframes honor-card-in {
   0% { opacity: 0; transform: translateY(10px); }
-  100% { opacity: 1; transform: none; }
-}
-@keyframes dot-stamp {
-  0% { transform: scale(1.35); opacity: 0; }
-  60% { transform: scale(.96); opacity: 1; }
-  100% { transform: scale(1); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 @keyframes honor-meta-in {
   0% { opacity: 0; transform: translateY(4px); }
-  100% { opacity: 1; transform: none; }
+  100% { opacity: 1; transform: translateY(0); }
 }
 .honor-card.revealed { animation: honor-card-in .42s var(--ease-out) both; }
-.honor-card.revealed .honor-date { animation: honor-meta-in .34s var(--ease-out) 50ms both; }
-.honor-card.revealed .honor-level-dot { animation: dot-stamp .42s var(--ease-out) 80ms both; }
-.honor-card.revealed .honor-level-tag { animation: honor-meta-in .34s var(--ease-out) 110ms both; }
-.honor-date-col {
-  display: flex; flex-direction: column; align-items: flex-start; gap: 12px;
-  padding-top: 4px;
+.honor-card.revealed .honor-date,
+.honor-card.revealed .honor-level-tag { animation: honor-meta-in .34s var(--ease-out) 50ms both; }
+.honor-coordinate {
+  grid-area: coordinate;
+  color: var(--honor-accent);
+  font-family: var(--font-technical);
+  font-size: clamp(1.35rem, 2.2vw, 1.75rem);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .08em;
+  line-height: 1;
 }
 .honor-date {
-  font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: .08em;
-  color: var(--dim); line-height: 1.5;
+  grid-area: date;
+  color: var(--dim);
+  font-family: var(--font-technical);
+  font-size: var(--type-meta-size);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .08em;
+  line-height: 1.5;
+  white-space: nowrap;
 }
-.honor-level-dot {
-  width: 10px; height: 10px; border-radius: 50%;
-  background: currentColor; box-shadow: 0 0 12px currentColor;
-  transition: box-shadow var(--dur-base) var(--ease-soft);
-}
-.honor-card:hover .honor-level-dot { box-shadow: 0 0 16px currentColor; }
-.honor-content { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
-.honor-level-tag {
-  display: inline-flex; align-self: flex-start;
-  font-family: var(--font-technical); font-size: var(--text-xs); letter-spacing: var(--tracking-latin-wide);
-  padding: 3px 9px; border-radius: var(--radius-pill);
-  border: 1px solid currentColor; color: currentColor;
-  text-transform: uppercase;
+.honor-content {
+  grid-area: content;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
 }
 .honor-content h3 {
-  margin: 0; font-family: var(--font-editorial); font-size: 1.35rem; font-weight: 400;
-  color: var(--ink); line-height: 1.4; overflow-wrap: break-word;
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-editorial);
+  font-size: 1.35rem;
+  font-weight: 400;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 .honor-org {
-  font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: .08em;
-  color: var(--dim); text-transform: uppercase; overflow-wrap: break-word;
+  color: var(--dim);
+  font-family: var(--font-technical);
+  font-size: var(--type-meta-size);
+  letter-spacing: .08em;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
-.disclosure-mark {
-  display: inline-grid;
-  width: 1em;
-  place-items: center;
-  color: currentColor;
-  font-size: 1.05em;
-  line-height: 1;
-  transition: transform var(--dur-base) var(--ease-spring);
+.honor-level-tag {
+  grid-area: level;
+  justify-self: end;
+  color: var(--honor-accent);
+  font-family: var(--font-technical);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-latin-wide);
+  line-height: 1.3;
+  text-align: right;
+  white-space: nowrap;
 }
-.method-toggle.open .disclosure-mark { transform: rotate(180deg); }
-
-
 
 /* ===== 荣誉页面级响应式补丁 ===== */
 @media (max-width: 900px) {
-  .honor-card { grid-template-columns: 100px minmax(0, 1fr); gap: var(--space-5); padding: var(--space-5); }
+  .honor-card { gap: var(--space-4); padding-inline: var(--space-5); }
 }
 @media (max-width: 640px) {
-  .honor-card { grid-template-columns: 1fr; gap: var(--space-3); padding: var(--space-5); }
-  .honor-date-col { flex-direction: row; align-items: center; gap: var(--space-3); }
+  .honor-card {
+    grid-template-columns: 44px minmax(0, 1fr);
+    grid-template-areas:
+      'coordinate content'
+      'date level';
+    align-items: start;
+    row-gap: var(--space-3);
+    padding: var(--space-5);
+  }
+  .honor-date { padding-top: 2px; }
+  .honor-level-tag { justify-self: end; padding-top: 2px; }
 }
 @media (hover: none), (pointer: coarse) {
   .filter-btn { min-height: 44px; }
-  .honor-card:hover:not(:focus-visible) { border-color: var(--line); background: var(--surface); box-shadow: var(--shadow-1); transform: none; }
-  .honor-card:hover:not(:focus-visible)::before { width: 3px; }
+  .honor-card:hover:not(:focus-visible) {
+    background: var(--surface);
+    box-shadow: none;
+    transform: none;
+  }
+  .honor-card:hover:not(:focus-visible)::before { width: 2px; }
+}
+@media (max-width: 340px) {
+  .honor-card { grid-template-columns: 36px minmax(0, 1fr); padding-inline: var(--space-4); }
+  .honor-coordinate { font-size: 1.15rem; }
+  .honor-content h3 { font-size: 1.2rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   .honor-list-enter-active,
@@ -137,6 +201,6 @@
   .honor-list-leave-to { opacity: 1; transform: none; }
   .honor-card.revealed,
   .honor-card.revealed .honor-date,
-  .honor-card.revealed .honor-level-dot,
   .honor-card.revealed .honor-level-tag { animation: none !important; transform: none !important; }
+  .honor-card:hover { transform: none; }
 }

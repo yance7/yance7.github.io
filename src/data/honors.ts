@@ -13,8 +13,8 @@ export const honors = [
     org: 'National Youth AI Innovation Challenge'
   },
   {
-    id: 'trae-ai-2026-top-300', date: '2026.07', level: 'peak', title: 'TRAE AI 创意大赛 · Top 300',
-    org: '约 14,000 参赛者'
+    id: 'trae-ai-2026-top-350', date: '2026.07', level: 'peak', title: 'TRAE AI 创造力大赛 · Top 350',
+    org: '约 14,000 份作品'
   },
   {
     id: 'ukcho-2026-gold', date: '2026.05', level: 'peak', title: '英国化学奥赛 UKChO · 全球金奖',

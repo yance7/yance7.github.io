@@ -11,7 +11,7 @@ export const honorsCopy = {
   },
   entities: {
     'ai-innovation-2026-third': { title: '第九屆全國青少年人工智能創新挑戰賽 · 三等獎', org: 'National Youth AI Innovation Challenge' },
-    'trae-ai-2026-top-300': { title: 'TRAE AI 創意大賽 · Top 300', org: '約 14,000 名參賽者' },
+    'trae-ai-2026-top-350': { title: 'TRAE AI 創造力大賽 · Top 350', org: '約 14,000 份作品' },
     'ukcho-2026-gold': { title: '英國化學奧林匹克 UKChO · 全球金獎', org: 'UK Chemistry Olympiad' },
     'usabo-2026-silver': { title: '美國生物奧林匹克 USABO · 全球銀獎', org: 'USA Biology Olympiad' },
     'ccc-2026-national-bronze': { title: '加拿大化學競賽 CCC · 全國銅獎', org: 'Canadian Chemistry Contest' },
