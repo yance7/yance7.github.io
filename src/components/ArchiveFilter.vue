@@ -29,6 +29,7 @@ const { messages } = useLocale()
       class="filter-btn"
       type="button"
       :class="{ active: props.active === cat.key, [cat.key]: true }"
+      :data-honor-filter="cat.key"
       :aria-pressed="props.active === cat.key"
       @click="emit('filter', cat.key)"
     >
