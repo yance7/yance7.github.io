@@ -75,7 +75,9 @@
   .hero-line { width: 100%; }
   .metric-strip, .metric-strip.large { grid-template-columns: 1fr 1fr; }
 
-  .site-footer { flex-direction: column; align-items: flex-start; gap: var(--space-3); }
+  .site-footer { flex-direction: column; align-items: flex-start; gap: var(--space-4); }
+  .foot-identity { width: 100%; }
+  .foot-contacts { width: 100%; max-width: 420px; }
 
   .lightbox { padding: var(--space-4) var(--space-3); gap: var(--space-2); }
   .lightbox {
@@ -107,11 +109,15 @@
   .hero-action { width: 100%; justify-content: space-between; }
 }
 
+@media (max-width: 300px) {
+  .foot-contacts { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 760px) {
   .wordmark { flex-basis: 44px; width: 44px; height: 44px; }
   .brand-mark-header { width: 40px; height: 40px; }
   .brand-mark-footer { width: 40px; height: 40px; }
-  .foot-brand { min-width: 0; }
+  .foot-identity { min-width: 0; }
 }
 
 /* Shared controls keep comfortable touch targets without owning page content. */
@@ -152,7 +158,9 @@
   .hero-action:hover:not(:focus-visible) span { transform: none; }
   .metric-card:hover:not(:focus-visible) { background: var(--surface-strong); transform: none; box-shadow: none; }
   .foot-mark:hover:not(:focus-visible) { color: var(--ink); transform: none; }
-  .foot-links a:hover:not(:focus-visible) { color: var(--gold); transform: none; }
+  .foot-contact:hover:not(:focus-visible) {
+    color: var(--dim); border-color: transparent; background: transparent; transform: none;
+  }
   .lb-nav:hover:not(:focus-visible), .lb-close:hover:not(:focus-visible) {
     background: var(--control-bg); border-color: var(--control-border); color: var(--ink); box-shadow: var(--control-shadow); transform: none;
   }
@@ -163,9 +171,11 @@
   .site-nav-surface,
   .wordmark,
   .wordmark .brand-mark-header,
-  .foot-mark { transition: none; }
+  .foot-mark,
+  .foot-contact { transition: none; }
   .wordmark:hover,
-  .foot-mark:hover { transform: none; }
+  .foot-mark:hover,
+  .foot-contact:hover { transform: none; }
   .wordmark:hover .brand-mark-image,
   .foot-mark:hover .brand-mark-image { filter: var(--brand-mark-filter); }
 }

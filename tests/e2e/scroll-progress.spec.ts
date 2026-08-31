@@ -12,6 +12,7 @@ test('content pages expose a localized transform-driven reading progress bar', a
   await expect(progress).toHaveAttribute('aria-valuenow', '0')
   await expect(bar).toHaveAttribute('style', /transform: scaleX\(/)
 
+  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready', { timeout: 10_000 })
   await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'auto' }))
   await expect.poll(() => progress.getAttribute('aria-valuenow')).toBe('100')
   await expect(bar).toHaveAttribute('style', /scaleX\(1\)/)
