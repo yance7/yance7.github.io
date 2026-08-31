@@ -1,5 +1,5 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { getScrollProgress } from '../utils/pageCompass'
+import { getScrollProgress } from '../utils/scrollProgress'
 
 export function useScrollProgress() {
   const progress = ref(0)

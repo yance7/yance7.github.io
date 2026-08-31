@@ -198,12 +198,6 @@ export interface LightboxPayload {
   meta?: LightboxMeta | null
 }
 
-export interface PageCompassSection {
-  readonly id: string
-  readonly label: string
-  shortLabel?: string
-}
-
 export interface PageMeta {
   kicker: string
   title: string

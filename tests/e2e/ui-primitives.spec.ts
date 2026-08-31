@@ -41,23 +41,14 @@ test('status badges use compact semantic surfaces without pulse animation', asyn
   }
 })
 
-test('page compass exposes a keyboard-expandable semantic panel', async ({ page }) => {
+test('reading progress exposes one non-interactive semantic surface', async ({ page }) => {
   await page.goto('/research.html')
 
-  const compass = page.locator('.page-compass')
-  const trigger = compass.locator('.page-compass-trigger')
-  const panel = compass.locator('.page-compass-panel')
-  await expect(trigger).toHaveAttribute('aria-expanded', 'false')
-  await expect(panel).toHaveAttribute('aria-hidden', 'true')
-  await trigger.focus()
-  await expect(trigger).toBeFocused()
-  await expect(trigger).toHaveAttribute('aria-expanded', 'true')
-  await expect(panel).toBeVisible()
-  await expect(compass.locator('.page-compass-link').nth(1)).toBeVisible()
-  await expect(page.locator('.page-compass')).toHaveCSS('overflow', 'visible')
-  await expect(compass.locator('.page-compass-step')).toHaveCount(0)
-  await page.keyboard.press('Escape')
-  await expect(trigger).toHaveAttribute('aria-expanded', 'false')
+  const progress = page.locator('.scroll-progress')
+  await expect(progress).toHaveRole('progressbar')
+  await expect(progress).toHaveAttribute('aria-label', '阅读进度')
+  await expect(progress).toHaveCSS('pointer-events', 'none')
+  await expect(progress).toHaveAttribute('aria-valuenow', '0')
 })
 
 test('lightbox keeps metadata and quiet control chrome bounded', async ({ page }) => {

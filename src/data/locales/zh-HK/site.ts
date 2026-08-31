@@ -17,14 +17,6 @@ export const siteCopy = {
     works: { label: '作品', desc: '已上線的項目' },
     concerts: { label: '演唱會', desc: '現場記憶檔案' }
   },
-  sections: {
-    home: [{ id: 'selected-work', label: '精選作品', shortLabel: '作品' }, { id: 'home-worlds', label: '五個小世界', shortLabel: '世界' }, { id: 'home-beyond', label: '實驗室之外', shortLabel: '之外' }],
-    academics: [{ id: 'sec-education', label: '教育履歷', shortLabel: '教育' }, { id: 'sec-scoreboard', label: '成績看板', shortLabel: '成績' }, { id: 'sec-ap-archive', label: 'AP 檔案', shortLabel: 'AP' }],
-    honors: [{ id: 'sec-milestones', label: '榮譽里程碑', shortLabel: '里程碑' }, { id: 'sec-honors-archive', label: '榮譽檔案', shortLabel: '檔案' }],
-    research: [{ id: 'sec-research-timeline', label: '研究時間軸', shortLabel: '研究' }, { id: 'sec-toolchain', label: '方法與技術棧', shortLabel: '方法' }],
-    works: [{ id: 'works-overview', label: '已發佈作品', shortLabel: '作品' }, { id: 'project-fresheye', label: 'FreshEye', shortLabel: 'FreshEye' }],
-    concerts: [{ id: 'concerts-overview', label: '現場檔案', shortLabel: '現場' }, { id: 'concert-archive', label: '演唱會檔案', shortLabel: '海報' }, { id: 'album-frequencies', label: '專輯收藏牆', shortLabel: '專輯' }]
-  },
   worlds: {
     academics: { no: '01', label: '學業', icon: '✦', desc: 'GPA、標化考試與 AP 成績，是努力留下的可讀痕跡。', accent: 'aqua' },
     honors: { no: '02', label: '榮譽', icon: '❖', desc: '獎項是座標，不是終點；真正重要的是仍然保持向上的慣性。', accent: 'violet' },

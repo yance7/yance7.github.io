@@ -23,12 +23,11 @@ test('compatibility pages boot without horizontal overflow', async ({ page }) =>
   }
 })
 
-test('compatibility hash navigation and PageCompass settle together', async ({ page }) => {
+test('compatibility hash navigation settles below the sticky header', async ({ page }) => {
   await page.goto('/works.html#project-fresheye')
   const target = page.locator('#project-fresheye')
   await expect(target).toBeVisible()
   await expect.poll(() => target.evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBeGreaterThanOrEqual(12)
-  await expect(page.locator('.page-compass-link[href="#project-fresheye"]')).toHaveAttribute('aria-current', 'location')
 })
 
 test('keyboard focus targets stay clear of sticky navigation surfaces', async ({ page }) => {
@@ -42,12 +41,8 @@ test('keyboard focus targets stay clear of sticky navigation surfaces', async ({
   const geometry = await target.evaluate((element) => {
     const rect = element.getBoundingClientRect()
     const header = document.querySelector<HTMLElement>('.site-nav')?.getBoundingClientRect()
-    const compass = document.querySelector<HTMLElement>('.page-compass')?.getBoundingClientRect()
-    const compassVisible = compass && getComputedStyle(document.querySelector<HTMLElement>('.page-compass')!).visibility !== 'hidden'
-    const intersectsCompass = Boolean(compassVisible && compass && rect.right > compass.left && rect.left < compass.right && rect.bottom > compass.top && rect.top < compass.bottom)
     return {
       headerBottom: header?.bottom ?? 0,
-      intersectsCompass,
       top: rect.top,
       bottom: rect.bottom,
       viewportHeight: window.innerHeight
@@ -56,18 +51,6 @@ test('keyboard focus targets stay clear of sticky navigation surfaces', async ({
 
   expect(geometry.top, 'focused target below sticky header').toBeGreaterThanOrEqual(geometry.headerBottom)
   expect(geometry.bottom, 'focused target inside viewport').toBeLessThanOrEqual(geometry.viewportHeight)
-  expect(geometry.intersectsCompass, 'focused target clear of PageCompass').toBe(false)
-})
-
-test('PageCompass exposes progress text and a single active chapter', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 })
-  await page.goto('/works.html')
-
-  await expect(page.locator('.scroll-progress')).toHaveAttribute('aria-valuetext', /阅读进度/)
-  await expect(page.locator('.page-compass-trigger-index')).toHaveText('01 / 02')
-  await expect(page.locator('.page-compass-link.active')).toHaveCount(1)
-  await expect(page.locator('.page-compass-link.active .page-compass-link-index')).toHaveText('01')
-  await expect(page.locator('.page-compass-link.active')).toHaveAttribute('aria-current', 'location')
 })
 
 test('coarse-pointer shared controls keep 44px touch targets', async ({ page }, testInfo) => {
@@ -89,87 +72,6 @@ test('coarse-pointer shared controls keep 44px touch targets', async ({ page }, 
   expect(closeBox, 'mobile menu close geometry').not.toBeNull()
   expectTouchTarget(closeBox!, 'mobile menu close')
   await closeButton.click()
-})
-
-test('keyboard PageCompass expands the panel with a coarse pointer at desktop width', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'chromium-android-smoke', 'Android-specific coarse-pointer keyboard contract')
-  await page.setViewportSize({ width: 1024, height: 768 })
-  await page.goto('/research.html')
-
-  await page.locator('.page-compass-trigger').focus()
-  const link = page.locator('.page-compass-link').nth(1)
-  await expect(link).toBeVisible()
-  await expect(page.locator('.page-compass-panel')).not.toHaveAttribute('aria-hidden', 'true')
-})
-
-test('compass stays inside the viewport and keeps touch targets usable', async ({ page }) => {
-  for (const width of [320, 390, 768, 820, 1024, 1440]) {
-    await page.setViewportSize({ width, height: 844 })
-    await page.goto('/research.html')
-    const box = await page.locator('.page-compass').boundingBox()
-    expect(box, `${width}px compass geometry`).not.toBeNull()
-    expect(box!.x, `${width}px left edge`).toBeGreaterThanOrEqual(0)
-    expect(box!.x + box!.width, `${width}px right edge`).toBeLessThanOrEqual(width)
-    if (width <= 1024) {
-      await page.locator('.page-compass-trigger').click()
-      const linkBox = await page.locator('.page-compass-link').first().boundingBox()
-      expect(linkBox, `${width}px link geometry`).not.toBeNull()
-      expectTouchTarget(linkBox!, `${width}px link`)
-    }
-  }
-})
-
-test('compass preserves reduced motion, keyboard navigation, and viewport changes', async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.setViewportSize({ width: 1440, height: 900 })
-  await page.goto('/works.html')
-  const transitionDuration = await page.locator('.page-compass').evaluate((element) => (
-    Number.parseFloat(getComputedStyle(element).transitionDuration)
-  ))
-  expect(transitionDuration).toBeLessThanOrEqual(0.00001)
-
-  const trigger = page.locator('.page-compass-trigger')
-  const panel = page.locator('.page-compass-panel')
-  await trigger.focus()
-  await expect(trigger).toHaveAttribute('aria-expanded', 'true')
-  await expect(panel).not.toHaveAttribute('inert', '')
-  const fresheyeLink = page.locator('.page-compass-link[href="#project-fresheye"]')
-  await expect(fresheyeLink).toBeVisible()
-  await fresheyeLink.press('Enter')
-  await expect(page).toHaveURL(/#project-fresheye$/)
-
-  await page.setViewportSize({ width: 390, height: 844 })
-  await page.setViewportSize({ width: 844, height: 390 })
-  await expect(page.locator('.page-compass')).toBeVisible()
-})
-
-test('mobile compass keeps numbered chapter controls legible', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/works.html')
-  await page.locator('.page-compass-trigger').click()
-  const firstIndex = page.locator('.page-compass-link-index').first()
-  await expect(firstIndex).toBeVisible()
-  await expect(firstIndex).toHaveText('01')
-})
-
-test('mobile PageCompass uses a dismissible compact panel without trapping focus', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/index.html')
-
-  const compass = page.locator('.page-compass')
-  const trigger = compass.locator('.page-compass-trigger')
-  const panel = compass.locator('.page-compass-panel')
-  await trigger.click()
-  await expect(panel).toBeVisible()
-  await page.keyboard.press('Escape')
-  await expect(trigger).toBeFocused()
-  await expect(trigger).toHaveAttribute('aria-expanded', 'false')
-
-  await trigger.click()
-  await expect(panel).toBeVisible()
-  await page.locator('main#main').click({ position: { x: 12, y: 12 } })
-  await expect(trigger).toHaveAttribute('aria-expanded', 'false')
-  await expect(panel).toHaveAttribute('aria-hidden', 'true')
 })
 
 test('compatibility menu, carousel, modal, and axe smoke remain usable', async ({ page }) => {
@@ -311,12 +213,10 @@ test('touch carousel hover suppression follows the active theme control tokens',
 test('Firefox preserves direct hashes and theme state across navigation', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'firefox-desktop-smoke', 'Firefox-specific desktop compatibility proof')
   await page.goto('/research.html#sec-toolchain')
-  await expect(page.locator('.page-compass-link[href="#sec-toolchain"]')).toHaveAttribute('aria-current', 'location')
   await page.locator('.theme-orbit').click()
   const theme = await page.locator('html').getAttribute('data-theme')
   await page.goto('/works.html#project-fresheye')
   await expect(page.locator('html')).toHaveAttribute('data-theme', theme!)
-  await expect(page.locator('.page-compass-link[href="#project-fresheye"]')).toHaveAttribute('aria-current', 'location')
 })
 
 test('Android touch workflows survive portrait and landscape changes', async ({ page }, testInfo) => {
@@ -339,5 +239,4 @@ test('Android touch workflows survive portrait and landscape changes', async ({ 
   }))
   expect(geometry.documentWidth).toBeLessThanOrEqual(geometry.viewportWidth)
   expect(geometry.bodyWidth).toBeLessThanOrEqual(geometry.viewportWidth)
-  await expect(page.locator('.page-compass')).toBeVisible()
 })

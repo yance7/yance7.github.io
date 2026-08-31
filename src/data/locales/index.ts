@@ -6,7 +6,7 @@ import { research } from '../research'
 import { projects } from '../projects'
 import { albums } from '../albums'
 import { concerts, isConcertUpcoming } from '../concerts'
-import type { Concert, Honor, PageCompassSection, PageMeta, Project, ResearchItem, SiteNavItem, World } from '../types'
+import type { Concert, Honor, PageMeta, Project, ResearchItem, SiteNavItem, World } from '../types'
 import type { Locale } from '../../i18n/types'
 import type { LocaleContent } from './types'
 import { siteCopy as zhCNSite } from './zh-CN/site'
@@ -62,15 +62,6 @@ export function getLocalizedNavItems(locale: Locale): SiteNavItem[] {
     href: buildLocalizedPageHref(key, locale),
     ...content(locale).site.nav[key]
   }))
-}
-
-export function getLocalizedSections(locale: Locale, page: PageKey): readonly PageCompassSection[] {
-  const sections = content(locale).site.sections[page]
-  const expectedIds = pageRegistry[page].sectionIds
-  if (sections.map((section) => section.id).join('|') !== expectedIds.join('|')) {
-    throw new Error(`Locale ${locale} has incomplete sections for ${page}`)
-  }
-  return sections
 }
 
 export function getLocalizedWorlds(locale: Locale): World[] {

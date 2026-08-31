@@ -64,10 +64,10 @@ jobs:
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/chromium
         run: npm run test:e2e -- --project=chromium --workers=4 --retries=0
-      - name: WebKit desktop PageCompass quality
+      - name: WebKit desktop ScrollProgress quality
         env:
-          PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-compass
-        run: npm run test:e2e -- tests/e2e/page-compass-desktop.spec.ts --project=webkit-desktop --workers=4 --retries=0
+          PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-scroll-progress
+        run: npm run test:e2e -- tests/e2e/scroll-progress.spec.ts --project=webkit-desktop --workers=4 --retries=0
       - name: WebKit desktop adaptive header quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-header
@@ -80,10 +80,10 @@ jobs:
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-primitives
         run: npm run test:e2e -- tests/e2e/ui-primitives.spec.ts --project=webkit-desktop --workers=4 --retries=0
-      - name: WebKit mobile PageCompass quality
+      - name: WebKit mobile ScrollProgress quality
         env:
-          PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-compass
-        run: npm run test:e2e -- tests/e2e/page-compass-mobile.spec.ts --project=webkit-mobile --workers=4 --retries=0
+          PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-scroll-progress
+        run: npm run test:e2e -- tests/e2e/scroll-progress.spec.ts --project=webkit-mobile --workers=4 --retries=0
       - name: WebKit mobile adaptive header quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-header

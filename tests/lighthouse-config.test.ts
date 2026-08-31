@@ -78,7 +78,7 @@ describe('Lighthouse quality matrix', () => {
     for (const interaction of [
       'theme-toggle',
       'mobile-menu',
-      'page-compass',
+      'honor-filter',
       'album-selection',
       'carousel-next',
       'lightbox-open',
@@ -90,7 +90,7 @@ describe('Lighthouse quality matrix', () => {
     expect(runner).toContain('interaction-to-next-paint')
     expect(runner).toContain('200')
     expect(runner).toContain('index.html')
-    expect(runner).toContain('research.html')
+    expect(runner).toContain('honors.html')
     expect(runner).toContain('concerts.html')
     expect(runner).toContain('process.env.PLAYWRIGHT_PORT')
   })

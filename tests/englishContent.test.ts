@@ -21,7 +21,6 @@ import {
   getLocalizedResearchMethodGroups,
   getLocalizedResearchMethods,
   getLocalizedResearchSections,
-  getLocalizedSections,
   getLocalizedWorlds
 } from '../src/data/locales'
 import { uiMessages } from '../src/i18n'
@@ -43,7 +42,6 @@ describe('English content hygiene', () => {
     uiMessages.en,
     ...pageEntries.map(({ key }) => getLocalizedPageMeta('en', key)),
     getLocalizedNavItems('en'),
-    ...pageEntries.map(({ key }) => getLocalizedSections('en', key)),
     getLocalizedWorlds('en'),
     getLocalizedHomeCopy('en'),
     getLocalizedAcademics('en'),
@@ -75,18 +73,6 @@ describe('English content hygiene', () => {
     const strings = englishSources.flatMap(collectStrings)
 
     expect(strings.filter((value) => / {2,}/.test(value))).toEqual([])
-  })
-
-  it('keeps PageCompass English short labels compact', () => {
-    for (const page of pageEntries) {
-      const sections = getLocalizedSections('en', page.key)
-
-      expect(
-        sections.every((section) => (
-          (section.shortLabel ?? section.label).length <= 12
-        ))
-      ).toBe(true)
-    }
   })
 
   it('keeps the archive hero titles word-separated in source copy', () => {

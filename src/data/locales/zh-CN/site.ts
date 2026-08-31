@@ -17,35 +17,6 @@ export const siteCopy = {
     works: { label: '作品', desc: '已上线的项目' },
     concerts: { label: '演唱会', desc: '现场记忆档案' }
   },
-  sections: {
-    home: [
-      { id: 'selected-work', label: '精选作品', shortLabel: '作品' },
-      { id: 'home-worlds', label: '五个小世界', shortLabel: '世界' },
-      { id: 'home-beyond', label: '实验室之外', shortLabel: '之外' }
-    ],
-    academics: [
-      { id: 'sec-education', label: '教育履历', shortLabel: '教育' },
-      { id: 'sec-scoreboard', label: '成绩看板', shortLabel: '成绩' },
-      { id: 'sec-ap-archive', label: 'AP 档案', shortLabel: 'AP' }
-    ],
-    honors: [
-      { id: 'sec-milestones', label: '荣誉里程碑', shortLabel: '里程碑' },
-      { id: 'sec-honors-archive', label: '荣誉档案', shortLabel: '档案' }
-    ],
-    research: [
-      { id: 'sec-research-timeline', label: '研究时间轴', shortLabel: '研究' },
-      { id: 'sec-toolchain', label: '方法与技术栈', shortLabel: '方法' }
-    ],
-    works: [
-      { id: 'works-overview', label: '已发布作品', shortLabel: '作品' },
-      { id: 'project-fresheye', label: '鲜眸', shortLabel: '鲜眸' }
-    ],
-    concerts: [
-      { id: 'concerts-overview', label: '现场档案', shortLabel: '现场' },
-      { id: 'concert-archive', label: '演唱会档案', shortLabel: '海报' },
-      { id: 'album-frequencies', label: '专辑收藏墙', shortLabel: '专辑' }
-    ]
-  },
   worlds: {
     academics: { no: '01', label: '学业', icon: '✦', desc: '绩点、标化与 AP 成绩，是努力留下的可读痕迹。', accent: 'aqua' },
     honors: { no: '02', label: '荣誉', icon: '❖', desc: '奖项是坐标，不是终点；真正重要的是仍然保持向上的惯性。', accent: 'violet' },

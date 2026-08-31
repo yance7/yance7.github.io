@@ -52,8 +52,8 @@ test('language switching preserves the current page and section hash', async ({ 
   await (await openLocaleNav(page)).locator('a[hreflang="en"]').click()
   await expect(page).toHaveURL(/\/en\/research\.html#sec-toolchain$/)
   await expect(page.locator('html')).toHaveAttribute('lang', 'en')
-  await page.locator('.page-compass-trigger').click()
-  await expect(page.locator('.page-compass-link[aria-current="location"]')).toBeVisible()
+  await expect(page.locator('.scroll-progress')).toHaveRole('progressbar')
+  await expect(page.locator('.scroll-progress')).toHaveAttribute('aria-label', 'Reading progress')
 
   await (await openLocaleNav(page)).locator('a[hreflang="zh-HK"]').click()
   await expect(page).toHaveURL(/\/zh-hk\/research\.html#sec-toolchain$/)
