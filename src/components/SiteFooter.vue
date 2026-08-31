@@ -1,26 +1,41 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { footerContacts } from '../data/footerContacts'
 import { buildLocalizedPageHref, useLocale } from '../i18n'
 import BrandMark from './BrandMark.vue'
+import FooterContactIcon from './FooterContactIcon.vue'
 
 const { locale, messages } = useLocale()
+const localizedHomeHref = computed(() => buildLocalizedPageHref('home', locale.value))
 </script>
 
 <template>
   <footer class="site-footer">
-    <div class="foot-brand">
-      <a class="foot-mark" :href="buildLocalizedPageHref('home', locale)" :aria-label="`${messages.accessibility.footerHome}: Yance. ${messages.footer.archive}`">
+    <div class="foot-identity">
+      <a class="foot-mark" :href="localizedHomeHref" :aria-label="messages.footer.homeLabel">
         <BrandMark variant="footer" />
-        <span class="foot-mark-copy">
-          <strong>Yance.</strong>
-          <small>{{ messages.footer.archive }}</small>
-        </span>
       </a>
-      <span class="foot-tag">{{ messages.footer.identity }}</span>
+      <div class="foot-meta">
+        <p>{{ messages.footer.archive }}</p>
+        <p>{{ messages.footer.identity }}</p>
+      </div>
     </div>
-    <div class="foot-links">
-      <a href="https://github.com/yance7" target="_blank" rel="noopener noreferrer">{{ messages.footer.profile }} ↗</a>
-      <a href="https://github.com/yance7" target="_blank" rel="noopener noreferrer">{{ messages.footer.researchRepos }} ↗</a>
-      <a href="mailto:yance777@outlook.com">{{ messages.footer.contact }} ↗</a>
-    </div>
+    <address class="foot-contacts" :aria-label="messages.footer.contactsLabel">
+      <a
+        v-for="contact in footerContacts"
+        :key="contact.key"
+        class="foot-contact"
+        :href="contact.href"
+        :target="contact.external ? '_blank' : undefined"
+        :rel="contact.external ? 'noopener noreferrer' : undefined"
+      >
+        <FooterContactIcon :name="contact.key" />
+        <span class="foot-contact-copy">
+          <span class="foot-contact-label">{{ messages.footer[contact.key] }}</span>
+          <span class="foot-contact-value">{{ contact.value }}</span>
+        </span>
+        <span class="foot-contact-arrow" aria-hidden="true">{{ contact.external ? '↗' : '→' }}</span>
+      </a>
+    </address>
   </footer>
 </template>

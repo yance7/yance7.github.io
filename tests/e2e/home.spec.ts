@@ -18,7 +18,8 @@ test('home keeps the Yance brand mark at both archive anchors', async ({ page })
   await expect(mark).toHaveAttribute('width', '128')
   await expect(mark).toHaveAttribute('height', '128')
   await expect(page.locator('header .wordmark source[type="image/webp"]')).toHaveAttribute('srcset', /yance-mark-96\.webp/)
-  await expect(page.locator('.foot-mark')).toContainText('Yance.')
+  await expect(page.locator('.foot-mark .brand-mark-image')).toBeVisible()
+  await expect(page.locator('.foot-mark')).not.toContainText('Yance.')
 })
 
 test('home renders a focused stage with explicit entry actions', async ({ page }) => {

@@ -372,7 +372,10 @@ describe('shared UI correction contracts', () => {
 
     expect(locale).toContain(':aria-label="`${messages.locale.selector}: ${localeRegistry[locale].shortLabel}')
     expect(header).toContain(':aria-label="`${messages.accessibility.home}: Yance.`"')
-    expect(footer).toContain(':aria-label="`${messages.accessibility.footerHome}: Yance. ${messages.footer.archive}`"')
+    expect(footer).toContain(':aria-label="messages.footer.homeLabel"')
+    expect(footer).toContain('<address class="foot-contacts"')
+    expect(footer).toContain('<FooterContactIcon :name="contact.key" />')
+    expect(footer).not.toContain('Yance.')
     expect(theme).toContain(':aria-label="`${theme === \'light\' ? messages.theme.switchToDark : messages.theme.switchToLight}: ${theme === \'light\' ? messages.theme.light : messages.theme.dark}`"')
     expect(album).toContain(':aria-label="`${album.title} ${album.artist} · ${album.year}, ${formatLabel(album)}`"')
     expect(project).toContain(':aria-label="`${messages.actions.enterProject}: ${project.domain}`"')

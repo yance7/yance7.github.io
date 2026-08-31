@@ -29,6 +29,7 @@ export function useScrollProgress() {
     if ('ResizeObserver' in window) {
       resizeObserver = new ResizeObserver(() => scheduleUpdate())
       resizeObserver.observe(document.documentElement)
+      resizeObserver.observe(document.body)
     }
   })
 

@@ -137,11 +137,14 @@ export interface UiMessages {
     ep: string
   }
   footer: {
-    profile: string
-    researchRepos: string
-    contact: string
+    homeLabel: string
+    contactsLabel: string
     archive: string
     identity: string
+    email: string
+    github: string
+    instagram: string
+    x: string
   }
   error404: {
     kicker: string

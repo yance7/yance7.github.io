@@ -12,7 +12,7 @@ export const zhCNMessages = {
   honors: { filterLabel: '荣誉分类筛选', all: '全部', peak: '领航级', excellent: '卓越级', emerging: '新锐级', honorsUnit: '项荣誉' },
   lightbox: { gallery: '演唱会海报大图', close: '关闭灯箱', previous: '上一张', next: '下一张', position: (current, total) => `，第 ${current} 张，共 ${total} 张`, loading: '正在加载图片', failed: '图片加载失败', retry: '重试', posterAlt: '海报', openArchive: '打开档案' },
   albums: { collection: '专辑收藏墙', navigation: '专辑切换控制', previous: '上一张专辑', next: '下一张专辑', select: '选择一张专辑', selected: '已选择', nowSpinning: '正在播放', album: '专辑', ep: 'EP' },
-  footer: { profile: '个人档案', researchRepos: '研究仓库', contact: '联系', archive: '个人档案 / 2026', identity: '研究者 / 构建者 / 音乐听众' },
+  footer: { homeLabel: '返回首页', contactsLabel: '联系方式', archive: '个人档案 / 2026', identity: '研究者 / 构建者 / 音乐听众', email: '邮箱', github: 'GitHub', instagram: 'Instagram', x: 'X' },
   error404: { kicker: '信号丢失', title: '这一页走丢了', copy: '你访问的页面不存在，或者已经被移走。回到主页，重新选一间屋子走进去。', home: '回到首页', research: '去看看研究' },
   loadError: { title: '页面暂时无法加载', copy: '当前页面资源没有完成加载，请刷新后重试。', retry: '重新加载' },
   status: { active: '进行中', published: '已发表', completed: '已完成', deployed: '已部署', 'open-source': '开放源码', planned: '计划中', archived: '已归档' },

@@ -72,7 +72,7 @@
 - [x] **Step 5: Remove PageCompass imports/rendering/state/styles/copy/types** while retaining `pageRegistry.sectionIds`, section IDs, hash scrolling, Header behavior, and Research content width.
 - [x] **Step 6: Replace Lighthouse interaction with `honor-filter`** using `honors.html`, `[data-honor-filter="peak"]`, and `.honor-card` count 4; add `scroll-progress.spec.ts` for desktop/mobile and all locales.
 - [x] **Step 7: Delete only dedicated PageCompass snapshots and inspect all expected full-page diffs** for Linux/Windows, light/dark, 320×568, 1024×768, and 1440×900.
-- [ ] **Step 8: Run the exact residue scan, full quality gates, commit `移除PageCompass并保留阅读进度`, push, and create PR #34.** The scan must produce no output:
+- [x] **Step 8: Run the exact residue scan, full quality gates, commit `移除PageCompass并保留阅读进度`, push, and create PR #34.** The scan must produce no output:
 
 ```powershell
 rg -n "PageCompass|page-compass|pageCompass|messages\.compass|has-page-compass" src tests scripts .github playwright.config.ts
@@ -95,13 +95,13 @@ Wait for PR CI, Quality, and Pages green before merging.
 - Consumes: `footerContacts`, `FooterContactKey`, localized `messages.footer`, `buildLocalizedPageHref`, and existing `BrandMark` variants.
 - Produces: four ordered accessible footer links and a current-locale home icon link.
 
-- [ ] **Step 1: Write failing data, i18n, SVG, and E2E contract tests.** Assert exact order/URLs, mailto behavior, external target/rel, one GitHub link, no visible `Yance.`, current-locale home href, four hidden icons, and responsive geometry.
-- [ ] **Step 2: Run the focused tests and confirm failure** against the old three-link footer and old message fields.
-- [ ] **Step 3: Add `footerContacts.ts`** with the exact `FooterContactKey` union and readonly Email/GitHub/Instagram/X records; export through `src/data/index.ts`.
-- [ ] **Step 4: Replace footer message fields in all locales** with `homeLabel`, `contactsLabel`, `archive`, `identity`, `email`, `github`, `instagram`, and `x`; remove `profile`, `researchRepos`, and old `contact`.
-- [ ] **Step 5: Implement `FooterContactIcon.vue`** with inline SVGs, `viewBox="0 0 24 24"`, `currentColor`, consistent stroke width, and `aria-hidden="true"`; add recognizable icons without dependencies.
-- [ ] **Step 6: Rebuild `SiteFooter.vue`** into the icon-plus-two-line identity block and semantic `<address>` with exactly four links; use `_blank` plus `noopener noreferrer` only for external contacts and reset address italics.
-- [ ] **Step 7: Implement responsive/focus-visible styling** for a 2×2 matrix through normal mobile widths, a single column only when truly narrow, 44×44 hit areas, safe email wrapping, both themes, and no `transition: all`.
+- [x] **Step 1: Write failing data, i18n, SVG, and E2E contract tests.** Assert exact order/URLs, mailto behavior, external target/rel, one GitHub link, no visible `Yance.`, current-locale home href, four hidden icons, and responsive geometry.
+- [x] **Step 2: Run the focused tests and confirm failure** against the old three-link footer and old message fields.
+- [x] **Step 3: Add `footerContacts.ts`** with the exact `FooterContactKey` union and readonly Email/GitHub/Instagram/X records; export through `src/data/index.ts`.
+- [x] **Step 4: Replace footer message fields in all locales** with `homeLabel`, `contactsLabel`, `archive`, `identity`, `email`, `github`, `instagram`, and `x`; remove `profile`, `researchRepos`, and old `contact`.
+- [x] **Step 5: Implement `FooterContactIcon.vue`** with inline SVGs, `viewBox="0 0 24 24"`, `currentColor`, consistent stroke width, and `aria-hidden="true"`; add recognizable icons without dependencies.
+- [x] **Step 6: Rebuild `SiteFooter.vue`** into the icon-plus-two-line identity block and semantic `<address>` with exactly four links; use `_blank` plus `noopener noreferrer` only for external contacts and reset address italics.
+- [x] **Step 7: Implement responsive/focus-visible styling** for a 2×2 matrix through normal mobile widths, a single column only when truly narrow, 44×44 hit areas, safe email wrapping, both themes, and no `transition: all`.
 - [ ] **Step 8: Run focused browser checks and full gates, inspect screenshots, commit `重构页脚身份与联系方式`, push, and create PR #35.** Wait for PR CI, Quality, and Pages green before merging.
 
 ---
