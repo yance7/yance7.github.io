@@ -26,7 +26,26 @@ export const projectsCopy = {
         sequenceLabel: '產品流程', sequence: ['上載', '推理', '信心度', 'Grad-CAM', 'PDF'],
         proof: [{ type: 'deployment', label: '上線產品', value: 'fresheye.yance777.com', href: 'https://fresheye.yance777.com', external: true }, { type: 'source', label: '原始碼', value: 'GitHub', href: 'https://github.com/yance7/FreshEye', external: true }]
       }
+    },
+    'ap-microeconomics-notes': {
+      ...base['ap-microeconomics-notes']!,
+      title: 'AP Microeconomics 中文講義',
+      value: '把概念、圖形與練習整理成可以連續學習、複習與核驗的路徑。',
+      description: '一套面向 AP Microeconomics 學習者的中文開放講義，包含課程模組、經濟學圖表、選擇題、FRQ 與逐題解析。',
+      role: '內容編寫 · 課程結構設計 · 圖表與建構工具開發',
+      discipline: 'ECONOMICS EDUCATION / OPEN KNOWLEDGE',
+      story: {
+        label: 'FROM COURSEWORK TO OPEN NOTES',
+        note: '把分散的概念、圖形和題目整理成一套可維護、可複習的開放學習檔案。',
+        chapters: [
+          { label: '01 / CURRICULUM', title: '八個連續學習模組', detail: '由課程與考試概覽，到市場、企業行為、要素市場、市場失靈以及答案解析。' },
+          { label: '02 / VISUALIZATION', title: '39 張經濟學圖表', detail: '使用可維護腳本生成供求、成本、市場結構與政策分析圖形。' },
+          { label: '03 / PRACTICE', title: '60 道 MCQ、FRQ 與解析', detail: '練習題與答案按照相同單元和題號組織，便於複習後立即核驗。' }
+        ],
+        sequenceLabel: 'LEARNING LOOP', sequence: ['Learn', 'Model', 'Practice', 'Review'],
+        proof: [{ type: 'source', label: 'SOURCE', value: 'GitHub', href: 'https://github.com/yance7/ap-microeconomics-notes', external: true }]
+      }
     }
   },
-  section: { label: 'RELEASED WORLDS', title: '讓想法', accent: '可以被開啟', copySingular: '一個已經上線的小世界，記錄想法如何離開紙面，開始被真實使用。', copyPlural: '個已經上線的小世界，記錄想法如何離開紙面，開始被真實使用。' }
+  section: { label: 'RELEASED WORLDS', title: '讓想法', accent: '可以被開啟', copySingular: '一個持續建構的小世界，記錄想法如何離開紙面，成為可以使用或繼續成長的成果。', copyPlural: '個持續建構的小世界，記錄想法如何離開紙面，成為可以使用或繼續成長的成果。' }
 } satisfies ProjectLocaleCopy

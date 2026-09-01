@@ -162,8 +162,8 @@
   font-weight: 400;
   letter-spacing: .08em;
   line-height: 1;
-  overflow-wrap: normal;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 .sc-value {
   max-width: var(--w-editorial);

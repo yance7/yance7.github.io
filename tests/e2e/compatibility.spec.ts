@@ -24,10 +24,23 @@ test('compatibility pages boot without horizontal overflow', async ({ page }) =>
 })
 
 test('compatibility hash navigation settles below the sticky header', async ({ page }) => {
-  await page.goto('/works.html#project-fresheye')
-  const target = page.locator('#project-fresheye')
-  await expect(target).toBeVisible()
-  await expect.poll(() => target.evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBeGreaterThanOrEqual(12)
+  const targets = [
+    ['/works.html#project-fresheye', '#project-fresheye'],
+    ['/works.html#project-ap-microeconomics-notes', '#project-ap-microeconomics-notes'],
+    ['/zh-hk/works.html#project-ap-microeconomics-notes', '#project-ap-microeconomics-notes'],
+    ['/en/works.html#project-ap-microeconomics-notes', '#project-ap-microeconomics-notes']
+  ] as const
+
+  for (const [route, selector] of targets) {
+    await page.goto(route)
+    const target = page.locator(selector)
+    await expect(target).toBeVisible()
+    const geometry = await target.evaluate((element) => ({
+      targetTop: element.getBoundingClientRect().top,
+      headerBottom: document.querySelector<HTMLElement>('.site-nav')?.getBoundingClientRect().bottom ?? 0
+    }))
+    expect(geometry.targetTop, route).toBeGreaterThanOrEqual(geometry.headerBottom)
+  }
 })
 
 test('keyboard focus targets stay clear of sticky navigation surfaces', async ({ page }) => {

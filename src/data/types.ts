@@ -75,6 +75,7 @@ export interface ResearchMethodGroup {
 }
 
 type ProjectTone = 'aqua' | 'gold' | 'violet'
+type ProjectAction = 'live' | 'repository'
 
 interface ProjectStoryChapter {
   label: string
@@ -94,6 +95,7 @@ interface ProjectStory {
 
 export interface Project {
   id: string
+  action: ProjectAction
   title: string
   en: string
   domain: string

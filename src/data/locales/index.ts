@@ -128,7 +128,7 @@ export function getLocalizedProjects(locale: Locale): Project[] {
       ...project.story,
       chapters: project.story.chapters.map((chapter) => ({
         ...chapter,
-        href: chapter.href ? localizeInternalHref(chapter.href, locale) : undefined
+        href: 'href' in chapter && chapter.href ? localizeInternalHref(chapter.href, locale) : undefined
       }))
     }
   }))

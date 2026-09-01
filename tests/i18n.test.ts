@@ -75,6 +75,11 @@ describe('stable registry and localized content contracts', () => {
       href: 'research.html',
       sectionIds: ['sec-research-timeline', 'sec-toolchain']
     })
+    expect(pageRegistry.works.sectionIds).toEqual([
+      'works-overview',
+      'project-fresheye',
+      'project-ap-microeconomics-notes'
+    ])
     expect('nav' in pageRegistry.research).toBe(false)
     expect('sections' in pageRegistry.research).toBe(false)
   })

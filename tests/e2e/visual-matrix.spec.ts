@@ -179,6 +179,22 @@ for (const viewport of englishHomeViewports) {
   }
 }
 
+for (const theme of themes) {
+  for (const viewport of viewports) {
+    test(`captures AP Microeconomics dossier ${theme} ${viewport.name} visual baseline`, async ({ page }) => {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height })
+      await installTheme(page, theme)
+      await page.goto('/works.html#project-ap-microeconomics-notes')
+      await settlePage(page)
+
+      const project = page.locator('#project-ap-microeconomics-notes')
+      await project.scrollIntoViewIfNeeded()
+      await expect(project).toHaveClass(/revealed/)
+      await expect(project).toHaveScreenshot(`works-ap-${theme}-${viewport.name}.png`, componentScreenshotOptions)
+    })
+  }
+}
+
 test('200 percent zoom-equivalent reflow keeps keyboard reading usable', async ({ page }) => {
   await page.setViewportSize({ width: 640, height: 844 })
   await page.goto('/research.html')

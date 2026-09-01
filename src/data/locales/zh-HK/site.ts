@@ -6,7 +6,7 @@ export const siteCopy = {
     academics: { kicker: '學業', title: '明日從此的座標', copy: 'GPA、標化考試與 AP 成績，是努力留下的可讀痕跡。', credit: { artist: '林俊傑', song: '明日坐標', album: '明日坐標' } },
     honors: { kicker: '榮譽', title: '一步一步往上爬', copy: '獎項是座標，不是終點；真正重要的是仍然保持向上的慣性。', credit: { artist: '周杰倫', song: '蝸牛', album: 'Fantasy Plus' } },
     research: { kicker: '研究', title: '我不完美的夢，你陪着我想', copy: '從智慧農業到可解釋 AI，把論文中的模型推向瀏覽器裡可以操作的產品。', credit: { artist: 'TFBOYS', song: '不完美小孩', album: '我們的時光' } },
-    works: { kicker: '作品', title: '因為我已慢慢懂，努力就能成功', copy: '一個已經上線的小世界，記錄想法如何離開紙面，開始被真實使用。', credit: { artist: '汪蘇瀧', song: '慢慢懂', album: '慢慢懂' } },
+    works: { kicker: '作品', title: '因為我已慢慢懂，努力就能成功', copy: '兩個持續建構的小世界，記錄想法如何離開紙面，成為可以使用或繼續成長的成果。', credit: { artist: '汪蘇瀧', song: '慢慢懂', album: '慢慢懂' } },
     concerts: { kicker: '演唱會', title: '緣分讓我們相遇亂世以外', copy: '演唱會足跡與海報，記錄那些被燈光和合唱重新定義的夜晚。', credit: { artist: '鄧紫棋', song: '光年之外', album: '' } }
   },
   nav: {
@@ -14,14 +14,14 @@ export const siteCopy = {
     academics: { label: '學業', desc: 'GPA、標化考試與 AP 成績' },
     honors: { label: '榮譽', desc: '獎項與競賽紀錄' },
     research: { label: '研究', desc: '由論文到產品' },
-    works: { label: '作品', desc: '已上線的項目' },
+    works: { label: '作品', desc: '持續建構的項目與開放學習資源' },
     concerts: { label: '演唱會', desc: '現場記憶檔案' }
   },
   worlds: {
     academics: { no: '01', label: '學業', icon: '✦', desc: 'GPA、標化考試與 AP 成績，是努力留下的可讀痕跡。', accent: 'aqua' },
     honors: { no: '02', label: '榮譽', icon: '❖', desc: '獎項是座標，不是終點；真正重要的是仍然保持向上的慣性。', accent: 'violet' },
     research: { no: '03', label: '研究', icon: '◉', desc: '從智慧農業到可解釋 AI，把論文中的模型推向瀏覽器裡可以操作的產品。', accent: 'gold' },
-    works: { no: '04', label: '作品', icon: '♬', desc: '一個已經上線的小世界，記錄想法如何離開紙面，開始被真實使用。', accent: 'aqua' },
+    works: { no: '04', label: '作品', icon: '♬', desc: '兩個持續建構的小世界，記錄想法如何離開紙面，成為可以使用或繼續成長的成果。', accent: 'aqua' },
     concerts: { no: '05', label: '演唱會', icon: '♪', desc: '演唱會足跡與海報，記錄那些被燈光和合唱重新定義的夜晚。', accent: 'gold' }
   },
   home: {
