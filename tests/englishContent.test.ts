@@ -25,6 +25,34 @@ import {
 } from '../src/data/locales'
 import { uiMessages } from '../src/i18n'
 
+const englishHeroContracts = [
+  {
+    key: 'academics' as const,
+    title: 'From here, tomorrow finds its way',
+    credit: { artist: 'JJ Lin', song: '明日坐标', album: '明日坐标' }
+  },
+  {
+    key: 'honors' as const,
+    title: 'Step by step, I climb toward the light',
+    credit: { artist: 'Jay Chou', song: '蜗牛', album: 'Fantasy Plus' }
+  },
+  {
+    key: 'research' as const,
+    title: 'My dream is imperfect; still, you dream it with me',
+    credit: { artist: 'TFBOYS', song: '不完美小孩', album: '我们的时光' }
+  },
+  {
+    key: 'works' as const,
+    title: 'Slowly I learned: keep striving, and success will come',
+    credit: { artist: 'Silence Wang', song: '慢慢懂', album: '慢慢懂' }
+  },
+  {
+    key: 'concerts' as const,
+    title: 'Fate brought us together, beyond this restless world',
+    credit: { artist: 'G.E.M.', song: '光年之外', album: '' }
+  }
+] as const
+
 function collectStrings(value: unknown): string[] {
   if (typeof value === 'string') return [value]
   if (Array.isArray(value)) return value.flatMap(collectStrings)
@@ -75,11 +103,27 @@ describe('English content hygiene', () => {
     expect(strings.filter((value) => / {2,}/.test(value))).toEqual([])
   })
 
-  it('keeps the archive hero titles word-separated in source copy', () => {
-    expect([
-      getLocalizedPageMeta('en', 'academics').title,
-      getLocalizedPageMeta('en', 'honors').title
-    ]).toEqual(['Academic record', 'Selected honors'])
+  it('uses the approved English lyric titles and source-transparent credits', () => {
+    for (const contract of englishHeroContracts) {
+      expect(getLocalizedPageMeta('en', contract.key)).toMatchObject({
+        title: contract.title,
+        credit: contract.credit
+      })
+      expect(uiMessages.en.page[contract.key].title).toBe(contract.title)
+    }
+  })
+
+  it('does not retain the old functional archive hero titles', () => {
+    const oldTitles = [
+      'Academic record',
+      'Selected honors',
+      'Research beyond the paper',
+      'Building ideas into products',
+      'Live music archive'
+    ]
+
+    const titles = englishHeroContracts.map(({ key }) => getLocalizedPageMeta('en', key).title)
+    for (const oldTitle of oldTitles) expect(titles).not.toContain(oldTitle)
   })
 
   it('keeps the AP project dossier fully localized in English', () => {

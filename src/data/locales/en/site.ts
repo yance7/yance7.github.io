@@ -3,11 +3,11 @@ import type { SiteLocaleCopy } from '../types'
 export const siteCopy = {
   pageMeta: {
     home: { kicker: 'PERSONAL ARCHIVE / BEIJING · 2026', title: 'SONG NOTES', copy: 'A record of research, shipped products, and the life fragments lit by music and live shows. Start with a real question, then follow the evidence toward something usable.' },
-    academics: { kicker: 'ACADEMICS', title: 'Academic record', copy: 'Coursework, standardized tests, and AP results—evidence of how the work has accumulated.' },
-    honors: { kicker: 'HONORS', title: 'Selected honors', copy: 'Awards mark the route; the more useful signal is the habit of continuing upward.' },
-    research: { kicker: 'RESEARCH', title: 'Research beyond the paper', copy: 'From smart agriculture to explainable AI, I turn models into tools that people can open and use.' },
-    works: { kicker: 'WORKS', title: 'Building ideas into products', copy: 'Two evolving project worlds showing how ideas leave the page and become products or open learning resources.' },
-    concerts: { kicker: 'CONCERTS', title: 'Live music archive', copy: 'Concerts, posters, and the nights when light and a shared chorus changed the scale of the world.' }
+    academics: { kicker: 'ACADEMICS', title: 'From here, tomorrow finds its way', copy: 'Coursework, standardized tests, and AP results—evidence of how the work has accumulated.', credit: { artist: 'JJ Lin', song: '明日坐标', album: '明日坐标' } },
+    honors: { kicker: 'HONORS', title: 'Step by step, I climb toward the light', copy: 'Awards mark the route; the more useful signal is the habit of continuing upward.', credit: { artist: 'Jay Chou', song: '蜗牛', album: 'Fantasy Plus' } },
+    research: { kicker: 'RESEARCH', title: 'My dream is imperfect; still, you dream it with me', copy: 'From smart agriculture to explainable AI, I turn models into tools that people can open and use.', credit: { artist: 'TFBOYS', song: '不完美小孩', album: '我们的时光' } },
+    works: { kicker: 'WORKS', title: 'Slowly I learned: keep striving, and success will come', copy: 'Two evolving project worlds showing how ideas leave the page and become products or open learning resources.', credit: { artist: 'Silence Wang', song: '慢慢懂', album: '慢慢懂' } },
+    concerts: { kicker: 'CONCERTS', title: 'Fate brought us together, beyond this restless world', copy: 'Concerts, posters, and the nights when light and a shared chorus changed the scale of the world.', credit: { artist: 'G.E.M.', song: '光年之外', album: '' } }
   },
   nav: {
     home: { label: 'Home', desc: 'Personal archive entrance' },

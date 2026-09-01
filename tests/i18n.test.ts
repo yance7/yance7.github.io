@@ -7,7 +7,7 @@ import {
   stripLocalePrefix,
   uiMessages
 } from '../src/i18n'
-import { getLocalizedConcerts, getLocalizedHonors, getLocalizedNavItems, getLocalizedProjects, getLocalizedResearch } from '../src/data/locales'
+import { getLocalizedConcerts, getLocalizedHonors, getLocalizedNavItems, getLocalizedPageMeta, getLocalizedProjects, getLocalizedResearch } from '../src/data/locales'
 import { pageRegistry } from '../src/data/pageRegistry'
 import { buildLocalizedCanonicalUrl, getLocalizedSeo, localizedSitemapEntries } from '../src/data/seo'
 
@@ -102,6 +102,12 @@ describe('stable registry and localized content contracts', () => {
     expect(getLocalizedNavItems('en').map((item) => item.label)).toEqual(['Home', 'Academics', 'Honors', 'Research', 'Works', 'Concerts'])
 
     expect(pageRegistry.research.sectionIds).toEqual(['sec-research-timeline', 'sec-toolchain'])
+  })
+
+  it('mirrors English archive lyric titles in the UI dictionary', () => {
+    for (const page of ['academics', 'honors', 'research', 'works', 'concerts'] as const) {
+      expect(uiMessages.en.page[page].title).toBe(getLocalizedPageMeta('en', page).title)
+    }
   })
 })
 

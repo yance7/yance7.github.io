@@ -9,6 +9,13 @@ const englishHomeViewports = [
   { name: 'mobile', width: 390, height: 844 },
   { name: 'desktop', width: 1440, height: 900 }
 ] as const
+const englishArchiveHeroRoutes = [
+  { name: 'academics', route: '/en/academics.html' },
+  { name: 'honors', route: '/en/honors.html' },
+  { name: 'research', route: '/en/research.html' },
+  { name: 'works', route: '/en/works.html' },
+  { name: 'concerts', route: '/en/concerts.html' }
+] as const
 const themes = ['light', 'dark'] as const
 const FIXED_NOW = '2026-08-21T12:00:00+08:00'
 
@@ -197,6 +204,26 @@ for (const viewport of englishHomeViewports) {
       })
       await expect(leadershipColumn).toHaveScreenshot(`english-home-beyond-${theme}-${viewport.name}.png`, componentScreenshotOptions)
     })
+  }
+}
+
+for (const route of englishArchiveHeroRoutes) {
+  for (const theme of themes) {
+    for (const viewport of viewports) {
+      test(`captures English ${route.name} hero ${theme} ${viewport.name} visual baseline`, async ({ page }) => {
+        await page.setViewportSize({ width: viewport.width, height: viewport.height })
+        await installTheme(page, theme)
+        await page.goto(route.route)
+        await settlePage(page)
+
+        const hero = page.locator('.hero-main')
+        await expect(hero).toBeVisible()
+        await expect(hero).toHaveScreenshot(
+          `english-hero-${route.name}-${theme}-${viewport.name}.png`,
+          componentScreenshotOptions
+        )
+      })
+    }
   }
 }
 

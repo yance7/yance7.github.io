@@ -72,6 +72,10 @@
   .archive-hero { padding-top: var(--space-hero-block); }
   .hero-title { font-size: 3rem; }
   .hero-title.hero-lyric:not(.hero-works-title) { font-size: clamp(1.6rem, 8vw, 2.1rem); }
+  html[data-locale='en'] .hero-title.hero-lyric {
+    max-width: min(100%, 24ch);
+    line-height: 1.28;
+  }
   .hero-line { width: 100%; }
   .metric-strip, .metric-strip.large { grid-template-columns: 1fr 1fr; }
 

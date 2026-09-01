@@ -19,6 +19,47 @@ const viewports = [
   { name: 'wide', width: 1440, height: 900 }
 ] as const
 
+const lyricViewports = [
+  { name: 'narrow', width: 320, height: 844 },
+  { name: 'mobile', width: 390, height: 844 },
+  { name: 'tablet', width: 768, height: 900 },
+  { name: 'desktop', width: 1024, height: 900 },
+  { name: 'wide', width: 1440, height: 900 }
+] as const
+
+const archiveHeroContracts = [
+  {
+    route: '/en/academics.html',
+    title: 'From here, tomorrow finds its way',
+    words: ['From', 'here,', 'tomorrow', 'finds', 'its', 'way'],
+    credit: { artist: 'JJ Lin', song: '明日坐标', album: '明日坐标' }
+  },
+  {
+    route: '/en/honors.html',
+    title: 'Step by step, I climb toward the light',
+    words: ['Step', 'by', 'step,', 'I', 'climb', 'toward', 'the', 'light'],
+    credit: { artist: 'Jay Chou', song: '蜗牛', album: 'Fantasy Plus' }
+  },
+  {
+    route: '/en/research.html',
+    title: 'My dream is imperfect; still, you dream it with me',
+    words: ['My', 'dream', 'is', 'imperfect;', 'still,', 'you', 'dream', 'it', 'with', 'me'],
+    credit: { artist: 'TFBOYS', song: '不完美小孩', album: '我们的时光' }
+  },
+  {
+    route: '/en/works.html',
+    title: 'Slowly I learned: keep striving, and success will come',
+    words: ['Slowly', 'I', 'learned:', 'keep', 'striving,', 'and', 'success', 'will', 'come'],
+    credit: { artist: 'Silence Wang', song: '慢慢懂', album: '慢慢懂' }
+  },
+  {
+    route: '/en/concerts.html',
+    title: 'Fate brought us together, beyond this restless world',
+    words: ['Fate', 'brought', 'us', 'together,', 'beyond', 'this', 'restless', 'world'],
+    credit: { artist: 'G.E.M.', song: '光年之外', album: 'Single' }
+  }
+] as const
+
 async function expectNoDocumentOverflow(page: Page) {
   const geometry = await page.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
@@ -218,32 +259,133 @@ test('English section title preserves semantic spacing around accent text', asyn
     .toHaveText('Turning research into something usable')
 })
 
-test('English archive hero keeps words intact and gives spaces visual width', async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto('/en/academics.html')
+for (const viewport of lyricViewports) {
+  for (const contract of archiveHeroContracts) {
+    test(`English lyric hero keeps words and credits readable: ${viewport.name} ${contract.route}`, async ({ page }) => {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height })
+      await page.emulateMedia({ reducedMotion: 'reduce' })
+      await page.goto(contract.route)
+      await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+      await page.evaluate(async () => {
+        await document.fonts?.ready
+      })
 
-  const hero = page.locator('.hero-title.hero-lyric')
-  await expect(hero).toHaveAttribute('aria-label', 'Academic record')
+      const hero = page.locator('.hero-title.hero-lyric')
+      await expect(hero).toHaveAttribute('aria-label', contract.title)
+      await expect(page.locator('.lyric-credit')).toContainText(contract.credit.artist)
+      await expect(page.locator('.lyric-credit')).toContainText(`「${contract.credit.song}」`)
+      await expect(page.locator('.lyric-credit')).toContainText(contract.credit.album)
+      await expect(hero.locator('br')).toHaveCount(0)
 
-  const geometry = await hero.evaluate((element) => {
-    const words = [...element.querySelectorAll<HTMLElement>('.lyric-word')]
-    const spaces = [...element.querySelectorAll<HTMLElement>('.lyric-space')]
-    const wordLines = words.map((word) => {
-      const characterLines = [...word.querySelectorAll<HTMLElement>('.lyric-char')]
-        .map((character) => Math.round(character.getBoundingClientRect().top))
-      return new Set(characterLines).size
+      const geometry = await hero.evaluate((element) => {
+        const words = [...element.querySelectorAll<HTMLElement>('.lyric-word')]
+        const spaces = [...element.querySelectorAll<HTMLElement>('.lyric-space')]
+        const wordLines = words.map((word) => {
+          const characterLines = [...word.querySelectorAll<HTMLElement>('.lyric-char')]
+            .map((character) => Math.round(character.getBoundingClientRect().top))
+          return new Set(characterLines).size
+        })
+        const wordTops = words.map((word) => Math.round(word.getBoundingClientRect().top))
+        const rect = element.getBoundingClientRect()
+
+        return {
+          words: words.map((word) => word.textContent),
+          spaceWidths: spaces.map((space) => space.getBoundingClientRect().width),
+          wordLines,
+          lineCount: new Set(wordTops).size,
+          titleWidth: element.scrollWidth,
+          titleClientWidth: element.clientWidth,
+          titleRect: { left: rect.left, right: rect.right },
+          documentWidth: document.documentElement.scrollWidth,
+          viewportWidth: window.innerWidth,
+          characterOpacity: [...element.querySelectorAll<HTMLElement>('.lyric-char')]
+            .every((character) => Number.parseFloat(getComputedStyle(character).opacity) === 1),
+          characterTransforms: [...element.querySelectorAll<HTMLElement>('.lyric-char')]
+            .every((character) => getComputedStyle(character).transform === 'none')
+        }
+      })
+
+      expect(geometry.words).toEqual(contract.words)
+      expect(geometry.spaceWidths.every((width) => width > 0)).toBe(true)
+      expect(geometry.wordLines).toEqual(contract.words.map(() => 1))
+      expect(geometry.lineCount, `${contract.route} title lines at ${viewport.width}px`).toBeGreaterThanOrEqual(2)
+      expect(geometry.lineCount, `${contract.route} title lines at ${viewport.width}px`).toBeLessThanOrEqual(4)
+      expect(geometry.titleWidth).toBeLessThanOrEqual(geometry.titleClientWidth + 1)
+      expect(geometry.titleRect.left).toBeGreaterThanOrEqual(-1)
+      expect(geometry.titleRect.right).toBeLessThanOrEqual(geometry.viewportWidth + 1)
+      expect(geometry.documentWidth).toBeLessThanOrEqual(geometry.viewportWidth + 1)
+      expect(geometry.characterOpacity).toBe(true)
+      expect(geometry.characterTransforms).toBe(true)
     })
+  }
+}
 
-    return {
-      words: words.map((word) => word.textContent),
-      spaceWidths: spaces.map((space) => space.getBoundingClientRect().width),
-      wordLines
+for (const contract of archiveHeroContracts) {
+  test(`English lyric hero remains readable in light and dark themes: ${contract.route}`, async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto(contract.route)
+
+    for (const theme of ['light', 'dark'] as const) {
+      await page.evaluate((selectedTheme) => localStorage.setItem('yance-theme', selectedTheme), theme)
+      await page.reload()
+      await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+
+      const appearance = await page.locator('.hero-title.hero-lyric').evaluate((element) => {
+        const titleStyle = getComputedStyle(element)
+        const credit = element.parentElement?.querySelector<HTMLElement>('.lyric-credit')
+        const creditStyle = credit ? getComputedStyle(credit) : null
+        return {
+          titleColor: titleStyle.color,
+          titleOpacity: titleStyle.opacity,
+          creditColor: creditStyle?.color,
+          creditOpacity: creditStyle?.opacity,
+          titleBackground: titleStyle.backgroundColor
+        }
+      })
+
+      expect(appearance.titleColor).toMatch(/^rgb/)
+      expect(appearance.creditColor).toMatch(/^rgb/)
+      expect(appearance.titleOpacity).toBe('1')
+      expect(appearance.creditOpacity).toBe('1')
+      expect(appearance.titleBackground).toBe('rgba(0, 0, 0, 0)')
+      await expect(page.locator('.lyric-credit')).toBeVisible()
     }
   })
+}
 
-  expect(geometry.words).toEqual(['Academic', 'record'])
-  expect(geometry.spaceWidths.every((width) => width > 0)).toBe(true)
-  expect(geometry.wordLines).toEqual([1, 1])
+test('English lyric hero animation does not change layout geometry', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+
+  for (const contract of archiveHeroContracts) {
+    await page.goto(contract.route)
+    await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+    await page.evaluate(async () => {
+      await document.fonts?.ready
+    })
+
+    const measureLayout = () => page.locator('.hero-main').evaluate((element) => {
+      const hero = element as HTMLElement
+      const title = element.querySelector<HTMLElement>('.hero-title')
+      const copy = element.querySelector<HTMLElement>('.hero-copy')
+      const credit = element.querySelector<HTMLElement>('.lyric-credit')
+      return {
+        heroHeight: hero.offsetHeight,
+        titleTop: title?.offsetTop,
+        titleHeight: title?.offsetHeight,
+        copyTop: copy?.offsetTop,
+        creditTop: credit?.offsetTop
+      }
+    })
+
+    const before = await measureLayout()
+    await page.evaluate(() => new Promise<void>((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+    }))
+    const after = await measureLayout()
+
+    expect(after).toEqual(before)
+  }
 })
 
 test('English research method groups do not duplicate the same label', async ({ page }) => {
