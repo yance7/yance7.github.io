@@ -72,6 +72,10 @@ jobs:
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-header
         run: npm run test:e2e -- tests/e2e/adaptive-header.spec.ts --project=webkit-desktop --workers=4 --retries=0
+      - name: WebKit desktop motion system quality
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-motion
+        run: npm run test:e2e -- tests/e2e/motion-system.spec.ts --project=webkit-desktop --workers=4 --retries=0
       - name: WebKit desktop English layout quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-english-layout
@@ -96,6 +100,10 @@ jobs:
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-header
         run: npm run test:e2e -- tests/e2e/adaptive-header.spec.ts --project=webkit-mobile --workers=4 --retries=0
+      - name: WebKit mobile motion system quality
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-motion
+        run: npm run test:e2e -- tests/e2e/motion-system.spec.ts --project=webkit-mobile --workers=4 --retries=0
       - name: WebKit mobile English layout quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-english-layout

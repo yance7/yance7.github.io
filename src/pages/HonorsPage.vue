@@ -74,7 +74,7 @@ function setCategory(category: 'all' | HonorLevel) {
           :class="h.level"
           :id="`honor-${h.id}`"
           v-pointer-sheen
-          v-reveal="{ delay: i * 60 }"
+          v-reveal="{ delay: Math.min(i, 4) * 60 }"
         >
           <span class="honor-coordinate" aria-hidden="true">{{ String(h.coordinate).padStart(2, '0') }}</span>
           <time class="honor-date" :datetime="h.date.replace('.', '-')">{{ h.date }}</time>

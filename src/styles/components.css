@@ -292,19 +292,30 @@ html[data-locale='en'] .section-copy {
 /* ===== 滚动进入动画 ===== */
 .reveal {
   opacity: 0;
-  transform: translateY(18px);
-  transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-slow) var(--ease-out);
+  transform: translate3d(0, var(--reveal-distance), 0);
+  transition:
+    opacity var(--dur-base) var(--ease-out),
+    transform var(--reveal-duration) var(--ease-out);
   will-change: opacity, transform;
 }
-.reveal[data-reveal-variant="fade-left"] { transform: translateX(-30px); }
-.reveal[data-reveal-variant="fade-right"] { transform: translateX(30px); }
-.reveal[data-reveal-variant="clip"] { clip-path: inset(0 0 100% 0); }
-.reveal[data-reveal-variant="scale"] { transform: scale(.92); }
-.reveal[data-reveal-variant="blur"] {
-  filter: blur(6px); transform: translateY(14px);
-  transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-slow) var(--ease-out), filter var(--dur-slow) var(--ease-out);
+.reveal.revealed {
+  opacity: 1;
+  transform: none;
+  will-change: auto;
 }
-.reveal.revealed { opacity: 1; transform: none; clip-path: none; filter: none; will-change: auto; }
+.reveal.showcase,
+.reveal.focus-card,
+.reveal.world-card,
+.reveal.honor-card,
+.reveal.tl-item,
+.reveal.concert-rail-card {
+  transition:
+    opacity var(--dur-base) var(--ease-out),
+    transform var(--reveal-duration) var(--ease-out),
+    background-color var(--dur-base),
+    border-color var(--dur-base),
+    box-shadow var(--dur-base);
+}
 
 /* ===== 错误页 ===== */
 .error-actions { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px; }

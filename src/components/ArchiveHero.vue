@@ -54,7 +54,7 @@ const accessibleTitle = computed(() =>
           </template>
         </h1>
         <p class="hero-copy">{{ copy }}</p>
-        <p v-if="credit" class="lyric-credit" v-reveal="{ delay: 270 }">
+        <p v-if="credit" class="lyric-credit" v-reveal="{ delay: 240 }">
           <b>{{ credit.artist }}</b>
           <i aria-hidden="true">/</i>
           <span>「{{ credit.song }}」</span>
@@ -62,7 +62,7 @@ const accessibleTitle = computed(() =>
           <span v-if="credit.album" class="lc-album">《{{ credit.album }}》</span>
           <span v-else class="lc-album">{{ messages.common.single }}</span>
         </p>
-        <div class="hero-line" v-reveal="{ delay: 300 }"><span></span></div>
+        <div class="hero-line" v-reveal="{ delay: 240 }"><span></span></div>
       </div>
     </div>
   </section>

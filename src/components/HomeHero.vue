@@ -53,7 +53,7 @@ const home = computed(() => getLocalizedHomeCopy(locale.value))
         </div>
       </div>
 
-      <a class="home-stage-scroll" href="#home-worlds" v-reveal="{ delay: 420 }">
+      <a class="home-stage-scroll" href="#home-worlds" v-reveal="{ delay: 240 }">
         <span class="home-stage-scroll-line" aria-hidden="true"></span>
         <span>{{ messages.actions.scrollToExplore }}</span>
         <span class="home-stage-scroll-arrow" aria-hidden="true">↓</span>

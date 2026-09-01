@@ -1,17 +1,19 @@
 import type { Directive, DirectiveBinding } from 'vue'
-import { getRevealMode, isInInitialViewport } from '../utils/reveal'
+import { getRevealMode, isInInitialViewport, normalizeRevealDelay, revealMaxDelay } from '../utils/reveal'
 
-type RevealVariant = 'fade-up' | 'fade-left' | 'fade-right' | 'clip' | 'scale' | 'blur'
-type RevealValue = number | { delay?: number; variant?: RevealVariant }
+type RevealValue = number | { delay?: number }
 
 let observer: IntersectionObserver | null = null
 let bottomResizeObserver: ResizeObserver | null = null
 let reachedDocumentEnd = false
-const documentEndBuffer = 240
+const observedElements = new Set<HTMLElement>()
+const documentEndBuffer = revealMaxDelay
 
 function revealElement(element: HTMLElement, currentObserver: IntersectionObserver) {
   element.classList.add('revealed')
   currentObserver.unobserve(element)
+  observedElements.delete(element)
+  disconnectObserverIfIdle()
 }
 
 function isNearDocumentEnd() {
@@ -24,6 +26,14 @@ function disconnectBottomFallback() {
   bottomResizeObserver = null
 }
 
+function disconnectObserverIfIdle() {
+  if (observedElements.size) return
+  observer?.disconnect()
+  observer = null
+  disconnectBottomFallback()
+  reachedDocumentEnd = false
+}
+
 function revealRemainingAtDocumentEnd() {
   if (reachedDocumentEnd || !isNearDocumentEnd()) return
   reachedDocumentEnd = true
@@ -31,8 +41,9 @@ function revealRemainingAtDocumentEnd() {
   document.querySelectorAll<HTMLElement>('.reveal:not(.revealed)').forEach((element) => {
     element.classList.add('revealed')
     observer?.unobserve(element)
+    observedElements.delete(element)
   })
-  disconnectBottomFallback()
+  disconnectObserverIfIdle()
 }
 
 function handleScroll() {
@@ -60,21 +71,18 @@ function getObserver() {
   return observer
 }
 
-function resolveValue(value: RevealValue | undefined) {
-  if (typeof value === 'number') return { delay: value, variant: 'fade-up' as RevealVariant }
-  return {
-    delay: value?.delay ?? 0,
-    variant: value?.variant ?? 'fade-up' as RevealVariant
-  }
+function resolveDelay(value: RevealValue | undefined) {
+  return normalizeRevealDelay(typeof value === 'number' ? value : value?.delay)
 }
 
 function revealImmediately(element: HTMLElement) {
-  element.classList.add('revealed')
+  element.classList.add('reveal', 'revealed')
   element.style.removeProperty('transition-delay')
 }
 
 const reveal: Directive<HTMLElement, RevealValue> = {
   mounted(element, binding) {
+    const delay = resolveDelay(binding.value)
     const mode = getRevealMode({
       supportsIntersectionObserver: 'IntersectionObserver' in window,
       prefersReducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -94,26 +102,26 @@ const reveal: Directive<HTMLElement, RevealValue> = {
       return
     }
 
-    const { delay, variant } = resolveValue(binding.value)
-    element.dataset.revealVariant = variant
-    element.style.transitionDelay = delay > 0 ? `${delay}ms` : ''
     element.classList.add('reveal')
+    element.style.transitionDelay = delay > 0 ? `${delay}ms` : ''
 
     const currentObserver = getObserver()
+    observedElements.add(element)
     currentObserver.observe(element)
     revealRemainingAtDocumentEnd()
   },
 
   updated(element, binding: DirectiveBinding<RevealValue>) {
     if (binding.value === binding.oldValue) return
-    const { delay, variant } = resolveValue(binding.value)
-    element.dataset.revealVariant = variant
+    const delay = resolveDelay(binding.value)
     element.style.transitionDelay = delay > 0 ? `${delay}ms` : ''
   },
 
   unmounted(element) {
     observer?.unobserve(element)
+    observedElements.delete(element)
     element.style.removeProperty('transition-delay')
+    disconnectObserverIfIdle()
   }
 }
 

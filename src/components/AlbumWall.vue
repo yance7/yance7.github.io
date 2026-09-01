@@ -146,7 +146,7 @@ onUnmounted(() => {
       :copy="section.copy"
     />
 
-    <div class="album-wall" :style="wallStyle">
+    <div class="album-wall" :style="wallStyle" v-reveal>
       <div class="album-stage-layout">
         <div class="album-spotlight">
           <div class="album-spotlight-head">
@@ -294,6 +294,15 @@ onUnmounted(() => {
     var(--stage-surface);
   box-shadow: var(--album-stage-shadow);
   transition: background-color var(--dur-slow) var(--ease-soft), border-color var(--dur-slow) var(--ease-soft), color var(--dur-slow) var(--ease-soft);
+}
+
+.album-wall.reveal {
+  transition:
+    opacity var(--dur-base) var(--ease-out),
+    transform var(--reveal-duration) var(--ease-out),
+    background-color var(--dur-slow) var(--ease-soft),
+    border-color var(--dur-slow) var(--ease-soft),
+    color var(--dur-slow) var(--ease-soft);
 }
 
 .album-wall::before {

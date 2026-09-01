@@ -190,13 +190,13 @@ onBeforeUnmount(() => {
     >
       <div class="concert-rail-track">
         <article
-          v-for="item in props.concerts"
+          v-for="(item, i) in props.concerts"
           :key="item.id"
           class="concert-rail-card"
           :data-anchor-id="`concert-${item.id}`"
           :data-concert-id="item.id"
           data-concert-status="attended"
-          v-reveal
+          v-reveal="{ delay: Math.min(i, 4) * 60 }"
           @mouseenter="preloadItem(item)"
           @focusin="preloadItem(item)"
         >

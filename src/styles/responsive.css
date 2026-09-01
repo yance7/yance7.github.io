@@ -188,7 +188,7 @@
     animation-duration: .01ms !important;
     animation-iteration-count: 1 !important;
   }
-  .reveal { opacity: 1; transform: none; clip-path: none; filter: none; }
+  .reveal { opacity: 1; transform: none; animation: none !important; }
   .lyric-char { opacity: 1; transform: none; animation: none !important; }
   .hero-action:hover,
   .hero-action:focus-visible,
