@@ -102,12 +102,17 @@
   border-radius: var(--nav-floating-radius);
   background: var(--nav-floating-bg);
   box-shadow: var(--nav-floating-shadow);
+  -webkit-backdrop-filter: blur(var(--nav-floating-blur)) saturate(var(--nav-floating-saturate));
   backdrop-filter: blur(var(--nav-floating-blur)) saturate(var(--nav-floating-saturate));
   transform: translateY(var(--nav-floating-top));
   gap: var(--nav-floating-gap);
 }
-@supports not (backdrop-filter: blur(1px)) {
-  .site-nav-surface { backdrop-filter: none; }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .site-nav[data-header-state='floating'] .site-nav-surface {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--surface-strong);
+  }
 }
 @media (forced-colors: active) {
   .site-nav-surface,
