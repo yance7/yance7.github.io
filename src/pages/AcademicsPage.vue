@@ -25,7 +25,7 @@ const academics = computed(() => getLocalizedAcademics(locale.value))
           v-for="(edu, i) in academics.education"
           :key="edu.name"
           class="education-row"
-          v-reveal="{ delay: i * 80 }"
+          v-reveal="{ delay: Math.min(i, 4) * 60 }"
         >
           <span class="education-period">{{ edu.period }}</span>
           <span class="education-name">{{ edu.name }}</span>
@@ -61,7 +61,7 @@ const academics = computed(() => getLocalizedAcademics(locale.value))
           :key="row.name"
           class="ap-row"
           :class="row.status"
-          v-reveal="{ delay: i * 40 }"
+          v-reveal="{ delay: Math.min(i, 4) * 60 }"
         >
           <span class="ap-no">{{ String(i + 1).padStart(2, '0') }}</span>
           <div class="ap-main">

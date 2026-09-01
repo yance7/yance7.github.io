@@ -68,6 +68,10 @@
   --dur-base: .28s;
   --dur-slow: .52s;
   --dur-page: .56s;
+  --reveal-distance: 18px;
+  --reveal-duration: .52s;
+  --reveal-stagger-step: 60ms;
+  --reveal-max-delay: 240ms;
 
   /* 统一交互幅度 */
   --motion-lift: -3px;

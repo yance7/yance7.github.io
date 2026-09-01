@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { getRevealMode, isInInitialViewport } from '../src/utils/reveal'
+import { getRevealMode, isInInitialViewport, normalizeRevealDelay } from '../src/utils/reveal'
 
 describe('reveal mode contract', () => {
   it('chooses immediate mode when IntersectionObserver is unavailable or motion is reduced', () => {
@@ -15,6 +15,13 @@ describe('reveal mode contract', () => {
     expect(isInInitialViewport({ top: -40, bottom: 20 }, 844)).toBe(true)
     expect(isInInitialViewport({ top: 844, bottom: 920 }, 844)).toBe(false)
     expect(isInInitialViewport({ top: -120, bottom: -8 }, 844)).toBe(false)
+  })
+
+  it('normalizes stagger delays into the shared reveal budget', () => {
+    expect(normalizeRevealDelay(-10)).toBe(0)
+    expect(normalizeRevealDelay(61.4)).toBe(61)
+    expect(normalizeRevealDelay(800)).toBe(240)
+    expect(normalizeRevealDelay(Number.NaN)).toBe(0)
   })
 
   it('keeps the directive on one observer lifecycle without the duplicate fallback path', () => {

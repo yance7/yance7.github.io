@@ -2,6 +2,8 @@ import { expect, test } from '@playwright/test'
 
 test('Academics passive rows remain inside layout after pointer emphasis', async ({ page }) => {
   await page.goto('/academics.html')
+  const finePointer = await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)
+  test.skip(!finePointer, 'Hover emphasis is only observable on fine-pointer projects')
 
   const row = page.locator('.ap-row').first()
 
@@ -24,6 +26,8 @@ test('Academics passive rows remain inside layout after pointer emphasis', async
 
 test('Academics education rows expose emphasis without becoming controls', async ({ page }) => {
   await page.goto('/academics.html')
+  const finePointer = await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)
+  test.skip(!finePointer, 'Hover emphasis is only observable on fine-pointer projects')
 
   const row = page.locator('.education-row').first()
   const initial = await row.evaluate((element) => ({
@@ -47,6 +51,8 @@ test('Academics education rows expose emphasis without becoming controls', async
 
 test('Academics AP rows emphasize their result without shifting layout', async ({ page }) => {
   await page.goto('/academics.html')
+  const finePointer = await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)
+  test.skip(!finePointer, 'Hover emphasis is only observable on fine-pointer projects')
   await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
   await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready', { timeout: 10_000 })
 
@@ -87,9 +93,13 @@ test('Research toolchain groups use a bounded staggered reveal', async ({ page }
 
 test('Research toolchain groups expose a passive accent without lifting the group', async ({ page }) => {
   await page.goto('/research.html')
+  const finePointer = await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)
+  test.skip(!finePointer, 'Hover emphasis is only observable on fine-pointer projects')
 
   const group = page.locator('.toolchain-group').first()
 
+  await group.scrollIntoViewIfNeeded()
+  await expect(group).toHaveClass(/revealed/)
   await group.hover()
 
   await expect.poll(() => group.evaluate((element) => (
@@ -130,4 +140,61 @@ test('New interaction polish does not introduce motion under reduced motion', as
   ))
 
   expect(['0s', '0.01ms', '1e-05s']).toContain(pseudoTransition)
+})
+
+test('reveal content uses one-shot fade-up with a bounded stagger', async ({ page }) => {
+  await page.goto('/works.html')
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+
+  const secondProject = page.locator('#project-ap-microeconomics-notes')
+  await expect(secondProject).toHaveClass(/reveal/)
+  await expect(secondProject).not.toHaveClass(/revealed/)
+
+  await secondProject.evaluate((element) => {
+    element.scrollIntoView({ behavior: 'instant', block: 'center', inline: 'nearest' })
+  })
+  await expect(secondProject).toHaveClass(/revealed/)
+  await expect.poll(() => secondProject.evaluate((element) => getComputedStyle(element).transform)).toBe('none')
+
+  await page.evaluate(() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' }))
+  await expect.poll(() => secondProject.evaluate((element) => element.classList.contains('revealed'))).toBe(true)
+
+  for (const route of ['/index.html', '/honors.html']) {
+    await page.goto(route)
+    const delays = await page.locator('.reveal').evaluateAll((elements) => elements
+      .map((element) => element.style.transitionDelay)
+      .filter(Boolean)
+      .map((value) => Number.parseFloat(value)))
+    expect(delays.every((delay) => delay <= 240)).toBe(true)
+  }
+})
+
+test('reduced motion completes every reveal immediately', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/research.html')
+
+  await expect.poll(() => page.locator('.reveal').count()).toBeGreaterThan(0)
+  await expect.poll(() => page.locator('.reveal:not(.revealed)').count()).toBe(0)
+  const states = await page.locator('.reveal').evaluateAll((elements) => elements.map((element) => {
+    const style = getComputedStyle(element)
+    return { opacity: Number.parseFloat(style.opacity), transform: style.transform }
+  }))
+  expect(states.every(({ opacity, transform }) => opacity === 1 && transform === 'none')).toBe(true)
+})
+
+test('quick hash navigation reveals the targeted Works project', async ({ page }) => {
+  await page.goto('/works.html#project-ap-microeconomics-notes', { waitUntil: 'domcontentloaded' })
+
+  const target = page.locator('#project-ap-microeconomics-notes')
+  await expect(target).toHaveClass(/revealed/)
+  await expect.poll(() => target.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBe(1)
+  await expect.poll(() => target.evaluate((element) => getComputedStyle(element).transform)).toBe('none')
+})
+
+test('scrolling to the document end reveals the footer and all remaining content', async ({ page }) => {
+  await page.goto('/concerts.html')
+
+  await page.locator('.site-footer').scrollIntoViewIfNeeded()
+  await expect(page.locator('.site-footer')).toBeVisible()
+  await expect.poll(() => page.locator('.reveal:not(.revealed)').count()).toBe(0)
 })

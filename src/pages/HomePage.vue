@@ -38,7 +38,7 @@ const selectedActivities = computed(() => community.value.activities.filter((ite
           :key="item.id"
           class="focus-card focus-research"
           :href="buildLocalizedPageHref('research', locale, { hash: `#${item.id}` })"
-          v-reveal="{ delay: i * 70 }"
+          v-reveal="{ delay: Math.min(i, 4) * 60 }"
           v-pointer-sheen
         >
           <span class="focus-label">{{ messages.home.researchLabel }} / 0{{ i + 1 }}</span>
@@ -58,7 +58,7 @@ const selectedActivities = computed(() => community.value.activities.filter((ite
           :key="item.id"
           class="focus-card focus-product"
           :class="item.tone"
-          v-reveal="{ delay: (i + featuredResearch.length) * 70 }"
+          v-reveal="{ delay: Math.min(i + featuredResearch.length, 4) * 60 }"
           v-pointer-sheen
         >
           <a class="focus-card-main" :href="buildLocalizedPageHref('works', locale, { hash: `#project-${item.id}` })">
@@ -93,7 +93,7 @@ const selectedActivities = computed(() => community.value.activities.filter((ite
           :class="`accent-${w.accent}`"
           :href="w.href"
           :style="{ '--wi': i }"
-          v-reveal="{ delay: i * 80 }"
+          v-reveal="{ delay: Math.min(i, 4) * 60 }"
         >
           <div class="world-left">
             <span class="world-no">{{ w.no }}</span>
@@ -128,7 +128,7 @@ const selectedActivities = computed(() => community.value.activities.filter((ite
             </article>
           </div>
         </div>
-        <div class="beyond-column" v-reveal="{ delay: 80 }">
+        <div class="beyond-column" v-reveal="{ delay: 60 }">
           <span class="beyond-label">{{ messages.home.selectedActivities }}</span>
           <div class="beyond-activity-list">
             <article v-for="item in selectedActivities" :key="item.id" class="beyond-activity">

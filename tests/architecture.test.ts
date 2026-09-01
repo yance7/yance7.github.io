@@ -436,12 +436,10 @@ describe('motion hierarchy contracts', () => {
   it('lets IntersectionObserver own reveal geometry after initial viewport setup', () => {
     const reveal = readFileSync(resolve(process.cwd(), 'src/directives/reveal.ts'), 'utf8')
 
-    expect(reveal).not.toContain('const tracked = new Set<HTMLElement>()')
-    expect(reveal).not.toContain('tracked.forEach(')
-    expect(reveal).not.toContain('tracked.add(element)')
-    expect(reveal).not.toContain('tracked.delete(element)')
     expect(reveal).toContain('currentObserver.unobserve(element)')
     expect(reveal).toContain('isInInitialViewport(element.getBoundingClientRect(), window.innerHeight)')
+    expect(reveal).toContain('normalizeRevealDelay')
+    expect(reveal).toContain('const observedElements = new Set<HTMLElement>()')
     expect(reveal).toContain('function revealRemainingAtDocumentEnd()')
     expect(reveal).toContain('document.documentElement.scrollHeight')
     expect(reveal).toContain("document.querySelectorAll<HTMLElement>('.reveal:not(.revealed)')")
@@ -454,6 +452,25 @@ describe('motion hierarchy contracts', () => {
     expect(reveal).toContain('bottomResizeObserver?.disconnect()')
     expect(reveal).toContain('if (reachedDocumentEnd) {\n      revealImmediately(element)')
     expect(reveal).toContain('new ResizeObserver(')
+    expect(reveal).toContain('observer?.disconnect()')
+    expect(reveal).toContain('observedElements.delete(element)')
+    expect(reveal).not.toContain('RevealVariant')
+    expect(reveal).not.toContain('data-reveal-variant')
+  })
+
+  it('keeps reveal styling to one bounded fade-up primitive', () => {
+    const styles = readFileSync(resolve(process.cwd(), 'src/styles/components.css'), 'utf8')
+    const theme = readFileSync(resolve(process.cwd(), 'src/theme.css'), 'utf8')
+
+    expect(theme).toContain('--reveal-distance: 18px')
+    expect(theme).toContain('--reveal-duration: .52s')
+    expect(theme).toContain('--reveal-stagger-step: 60ms')
+    expect(theme).toContain('--reveal-max-delay: 240ms')
+    expect(styles).toContain('transform: translate3d(0, var(--reveal-distance), 0)')
+    expect(styles).toContain('transform var(--reveal-duration) var(--ease-out)')
+    expect(styles).not.toContain('data-reveal-variant')
+    expect(styles).not.toContain('clip-path: inset(0 0 100% 0)')
+    expect(styles).not.toContain('filter: blur(6px)')
   })
 
   it('keeps project actions free of nested magnetic bindings', () => {

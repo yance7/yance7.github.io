@@ -11,7 +11,7 @@ const localizedHomeHref = computed(() => buildLocalizedPageHref('home', locale.v
 
 <template>
   <footer class="site-footer">
-    <div class="foot-identity">
+    <div class="foot-identity" v-reveal>
       <a class="foot-mark" :href="localizedHomeHref" :aria-label="messages.footer.homeLabel">
         <BrandMark variant="footer" />
       </a>
@@ -20,7 +20,7 @@ const localizedHomeHref = computed(() => buildLocalizedPageHref('home', locale.v
         <p>{{ messages.footer.identity }}</p>
       </div>
     </div>
-    <address class="foot-contacts" :aria-label="messages.footer.contactsLabel">
+    <address class="foot-contacts" :aria-label="messages.footer.contactsLabel" v-reveal="{ delay: 60 }">
       <a
         v-for="contact in footerContacts"
         :key="contact.key"

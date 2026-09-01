@@ -77,13 +77,13 @@ onUnmounted(() => {
   <div ref="timelineRoot" class="timeline-track">
     <div class="tl-rail" aria-hidden="true"></div>
     <article
-      v-for="item in items"
+      v-for="(item, i) in items"
       :key="item.id"
       :id="item.id"
       class="tl-item"
       :class="{ active: item.status === 'active', 'is-current': currentId === item.id }"
       :data-reading-state="currentId === item.id ? 'current' : 'idle'"
-      v-reveal
+      v-reveal="{ delay: Math.min(i, 4) * 60 }"
     >
       <div class="tl-side">
         <span class="tl-date">{{ item.date }}</span>
