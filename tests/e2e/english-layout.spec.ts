@@ -15,6 +15,7 @@ const viewports = [
   { name: 'mobile', width: 390, height: 844 },
   { name: 'tablet', width: 768, height: 900 },
   { name: 'desktop', width: 1024, height: 900 },
+  { name: 'wide-desktop', width: 1080, height: 943 },
   { name: 'wide', width: 1440, height: 900 }
 ] as const
 
@@ -56,6 +57,122 @@ async function expectEnglishLayoutSurfacesInsideViewport(page: Page) {
   expect(violations).toEqual([])
 }
 
+async function expectEnglishTextSurfacesReadable(page: Page) {
+  const violations = await page.evaluate(() => {
+    const selectors = [
+      '.home-stage-heading',
+      '.home-stage-title',
+      '.home-stage-copy',
+      '.hero-title',
+      '.hero-copy',
+      '.section-head h2',
+      '.section-head p',
+      '.nav-rail a',
+      '.beyond-label',
+      '.beyond-leadership strong',
+      '.beyond-leadership span',
+      '.beyond-leadership small',
+      '.beyond-activity strong',
+      '.beyond-activity small',
+      '.education-name',
+      '.education-en',
+      '.ap-main strong',
+      '.ap-main small',
+      '.filter-btn',
+      '.honor-title',
+      '.honor-org',
+      '.tl-body h3',
+      '.tl-body > p',
+      '.tc-group-head strong',
+      '.tc-group-head small',
+      '.sc-overline',
+      '.sc-identity h3 > span',
+      '.sc-value',
+      '.sc-desc',
+      '.sc-chapter strong',
+      '.sc-chapter p',
+      '.sc-role > span:last-child',
+      '.next-up-card strong',
+      '.next-up-card small',
+      '.concert-venue',
+      '.foot-contact-value',
+      '.hero-action'
+    ]
+
+    return selectors.flatMap((selector) => [...document.querySelectorAll<HTMLElement>(selector)]
+      .filter((element) => {
+        let ancestor = element.parentElement
+        while (ancestor) {
+          const ancestorOverflowX = getComputedStyle(ancestor).overflowX
+          if (['auto', 'scroll'].includes(ancestorOverflowX)) return false
+          ancestor = ancestor.parentElement
+        }
+
+        const hasHorizontalOverflow = element.scrollWidth > element.clientWidth + 1
+        const rect = element.getBoundingClientRect()
+        return hasHorizontalOverflow
+          || rect.left < -1
+          || rect.right > window.innerWidth + 1
+      })
+      .map((element) => ({
+        selector,
+        text: element.textContent?.trim().slice(0, 100),
+        scrollWidth: element.scrollWidth,
+        clientWidth: element.clientWidth,
+        overflowX: getComputedStyle(element).overflowX,
+        left: element.getBoundingClientRect().left,
+        right: element.getBoundingClientRect().right
+      })))
+  })
+
+  expect(violations).toEqual([])
+}
+
+async function expectEnglishLeadershipRowsDoNotCollide(page: Page) {
+  const violations = await page.evaluate(() => {
+    type TextRect = Pick<DOMRect, 'left' | 'right' | 'top' | 'bottom'>
+
+    const getTextRects = (element: HTMLElement): TextRect[] => {
+      const range = document.createRange()
+      range.selectNodeContents(element)
+      return [...range.getClientRects()].map((rect) => ({
+        left: rect.left,
+        right: rect.right,
+        top: rect.top,
+        bottom: rect.bottom
+      }))
+    }
+
+    const overlaps = (first: TextRect, second: TextRect) => (
+      first.left < second.right - .5
+      && first.right > second.left + .5
+      && first.top < second.bottom - .5
+      && first.bottom > second.top + .5
+    )
+
+    return [...document.querySelectorAll<HTMLElement>('.beyond-leadership')]
+      .flatMap((row) => {
+        const elements = ['strong', 'span', 'small'].map((selector) => row.querySelector<HTMLElement>(selector))
+        const rects = elements.map((element) => element ? getTextRects(element) : [])
+        const rowViolations: string[] = []
+
+        for (let firstIndex = 0; firstIndex < rects.length; firstIndex += 1) {
+          for (let secondIndex = firstIndex + 1; secondIndex < rects.length; secondIndex += 1) {
+            const firstRects = rects[firstIndex] ?? []
+            const secondRects = rects[secondIndex] ?? []
+            if (firstRects.some((first) => secondRects.some((second) => overlaps(first, second)))) {
+              rowViolations.push(`${elements[firstIndex]?.textContent} / ${elements[secondIndex]?.textContent}`)
+            }
+          }
+        }
+
+        return rowViolations.map((pair) => ({ row: row.textContent?.trim(), pair }))
+      })
+  })
+
+  expect(violations).toEqual([])
+}
+
 for (const viewport of viewports) {
   for (const route of routes) {
     test(`English layout stays inside viewport: ${viewport.name} ${route}`, async ({ page }) => {
@@ -71,8 +188,25 @@ for (const viewport of viewports) {
 
       await expectNoDocumentOverflow(page)
       await expectEnglishLayoutSurfacesInsideViewport(page)
+      await expectEnglishTextSurfacesReadable(page)
     })
   }
+}
+
+for (const viewport of viewports) {
+  test(`English leadership roles never collide: ${viewport.name}`, async ({ page }) => {
+    await page.setViewportSize({
+      width: viewport.width,
+      height: viewport.height
+    })
+
+    await page.goto('/en/')
+
+    await expect(page.locator('.site-shell'))
+      .toHaveAttribute('data-page-load-state', 'ready')
+
+    await expectEnglishLeadershipRowsDoNotCollide(page)
+  })
 }
 
 test('English section title preserves semantic spacing around accent text', async ({ page }) => {

@@ -5,6 +5,10 @@ const viewports = [
   { name: 'mobile', width: 390, height: 844 },
   { name: 'desktop', width: 1440, height: 900 }
 ] as const
+const englishHomeViewports = [
+  { name: 'mobile', width: 390, height: 844 },
+  { name: 'desktop', width: 1440, height: 900 }
+] as const
 const themes = ['light', 'dark'] as const
 const FIXED_NOW = '2026-08-21T12:00:00+08:00'
 
@@ -148,6 +152,31 @@ for (const theme of themes) {
     await expectLightboxGeometry(page)
     await expect(page.locator('.lightbox')).toHaveScreenshot(`${theme}-lightbox-mobile.png`, componentScreenshotOptions)
   })
+}
+
+for (const viewport of englishHomeViewports) {
+  for (const theme of themes) {
+    test(`captures English home leadership ${theme} ${viewport.name} visual baseline`, async ({ page }) => {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height })
+      await installTheme(page, theme)
+      await page.goto('/en/')
+      await settlePage(page)
+
+      const leadershipColumn = page.locator('#home-beyond .beyond-column').first()
+      await leadershipColumn.scrollIntoViewIfNeeded()
+      await expect(leadershipColumn).toHaveClass(/revealed/)
+      await page.locator('.skip-link').evaluate((element) => element.blur())
+      await page.evaluate(() => {
+        const header = document.querySelector<HTMLElement>('.site-nav')
+        const target = document.querySelector<HTMLElement>('#home-beyond .beyond-column')
+        if (!header || !target) throw new Error('English home visual targets are missing')
+
+        const overlap = header.getBoundingClientRect().bottom + 16 - target.getBoundingClientRect().top
+        if (overlap > 0) window.scrollBy(0, -overlap)
+      })
+      await expect(leadershipColumn).toHaveScreenshot(`english-home-beyond-${theme}-${viewport.name}.png`, componentScreenshotOptions)
+    })
+  }
 }
 
 test('200 percent zoom-equivalent reflow keeps keyboard reading usable', async ({ page }) => {
