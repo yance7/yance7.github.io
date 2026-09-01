@@ -84,6 +84,27 @@ async function expectLightboxGeometry(page: Page) {
   expect(geometry.imageBottom, JSON.stringify(geometry)).toBeLessThanOrEqual(geometry.metadataTop - 12)
 }
 
+async function settleFloatingHeader(page: Page, route: 'research' | 'works') {
+  const targetSelector = route === 'research' ? '#sec-toolchain' : '#project-fresheye'
+  await page.locator(targetSelector).evaluate((element) => {
+    const root = document.documentElement
+    const body = document.body
+    const previousRootBehavior = root.style.scrollBehavior
+    const previousBodyBehavior = body.style.scrollBehavior
+    const targetTop = element.getBoundingClientRect().top + window.scrollY - 44
+
+    root.style.scrollBehavior = 'auto'
+    body.style.scrollBehavior = 'auto'
+    window.scrollTo({ top: targetTop, left: 0, behavior: 'auto' })
+    root.style.scrollBehavior = previousRootBehavior
+    body.style.scrollBehavior = previousBodyBehavior
+  })
+  await expect(page.locator('.site-nav')).toHaveAttribute('data-header-state', 'floating')
+  await page.evaluate(() => new Promise<void>((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+  }))
+}
+
 for (const viewport of viewports) {
   for (const theme of themes) {
     test(`captures ${theme} ${viewport.name} visual baselines`, async ({ page }, testInfo) => {
@@ -192,6 +213,24 @@ for (const theme of themes) {
       await expect(project).toHaveClass(/revealed/)
       await expect(project).toHaveScreenshot(`works-ap-${theme}-${viewport.name}.png`, componentScreenshotOptions)
     })
+  }
+}
+
+for (const route of ['research', 'works'] as const) {
+  for (const theme of themes) {
+    for (const viewport of viewports) {
+      test(`captures ${route} floating header ${theme} ${viewport.name} visual baseline`, async ({ page }) => {
+        await page.setViewportSize({ width: viewport.width, height: viewport.height })
+        await installTheme(page, theme)
+        await page.goto(`/${route}.html`)
+        await settlePage(page)
+        await settleFloatingHeader(page, route)
+        await expect(page.locator('.site-nav-surface')).toHaveScreenshot(
+          `header-floating-${route}-${theme}-${viewport.name}.png`,
+          componentScreenshotOptions
+        )
+      })
+    }
   }
 }
 

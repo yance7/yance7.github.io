@@ -48,7 +48,16 @@ describe('adaptive header source contracts', () => {
     expect(shell).toContain('pointer-events: none')
     expect(shell).toContain('pointer-events: auto')
     expect(shell).toContain(".site-nav[data-header-state='floating']")
+    expect(shell).toContain('-webkit-backdrop-filter: blur(var(--nav-floating-blur)) saturate(var(--nav-floating-saturate))')
+    expect(shell).toContain('backdrop-filter: blur(var(--nav-floating-blur)) saturate(var(--nav-floating-saturate))')
+    expect(shell).toContain('@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)))')
+    expect(shell).toContain('background: var(--surface-strong)')
     expect(shell).not.toMatch(/transition:\s*all/)
+
+    expect(theme).toContain('--nav-floating-blur: 20px')
+    expect(theme).toContain('--nav-floating-saturate: 125%')
+    expect(theme).toContain('--nav-floating-bg: rgba(250, 251, 249, .78)')
+    expect(theme).toContain('--nav-floating-bg: rgba(14, 22, 27, .74)')
   })
 })
 

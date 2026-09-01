@@ -136,10 +136,10 @@ test('floating header uses translucent glass, compact geometry, and stable brand
 
   const light = await readSurfaceMetrics()
   expect(light.backgroundToken).toMatch(/(?:250|#fafbf9)/i)
-  expect(light.alpha).toBeGreaterThanOrEqual(.91)
-  expect(light.alpha).toBeLessThanOrEqual(.93)
-  expect(light.backdropFilter).toContain('blur(18px)')
-  expect(light.backdropFilter).toMatch(/saturate\((?:120%|1\.2)\)/)
+  expect(light.alpha).toBeGreaterThanOrEqual(.77)
+  expect(light.alpha).toBeLessThanOrEqual(.79)
+  expect(light.backdropFilter).toContain('blur(20px)')
+  expect(light.backdropFilter).toMatch(/saturate\((?:125%|1\.25)\)/)
   expect(light.surfaceHeight).toBeGreaterThanOrEqual(59)
   expect(light.surfaceHeight).toBeLessThanOrEqual(61)
   expect(light.surfaceWidth).toBeLessThanOrEqual(1162)
@@ -162,8 +162,8 @@ test('floating header uses translucent glass, compact geometry, and stable brand
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
   const dark = await readSurfaceMetrics()
   expect(dark.backgroundToken).toMatch(/(?:14|#0e161b)/i)
-  expect(dark.alpha).toBeGreaterThanOrEqual(.89)
-  expect(dark.alpha).toBeLessThanOrEqual(.91)
+  expect(dark.alpha).toBeGreaterThanOrEqual(.73)
+  expect(dark.alpha).toBeLessThanOrEqual(.75)
 })
 
 test('floating header hover and focus preserve navigation geometry', async ({ page }) => {

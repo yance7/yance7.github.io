@@ -86,8 +86,8 @@
   --nav-floating-inline: 16px;
   --nav-floating-max-width: 1160px;
   --nav-floating-radius: 26px;
-  --nav-floating-blur: 18px;
-  --nav-floating-saturate: 120%;
+  --nav-floating-blur: 20px;
+  --nav-floating-saturate: 125%;
   --nav-floating-gap: clamp(10px, 1.2vw, 18px);
   --nav-floating-padding: clamp(18px, 1.7vw, 24px);
   --nav-floating-transition: .28s cubic-bezier(.2, .8, .2, 1);
@@ -211,9 +211,9 @@
   --brand-edge: #16485E;
 
   --nav-resting-bg: color-mix(in srgb, var(--bg) 92%, transparent);
-  --nav-floating-bg: rgba(250, 251, 249, .92);
+  --nav-floating-bg: rgba(250, 251, 249, .78);
   --nav-floating-border: color-mix(in srgb, var(--line-strong) 84%, var(--gold) 16%);
-  --nav-floating-shadow: 0 6px 20px rgba(52, 63, 59, .10), 0 1px 4px rgba(52, 63, 59, .05);
+  --nav-floating-shadow: 0 8px 28px rgba(52, 63, 59, .12), 0 1px 5px rgba(52, 63, 59, .06), inset 0 1px 0 rgba(255, 255, 255, .52);
 
   --text-primary: var(--ink);
   --text-secondary: var(--muted);
@@ -345,9 +345,9 @@
   --brand-edge: #A9E5D9;
 
   --nav-resting-bg: color-mix(in srgb, var(--bg) 88%, transparent);
-  --nav-floating-bg: rgba(14, 22, 27, .9);
+  --nav-floating-bg: rgba(14, 22, 27, .74);
   --nav-floating-border: color-mix(in srgb, var(--line-strong) 84%, var(--aqua) 16%);
-  --nav-floating-shadow: 0 8px 24px rgba(0, 0, 0, .26), 0 1px 5px rgba(0, 0, 0, .16);
+  --nav-floating-shadow: 0 10px 32px rgba(0, 0, 0, .32), 0 1px 6px rgba(0, 0, 0, .18), inset 0 1px 0 rgba(255, 255, 255, .08);
 
   --text-primary: var(--ink);
   --text-secondary: var(--muted);
