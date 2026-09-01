@@ -23,7 +23,7 @@ export const zhHKMessages = {
     academics: { kicker: '學業', title: '明日從此的座標', copy: 'GPA、標化考試與 AP 成績，是努力留下的可讀痕跡。' },
     honors: { kicker: '榮譽', title: '一步一步往上爬', copy: '獎項是座標，不是終點；真正重要的是仍然保持向上的慣性。' },
     research: { kicker: '研究', title: '我不完美的夢，你陪着我想', copy: '從智慧農業到可解釋 AI，把論文中的模型推向瀏覽器裡可以操作的產品。' },
-    works: { kicker: '作品', title: '因為我已慢慢懂，努力就能成功', copy: '一個已經上線的小世界，記錄想法如何離開紙面，開始被真實使用。' },
+    works: { kicker: '作品', title: '因為我已慢慢懂，努力就能成功', copy: '兩個持續建構的小世界，記錄想法如何離開紙面，成為可以使用或繼續成長的成果。' },
     concerts: { kicker: '演唱會', title: '緣分讓我們相遇亂世以外', copy: '演唱會足跡與海報，記錄那些被燈光和合唱重新定義的夜晚。' }
   }
 } satisfies UiMessages
