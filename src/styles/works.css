@@ -146,11 +146,13 @@
 }
 .sc-identity h3 > span {
   display: block;
+  min-width: 0;
   margin-bottom: 8px;
   font-family: var(--font-editorial);
   font-size: clamp(1.35rem, 2.5vw, 2.1rem);
   font-weight: 400;
   letter-spacing: .08em;
+  overflow-wrap: anywhere;
 }
 .sc-wordmark {
   display: block;
