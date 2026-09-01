@@ -150,6 +150,22 @@
 .beyond-leadership strong { color: var(--gold); font-family: var(--font-editorial); font-size: 1.1rem; font-style: italic; font-weight: 440; }
 .beyond-leadership span { font-family: var(--font-editorial); font-size: 1rem; }
 .beyond-leadership small { grid-column: 2; color: var(--dim); font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: var(--tracking-zh-meta); }
+html[data-locale='en'] .beyond-leadership {
+  grid-template-columns: minmax(124px, 138px) minmax(0, 1fr);
+  column-gap: clamp(18px, 2vw, 28px);
+  row-gap: 6px;
+}
+html[data-locale='en'] .beyond-leadership strong {
+  min-width: 0;
+  line-height: 1.28;
+  overflow-wrap: normal;
+  hyphens: none;
+}
+html[data-locale='en'] .beyond-leadership span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+html[data-locale='en'] .beyond-leadership small { grid-column: 2; }
 .beyond-activity { grid-template-columns: 92px 1fr; align-items: baseline; }
 .beyond-activity time { color: var(--gold); font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: .05em; }
 .beyond-activity strong, .beyond-activity small { display: block; }
@@ -272,6 +288,8 @@
   .world-icon { font-size: 20px; }
   .leadership-grid { grid-template-columns: 1fr; }
   .home-beyond-grid { grid-template-columns: 1fr; gap: 34px; }
+  html[data-locale='en'] .beyond-leadership { grid-template-columns: minmax(0, 1fr); }
+  html[data-locale='en'] .beyond-leadership small { grid-column: 1; }
   .activity-btn { grid-template-columns: 1fr 28px; gap: var(--space-3); padding: var(--space-4) var(--space-5); }
   .activity-period { grid-column: 1 / -1; }
   .activity-detail p { padding: 0 var(--space-5) var(--space-4); }
