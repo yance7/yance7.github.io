@@ -42,7 +42,7 @@ const registry = {
     changefreq: 'monthly',
     priority: '0.9',
     ogImage: 'assets/og-works.png',
-    sectionIds: ['works-overview', 'project-fresheye']
+    sectionIds: ['works-overview', 'project-fresheye', 'project-ap-microeconomics-notes']
   },
   concerts: {
     htmlName: 'concerts',

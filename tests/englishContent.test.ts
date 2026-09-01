@@ -81,4 +81,13 @@ describe('English content hygiene', () => {
       getLocalizedPageMeta('en', 'honors').title
     ]).toEqual(['Academic record', 'Selected honors'])
   })
+
+  it('keeps the AP project dossier fully localized in English', () => {
+    const project = getLocalizedProjects('en').find(({ id }) => id === 'ap-microeconomics-notes')
+    expect(project?.title).toBe('AP Microeconomics Notes')
+    expect(project?.description).toBe('An open Chinese-language AP Microeconomics study archive with structured course modules, economic diagrams, multiple-choice practice, FRQs, and worked explanations.')
+    expect(project?.role).toBe('Content authoring · Curriculum design · Chart and build tooling')
+    expect(collectStrings(project).some((value) => /[\u3400-\u9fff]/.test(value))).toBe(false)
+    expect(getLocalizedProjectSection('en').copyPlural).toContain('open learning resources')
+  })
 })

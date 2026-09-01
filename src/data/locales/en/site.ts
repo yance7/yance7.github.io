@@ -6,7 +6,7 @@ export const siteCopy = {
     academics: { kicker: 'ACADEMICS', title: 'Academic record', copy: 'Coursework, standardized tests, and AP results—evidence of how the work has accumulated.' },
     honors: { kicker: 'HONORS', title: 'Selected honors', copy: 'Awards mark the route; the more useful signal is the habit of continuing upward.' },
     research: { kicker: 'RESEARCH', title: 'Research beyond the paper', copy: 'From smart agriculture to explainable AI, I turn models into tools that people can open and use.' },
-    works: { kicker: 'WORKS', title: 'Building ideas into products', copy: 'A deployed product archive showing how a question leaves the page and becomes something people can use.' },
+    works: { kicker: 'WORKS', title: 'Building ideas into products', copy: 'Two evolving project worlds showing how ideas leave the page and become products or open learning resources.' },
     concerts: { kicker: 'CONCERTS', title: 'Live music archive', copy: 'Concerts, posters, and the nights when light and a shared chorus changed the scale of the world.' }
   },
   nav: {
@@ -14,14 +14,14 @@ export const siteCopy = {
     academics: { label: 'Academics', desc: 'Coursework, tests, and AP results' },
     honors: { label: 'Honors', desc: 'Awards and competition record' },
     research: { label: 'Research', desc: 'From papers to products' },
-    works: { label: 'Works', desc: 'Deployed projects' },
+    works: { label: 'Works', desc: 'Evolving projects and open learning resources' },
     concerts: { label: 'Concerts', desc: 'Live music archive' }
   },
   worlds: {
     academics: { no: '01', label: 'Academics', icon: '✦', desc: 'Coursework, standardized tests, and AP results—the readable record of sustained work.', accent: 'aqua' },
     honors: { no: '02', label: 'Honors', icon: '❖', desc: 'Awards mark the route; the useful signal is the habit of continuing upward.', accent: 'violet' },
     research: { no: '03', label: 'Research', icon: '◉', desc: 'From smart agriculture to explainable AI, turning models into tools people can use.', accent: 'gold' },
-    works: { no: '04', label: 'Works', icon: '♬', desc: 'A deployed product archive showing how ideas leave the page and meet real use.', accent: 'aqua' },
+    works: { no: '04', label: 'Works', icon: '♬', desc: 'Two evolving project worlds showing how ideas leave the page and become products or open learning resources.', accent: 'aqua' },
     concerts: { no: '05', label: 'Concerts', icon: '♪', desc: 'Live shows and posters: the personal archive beyond the lab.', accent: 'gold' }
   },
   home: {

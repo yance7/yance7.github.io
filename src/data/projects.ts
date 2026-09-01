@@ -2,7 +2,7 @@ import type { Project } from './types'
 
 export const projects = [
   {
-    id: 'fresheye', status: 'deployed', updatedAt: '2026-08-08',
+    id: 'fresheye', status: 'deployed', action: 'live', updatedAt: '2026-08-08',
     title: '鲜眸', en: 'FreshEye', domain: 'fresheye.yance777.com', tone: 'aqua',
     discipline: 'COMPUTER VISION / WEB PRODUCT',
     description: '上传鱼眼照片，AI 评估水产品新鲜度，输出等级、置信度与 Grad-CAM 热力图。',
@@ -37,6 +37,54 @@ export const projects = [
       proof: [
         { type: 'deployment', label: 'LIVE PRODUCT', value: 'fresheye.yance777.com', href: 'https://fresheye.yance777.com', external: true },
         { type: 'source', label: 'SOURCE', value: 'GitHub', href: 'https://github.com/yance7/FreshEye', external: true }
+      ]
+    }
+  },
+  {
+    id: 'ap-microeconomics-notes',
+    status: 'open-source',
+    action: 'repository',
+    updatedAt: '2026-08-11',
+    title: 'AP Microeconomics 中文讲义',
+    en: 'AP Microeconomics Notes',
+    domain: 'github.com/yance7/ap-microeconomics-notes',
+    tone: 'gold',
+    discipline: 'ECONOMICS EDUCATION / OPEN KNOWLEDGE',
+    description: '一套面向 AP Microeconomics 学习者的中文开源讲义，包含课程模块、经济学图表、选择题、FRQ 与逐题解析。',
+    value: '把概念、图形与练习整理成可以连续学习、复习与核验的路径。',
+    role: '内容编写 · 课程结构设计 · 图表与构建工具开发',
+    stack: ['Markdown', 'Python', 'Matplotlib', 'Pandoc'],
+    href: 'https://github.com/yance7/ap-microeconomics-notes',
+    story: {
+      label: 'FROM COURSEWORK TO OPEN NOTES',
+      note: '把分散的概念、图形和题目整理成一套可维护、可复习的开放学习档案。',
+      chapters: [
+        {
+          label: '01 / CURRICULUM',
+          title: '八个连续学习模块',
+          detail: '从课程与考试概览，到市场、企业行为、要素市场、市场失灵以及答案解析。'
+        },
+        {
+          label: '02 / VISUALIZATION',
+          title: '39 张经济学图表',
+          detail: '使用可维护脚本生成供需、成本、市场结构与政策分析图形。'
+        },
+        {
+          label: '03 / PRACTICE',
+          title: '60 道 MCQ、FRQ 与解析',
+          detail: '练习题与答案按照相同单元和题号组织，便于复习后立即核验。'
+        }
+      ],
+      sequenceLabel: 'LEARNING LOOP',
+      sequence: ['Learn', 'Model', 'Practice', 'Review'],
+      proof: [
+        {
+          type: 'source',
+          label: 'SOURCE',
+          value: 'GitHub',
+          href: 'https://github.com/yance7/ap-microeconomics-notes',
+          external: true
+        }
       ]
     }
   }

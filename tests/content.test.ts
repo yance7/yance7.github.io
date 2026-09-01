@@ -122,7 +122,7 @@ describe('content contracts', () => {
 
   it('keeps the home works description aligned with the published project count', () => {
     const worksWorld = worlds.find((world) => world.key === 'works')
-    expect(worksWorld?.desc).toContain(`${projects.length} 个已经上线的小世界`)
+    expect(worksWorld?.desc).toContain(`${projects.length} 个持续构建的小世界`)
   })
 
   it('keeps English archive labels and product brand names accurate', () => {
@@ -136,7 +136,7 @@ describe('content contracts', () => {
     expect(projects.every((project) => project.updatedAt && project.status)).toBe(true)
     expect(research.every((item) => item.updatedAt && item.id)).toBe(true)
     expect(pageMetadata.concerts.updatedAt).toBe('2026-08-08')
-    expect(pageMetadata.home.updatedAt).toBe('2026-08-08')
+    expect(pageMetadata.home.updatedAt).toBe('2026-08-11')
     expect(pageMetadata.academics.updatedAt).toBe('2026-08-08')
     expect(pageMetadata.research).toEqual({ updatedAt: '2026-08-08' })
   })

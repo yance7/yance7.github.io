@@ -9,6 +9,11 @@ const props = withDefaults(defineProps<{ project: Project; index?: number }>(), 
 const { locale, messages } = useLocale()
 const projectNo = computed(() => String(props.index + 1).padStart(2, '0'))
 const chapterCount = computed(() => String(props.project.story.chapters.length).padStart(2, '0'))
+const primaryActionLabel = computed(() => (
+  props.project.action === 'repository'
+    ? messages.value.actions.viewOnGitHub
+    : messages.value.actions.enterProject
+))
 const secondaryWordmark = computed(() => (
   locale.value === 'en'
     ? ''
@@ -67,7 +72,7 @@ const secondaryWordmark = computed(() => (
             rel="noopener noreferrer"
             variant="primary"
           >
-            {{ messages.actions.enterProject }}
+            {{ primaryActionLabel }}
             <template #trailing>→</template>
           </YanceButton>
           <YanceButton

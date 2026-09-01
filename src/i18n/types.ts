@@ -74,6 +74,7 @@ export interface UiMessages {
     exploreAcademics: string
     viewHonors: string
     enterProject: string
+    viewOnGitHub: string
     sourceCode: string
     openResearch: string
   }

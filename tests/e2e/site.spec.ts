@@ -615,9 +615,9 @@ test('rapid control clicks settle without duplicate or stale state', async ({ pa
 test('Works wordmarks keep typography on hover', async ({ page }) => {
   await page.goto('/works.html')
   const showcases = page.locator('.showcase')
-  await expect(showcases).toHaveCount(1)
+  await expect(showcases).toHaveCount(2)
 
-  for (let index = 0; index < 1; index += 1) {
+  for (let index = 0; index < 2; index += 1) {
     const before = await page.locator('.sc-wordmark').evaluateAll((elements) =>
       elements.map((element) => {
         const style = getComputedStyle(element)
