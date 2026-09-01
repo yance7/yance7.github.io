@@ -434,7 +434,7 @@ describe('motion hierarchy contracts', () => {
   })
 
   it('lets IntersectionObserver own reveal geometry after initial viewport setup', () => {
-    const reveal = readFileSync(resolve(process.cwd(), 'src/directives/reveal.ts'), 'utf8')
+    const reveal = readFileSync(resolve(process.cwd(), 'src/directives/reveal.ts'), 'utf8').replace(/\r\n/g, '\n')
 
     expect(reveal).toContain('currentObserver.unobserve(element)')
     expect(reveal).toContain('isInInitialViewport(element.getBoundingClientRect(), window.innerHeight)')
@@ -490,7 +490,7 @@ describe('motion hierarchy contracts', () => {
   })
 
   it('clears a stale timeline current state when no item is readable', () => {
-    const timeline = readFileSync(resolve(process.cwd(), 'src/components/TimelineTrack.vue'), 'utf8')
+    const timeline = readFileSync(resolve(process.cwd(), 'src/components/TimelineTrack.vue'), 'utf8').replace(/\r\n/g, '\n')
     expect(timeline).toContain("if (!readingTargets.size) {\n    currentId.value = ''")
   })
 
