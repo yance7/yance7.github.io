@@ -83,9 +83,6 @@ function revealImmediately(element: HTMLElement) {
 const reveal: Directive<HTMLElement, RevealValue> = {
   mounted(element, binding) {
     const delay = resolveDelay(binding.value)
-    element.classList.add('reveal')
-    element.style.transitionDelay = delay > 0 ? `${delay}ms` : ''
-
     const mode = getRevealMode({
       supportsIntersectionObserver: 'IntersectionObserver' in window,
       prefersReducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -104,6 +101,9 @@ const reveal: Directive<HTMLElement, RevealValue> = {
       revealImmediately(element)
       return
     }
+
+    element.classList.add('reveal')
+    element.style.transitionDelay = delay > 0 ? `${delay}ms` : ''
 
     const currentObserver = getObserver()
     observedElements.add(element)
