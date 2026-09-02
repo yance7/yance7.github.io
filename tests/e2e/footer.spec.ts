@@ -36,6 +36,7 @@ for (const locale of locales) {
       await expect(link).toContainText(contact.value)
       await expect(link.locator('svg')).toHaveAttribute('aria-hidden', 'true')
       await expect(link.locator('svg')).toHaveAttribute('viewBox', '0 0 24 24')
+      await expect(link.locator('.foot-contact-arrow')).toHaveText('↗')
 
       if (contact.external) {
         await expect(link).toHaveAttribute('target', '_blank')
@@ -61,7 +62,8 @@ for (const width of [320, 390, 768, 1024, 1440]) {
     const geometry = await page.evaluate(() => {
       const grid = document.querySelector('.foot-contacts')!
       const links = Array.from(document.querySelectorAll<HTMLElement>('.foot-contact'))
-      const firstRow = links.slice(0, 2).map((link) => link.getBoundingClientRect())
+      const rects = links.map((link) => link.getBoundingClientRect())
+      const firstRow = rects.slice(0, 2)
       const svgCount = document.querySelectorAll('.foot-contact svg[aria-hidden="true"]').length
       return {
         documentWidth: document.documentElement.scrollWidth,
@@ -72,6 +74,7 @@ for (const width of [320, 390, 768, 1024, 1440]) {
           const rect = link.getBoundingClientRect()
           return { width: rect.width, height: rect.height }
         }),
+        rowHeights: rects.map(({ height }) => height),
         svgCount
       }
     })
@@ -79,7 +82,10 @@ for (const width of [320, 390, 768, 1024, 1440]) {
     expect(geometry.documentWidth, `${width}px footer overflow`).toBeLessThanOrEqual(geometry.viewportWidth)
     expect(geometry.svgCount).toBe(4)
     expect(geometry.hitAreas.every(({ width: hitWidth, height }) => hitWidth >= 44 && height >= 44)).toBe(true)
-    if (width >= 320) {
+    expect(geometry.rowHeights.every((height) => Math.abs(height - geometry.rowHeights[0]!) <= 1)).toBe(true)
+    if (width >= 961) {
+      expect(geometry.gridColumns, `${width}px contact grid`).toBe(4)
+    } else if (width >= 320) {
       expect(geometry.gridColumns, `${width}px contact grid`).toBe(2)
       expect(geometry.firstRowTopDelta, `${width}px contact first row`).toBeLessThanOrEqual(1)
     }
@@ -97,4 +103,36 @@ test('footer contact links expose a visible keyboard focus ring', async ({ page 
 
   expect(focusStyle.outlineStyle).toBe('solid')
   expect(focusStyle.outlineWidth).not.toBe('0px')
+})
+
+test('footer contact feedback is scoped to pointer capabilities', async ({ page }) => {
+  await page.goto('/index.html')
+  const link = page.locator('.foot-contact').first()
+  const coarse = await page.evaluate(() => window.matchMedia('(pointer: coarse)').matches)
+
+  if (!coarse) {
+    await link.hover()
+    await page.evaluate(() => new Promise<void>((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+    }))
+    await expect(link).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, -1)')
+    await expect(link.locator('.foot-contact-arrow')).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 2, -2)')
+  }
+
+  await link.focus()
+  await page.evaluate(() => new Promise<void>((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+  }))
+  const focusedTransforms = await link.evaluate((element) => ({
+    icon: getComputedStyle(element.querySelector('svg')!).transform,
+    arrow: getComputedStyle(element.querySelector<HTMLElement>('.foot-contact-arrow')!).transform
+  }))
+
+  if (coarse) {
+    expect(focusedTransforms.icon).toBe('none')
+    expect(focusedTransforms.arrow).toBe('none')
+  } else {
+    expect(focusedTransforms.icon).toBe('matrix(1.04, 0, 0, 1.04, 0, 0)')
+    expect(focusedTransforms.arrow).toBe('matrix(1, 0, 0, 1, 2, -2)')
+  }
 })
