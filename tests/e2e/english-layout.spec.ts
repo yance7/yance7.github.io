@@ -360,6 +360,7 @@ test('English lyric hero animation does not change layout geometry', async ({ pa
   for (const contract of archiveHeroContracts) {
     await page.goto(contract.route)
     await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+    await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
     await page.evaluate(async () => {
       await document.fonts?.ready
     })
