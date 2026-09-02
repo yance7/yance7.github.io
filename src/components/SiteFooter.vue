@@ -34,7 +34,7 @@ const localizedHomeHref = computed(() => buildLocalizedPageHref('home', locale.v
           <span class="foot-contact-label">{{ messages.footer[contact.key] }}</span>
           <span class="foot-contact-value">{{ contact.value }}</span>
         </span>
-        <span class="foot-contact-arrow" aria-hidden="true">{{ contact.external ? '↗' : '→' }}</span>
+        <span class="foot-contact-arrow" aria-hidden="true">↗</span>
       </a>
     </address>
   </footer>

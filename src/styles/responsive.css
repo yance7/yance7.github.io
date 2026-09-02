@@ -17,6 +17,15 @@
   .metric-strip, .metric-strip.large { grid-template-columns: repeat(2, 1fr); }
 }
 
+@media (max-width: 960px) {
+  .foot-contacts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: minmax(60px, 1fr);
+    width: 100%;
+    max-width: 720px;
+  }
+}
+
 @media (max-width: 640px) {
   .site-nav {
     --nav-shell-height: var(--nav-shell-height-mobile);
@@ -81,7 +90,7 @@
 
   .site-footer { flex-direction: column; align-items: flex-start; gap: var(--space-4); }
   .foot-identity { width: 100%; }
-  .foot-contacts { width: 100%; max-width: 420px; }
+  .foot-contacts { flex: 0 1 auto; width: 100%; max-width: 720px; }
 
   .lightbox { padding: var(--space-4) var(--space-3); gap: var(--space-2); }
   .lightbox {
@@ -165,6 +174,8 @@
   .foot-contact:hover:not(:focus-visible) {
     color: var(--dim); border-color: transparent; background: transparent; transform: none;
   }
+  .foot-contact:hover:not(:focus-visible) svg { transform: none; color: var(--gold); }
+  .foot-contact:hover:not(:focus-visible) .foot-contact-arrow { color: var(--muted); transform: none; }
   .lb-nav:hover:not(:focus-visible), .lb-close:hover:not(:focus-visible) {
     background: var(--control-bg); border-color: var(--control-border); color: var(--ink); box-shadow: var(--control-shadow); transform: none;
   }
@@ -176,10 +187,16 @@
   .wordmark,
   .wordmark .brand-mark-header,
   .foot-mark,
-  .foot-contact { transition: none; }
+  .foot-contact,
+  .foot-contact svg,
+  .foot-contact-arrow { transition: none; }
   .wordmark:hover,
   .foot-mark:hover,
   .foot-contact:hover { transform: none; }
+  .foot-contact:hover svg,
+  .foot-contact:hover .foot-contact-arrow,
+  .foot-contact:focus-visible svg,
+  .foot-contact:focus-visible .foot-contact-arrow { transform: none; }
   .wordmark:hover .brand-mark-image,
   .foot-mark:hover .brand-mark-image { filter: var(--brand-mark-filter); }
 }
