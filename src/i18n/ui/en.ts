@@ -21,7 +21,7 @@ export const enMessages = {
     academics: { kicker: 'ACADEMICS', title: 'From here, tomorrow finds its way', copy: 'Coursework, standardized tests, and AP results—evidence of how the work has accumulated.' },
     honors: { kicker: 'HONORS', title: 'Step by step, I climb toward the light', copy: 'Awards mark the route; the more useful signal is the habit of continuing upward.' },
     research: { kicker: 'RESEARCH', title: 'My dream is imperfect; still, you dream it with me', copy: 'From smart agriculture to explainable AI, I turn models into tools that people can open and use.' },
-    works: { kicker: 'WORKS', title: 'Slowly I learned: keep striving, and success will come', copy: 'A deployed product archive showing how a question leaves the page and becomes something people can use.' },
+    works: { kicker: 'WORKS', title: 'Slowly I learned: keep striving, and success will come', copy: 'Two evolving project worlds showing how ideas leave the page and become products or open learning resources.' },
     concerts: { kicker: 'CONCERTS', title: 'Fate brought us together, beyond this restless world', copy: 'Concerts, posters, and the nights when light and a shared chorus changed the scale of the world.' }
   }
 } satisfies UiMessages

@@ -109,6 +109,12 @@ describe('stable registry and localized content contracts', () => {
       expect(uiMessages.en.page[page].title).toBe(getLocalizedPageMeta('en', page).title)
     }
   })
+
+  it('mirrors localized Works page copy in the UI dictionary', () => {
+    for (const locale of ['zh-CN', 'zh-HK', 'en'] as const) {
+      expect(uiMessages[locale].page.works.copy).toBe(getLocalizedPageMeta(locale, 'works').copy)
+    }
+  })
 })
 
 describe('localized SEO contracts', () => {

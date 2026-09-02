@@ -21,7 +21,7 @@ export const zhCNMessages = {
     academics: { kicker: '学业', title: '明日从此的坐标', copy: '绩点、标化与 AP 成绩，是努力留下的可读痕迹。' },
     honors: { kicker: '荣誉', title: '一步一步往上爬', copy: '奖项是坐标，不是终点；真正重要的是仍然保持向上的惯性。' },
     research: { kicker: '研究', title: '我不完美的梦，你陪着我想', copy: '从智慧农业到可解释 AI，把论文里的模型推向浏览器里能点开的产品。' },
-    works: { kicker: '作品', title: '因为我已慢慢懂，努力就能成功', copy: '一个已经上线的小世界，记录想法如何离开纸面，开始被真实使用。' },
+    works: { kicker: '作品', title: '因为我已慢慢懂，努力就能成功', copy: '两个持续构建的小世界，记录想法如何离开纸面，成为可以使用或继续生长的成果。' },
     concerts: { kicker: '演唱会', title: '缘分让我们相遇乱世以外', copy: '演唱会足迹与海报，记录那些被灯光和合唱重新定义的夜晚。' }
   }
 } satisfies UiMessages
