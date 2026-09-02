@@ -104,3 +104,35 @@ test('footer contact links expose a visible keyboard focus ring', async ({ page 
   expect(focusStyle.outlineStyle).toBe('solid')
   expect(focusStyle.outlineWidth).not.toBe('0px')
 })
+
+test('footer contact feedback is scoped to pointer capabilities', async ({ page }) => {
+  await page.goto('/index.html')
+  const link = page.locator('.foot-contact').first()
+  const coarse = await page.evaluate(() => window.matchMedia('(pointer: coarse)').matches)
+
+  if (!coarse) {
+    await link.hover()
+    await page.evaluate(() => new Promise<void>((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+    }))
+    await expect(link).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, -1)')
+    await expect(link.locator('.foot-contact-arrow')).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 2, -2)')
+  }
+
+  await link.focus()
+  await page.evaluate(() => new Promise<void>((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+  }))
+  const focusedTransforms = await link.evaluate((element) => ({
+    icon: getComputedStyle(element.querySelector('svg')!).transform,
+    arrow: getComputedStyle(element.querySelector<HTMLElement>('.foot-contact-arrow')!).transform
+  }))
+
+  if (coarse) {
+    expect(focusedTransforms.icon).toBe('none')
+    expect(focusedTransforms.arrow).toBe('none')
+  } else {
+    expect(focusedTransforms.icon).toBe('matrix(1.04, 0, 0, 1.04, 0, 0)')
+    expect(focusedTransforms.arrow).toBe('matrix(1, 0, 0, 1, 2, -2)')
+  }
+})

@@ -176,6 +176,9 @@
   }
   .foot-contact:hover:not(:focus-visible) svg { transform: none; color: var(--gold); }
   .foot-contact:hover:not(:focus-visible) .foot-contact-arrow { color: var(--muted); transform: none; }
+  .foot-contact:focus-visible { transform: none; }
+  .foot-contact:focus-visible svg,
+  .foot-contact:focus-visible .foot-contact-arrow { transform: none; }
   .lb-nav:hover:not(:focus-visible), .lb-close:hover:not(:focus-visible) {
     background: var(--control-bg); border-color: var(--control-border); color: var(--ink); box-shadow: var(--control-shadow); transform: none;
   }
