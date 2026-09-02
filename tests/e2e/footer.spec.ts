@@ -108,9 +108,11 @@ test('footer contact links expose a visible keyboard focus ring', async ({ page 
 test('footer contact feedback is scoped to pointer capabilities', async ({ page }) => {
   await page.goto('/index.html')
   const link = page.locator('.foot-contact').first()
-  const coarse = await page.evaluate(() => window.matchMedia('(pointer: coarse)').matches)
+  const touchLike = await page.evaluate(() => (
+    window.matchMedia('(hover: none)').matches || window.matchMedia('(pointer: coarse)').matches
+  ))
 
-  if (!coarse) {
+  if (!touchLike) {
     await link.hover()
     await page.evaluate(() => new Promise<void>((resolve) => {
       requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
@@ -128,7 +130,7 @@ test('footer contact feedback is scoped to pointer capabilities', async ({ page 
     arrow: getComputedStyle(element.querySelector<HTMLElement>('.foot-contact-arrow')!).transform
   }))
 
-  if (coarse) {
+  if (touchLike) {
     expect(focusedTransforms.icon).toBe('none')
     expect(focusedTransforms.arrow).toBe('none')
   } else {
