@@ -37,6 +37,15 @@ describe('honors archive content contract', () => {
     expect(withCoordinates.filter((honor) => honor.level === 'peak').map((honor) => honor.coordinate)).toEqual([2, 3, 7, 10])
   })
 
+  it('keeps the four archive filter counts aligned with the honors levels', () => {
+    expect({
+      all: honors.length,
+      peak: honors.filter(({ level }) => level === 'peak').length,
+      excellent: honors.filter(({ level }) => level === 'excellent').length,
+      emerging: honors.filter(({ level }) => level === 'emerging').length
+    }).toEqual({ all: 13, peak: 4, excellent: 2, emerging: 7 })
+  })
+
   it('uses the corrected TRAE record in every locale', () => {
     for (const locale of locales) {
       const trae = getLocalizedHonors(locale).find((honor) => honor.id === 'trae-ai-2026-top-350')
