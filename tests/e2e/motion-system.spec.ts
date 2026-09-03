@@ -51,25 +51,39 @@ test('Academics education rows expose emphasis without becoming controls', async
 
 test('Academics AP rows emphasize their result without shifting layout', async ({ page }) => {
   await page.goto('/academics.html')
-  const finePointer = await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)
+  const finePointer = await page.evaluate(() => (
+    window.matchMedia('(hover: hover) and (pointer: fine)').matches
+    && !window.matchMedia('(hover: none), (pointer: coarse)').matches
+  ))
   test.skip(!finePointer, 'Hover emphasis is only observable on fine-pointer projects')
   await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
   await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready', { timeout: 10_000 })
 
   const row = page.locator('.ap-row').first()
-  await row.evaluate((element) => {
-    const html = document.documentElement
-    const previousScrollBehavior = html.style.scrollBehavior
-    html.style.scrollBehavior = 'auto'
-    element.scrollIntoView({ behavior: 'auto', block: 'center', inline: 'nearest' })
-    html.style.scrollBehavior = previousScrollBehavior
+  await page.evaluate(() => {
+    document.documentElement.style.scrollBehavior = 'auto'
   })
+  await row.scrollIntoViewIfNeeded()
+  await expect(page.locator('.metric-strip')).toHaveAttribute('data-metrics-ready', 'true')
+  await page.locator('.metric-card').evaluateAll((elements) => {
+    elements.forEach((element) => {
+      (element as HTMLElement).style.contentVisibility = 'visible'
+    })
+  })
+  await row.scrollIntoViewIfNeeded()
+  await expect.poll(() => row.evaluate((element) => {
+    const rect = element.getBoundingClientRect()
+    const header = document.querySelector('.site-nav')?.getBoundingClientRect()
+    const headerBottom = header?.bottom ?? 0
+    return rect.top >= headerBottom && rect.bottom <= window.innerHeight
+  })).toBe(true)
   await expect(row).toHaveClass(/revealed/)
   await expect(row).toHaveCSS('transform', 'none')
   const initialBackground = await row.evaluate((element) => getComputedStyle(element).backgroundColor)
   const initialNumberColor = await row.locator('.ap-no').evaluate((element) => getComputedStyle(element).color)
 
   await row.hover()
+  await expect.poll(() => row.evaluate((element) => element.matches(':hover'))).toBe(true)
 
   await expect.poll(() => row.evaluate((element) => getComputedStyle(element).backgroundColor))
     .not.toBe(initialBackground)
