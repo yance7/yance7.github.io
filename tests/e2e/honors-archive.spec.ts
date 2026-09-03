@@ -47,7 +47,7 @@ test('honors filter counts keep fixed circles and centered numerals', async ({ p
   await expect(counts).toHaveCount(4)
   const geometry = await counts.evaluateAll((elements) => elements.map((element) => {
     const circle = element.getBoundingClientRect()
-    const textNode = element.firstChild
+    const textNode = document.createTreeWalker(element, NodeFilter.SHOW_TEXT).nextNode()
     const button = element.closest('button')
     if (!textNode || !button) throw new Error('Honor filter count is missing its text node or button')
 

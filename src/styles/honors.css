@@ -25,6 +25,7 @@
   letter-spacing: 0; line-height: 1; text-align: center;
   transition: background-color var(--dur-base), color var(--dur-base);
 }
+.filter-count-value { display: inline-block; line-height: 24px; }
 .filter-btn.active .filter-count { background: var(--bg); color: var(--ink); }
 
 /* ===== 荣誉 · 坐标档案台账 ===== */

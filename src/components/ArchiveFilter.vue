@@ -34,7 +34,9 @@ const { messages } = useLocale()
       @click="emit('filter', cat.key)"
     >
       <span class="filter-label">{{ cat.label }}</span>
-      <span v-if="props.counts[cat.key]" class="filter-count">{{ props.counts[cat.key] }}</span>
+      <span v-if="props.counts[cat.key]" class="filter-count">
+        <span class="filter-count-value">{{ props.counts[cat.key] }}</span>
+      </span>
     </button>
   </div>
 </template>
