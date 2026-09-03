@@ -33,7 +33,8 @@ const { messages } = useLocale()
       :aria-pressed="props.active === cat.key"
       @click="emit('filter', cat.key)"
     >
-      {{ cat.label }}<span v-if="props.counts[cat.key]" class="filter-count">{{ props.counts[cat.key] }}</span>
+      <span class="filter-label">{{ cat.label }}</span>
+      <span v-if="props.counts[cat.key]" class="filter-count">{{ props.counts[cat.key] }}</span>
     </button>
   </div>
 </template>

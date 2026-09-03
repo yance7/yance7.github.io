@@ -3,10 +3,12 @@
   display: flex; gap: 10px; margin-bottom: 36px; flex-wrap: wrap;
 }
 .filter-btn {
-  position: relative; padding: var(--space-2) var(--space-4); border: 1px solid var(--control-border);
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  min-height: 46px; position: relative; padding: 9px 18px; border: 1px solid var(--control-border);
   background: var(--control-bg); color: var(--dim); box-shadow: var(--control-shadow);
   border-radius: var(--radius-pill);
   font-family: var(--font-prose); font-size: var(--text-xs); font-weight: 560; letter-spacing: .1em;
+  line-height: 1;
   transition: color var(--dur-base), border-color var(--dur-base), background-color var(--dur-base), box-shadow var(--dur-base), transform var(--dur-base) var(--ease-apple);
 }
 .filter-btn:hover { border-color: var(--gold); background: var(--control-hover); color: var(--ink); transform: translateY(-1px); box-shadow: var(--interactive-shadow); }
@@ -15,11 +17,12 @@
   background: var(--ink); border-color: var(--ink); color: var(--bg);
 }
 .filter-count {
-  display: inline-grid; place-items: center;
-  min-width: 18px; height: 18px; margin-left: 8px; padding: 0 5px;
-  border-radius: var(--radius-pill);
+  display: inline-flex; align-items: center; justify-content: center;
+  flex: 0 0 24px; width: 24px; height: 24px; margin: 0; padding: 0;
+  box-sizing: border-box; border-radius: 50%;
   background: var(--line); color: var(--dim);
-  font-size: var(--text-xs); letter-spacing: 0;
+  font-family: var(--font-technical); font-size: .72rem; font-variant-numeric: tabular-nums;
+  letter-spacing: 0; line-height: 1; text-align: center;
   transition: background-color var(--dur-base), color var(--dur-base);
 }
 .filter-btn.active .filter-count { background: var(--bg); color: var(--ink); }
@@ -63,7 +66,7 @@
   background: var(--surface);
   color: var(--honor-accent);
   cursor: default;
-  transform: translateY(0);
+  transform: none;
   transition: transform var(--dur-base) var(--ease-apple), background-color var(--dur-base), box-shadow var(--dur-base);
 }
 .honor-card:last-child { border-bottom: 0; }
@@ -89,16 +92,16 @@
 .honor-card > * { position: relative; z-index: 1; }
 .honor-card:hover {
   background: var(--surface-hover);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--honor-accent) 24%, transparent);
-  transform: translateY(-1px);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--honor-accent) 22%, transparent);
+  transform: none;
 }
-.honor-card:hover::before { width: 4px; }
+.honor-card:hover::before { width: 3px; }
 .honor-card.peak { --honor-accent: var(--level-platinum); }
 .honor-card.excellent { --honor-accent: var(--level-gold); }
 .honor-card.emerging { --honor-accent: var(--level-silver); }
 @keyframes honor-card-in {
-  0% { opacity: 0; transform: translateY(10px); }
-  100% { opacity: 1; transform: translateY(0); }
+  0% { opacity: 0; }
+  100% { opacity: 1; }
 }
 @keyframes honor-meta-in {
   0% { opacity: 0; transform: translateY(4px); }
@@ -115,6 +118,7 @@
   font-variant-numeric: tabular-nums;
   letter-spacing: .08em;
   line-height: 1;
+  transition: color var(--dur-fast), opacity var(--dur-fast);
 }
 .honor-date {
   grid-area: date;
@@ -141,6 +145,7 @@
   font-weight: 400;
   line-height: 1.4;
   overflow-wrap: anywhere;
+  transition: color var(--dur-fast), opacity var(--dur-fast);
 }
 .honor-org {
   color: var(--dim);
