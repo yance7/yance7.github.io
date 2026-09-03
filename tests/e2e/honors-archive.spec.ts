@@ -14,7 +14,10 @@ async function settleHonorsPage(page: Page) {
   await page.goto('/honors.html')
   await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
   await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
-  await page.evaluate(async () => { await document.fonts?.ready })
+  await page.evaluate(async () => {
+    await document.fonts?.ready
+    await document.fonts?.load('560 11.52px "IBM Plex Mono"', '13')
+  })
   await expect(page.locator('.honor-card')).toHaveCount(13)
   await page.evaluate(() => new Promise<void>((resolve) => {
     requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
