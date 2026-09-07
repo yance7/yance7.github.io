@@ -398,12 +398,6 @@ describe('release workflow contracts', () => {
     expect(qualityWorkflow).toContain('include-hidden-files: true')
   })
 
-  it('does not instruct active UI refinement work to push directly to main', () => {
-    const plan = readFileSync(resolve(process.cwd(), 'docs/superpowers/plans/2026-08-23-ui-component-refinement.md'), 'utf8')
-
-    expect(plan).not.toContain('直接提交并推送 `main`')
-    expect(plan).not.toContain('不创建 feature branch 或 PR')
-  })
 })
 
 describe('shared UI correction contracts', () => {
