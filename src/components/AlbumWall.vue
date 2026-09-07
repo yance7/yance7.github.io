@@ -21,15 +21,14 @@ let tiltElement: HTMLElement | null = null
 let tiltClientX = 0
 let tiltClientY = 0
 
-const selectedAlbum = computed<Album>(() => albums[spotlight.state.value.selected]!)
-const spotlightAlbum = computed<Album>(() => albums[spotlight.state.value.displayed]!)
+const displayedAlbum = computed<Album>(() => albums[spotlight.state.value.displayed]!)
 const wallStyle = computed(() => ({
-  '--album-primary': selectedAlbum.value.palette[0],
-  '--album-secondary': selectedAlbum.value.palette[1]
+  '--album-primary': displayedAlbum.value.palette[0],
+  '--album-secondary': displayedAlbum.value.palette[1]
 }))
-const selectedPosition = computed(() => `${formatIndex(spotlight.state.value.selected)} / ${String(total).padStart(2, '0')}`)
+const displayedPosition = computed(() => `${formatIndex(spotlight.state.value.displayed)} / ${String(total).padStart(2, '0')}`)
 const liveAnnouncement = computed(() => (
-  `${messages.value.albums.selected}: ${selectedAlbum.value.artist}, ${selectedAlbum.value.title}, ${selectedAlbum.value.year}, ${formatLabel(selectedAlbum.value)}`
+  `${messages.value.albums.selected}: ${displayedAlbum.value.artist}, ${displayedAlbum.value.title}, ${displayedAlbum.value.year}, ${formatLabel(displayedAlbum.value)}`
 ))
 
 function formatIndex(index: number) {
@@ -44,19 +43,20 @@ function setTileRef(element: unknown, index: number) {
   tileElements.value[index] = element instanceof HTMLButtonElement ? element : null
 }
 
-function preloadImage(options: { src: string; srcset?: string; sizes?: string }) {
+function preloadImage(options: { src: string; srcset?: string; sizes?: string; signal: AbortSignal }) {
   return loadImage(options)
 }
 
-async function preloadSpotlight(album: Album) {
+async function preloadSpotlight(album: Album, signal: AbortSignal) {
   return preloadImage({
     src: albumCoverFallback(album.cover),
     srcset: albumCoverSrcset(album.cover),
-    sizes: spotlightSizes
+    sizes: spotlightSizes,
+    signal
   })
 }
 
-const spotlight = useAlbumSpotlight(total, (index) => preloadSpotlight(albums[index]!))
+const spotlight = useAlbumSpotlight(total, (index, signal) => preloadSpotlight(albums[index]!, signal))
 const spotlightState = spotlight.state
 
 function selectAlbum(index: number, moveFocus = false) {
@@ -133,6 +133,7 @@ function resetSleeve(event: PointerEvent) {
 onUnmounted(() => {
   if (tiltFrame !== null) window.cancelAnimationFrame(tiltFrame)
   tiltElement = null
+  spotlight.cancel()
 })
 </script>
 
@@ -151,7 +152,7 @@ onUnmounted(() => {
         <div class="album-spotlight">
           <div class="album-spotlight-head">
             <span class="album-kicker">{{ messages.albums.nowSpinning }}</span>
-            <span class="album-index">{{ selectedPosition }}</span>
+            <span class="album-index">{{ displayedPosition }}</span>
           </div>
 
           <div class="album-spotlight-body">
@@ -166,19 +167,16 @@ onUnmounted(() => {
                 @pointerleave="resetSleeve"
                 @pointercancel="resetSleeve"
               >
-                <div class="album-vinyl" aria-hidden="true">
-                  <span></span>
-                </div>
                 <Transition name="album-switch">
-                  <picture :key="spotlightAlbum.id" class="album-cover-frame">
+                  <picture :key="displayedAlbum.id" class="album-cover-frame">
                     <source
-                      :srcset="albumCoverSrcset(spotlightAlbum.cover)"
+                      :srcset="albumCoverSrcset(displayedAlbum.cover)"
                       :sizes="spotlightSizes"
                       type="image/webp"
                     >
                     <img
-                      :src="albumCoverFallback(spotlightAlbum.cover)"
-                      :alt="`${spotlightAlbum.artist} ${spotlightAlbum.title} ${messages.albums.album} ${messages.lightbox.posterAlt}`"
+                      :src="albumCoverFallback(displayedAlbum.cover)"
+                      :alt="`${displayedAlbum.artist} ${displayedAlbum.title} ${messages.albums.album} ${messages.lightbox.posterAlt}`"
                       width="1200"
                       height="1200"
                       loading="eager"
@@ -191,12 +189,12 @@ onUnmounted(() => {
             </div>
 
             <div class="album-details">
-              <p class="album-artist">{{ selectedAlbum.artist }}</p>
-              <h3 class="album-title">{{ selectedAlbum.title }}</h3>
+              <p class="album-artist">{{ displayedAlbum.artist }}</p>
+              <h3 class="album-title">{{ displayedAlbum.title }}</h3>
               <p class="album-meta">
-                <span>{{ selectedAlbum.year }}</span>
+                <span>{{ displayedAlbum.year }}</span>
                 <span aria-hidden="true">·</span>
-                <span>{{ formatLabel(selectedAlbum) }}</span>
+                <span>{{ formatLabel(displayedAlbum) }}</span>
               </p>
 
               <div class="album-actions">
@@ -210,7 +208,7 @@ onUnmounted(() => {
                 </div>
                 <a
                   class="album-link"
-                  :href="selectedAlbum.appleMusicUrl"
+                  :href="displayedAlbum.appleMusicUrl"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -417,24 +415,10 @@ html[data-theme='light'] .album-kicker {
   transition: opacity var(--dur-fast), border-color var(--dur-fast), box-shadow var(--dur-base);
 }
 
-.album-visual-slot[data-spotlight-state='loading']::after {
-  border-color: color-mix(in srgb, var(--aqua) 38%, transparent);
-  background:
-    linear-gradient(90deg, transparent, color-mix(in srgb, var(--aqua) 78%, transparent), transparent) top / 100% 1px no-repeat,
-    linear-gradient(90deg, transparent, color-mix(in srgb, var(--gold) 68%, transparent), transparent) bottom / 100% 1px no-repeat;
-  animation: album-loading-pulse 1.2s ease-in-out infinite;
-  opacity: 1;
-}
-
 .album-visual-slot[data-spotlight-state='error']::after {
   border-color: color-mix(in srgb, var(--danger) 72%, transparent);
   box-shadow: 0 0 18px color-mix(in srgb, var(--danger) 22%, transparent);
   opacity: .9;
-}
-
-@keyframes album-loading-pulse {
-  0%, 100% { box-shadow: 0 0 0 color-mix(in srgb, var(--aqua) 0%, transparent); }
-  50% { box-shadow: 0 0 18px color-mix(in srgb, var(--aqua) 22%, transparent); }
 }
 
 .album-sleeve {
@@ -466,37 +450,6 @@ html[data-theme='light'] .album-kicker {
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-.album-vinyl {
-  position: absolute;
-  inset: 5% -8% 5% 14%;
-  z-index: 1;
-  overflow: hidden;
-  border: 1px solid var(--album-cover-line);
-  border-radius: 50%;
-  background:
-    radial-gradient(circle, var(--album-cover-accent) 0 3.8%, var(--album-cover-surface) 4.1% 9%, transparent 9.4%),
-    repeating-radial-gradient(circle, var(--album-cover-groove) 0 1px, var(--album-cover-deep) 2px 4px);
-  box-shadow: var(--shadow-2);
-  transform: translateX(14px) rotate(3deg);
-}
-
-.album-vinyl::after {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: conic-gradient(from 30deg, transparent, var(--album-cover-sheen), transparent 18%, transparent 56%, color-mix(in srgb, var(--aqua) 8%, transparent), transparent 72%);
-  content: '';
-}
-
-.album-vinyl span {
-  position: absolute;
-  inset: 43%;
-  z-index: 1;
-  border-radius: 50%;
-  background: var(--album-cover-deep);
-  box-shadow: 0 0 0 1px var(--album-cover-line);
 }
 
 .album-details {
@@ -867,7 +820,6 @@ html[data-theme='light'] .album-kicker {
 @media (prefers-reduced-motion: reduce) {
   .album-wall,
   .album-sleeve,
-  .album-vinyl,
   .album-tile,
   .album-tile img,
   .album-tile-meta,
@@ -891,9 +843,6 @@ html[data-theme='light'] .album-kicker {
     transform: none !important;
   }
 
-  .album-vinyl {
-    transform: translateX(14px) rotate(3deg);
-  }
   .album-visual-slot::after { animation: none !important; }
 }
 
