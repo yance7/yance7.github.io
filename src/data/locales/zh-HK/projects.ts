@@ -29,7 +29,7 @@ export const projectsCopy = {
     },
     'ap-microeconomics-notes': {
       ...base['ap-microeconomics-notes']!,
-      title: 'AP Microeconomics 中文講義',
+      title: 'AP Micro 講義',
       value: '把概念、圖形與練習整理成可以連續學習、複習與核驗的路徑。',
       description: '一套面向 AP Microeconomics 學習者的中文開放講義，包含課程模組、經濟學圖表、選擇題、FRQ 與逐題解析。',
       role: '內容編寫 · 課程結構設計 · 圖表與建構工具開發',

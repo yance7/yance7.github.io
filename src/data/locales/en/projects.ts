@@ -29,7 +29,7 @@ export const projectsCopy = {
     },
     'ap-microeconomics-notes': {
       ...base['ap-microeconomics-notes']!,
-      title: 'AP Microeconomics Notes',
+      title: 'AP Micro Notes',
       value: 'Turn concepts, graphs, and practice into one maintainable path for learning, review, and verification.',
       description: 'An open Chinese-language AP Microeconomics study archive with structured course modules, economic diagrams, multiple-choice practice, FRQs, and worked explanations.',
       role: 'Content authoring · Curriculum design · Chart and build tooling',
