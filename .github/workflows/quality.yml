@@ -64,6 +64,10 @@ jobs:
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/chromium
         run: npm run test:e2e -- --project=chromium --workers=4 --retries=0
+      - name: WebKit desktop AlbumWall quality
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-album-wall
+        run: npm run test:e2e -- tests/e2e/album-wall.spec.ts --project=webkit-desktop --workers=4 --retries=0
       - name: WebKit desktop ScrollProgress quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-scroll-progress
@@ -100,6 +104,10 @@ jobs:
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-header
         run: npm run test:e2e -- tests/e2e/adaptive-header.spec.ts --project=webkit-mobile --workers=4 --retries=0
+      - name: WebKit mobile AlbumWall quality
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-album-wall
+        run: npm run test:e2e -- tests/e2e/album-wall.spec.ts --project=webkit-mobile --workers=4 --retries=0
       - name: WebKit mobile motion system quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-motion
