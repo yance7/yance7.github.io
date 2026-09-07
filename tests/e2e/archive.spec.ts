@@ -136,6 +136,7 @@ test('research deployment link lands on the FreshEye case study', async ({ page 
 test('research project dates and statuses render the current records', async ({ page }) => {
   await page.goto('/research.html')
   await expect(page.locator('#fresheye .tl-date')).toHaveText('2026.06 — 2026.08')
+  await expect(page.locator('#fresheye .status-badge')).toContainText('已完成')
   await expect(page.locator('#fishfreshnet-v2 .tl-date')).toHaveText('2026.05 — 2026.08')
   await expect(page.locator('#fishfreshnet-v2 .status-badge')).toContainText('已完成')
   await expect(page.locator('#fishfreshnet-v2 .tl-tag')).not.toContainText('PUBLISHED')

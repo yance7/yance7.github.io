@@ -8,9 +8,9 @@ const locales = [
 
 const viewports = [390, 768, 1024, 1440] as const
 const projectLocales = [
-  { name: 'zh-CN', path: '/works.html', title: 'AP Microeconomics 中文讲义', action: '在 GitHub 查看' },
-  { name: 'zh-HK', path: '/zh-hk/works.html', title: 'AP Microeconomics 中文講義', action: '在 GitHub 查看' },
-  { name: 'en', path: '/en/works.html', title: 'AP Microeconomics Notes', action: 'View on GitHub' }
+  { name: 'zh-CN', path: '/works.html', title: 'AP Micro 讲义', action: '在 GitHub 查看' },
+  { name: 'zh-HK', path: '/zh-hk/works.html', title: 'AP Micro 講義', action: '在 GitHub 查看' },
+  { name: 'en', path: '/en/works.html', title: 'AP Micro Notes', action: 'View on GitHub' }
 ] as const
 
 for (const locale of locales) {

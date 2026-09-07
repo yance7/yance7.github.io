@@ -6,7 +6,7 @@ export const research = [
     date: '2026.06 — 2026.08',
     updatedAt: '2026-08-08',
     tag: 'WEB TOOL',
-    status: 'active',
+    status: 'completed',
     title: 'FreshEye：AI 水产品新鲜度评估网页工具',
     org: '个人项目 · Hugging Face Spaces + GitHub Pages',
     text: '将 FishFreshNet 研究线转化为零安装网页工具，用户上传鱼眼照片即可获得新鲜度等级、置信度与 Grad-CAM 热力图。',
