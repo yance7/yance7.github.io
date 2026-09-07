@@ -18,9 +18,11 @@ test-results/
 # 简历源文件
 简历.pdf
 
-# Trae spec / 临时工作目录
+# Trae spec / 内部协作资料 / 临时工作目录
 .trae/
 .superpowers/
+docs/superpowers/
+docs/handoff/
 
 # Vue build
 node_modules/

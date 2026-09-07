@@ -7,6 +7,7 @@ Vue 3 + Vite MPA，部署目标为 GitHub Pages。
 ```bash
 npm ci
 npm run check
+npm run audit:repo
 npm run test:e2e
 npm run links
 ```
@@ -16,6 +17,8 @@ npm run links
 ```bash
 npx playwright install --with-deps chromium webkit firefox
 ```
+
+`npm run audit:repo` 检查仓库跟踪树、忽略规则和公开说明文本边界。
 
 ## 海报缩略图
 
