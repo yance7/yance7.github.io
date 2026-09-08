@@ -47,7 +47,7 @@ async function installTheme(page: Page, selectedTheme: typeof themes[number]) {
 }
 
 async function stabilizeVisualContext(page: Page) {
-  await page.locator('.album-grid, .metric-card').evaluateAll((elements) => {
+  await page.locator('.album-grid').evaluateAll((elements) => {
     elements.forEach((element) => {
       (element as HTMLElement).style.contentVisibility = 'visible'
     })
