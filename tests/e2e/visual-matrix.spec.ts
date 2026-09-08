@@ -46,6 +46,22 @@ async function installTheme(page: Page, selectedTheme: typeof themes[number]) {
   }, { fixedNow: FIXED_NOW, selectedTheme })
 }
 
+async function stabilizeVisualContext(page: Page) {
+  await page.locator('main#main img[loading="lazy"]').evaluateAll((images) => {
+    images.forEach((image) => {
+      (image as HTMLImageElement).loading = 'eager'
+    })
+  })
+}
+
+async function forceAlbumGridVisible(page: Page) {
+  await page.locator('.album-grid').evaluateAll((elements) => {
+    elements.forEach((element) => {
+      (element as HTMLElement).style.contentVisibility = 'visible'
+    })
+  })
+}
+
 async function settlePage(page: Page) {
   await page.waitForLoadState('domcontentloaded')
   await expect.poll(() => page.locator('html').getAttribute('data-fonts-ready')).toBe('ready')
@@ -67,20 +83,103 @@ async function settlePage(page: Page) {
   }))
 }
 
+async function settleImages(page: Page, imageSelector: string) {
+  await expect.poll(() => page.locator(imageSelector).count()).toBeGreaterThan(0)
+  await page.evaluate(async (selector) => {
+    const images = [...document.querySelectorAll<HTMLImageElement>(selector)]
+
+    const waitForLoad = (image: HTMLImageElement) => new Promise<void>((resolve, reject) => {
+      const cleanup = () => {
+        image.removeEventListener('load', handleLoad)
+        image.removeEventListener('error', handleError)
+      }
+      const handleLoad = () => {
+        cleanup()
+        resolve()
+      }
+      const handleError = () => {
+        cleanup()
+        reject(new Error(`Image failed to load: ${image.currentSrc || image.src}`))
+      }
+
+      image.addEventListener('load', handleLoad, { once: true })
+      image.addEventListener('error', handleError, { once: true })
+      if (image.complete) {
+        if (image.naturalWidth > 0) handleLoad()
+        else handleError()
+      }
+    })
+
+    await Promise.all(images.map(async (image) => {
+      if (!image.complete) await waitForLoad(image)
+      if (image.naturalWidth <= 0) {
+        throw new Error(`Image has no natural dimensions: ${image.currentSrc || image.src}`)
+      }
+      await image.decode()
+      if (image.naturalWidth <= 0) {
+        throw new Error(`Image failed to decode: ${image.currentSrc || image.src}`)
+      }
+    }))
+  }, imageSelector)
+}
+
+async function movePointerAway(page: Page) {
+  const viewport = page.viewportSize()
+  if (!viewport) return
+  await page.mouse.move(viewport.width - 1, viewport.height - 1)
+}
+
+async function settleStableConcertLayout(page: Page) {
+  await page.locator('main#main').scrollIntoViewIfNeeded()
+  await movePointerAway(page)
+  await expect.poll(() => page.evaluate(() => new Promise<boolean>((resolve) => {
+    const selectors = ['#concert-archive', '#album-frequencies', '.album-wall', '.next-up']
+    const round = (value: number) => Math.round(value * 100) / 100
+    const snapshot = () => JSON.stringify({
+      documentHeight: document.documentElement.scrollHeight,
+      mainHeight: document.querySelector<HTMLElement>('main#main')?.getBoundingClientRect().height ?? 0,
+      mainScrollHeight: document.querySelector<HTMLElement>('main#main')?.scrollHeight ?? 0,
+      scrollY: round(window.scrollY),
+      regions: selectors.map((selector) => {
+        const rect = document.querySelector<HTMLElement>(selector)?.getBoundingClientRect()
+        if (!rect) return null
+        return [rect.left, rect.top, rect.width, rect.height].map(round)
+      })
+    })
+
+    requestAnimationFrame(() => {
+      const first = snapshot()
+      requestAnimationFrame(() => resolve(first === snapshot()))
+    })
+  }))).toBe(true)
+}
+
 async function settleConcertVisualState(page: Page) {
+  await stabilizeVisualContext(page)
   await page.locator('#concert-archive').scrollIntoViewIfNeeded()
-  await expect.poll(() => page.locator('#concert-archive .concert-rail-card').first().evaluate((card) => (
-    card.classList.contains('revealed')
-  ))).toBe(true)
+  const railCards = page.locator('#concert-archive-rail .concert-rail-card')
+  await expect.poll(() => railCards.count()).toBeGreaterThan(0)
+  for (let index = 0; index < await railCards.count(); index += 1) {
+    const card = railCards.nth(index)
+    await card.scrollIntoViewIfNeeded()
+    await expect(card).toHaveClass(/revealed/)
+  }
+  await page.locator('#concert-archive-rail').evaluate((rail) => {
+    rail.scrollTo({ left: 0, behavior: 'auto' })
+  })
+  await expect.poll(() => page.locator('#concert-archive-rail').evaluate((rail) => rail.scrollLeft)).toBe(0)
+  await settleImages(page, '#concert-archive-rail .concert-poster img')
   await page.locator('#album-frequencies').scrollIntoViewIfNeeded()
-  await expect.poll(() => page.locator('.album-tile img').evaluateAll((images) => {
-    const imageElements = images as HTMLImageElement[]
-    return imageElements.length > 0 && imageElements.every((image) => image.complete && image.naturalWidth > 0)
-  })).toBe(true)
+  await forceAlbumGridVisible(page)
+  await expect(page.locator('.album-wall')).toHaveClass(/revealed/)
+  await expect(page.locator('.album-visual-slot')).toHaveAttribute('data-spotlight-state', 'ready')
+  await settleImages(page, '.album-tile img')
+  await settleImages(page, '.album-spotlight img')
+  await expect.poll(() => page.locator('.next-up').count()).toBeGreaterThan(0)
   await expect.poll(() => page.locator('.next-up').evaluateAll((elements) => (
     elements.every((element) => element.classList.contains('revealed'))
   ))).toBe(true)
-  await page.locator('main#main').scrollIntoViewIfNeeded()
+  await settleStableConcertLayout(page)
 }
 
 async function expectLightboxGeometry(page: Page) {
@@ -121,6 +220,7 @@ for (const viewport of viewports) {
 
       for (const route of routes) {
         await page.goto(`/${route}.html`)
+        if (route === 'concerts') await stabilizeVisualContext(page)
         await settlePage(page)
         await expect(page.locator('main#main')).toBeVisible()
         await expect(page.locator('.site-footer')).toHaveCount(1)
