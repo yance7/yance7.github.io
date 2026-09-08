@@ -47,14 +47,17 @@ async function installTheme(page: Page, selectedTheme: typeof themes[number]) {
 }
 
 async function stabilizeVisualContext(page: Page) {
-  await page.locator('.album-grid').evaluateAll((elements) => {
-    elements.forEach((element) => {
-      (element as HTMLElement).style.contentVisibility = 'visible'
-    })
-  })
   await page.locator('main#main img[loading="lazy"]').evaluateAll((images) => {
     images.forEach((image) => {
       (image as HTMLImageElement).loading = 'eager'
+    })
+  })
+}
+
+async function forceAlbumGridVisible(page: Page) {
+  await page.locator('.album-grid').evaluateAll((elements) => {
+    elements.forEach((element) => {
+      (element as HTMLElement).style.contentVisibility = 'visible'
     })
   })
 }
@@ -167,6 +170,7 @@ async function settleConcertVisualState(page: Page) {
   await expect.poll(() => page.locator('#concert-archive-rail').evaluate((rail) => rail.scrollLeft)).toBe(0)
   await settleImages(page, '#concert-archive-rail .concert-poster img')
   await page.locator('#album-frequencies').scrollIntoViewIfNeeded()
+  await forceAlbumGridVisible(page)
   await expect(page.locator('.album-wall')).toHaveClass(/revealed/)
   await expect(page.locator('.album-visual-slot')).toHaveAttribute('data-spotlight-state', 'ready')
   await settleImages(page, '.album-tile img')
