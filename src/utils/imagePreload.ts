@@ -25,6 +25,7 @@ export interface ImageLoadOptions {
   sizes?: string
   timeoutMs?: number
   image?: PreloadImage
+  signal?: AbortSignal
   onSettled?: (loaded: boolean) => void
 }
 
@@ -49,24 +50,43 @@ export function loadImage(
   return new Promise<boolean>((resolve) => {
     let settled = false
     let fallbackAttempted = false
-    const timer = globalThis.setTimeout(() => finish(false), Math.max(0, timeoutMs))
+    const timer = globalThis.setTimeout(() => finish(false, true), Math.max(0, timeoutMs))
 
     function cleanup() {
       if (timer !== undefined) globalThis.clearTimeout(timer)
       image.onload = null
       image.onerror = null
+      options.signal?.removeEventListener('abort', onAbort)
     }
 
-    function finish(loaded: boolean) {
+    function finish(loaded: boolean, cancelRequest = false) {
       if (settled) return
       settled = true
       cleanup()
+      if (cancelRequest) {
+        image.removeAttribute?.('srcset')
+        image.removeAttribute?.('sizes')
+        image.srcset = ''
+        image.sizes = ''
+        image.src = ''
+      }
       try {
         options.onSettled?.(loaded)
       } finally {
         resolve(loaded)
       }
     }
+
+    function onAbort() {
+      finish(false, true)
+    }
+
+    if (options.signal?.aborted) {
+      finish(false, true)
+      return
+    }
+
+    options.signal?.addEventListener('abort', onAbort, { once: true })
 
     function retryWithoutSourceSet() {
       fallbackAttempted = true
@@ -81,9 +101,18 @@ export function loadImage(
     if (srcset) image.srcset = srcset
     if (sizes) image.sizes = sizes
     image.onload = () => {
-      const decode = image.decode?.()
-      if (decode) void decode.catch(() => undefined)
-      finish(true)
+      let decode: Promise<void> | undefined
+      try {
+        decode = image.decode?.()
+      } catch {
+        finish(false)
+        return
+      }
+      if (!decode) {
+        finish(true)
+        return
+      }
+      void decode.then(() => finish(true), () => finish(false))
     }
     image.onerror = () => {
       if (srcset && !fallbackAttempted) {

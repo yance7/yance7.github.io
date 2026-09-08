@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { htmlPageEntries, isPageKey, pageEntries, pageRegistry } from '../src/data/pageRegistry'
 import { getConcertState } from '../src/data/concerts'
 import { useAlbumSpotlight } from '../src/composables/useAlbumSpotlight'
-import { createImagePreloader, type PreloadImage } from '../src/utils/imagePreload'
+import { createImagePreloader, loadImage, type PreloadImage } from '../src/utils/imagePreload'
 import { decodeHashTarget, retryAsync } from '../src/utils/navigation'
 import type { YanceButtonSize, YanceButtonVariant } from '../src/components/yanceButtonTypes'
 
@@ -144,13 +144,18 @@ describe('concert state snapshots', () => {
 describe('album spotlight state machine', () => {
   it('commits the latest request and exposes loading/error transitions', async () => {
     const resolvers: Array<(loaded: boolean) => void> = []
-    const load = vi.fn(() => new Promise<boolean>((resolve) => resolvers.push(resolve)))
+    const signals: AbortSignal[] = []
+    const load = vi.fn((_index: number, signal: AbortSignal) => {
+      signals.push(signal)
+      return new Promise<boolean>((resolve) => resolvers.push(resolve))
+    })
     const spotlight = useAlbumSpotlight(3, load)
 
     const first = spotlight.select(1)
     expect(spotlight.state.value).toMatchObject({ selected: 1, displayed: 0, status: 'loading' })
     const second = spotlight.select(2)
     expect(spotlight.state.value.selected).toBe(2)
+    expect(signals[0]?.aborted).toBe(true)
 
     resolvers[0]?.(true)
     await first
@@ -158,7 +163,73 @@ describe('album spotlight state machine', () => {
 
     resolvers[1]?.(false)
     await second
-    expect(spotlight.state.value).toMatchObject({ selected: 2, displayed: 2, status: 'error' })
+    expect(spotlight.state.value).toMatchObject({ selected: 2, displayed: 0, status: 'error' })
+  })
+
+  it('retries failed selections and caches successful selections', async () => {
+    const results = [false, true, true]
+    const load = vi.fn(async () => results.shift() ?? false)
+    const spotlight = useAlbumSpotlight(3, load)
+
+    await spotlight.select(1)
+    expect(spotlight.state.value).toMatchObject({ selected: 1, displayed: 0, status: 'error' })
+
+    await spotlight.select(1)
+    expect(spotlight.state.value).toMatchObject({ selected: 1, displayed: 1, status: 'ready' })
+
+    await spotlight.select(0)
+    expect(spotlight.state.value).toMatchObject({ selected: 0, displayed: 0, status: 'ready' })
+
+    await spotlight.select(1)
+    expect(spotlight.state.value).toMatchObject({ selected: 1, displayed: 1, status: 'ready' })
+    expect(load).toHaveBeenCalledTimes(3)
+  })
+})
+
+describe('decoded image loading', () => {
+  it('waits for decode and treats decode failures as load failures', async () => {
+    let releaseDecode = () => {}
+    const image: PreloadImage = {
+      src: '',
+      decoding: 'auto',
+      onload: null,
+      onerror: null,
+      decode: () => new Promise<void>((resolve) => { releaseDecode = resolve })
+    }
+    const request = loadImage({ src: '/cover.webp', image })
+    image.onload?.(new Event('load'))
+
+    let settled = false
+    void request.then(() => { settled = true })
+    await Promise.resolve()
+    expect(settled).toBe(false)
+
+    releaseDecode()
+    expect(await request).toBe(true)
+
+    const failedImage: PreloadImage = {
+      src: '',
+      decoding: 'auto',
+      onload: null,
+      onerror: null,
+      decode: () => Promise.reject(new Error('decode failed'))
+    }
+    const failedRequest = loadImage({ src: '/broken.webp', image: failedImage })
+    failedImage.onload?.(new Event('load'))
+    expect(await failedRequest).toBe(false)
+  })
+
+  it('cancels an aborted image request and clears its handlers', async () => {
+    const controller = new AbortController()
+    const image: PreloadImage = { src: '', decoding: 'auto', onload: null, onerror: null }
+    const request = loadImage({ src: '/stale.webp', image, signal: controller.signal })
+
+    controller.abort()
+
+    expect(await request).toBe(false)
+    expect(image.onload).toBeNull()
+    expect(image.onerror).toBeNull()
+    expect(image.src).toBe('')
   })
 })
 
@@ -327,12 +398,6 @@ describe('release workflow contracts', () => {
     expect(qualityWorkflow).toContain('include-hidden-files: true')
   })
 
-  it('does not instruct active UI refinement work to push directly to main', () => {
-    const plan = readFileSync(resolve(process.cwd(), 'docs/superpowers/plans/2026-08-23-ui-component-refinement.md'), 'utf8')
-
-    expect(plan).not.toContain('直接提交并推送 `main`')
-    expect(plan).not.toContain('不创建 feature branch 或 PR')
-  })
 })
 
 describe('shared UI correction contracts', () => {

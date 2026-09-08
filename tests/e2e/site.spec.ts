@@ -434,7 +434,7 @@ test('research status markers keep a static hierarchy without competing pulses',
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/research.html')
 
-  const contentMarkers = page.locator('.status-badge.active .status-dot, .tc-head-status i, .tl-item.active .tl-node i')
+  const contentMarkers = page.locator('.status-badge .status-dot, .tc-head-status i, .tl-item.is-current .tl-node i')
   await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
   await expect(contentMarkers.first()).toBeAttached()
   expect(await contentMarkers.count()).toBeGreaterThan(0)

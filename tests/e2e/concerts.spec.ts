@@ -239,8 +239,9 @@ test('concert album spotlight keeps a decoded cover during delayed rapid switchi
   })
   expect(loadingVisual.reducedMotion).toBe(false)
   expect(loadingVisual.state).toBe('loading')
-  expect(loadingVisual.animationName).toMatch(/^album-loading-pulse-/)
-  expect(loadingVisual.backgroundImage).toMatch(/gradient/)
+  expect(loadingVisual.animationName).toBe('none')
+  expect(loadingVisual.backgroundImage).toBe('none')
+  await expect(wall.locator('.album-vinyl')).toHaveCount(0)
 
   const preservedCover = wall.locator('.album-cover-frame:has(img[src$="jay-fantasy.jpg"])')
   await expect(preservedCover).toHaveCount(1)
@@ -260,7 +261,7 @@ test('concert album spotlight keeps a decoded cover during delayed rapid switchi
   await expect.poll(() => wall.locator('.album-visual-slot').evaluate((element) => getComputedStyle(element, '::after').animationName)).toBe('none')
 })
 
-test('concert album spotlight settles on the selected album when both cover sources fail', async ({ page }) => {
+test('concert album spotlight retains the previous cover when both cover sources fail', async ({ page }) => {
   await page.route('**/assets/albums/**', async (route) => {
     const url = route.request().url()
     if (url.includes('jay-ye-hui-mei-') || url.includes('jay-ye-hui-mei.jpg')) {
@@ -275,8 +276,8 @@ test('concert album spotlight settles on the selected album when both cover sour
   await wall.locator('[data-album-id="jay-ye-hui-mei"]').click()
 
   await expect(wall.locator('[data-album-id="jay-ye-hui-mei"]')).toHaveAttribute('aria-selected', 'true')
-  await expect(wall.locator('.album-title')).toHaveText('叶惠美')
-  await expect(wall.locator('.album-cover-frame img[src$="jay-ye-hui-mei.jpg"]')).toHaveCount(1)
+  await expect(wall.locator('.album-title')).toHaveText('范特西')
+  await expect(wall.locator('.album-cover-frame img[src$="jay-fantasy.jpg"]')).toHaveCount(1)
   await expect(wall.locator('.album-visual-slot')).toHaveAttribute('aria-busy', 'false')
   await expect(wall.locator('.album-visual-slot')).toHaveAttribute('data-spotlight-state', 'error')
   await expect.poll(() => wall.locator('.album-visual-slot').evaluate((element) => getComputedStyle(element, '::after').animationName)).toBe('none')

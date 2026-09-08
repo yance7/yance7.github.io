@@ -21,8 +21,8 @@ describe('AP Microeconomics Notes project archive', () => {
       status: 'open-source',
       action: 'repository',
       updatedAt: '2026-08-11',
-      title: 'AP Microeconomics 中文讲义',
-      en: 'AP Microeconomics Notes',
+      title: 'AP Micro 讲义',
+      en: 'AP Micro Notes',
       domain: 'github.com/yance7/ap-microeconomics-notes',
       tone: 'gold',
       discipline: 'ECONOMICS EDUCATION / OPEN KNOWLEDGE',
@@ -44,6 +44,7 @@ describe('AP Microeconomics Notes project archive', () => {
 
     for (const locale of locales) {
       const ap = getLocalizedProjects(locale).find(({ id }) => id === 'ap-microeconomics-notes')
+      expect(ap?.en).toBe('AP Micro Notes')
       expect(ap?.story.chapters).toHaveLength(3)
       expect(ap?.href).toBe(repositoryUrl)
       expect(ap?.story.proof).toHaveLength(1)
