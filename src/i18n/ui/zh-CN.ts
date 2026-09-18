@@ -1,4 +1,4 @@
-import type { UiMessages } from '../types'
+import type { UiMessages } from '../types.ts'
 
 export const zhCNMessages = {
   navigation: { main: '主导航', mobile: '移动端导航', home: '首页', openMenu: '打开导航', closeMenu: '关闭导航' },

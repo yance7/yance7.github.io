@@ -1,4 +1,4 @@
-import type { AcademicStat, ApScore, Education } from './types'
+import type { AcademicStat, ApScore, Education } from './types.ts'
 
 export const academicsUpdatedAt = '2026-08-08'
 

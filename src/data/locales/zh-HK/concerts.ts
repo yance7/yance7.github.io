@@ -1,5 +1,5 @@
-import { concerts } from '../../concerts'
-import type { ConcertLocaleCopy } from '../types'
+import { concerts } from '../../concerts.ts'
+import type { ConcertLocaleCopy } from '../types.ts'
 
 const base = Object.fromEntries(concerts.map((item) => [item.id, { artist: item.artist, tour: item.tour, venue: item.venue }])) as ConcertLocaleCopy['entities']
 

@@ -1,4 +1,4 @@
-import type { PageKey } from '../data/pageRegistry'
+import type { PageKey } from '../data/pageRegistry.ts'
 
 export type Locale = 'zh-CN' | 'zh-HK' | 'en'
 

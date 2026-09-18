@@ -1,4 +1,4 @@
-import type { Honor, HonorLevel } from './types'
+import type { Honor, HonorLevel } from './types.ts'
 
 export const honorCategories = [
   { key: 'all', label: '全部' },

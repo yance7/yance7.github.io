@@ -1,4 +1,4 @@
-import type { UiMessages } from '../types'
+import type { UiMessages } from '../types.ts'
 
 export const enMessages = {
   navigation: { main: 'Main navigation', mobile: 'Mobile navigation', home: 'Home', openMenu: 'Open navigation', closeMenu: 'Close navigation' },

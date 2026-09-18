@@ -1,5 +1,5 @@
-import { apScores, education, stats } from '../../academics'
-import type { AcademicsLocaleCopy } from '../types'
+import { apScores, education, stats } from '../../academics.ts'
+import type { AcademicsLocaleCopy } from '../types.ts'
 
 export const academicsCopy = {
   stats: stats.map((item) => ({ ...item })),

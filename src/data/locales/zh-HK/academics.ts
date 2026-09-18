@@ -1,4 +1,4 @@
-import type { AcademicsLocaleCopy } from '../types'
+import type { AcademicsLocaleCopy } from '../types.ts'
 
 export const academicsCopy = {
   stats: [

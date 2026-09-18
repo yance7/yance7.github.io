@@ -1,5 +1,5 @@
-import { activities, leadership } from '../../community'
-import type { CommunityLocaleCopy } from '../types'
+import { activities, leadership } from '../../community.ts'
+import type { CommunityLocaleCopy } from '../types.ts'
 
 export const communityCopy = {
   leadership: leadership.map((item) => ({ ...item })),

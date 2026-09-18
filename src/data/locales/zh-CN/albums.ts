@@ -1,4 +1,4 @@
-import type { AlbumLocaleCopy } from '../types'
+import type { AlbumLocaleCopy } from '../types.ts'
 
 export const albumCopy = {
   entities: {},

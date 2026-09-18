@@ -1,4 +1,4 @@
-import type { ResearchItem, ResearchMethod, ResearchMethodGroup } from './types'
+import type { ResearchItem, ResearchMethod, ResearchMethodGroup } from './types.ts'
 
 export const research = [
   {

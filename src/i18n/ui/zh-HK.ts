@@ -1,5 +1,5 @@
-import type { UiMessages } from '../types'
-import { zhCNMessages } from './zh-CN'
+import type { UiMessages } from '../types.ts'
+import { zhCNMessages } from './zh-CN.ts'
 
 export const zhHKMessages = {
   ...zhCNMessages,
