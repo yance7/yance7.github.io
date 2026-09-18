@@ -47,6 +47,8 @@ jobs:
         run: npm run brand:assets:check
       - name: Repository hygiene
         run: npm run audit:repo
+      - name: Asset release audit
+        run: npm run audit:assets
       - name: Build audit target
         run: npm run build
       - name: Smoke test audit target
