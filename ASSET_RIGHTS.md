@@ -1,10 +1,10 @@
 # Asset rights and release status
 
-Known facts captured on 2026-08-21 from the current repository only. Ownership, license, permission, and release status remain `待确认` unless the repository contains explicit source documentation for that asset type.
+Known facts captured on 2026-09-18 from the current repository only. Ownership, license, permission, and release status remain `待确认` unless the repository contains explicit source documentation for that asset type.
 
 ## Automated asset audit
 
-Run `npm run audit:assets` before every release. The audit is read-only and checks raster format, dimensions, EXIF GPS metadata, and whether each file can be decoded. The current authorized audit on 2026-08-21 reported 168 image files, `GPS metadata: 0`, and `Unreadable files: 0`. A non-zero result blocks release until the files are reviewed; it does not automatically strip metadata or change assets.
+Run `npm run audit:assets` before every release. The audit is read-only and checks raster format, dimensions, EXIF GPS metadata, sensitive EXIF/XMP/text metadata, and whether each file can be decoded. The current authorized audit on 2026-09-18 reported 179 image files, `GPS metadata: 0`, `Sensitive metadata: 0`, and `Unreadable files: 0`. A non-zero result blocks release until the files are reviewed; it does not automatically strip metadata or change assets.
 
 | Asset type | Repository evidence | Source documentation | Ownership | License / permission | Release status | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -27,3 +27,11 @@ Run `npm run audit:assets` before every release. The audit is read-only and chec
 - Remove or redact home, school, workplace, and other sensitive addresses.
 - Avoid publishing real-time or near-real-time location clues in media, captions, or filenames.
 - Record the date and output of `npm run audit:assets` in the release review; a clean technical audit does not prove copyright, portrait, venue, or reuse permission.
+
+## Publishing governance
+
+- `待确认` only means that the repository does not contain sufficient evidence for the relevant right; it does not mean that an asset is approved for publication or that copyright is owned.
+- A development Agent must not change `待确认` to `Approved` or decide copyright, portrait rights, venue rules, or third-party trademark permissions on the site owner's behalf.
+- Before a future performance takes place, the public repository may retain only low-precision information confirmed by the site owner; do not publish exact dates, venues, seat numbers, ticket faces, QR codes, or near-real-time location clues.
+- After a performance ends, verify images, tickets, and identifiable people before adding accurate details.
+- Passing the technical audit does not prove copyright, portrait rights, venue permission, or trademark permission.
