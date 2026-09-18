@@ -1,7 +1,7 @@
-import { buildLocalizedPageHref, localeRegistry } from '../i18n/locales'
-import type { Locale } from '../i18n/types'
-import { getLocalizedPageMeta } from './locales'
-import { pageEntries, pageRegistry, type PageKey } from './pageRegistry'
+import { buildLocalizedPageHref, localeRegistry } from '../i18n/locales.ts'
+import type { Locale } from '../i18n/types.ts'
+import { getLocalizedPageMeta } from './locales/index.ts'
+import { pageEntries, pageRegistry, type PageKey } from './pageRegistry.ts'
 
 export const SITE_ORIGIN = 'https://www.yance777.com'
 

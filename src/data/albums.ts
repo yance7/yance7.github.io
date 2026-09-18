@@ -1,4 +1,4 @@
-import type { Album, ReadonlyNonEmptyArray } from './types'
+import type { Album, ReadonlyNonEmptyArray } from './types.ts'
 
 export const albums = [
   { id: 'jay-fantasy', artist: '周杰伦', title: '范特西', year: 2001, format: 'album', cover: 'jay-fantasy', appleMusicUrl: 'https://music.apple.com/cn/album/%E8%8C%83%E7%89%B9%E8%A5%BF/535739206', palette: ['#C1191D', '#060707'] },

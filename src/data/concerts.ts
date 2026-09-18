@@ -1,4 +1,4 @@
-import type { Concert } from './types'
+import type { Concert } from './types.ts'
 
 export const concerts = [
   { id: 'dengziqi-2024-08-25', date: '2024-08-25', artist: '邓紫棋', tour: 'I AM GLORIA 演唱会', venue: '鸟巢', images: ['concert-202408-deng-ziqi.jpg'] },

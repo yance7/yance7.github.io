@@ -1,4 +1,4 @@
-import type { HonorsLocaleCopy } from '../types'
+import type { HonorsLocaleCopy } from '../types.ts'
 
 export const honorsCopy = {
   categories: [{ key: 'all', label: '全部' }, { key: 'peak', label: '領航級' }, { key: 'excellent', label: '卓越級' }, { key: 'emerging', label: '新銳級' }],

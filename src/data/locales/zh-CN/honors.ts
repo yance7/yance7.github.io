@@ -1,5 +1,5 @@
-import { honorCategories, honors } from '../../honors'
-import type { HonorsLocaleCopy } from '../types'
+import { honorCategories, honors } from '../../honors.ts'
+import type { HonorsLocaleCopy } from '../types.ts'
 
 export const honorsCopy = {
   categories: honorCategories.map(({ key, label }) => ({ key, label })),

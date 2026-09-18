@@ -11,8 +11,8 @@ type ProofType = 'paper' | 'source' | 'demo' | 'dataset' | 'experiment' | 'deplo
 export type HonorLevel = 'peak' | 'excellent' | 'emerging'
 export type NonEmptyArray<T> = [T, ...T[]]
 export type ReadonlyNonEmptyArray<T> = readonly [T, ...T[]]
-export type { PageKey } from './pageRegistry'
-import type { PageKey } from './pageRegistry'
+export type { PageKey } from './pageRegistry.ts'
+import type { PageKey } from './pageRegistry.ts'
 
 interface ProofLink {
   type: ProofType

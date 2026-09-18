@@ -1,4 +1,4 @@
-import type { CommunityLocaleCopy } from '../types'
+import type { CommunityLocaleCopy } from '../types.ts'
 
 export const communityCopy = {
   leadership: [

@@ -1,5 +1,5 @@
-import { projects } from '../../projects'
-import type { ProjectLocaleCopy, ProjectCopy } from '../types'
+import { projects } from '../../projects.ts'
+import type { ProjectLocaleCopy, ProjectCopy } from '../types.ts'
 
 const base = Object.fromEntries(projects.map((item) => [item.id, {
   title: item.title, value: item.value, description: item.description, role: item.role, discipline: item.discipline, story: item.story

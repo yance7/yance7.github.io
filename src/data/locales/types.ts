@@ -1,5 +1,5 @@
-import type { PageKey, PageMeta, SiteNavItem, Status, World, AcademicStat, ApScore, Education, Activity, Leadership, Honor, Concert, Album, ResearchItem, Project } from '../types'
-import type { HonorLevel } from '../types'
+import type { PageKey, PageMeta, SiteNavItem, Status, World, AcademicStat, ApScore, Education, Activity, Leadership, Honor, Concert, Album, ResearchItem, Project } from '../types.ts'
+import type { HonorLevel } from '../types.ts'
 
 type LocalizedNav = Omit<SiteNavItem, 'href' | 'key'>
 type LocalizedWorld = Omit<World, 'href' | 'key'>

@@ -1,5 +1,5 @@
-import { research } from '../../research'
-import type { ResearchLocaleCopy, ResearchCopy } from '../types'
+import { research } from '../../research.ts'
+import type { ResearchLocaleCopy, ResearchCopy } from '../types.ts'
 
 const base = Object.fromEntries(research.map((item) => [item.id, {
   title: item.title, text: item.text, tag: item.tag, org: item.org, metrics: item.metrics, methodology: item.methodology, proof: item.proof

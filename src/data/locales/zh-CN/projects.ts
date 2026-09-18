@@ -1,5 +1,5 @@
-import { projects } from '../../projects'
-import type { ProjectLocaleCopy, ProjectCopy } from '../types'
+import { projects } from '../../projects.ts'
+import type { ProjectLocaleCopy, ProjectCopy } from '../types.ts'
 
 export const projectsCopy = {
   entities: Object.fromEntries(projects.map((item) => [item.id, {

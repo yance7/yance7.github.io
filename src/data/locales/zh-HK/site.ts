@@ -1,4 +1,4 @@
-import type { SiteLocaleCopy } from '../types'
+import type { SiteLocaleCopy } from '../types.ts'
 
 export const siteCopy = {
   pageMeta: {

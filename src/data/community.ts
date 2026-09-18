@@ -1,4 +1,4 @@
-import type { Activity, Leadership } from './types'
+import type { Activity, Leadership } from './types.ts'
 
 export const leadership = [
   { role: '社长', org: 'iHOSA 科技创新社', period: '2025.09 — 2026.09', note: '' },

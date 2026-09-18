@@ -1,5 +1,5 @@
-import { pageRegistry, type PageKey } from '../data/pageRegistry'
-import type { Locale, LocaleDefinition } from './types'
+import { pageRegistry, type PageKey } from '../data/pageRegistry.ts'
+import type { Locale, LocaleDefinition } from './types.ts'
 
 export const localeRegistry = {
   'zh-CN': {

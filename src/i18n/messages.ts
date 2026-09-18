@@ -1,7 +1,7 @@
-import { enMessages } from './ui/en'
-import { zhCNMessages } from './ui/zh-CN'
-import { zhHKMessages } from './ui/zh-HK'
-import type { Locale, UiMessages } from './types'
+import { enMessages } from './ui/en.ts'
+import { zhCNMessages } from './ui/zh-CN.ts'
+import { zhHKMessages } from './ui/zh-HK.ts'
+import type { Locale, UiMessages } from './types.ts'
 
 export const uiMessages = {
   'zh-CN': zhCNMessages,

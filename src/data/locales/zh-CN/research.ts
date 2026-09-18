@@ -1,5 +1,5 @@
-import { research, researchMethodGroups, researchMethods } from '../../research'
-import type { ResearchLocaleCopy, ResearchCopy } from '../types'
+import { research, researchMethodGroups, researchMethods } from '../../research.ts'
+import type { ResearchLocaleCopy, ResearchCopy } from '../types.ts'
 
 const entities = Object.fromEntries(research.map((item) => [item.id, {
   title: item.title,

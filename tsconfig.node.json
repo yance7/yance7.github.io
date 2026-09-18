@@ -2,8 +2,7 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "lib": ["ES2022"],
-    "types": ["node"],
-    "allowImportingTsExtensions": true
+    "types": ["node"]
   },
   "include": ["scripts/**/*.ts", "vite.config.ts", "vitest.config.ts", "playwright.config.ts"]
 }
