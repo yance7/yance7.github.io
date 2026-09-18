@@ -1,11 +1,17 @@
+import { execFileSync } from 'node:child_process'
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
-import { extname, join, relative, resolve } from 'node:path'
+import { dirname, extname, join, relative, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 type ImportViolation = {
   file: string
-  reason: 'directory index import' | 'extensionless import'
+  reason: 'directory index import' | 'extensionless import' | 'unresolved relative import'
   specifier: string
+}
+
+type ImportResolution = {
+  file: string | null
+  violation: ImportViolation | null
 }
 
 const root = process.cwd()
@@ -26,16 +32,22 @@ function collectTypeScriptFiles(directory: string): string[] {
 
 function collectRelativeImports(source: string): string[] {
   const imports = new Set<string>()
-  const pattern = /\b(?:import|export)\s+(?:type\s+)?(?:[^'"\n;]*?\sfrom\s+)?['"]([^'"]+)['"]/g
-  for (const match of source.matchAll(pattern)) {
-    const specifier = match[1]
-    if (specifier?.startsWith('./') || specifier?.startsWith('../')) imports.add(specifier)
+  const patterns = [
+    /\b(?:import|export)\s+(?:type\s+)?(?:[^'"\n;]*?\sfrom\s+)?['"]([^'"]+)['"]/g,
+    /\bimport\s*\(\s*['"]([^'"]+)['"]\s*\)/g,
+    /\brequire\s*\(\s*['"]([^'"]+)['"]\s*\)/g
+  ]
+  for (const pattern of patterns) {
+    for (const match of source.matchAll(pattern)) {
+      const specifier = match[1]
+      if (specifier?.startsWith('./') || specifier?.startsWith('../')) imports.add(specifier)
+    }
   }
   return [...imports]
 }
 
-function resolveTypeScriptImport(file: string, specifier: string): { file: string; violation: ImportViolation | null } | null {
-  const target = resolve(file, '..', specifier)
+function resolveTypeScriptImport(file: string, specifier: string): ImportResolution {
+  const target = resolve(dirname(file), specifier)
   if (target.endsWith('.ts') && existsSync(target)) return { file: target, violation: null }
 
   const extensionlessFile = `${target}.ts`
@@ -62,7 +74,14 @@ function resolveTypeScriptImport(file: string, specifier: string): { file: strin
     }
   }
 
-  return null
+  return {
+    file: null,
+    violation: {
+      file: relative(root, file),
+      reason: 'unresolved relative import',
+      specifier
+    }
+  }
 }
 
 function findConfigDependencyViolations(): ImportViolation[] {
@@ -78,9 +97,8 @@ function findConfigDependencyViolations(): ImportViolation[] {
 
     for (const specifier of collectRelativeImports(readFileSync(file, 'utf8'))) {
       const resolved = resolveTypeScriptImport(file, specifier)
-      if (!resolved) continue
       if (resolved.violation) violations.push(resolved.violation)
-      queue.push(resolved.file)
+      if (resolved.file) queue.push(resolved.file)
     }
   }
 
@@ -103,5 +121,13 @@ describe('Vite native config compatibility', () => {
     expect(source).not.toContain('VITE_CONFIG_NATIVE_IGNORE_WARNING')
     expect(source).not.toMatch(/configLoader\s*:\s*['"][^'"]+['"]/
     )
+  })
+
+  it('loads the Vite config through Node native TypeScript support', () => {
+    expect(() => execFileSync(
+      process.execPath,
+      ['--experimental-strip-types', '--input-type=module', '-e', "await import('./vite.config.ts')"],
+      { cwd: root, stdio: 'pipe' }
+    )).not.toThrow()
   })
 })
