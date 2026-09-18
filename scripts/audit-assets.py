@@ -144,7 +144,7 @@ def main():
                 sensitive_keys = collect_sensitive_metadata(reopened)
                 if sensitive_keys:
                     sensitive_metadata_files[path.relative_to(ROOT).as_posix()] = sorted(sensitive_keys)
-        except (OSError, UnidentifiedImageError, SyntaxError, ValueError):
+        except (EOFError, OSError, Image.DecompressionBombError, UnidentifiedImageError, SyntaxError, ValueError):
             unreadable.append(path.relative_to(ROOT).as_posix())
 
     format_summary = ', '.join(f'{name}={count}' for name, count in sorted(formats.items()))
