@@ -18,10 +18,10 @@ export const honorsCopy = {
     'senior-physics-2026-bronze': { title: 'Senior Physics Challenge · 全球銅獎', org: 'UK Senior Physics Challenge' },
     'bbo-2026-gold': { title: '英國生物奧林匹克 BBO · 全球金獎', org: 'British Biology Olympiad' },
     'ihosa-2026-bce-excellence': { title: 'iHOSA 全國賽 BCE · 全國優秀獎', org: 'iHOSA National Round' },
-    'beijing-sti-2026-second': { title: '北京青少年科技創新大賽 · 二等獎', org: 'Beijing Adolescents S&T Innovation Contest' },
+    'beijing-sti-2026-second': { title: '北京青少年科技創新大賽 · 二等獎', org: 'Beijing Youth Science Creation Competition' },
     'usaco-2025-2026-gold': { title: 'USACO 2025-2026 賽季 · Gold Division', org: 'USA Computing Olympiad' },
-    'chaoyang-jinpeng-2026-second': { title: '北京朝陽青少年金鵬科技論壇 · 二等獎', org: 'Chaoyang Jinping Technology Forum' },
-    'chaoyang-sti-2025-first': { title: '北京朝陽青少年科技創新大賽 · 一等獎', org: 'Chaoyang Adolescents S&T Innovation Contest' },
+    'chaoyang-jinpeng-2026-second': { title: '北京朝陽青少年金鵬科技論壇 · 二等獎', org: 'Chaoyang Youth “Jinpeng” Science and Technology Forum' },
+    'chaoyang-sti-2025-first': { title: '北京朝陽青少年科技創新大賽 · 一等獎', org: 'Chaoyang Youth Science and Technology Innovation Competition' },
     'ccc-2025-regional-excellence': { title: '加拿大化學競賽 CCC · 區域優秀獎', org: 'Canadian Chemistry Contest' }
   },
   sections: {

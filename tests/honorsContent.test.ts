@@ -72,4 +72,17 @@ describe('honors archive content contract', () => {
       }
     }
   })
+
+  it('keeps official-name corrections aligned across all locale records', () => {
+    for (const locale of locales) {
+      const records = getLocalizedHonors(locale)
+      expect(records.find((honor) => honor.id === 'beijing-sti-2026-second')?.org)
+        .toBe('Beijing Youth Science Creation Competition')
+      expect(records.find((honor) => honor.id === 'chaoyang-jinpeng-2026-second')?.org)
+        .toBe('Chaoyang Youth “Jinpeng” Science and Technology Forum')
+      expect(records.find((honor) => honor.id === 'chaoyang-sti-2025-first')?.org)
+        .toBe('Chaoyang Youth Science and Technology Innovation Competition')
+      expect(records.some((honor) => `${honor.title} ${honor.org}`.includes('Jinping'))).toBe(false)
+    }
+  })
 })

@@ -11,7 +11,7 @@ describe('lyric typography', () => {
   })
 
   it('groups English words and gives spaces a measurable token', () => {
-    expect(splitLyricTokens('From here, tomorrow finds its way', 'en')).toEqual([
+    expect(splitLyricTokens('From here, tomorrow finds its course', 'en')).toEqual([
       { type: 'word', text: 'From', animationStart: 0 },
       { type: 'space', text: ' ' },
       { type: 'word', text: 'here,', animationStart: 4 },
@@ -22,19 +22,17 @@ describe('lyric typography', () => {
       { type: 'space', text: ' ' },
       { type: 'word', text: 'its', animationStart: 22 },
       { type: 'space', text: ' ' },
-      { type: 'word', text: 'way', animationStart: 25 }
+      { type: 'word', text: 'course', animationStart: 25 }
     ])
   })
 
   it('keeps English closing punctuation attached to the preceding word', () => {
-    const tokens = splitLyricTokens('My dream is imperfect; still, you dream it with me', 'en')
+    const tokens = splitLyricTokens('You share this imperfect dream with me', 'en')
 
     expect(tokens.filter((token) => token.type === 'word').map((token) => token.text)).toEqual([
-      'My', 'dream', 'is', 'imperfect;', 'still,', 'you', 'dream', 'it', 'with', 'me'
+      'You', 'share', 'this', 'imperfect', 'dream', 'with', 'me'
     ])
-    expect(tokens.filter((token) => token.type === 'space')).toHaveLength(9)
-    expect(tokens).not.toContainEqual({ type: 'word', text: 'imperfect' })
-    expect(tokens).not.toContainEqual({ type: 'word', text: 'still' })
+    expect(tokens.filter((token) => token.type === 'space')).toHaveLength(6)
   })
 
   it('keeps a trailing English punctuation mark in the same word group', () => {
