@@ -30,32 +30,32 @@ const lyricViewports = [
 const archiveHeroContracts = [
   {
     route: '/en/academics.html',
-    title: 'From here, tomorrow finds its way',
-    words: ['From', 'here,', 'tomorrow', 'finds', 'its', 'way'],
+    title: 'From here, tomorrow finds its course',
+    words: ['From', 'here,', 'tomorrow', 'finds', 'its', 'course'],
     credit: { artist: 'JJ Lin', song: '明日坐标', album: '明日坐标' }
   },
   {
     route: '/en/honors.html',
-    title: 'Step by step, I climb toward the light',
-    words: ['Step', 'by', 'step,', 'I', 'climb', 'toward', 'the', 'light'],
+    title: 'Step by step, I keep climbing',
+    words: ['Step', 'by', 'step,', 'I', 'keep', 'climbing'],
     credit: { artist: 'Jay Chou', song: '蜗牛', album: 'Fantasy Plus' }
   },
   {
     route: '/en/research.html',
-    title: 'My dream is imperfect; still, you dream it with me',
-    words: ['My', 'dream', 'is', 'imperfect;', 'still,', 'you', 'dream', 'it', 'with', 'me'],
+    title: 'You share this imperfect dream with me',
+    words: ['You', 'share', 'this', 'imperfect', 'dream', 'with', 'me'],
     credit: { artist: 'TFBOYS', song: '不完美小孩', album: '我们的时光' }
   },
   {
     route: '/en/works.html',
-    title: 'Slowly I learned: keep striving, and success will come',
-    words: ['Slowly', 'I', 'learned:', 'keep', 'striving,', 'and', 'success', 'will', 'come'],
+    title: 'Little by little, I learned that effort can lead to success',
+    words: ['Little', 'by', 'little,', 'I', 'learned', 'that', 'effort', 'can', 'lead', 'to', 'success'],
     credit: { artist: 'Silence Wang', song: '慢慢懂', album: '慢慢懂' }
   },
   {
     route: '/en/concerts.html',
-    title: 'Fate brought us together, beyond this restless world',
-    words: ['Fate', 'brought', 'us', 'together,', 'beyond', 'this', 'restless', 'world'],
+    title: 'Fate brought us together beyond this restless world',
+    words: ['Fate', 'brought', 'us', 'together', 'beyond', 'this', 'restless', 'world'],
     credit: { artist: 'G.E.M.', song: '光年之外', album: 'Single' }
   }
 ] as const

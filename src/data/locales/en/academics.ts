@@ -28,6 +28,6 @@ export const academicsCopy = {
   sections: {
     education: { label: 'EDUCATION', title: 'Academic record', accent: 'two chapters', copy: 'A compact record of the current school stage and the years that led here.' },
     scoreboard: { label: 'SCOREBOARD', title: 'Numbers are honest,', accent: 'effort is visible', copy: 'GPA, standardized tests, and English scores make sustained work legible.' },
-    apArchive: { label: 'AP ARCHIVE', title: 'AP results', accent: 'on record', copy: 'Nine AP exams at 5, across science, social science, and computing; three Grade 12 results pending.', panelLabel: 'AP SCORE / 2024—2026 · 9 AT 5 · 3 PENDING' }
+    apArchive: { label: 'AP ARCHIVE', title: 'AP results', accent: 'on record', copy: 'Scores of 5 on nine AP exams across science, social science, and computing; three Grade 12 results pending.', panelLabel: 'AP SCORE / 2024—2026 · 9 SCORES OF 5 · 3 PENDING' }
   }
 } satisfies AcademicsLocaleCopy

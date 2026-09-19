@@ -34,7 +34,7 @@ export const activities = [
     id: 'academic-report-forum',
     featured: false,
     title: '北京市第八十中学学术报告会（第六届 & 第七届）', period: '2025.12 & 2026.06',
-    org: 'Beijing No.80 High School',
+    org: 'Beijing No. 80 High School',
     detail: '连续两届汇报研究成果，从 CNN/ResNet 到注意力机制与多模态学习，展示 FishFreshNet V1 到 V2 的演进。'
   },
   {
