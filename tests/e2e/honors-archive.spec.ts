@@ -204,6 +204,21 @@ test.describe('honors cards with reduced motion', () => {
     expect(after.transform).toBe('none')
     expect(Math.abs(after.top - before.top)).toBeLessThanOrEqual(.1)
   })
+
+  test('pressed filter controls stay still under reduced motion', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto('/honors.html')
+
+    const filter = page.locator('[data-honor-filter="peak"]')
+    await expect(filter).toBeVisible()
+    await filter.focus()
+    await page.keyboard.down(' ')
+    try {
+      await expect.poll(() => filter.evaluate((element) => getComputedStyle(element).transform)).toBe('none')
+    } finally {
+      await page.keyboard.up(' ')
+    }
+  })
 })
 
 test('honors archive fits the required viewport and theme matrix', async ({ page }) => {

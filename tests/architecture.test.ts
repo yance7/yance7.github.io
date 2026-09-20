@@ -404,8 +404,8 @@ describe('shared UI correction contracts', () => {
   it('keeps disabled links and shared semantic tokens explicit', () => {
     const button = readFileSync(resolve(process.cwd(), 'src/components/YanceButton.vue'), 'utf8')
     const status = readFileSync(resolve(process.cwd(), 'src/components/StatusBadge.vue'), 'utf8')
-    const primitives = readFileSync(resolve(process.cwd(), 'src/styles/primitives.css'), 'utf8')
-    const theme = readFileSync(resolve(process.cwd(), 'src/theme.css'), 'utf8')
+    const primitives = readFileSync(resolve(process.cwd(), 'src/styles/primitives.css'), 'utf8').replace(/\r\n/g, '\n')
+    const theme = readFileSync(resolve(process.cwd(), 'src/theme.css'), 'utf8').replace(/\r\n/g, '\n')
     const scrollProgress = readFileSync(resolve(process.cwd(), 'src/components/ScrollProgress.vue'), 'utf8')
     const shell = readFileSync(resolve(process.cwd(), 'src/styles/shell.css'), 'utf8')
     const responsive = readFileSync(resolve(process.cwd(), 'src/styles/responsive.css'), 'utf8')
@@ -464,9 +464,9 @@ describe('lightbox depth contracts', () => {
 
 describe('motion hierarchy contracts', () => {
   it('keeps theme controls immediate while deferring the full document restyle', () => {
-    const theme = readFileSync(resolve(process.cwd(), 'src/composables/useTheme.ts'), 'utf8')
-    const themeStyles = readFileSync(resolve(process.cwd(), 'src/theme.css'), 'utf8')
-    const shellStyles = readFileSync(resolve(process.cwd(), 'src/styles/shell.css'), 'utf8')
+    const theme = readFileSync(resolve(process.cwd(), 'src/composables/useTheme.ts'), 'utf8').replace(/\r\n/g, '\n')
+    const themeStyles = readFileSync(resolve(process.cwd(), 'src/theme.css'), 'utf8').replace(/\r\n/g, '\n')
+    const shellStyles = readFileSync(resolve(process.cwd(), 'src/styles/shell.css'), 'utf8').replace(/\r\n/g, '\n')
 
     const applyThemeStart = theme.indexOf('function applyTheme(')
     const setThemeIndex = theme.indexOf('\n  theme.value = value', applyThemeStart)
@@ -492,10 +492,10 @@ describe('motion hierarchy contracts', () => {
     expect(shellStyles).not.toContain('feTurbulence')
     const themeOrbitStart = shellStyles.indexOf('.theme-orbit {')
     const themeOrbitEnd = shellStyles.indexOf('\n}', themeOrbitStart)
-    expect(shellStyles.slice(themeOrbitStart, themeOrbitEnd)).toContain('transition: none;')
+    expect(shellStyles.slice(themeOrbitStart, themeOrbitEnd)).toContain('transition: color var(--dur-base)')
     const orbitKnobStart = shellStyles.indexOf('.orbit-knob {')
     const orbitKnobEnd = shellStyles.indexOf('\n}', orbitKnobStart)
-    expect(shellStyles.slice(orbitKnobStart, orbitKnobEnd)).toContain('transition: none;')
+    expect(shellStyles.slice(orbitKnobStart, orbitKnobEnd)).toContain('transition: transform var(--dur-base)')
   })
 
   it('lets IntersectionObserver own reveal geometry after initial viewport setup', () => {

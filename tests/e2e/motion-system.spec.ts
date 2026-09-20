@@ -140,6 +140,42 @@ test('Research tool tags remain flat information labels on hover', async ({ page
     .toBe('none')
 })
 
+test('Honor filter controls keep hover-only styling off coarse pointers', async ({ page }) => {
+  const coarsePointer = await page.evaluate(() => window.matchMedia('(hover: none), (pointer: coarse)').matches)
+  test.skip(!coarsePointer, 'Hover-only styling is only observable on coarse-pointer projects')
+
+  await page.goto('/honors.html')
+  const filter = page.locator('[data-honor-filter="peak"]')
+  await expect(filter).toBeVisible()
+  await page.mouse.move(0, 0)
+
+  const before = await filter.evaluate((element) => {
+    const style = getComputedStyle(element)
+    return {
+      background: style.backgroundColor,
+      border: style.borderColor,
+      color: style.color,
+      boxShadow: style.boxShadow,
+      transform: style.transform
+    }
+  })
+
+  await filter.hover()
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
+  const after = await filter.evaluate((element) => {
+    const style = getComputedStyle(element)
+    return {
+      background: style.backgroundColor,
+      border: style.borderColor,
+      color: style.color,
+      boxShadow: style.boxShadow,
+      transform: style.transform
+    }
+  })
+
+  expect(after).toEqual(before)
+})
+
 test('New interaction polish does not introduce motion under reduced motion', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/research.html')
@@ -194,6 +230,46 @@ test('reduced motion completes every reveal immediately', async ({ page }) => {
     return { opacity: Number.parseFloat(style.opacity), transform: style.transform }
   }))
   expect(states.every(({ opacity, transform }) => opacity === 1 && transform === 'none')).toBe(true)
+})
+
+test('theme controls use bounded transitions for state changes', async ({ page }) => {
+  await page.goto('/en/')
+
+  const durations = await page.locator('.theme-orbit, .orbit-knob').evaluateAll((elements) => (
+    elements.map((element) => getComputedStyle(element).transitionDuration)
+  ))
+  const milliseconds = durations.map((duration) => (
+    duration.endsWith('ms') ? Number.parseFloat(duration) : Number.parseFloat(duration) * 1000
+  ))
+
+  expect(milliseconds.every((duration) => duration >= 180 && duration <= 320), JSON.stringify(durations)).toBe(true)
+})
+
+test('mobile menu close control uses a bounded hover transition', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/en/')
+
+  await page.locator('.menu-trigger').click()
+  const close = page.locator('.mobile-menu-close')
+  await expect(close).toBeVisible()
+
+  const duration = await close.evaluate((element) => getComputedStyle(element).transitionDuration)
+  const milliseconds = duration.endsWith('ms') ? Number.parseFloat(duration) : Number.parseFloat(duration) * 1000
+  expect(milliseconds, duration).toBeGreaterThanOrEqual(180)
+  expect(milliseconds, duration).toBeLessThanOrEqual(320)
+})
+
+test('reduced motion removes delayed mobile menu entry motion', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/en/')
+
+  await page.locator('.menu-trigger').click()
+  const delays = await page.locator('.mobile-menu a').evaluateAll((elements) => (
+    elements.map((element) => getComputedStyle(element).animationDelay)
+  ))
+
+  expect(delays.every((delay) => delay === '0s'), JSON.stringify(delays)).toBe(true)
 })
 
 test('quick hash navigation reveals the targeted Works project', async ({ page }) => {
