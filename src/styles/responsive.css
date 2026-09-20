@@ -156,6 +156,12 @@
   .foot-mark:hover:not(:focus-visible) .brand-mark-image { filter: var(--brand-mark-filter); }
   .nav-rail a:hover:not(:focus-visible) { color: var(--dim); }
   .nav-rail a:hover:not(:focus-visible)::after { transform: scaleX(0); }
+  .locale-switcher-mobile summary:hover:not(:focus-visible) {
+    border-color: var(--control-border); background: var(--control-bg); color: var(--ink);
+  }
+  .locale-switcher-mobile nav a:not([aria-current='page']):hover:not(:focus-visible) {
+    background: transparent; color: var(--dim);
+  }
   .mobile-menu-close:hover:not(:focus-visible) {
     border-color: var(--control-border); background: var(--control-bg); color: var(--ink); transform: none;
   }
@@ -210,6 +216,8 @@
     scroll-behavior: auto !important;
     transition-duration: .01ms !important;
     animation-duration: .01ms !important;
+    transition-delay: 0s !important;
+    animation-delay: 0s !important;
     animation-iteration-count: 1 !important;
   }
   .reveal { opacity: 1; transform: none; animation: none !important; }
@@ -219,4 +227,6 @@
   .lb-nav:hover,
   .lb-close:hover { transform: none !important; }
   .hero-action:hover span { transform: none !important; }
+  button:not(:disabled):active,
+  a[href]:active { transform: none !important; }
 }

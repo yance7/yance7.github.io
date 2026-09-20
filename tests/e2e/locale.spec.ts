@@ -141,6 +141,49 @@ test('mobile locale pill keeps three real links inside narrow viewports', async 
   }
 })
 
+test('mobile locale controls keep hover-only styling off coarse pointers', async ({ page }) => {
+  const coarsePointer = await page.evaluate(() => window.matchMedia('(hover: none), (pointer: coarse)').matches)
+  test.skip(!coarsePointer, 'Hover-only styling is only observable on coarse-pointer projects')
+
+  await page.goto('/en/research.html')
+
+  const mobile = page.locator('.locale-switcher-mobile')
+  const summary = mobile.locator('summary')
+  const summaryBefore = await summary.evaluate((element) => {
+    const style = getComputedStyle(element)
+    return {
+      background: style.backgroundColor,
+      border: style.borderColor,
+      color: style.color
+    }
+  })
+
+  await summary.hover()
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
+  await expect.poll(() => summary.evaluate((element) => {
+    const style = getComputedStyle(element)
+    return {
+      background: style.backgroundColor,
+      border: style.borderColor,
+      color: style.color
+    }
+  })).toEqual(summaryBefore)
+
+  await mobile.evaluate((element) => element.setAttribute('open', ''))
+  const alternateLocale = mobile.locator('nav a:not([aria-current="page"])').first()
+  const alternateBefore = await alternateLocale.evaluate((element) => {
+    const style = getComputedStyle(element)
+    return { background: style.backgroundColor, color: style.color }
+  })
+
+  await alternateLocale.hover()
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
+  await expect.poll(() => alternateLocale.evaluate((element) => {
+    const style = getComputedStyle(element)
+    return { background: style.backgroundColor, color: style.color }
+  })).toEqual(alternateBefore)
+})
+
 test('localized not-found pages keep the locale and return to that home', async ({ page }) => {
   await page.goto('/en/does-not-exist')
   await expect(page.locator('html')).toHaveAttribute('lang', 'en')
