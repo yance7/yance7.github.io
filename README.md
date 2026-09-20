@@ -20,6 +20,22 @@
   <img src="public/assets/og-card.png" alt="Yance Personal Archive preview" />
 </p>
 
+## 快速导航
+
+| 如果你想…… | 从这里开始 |
+| --- | --- |
+| 浏览线上网站 | [www.yance777.com](https://www.yance777.com) |
+| 修改页面结构或路由视图 | [`src/pages/`](src/pages/) |
+| 修改页面共享内容与多语言文案 | [`src/data/`](src/data/) |
+| 修改通用界面组件 | [`src/components/`](src/components/) |
+| 调整全站或页面样式 | [`src/styles/`](src/styles/) |
+| 修改 HTML 入口源 | [`html-src/`](html-src/) |
+| 查找静态图片与媒体 | [`public/assets/`](public/assets/) |
+| 运行构建与审计工具 | [`scripts/`](scripts/) |
+| 查阅项目文档 | [`docs/README.md`](docs/README.md) |
+| 参与贡献 | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
+| 报告安全或隐私问题 | [`SECURITY.md`](SECURITY.md) |
+
 ## 项目简介
 
 网站以档案方式整理个人经历与创作，包含：
@@ -59,6 +75,7 @@ src/
 html-src/              HTML 源文件
 public/assets/         静态媒体与品牌资源
 tests/                 单元、浏览器与视觉测试
+docs/                  交互、媒体、隐私与发布文档
 .github/workflows/     GitHub Actions 工作流
 ```
 
