@@ -24,31 +24,32 @@ import {
   getLocalizedWorlds
 } from '../src/data/locales'
 import { uiMessages } from '../src/i18n'
+import { concertsCopy as zhCNConcertCopy } from '../src/data/locales/zh-CN/concerts'
 
 const englishHeroContracts = [
   {
     key: 'academics' as const,
-    title: 'From here, tomorrow finds its way',
+    title: 'From here, tomorrow finds its course',
     credit: { artist: 'JJ Lin', song: '明日坐标', album: '明日坐标' }
   },
   {
     key: 'honors' as const,
-    title: 'Step by step, I climb toward the light',
+    title: 'Step by step, I keep climbing',
     credit: { artist: 'Jay Chou', song: '蜗牛', album: 'Fantasy Plus' }
   },
   {
     key: 'research' as const,
-    title: 'My dream is imperfect; still, you dream it with me',
+    title: 'You share this imperfect dream with me',
     credit: { artist: 'TFBOYS', song: '不完美小孩', album: '我们的时光' }
   },
   {
     key: 'works' as const,
-    title: 'Slowly I learned: keep striving, and success will come',
+    title: 'Little by little, I learned that effort can lead to success',
     credit: { artist: 'Silence Wang', song: '慢慢懂', album: '慢慢懂' }
   },
   {
     key: 'concerts' as const,
-    title: 'Fate brought us together, beyond this restless world',
+    title: 'Fate brought us together beyond this restless world',
     credit: { artist: 'G.E.M.', song: '光年之外', album: '' }
   }
 ] as const
@@ -124,6 +125,43 @@ describe('English content hygiene', () => {
 
     const titles = englishHeroContracts.map(({ key }) => getLocalizedPageMeta('en', key).title)
     for (const oldTitle of oldTitles) expect(titles).not.toContain(oldTitle)
+  })
+
+  it('uses natural English labels for archive actions and album collections', () => {
+    const strings = englishSources.flatMap(collectStrings)
+    for (const legacy of [
+      'Personal archive entrance',
+      'Nine AP exams at 5',
+      'Contact channels',
+      'Enter project',
+      'Explore academics',
+      'Proof / links',
+      'eight coordinates of sound'
+    ]) {
+      expect(strings).not.toContain(legacy)
+    }
+
+    expect(getLocalizedNavItems('en')[0]).toMatchObject({ desc: 'Personal archive overview' })
+    expect(getLocalizedAcademics('en').sections.apArchive.copy).toContain('Scores of 5 on nine AP exams')
+    expect(getLocalizedAlbumSection('en').accent).toBe('eight albums to revisit')
+    expect(uiMessages.en.common.proofLinks).toBe('Evidence & links')
+    expect(uiMessages.en.actions.enterProject).toBe('View project')
+    expect(uiMessages.en.actions.exploreAcademics).toBe('View academic profile')
+  })
+
+  it('keeps translated regional program names transparent and consistent', () => {
+    for (const locale of ['zh-CN', 'zh-HK', 'en'] as const) {
+      const records = getLocalizedHonors(locale)
+      for (const id of ['beijing-sti-2026-second', 'chaoyang-jinpeng-2026-second', 'chaoyang-sti-2025-first']) {
+        const record = records.find((honor) => honor.id === id)
+        expect(record).toBeDefined()
+        expect(`${record?.title} ${record?.org}`).not.toContain('Jinping')
+      }
+    }
+  })
+
+  it('uses natural Simplified Chinese for current concert-year copy', () => {
+    expect(zhCNConcertCopy.currentYearMood(2, 1)).toBe('2 场已赴约，1 场待相见。')
   })
 
   it('keeps the AP project dossier fully localized in English', () => {

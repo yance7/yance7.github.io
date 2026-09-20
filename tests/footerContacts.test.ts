@@ -68,7 +68,7 @@ describe('footer localization contract', () => {
     })
     expect(enMessages.footer).toMatchObject({
       homeLabel: 'Back to home',
-      contactsLabel: 'Contact channels',
+      contactsLabel: 'Contact',
       archive: 'PERSONAL ARCHIVE / 2026',
       identity: 'RESEARCHER / BUILDER / MUSIC LISTENER',
       email: 'Email',

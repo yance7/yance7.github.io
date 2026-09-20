@@ -8,7 +8,7 @@ export const concertsCopy = {
     ...base,
     'dengziqi-2024-08-25': { artist: 'G.E.M.', tour: 'I AM GLORIA Live', venue: 'National Stadium' },
     'zhangjie-2025-04-18': { artist: 'Jason Zhang', tour: '未·Live — Kai Wang 1982', venue: 'National Stadium' },
-    'xietingfeng-2025-08-10': { artist: 'Nicholas Tse', tour: 'Evolution Nic Live', venue: 'Big Lotus' },
+    'xietingfeng-2025-08-10': { artist: 'Nicholas Tse', tour: 'Evolution Nic Live', venue: 'Hangzhou Olympic Sports Centre Stadium (“Big Lotus”)' },
     'taozhe-2025-09-19': { artist: 'David Tao', tour: 'Soul Power II Live', venue: 'National Stadium' },
     'zhangyixing-2025-10-06': { artist: 'Lay Zhang', tour: 'Grand Voyage 5', venue: 'National Stadium' },
     'kpl-2025-11-08': { artist: 'KPL Grand Finals', tour: 'KPL Annual Finals 2025', venue: 'National Stadium' },

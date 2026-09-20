@@ -42,7 +42,7 @@ export const honors = [
   },
   {
     id: 'beijing-sti-2026-second', date: '2026.03', level: 'excellent', title: '北京青少年科技创新大赛 · 二等奖',
-    org: 'Beijing Adolescents S&T Innovation Contest'
+    org: 'Beijing Youth Science Creation Competition'
   },
   {
     id: 'usaco-2025-2026-gold', date: '2026.02', level: 'peak', title: 'USACO 2025-2026 赛季 · Gold Division',
@@ -50,11 +50,11 @@ export const honors = [
   },
   {
     id: 'chaoyang-jinpeng-2026-second', date: '2026.01', level: 'emerging', title: '北京朝阳青少年金鹏科技论坛 · 二等奖',
-    org: 'Chaoyang Jinping Technology Forum'
+    org: 'Chaoyang Youth “Jinpeng” Science and Technology Forum'
   },
   {
     id: 'chaoyang-sti-2025-first', date: '2025.12', level: 'emerging', title: '北京朝阳青少年科技创新大赛 · 一等奖',
-    org: 'Chaoyang Adolescents S&T Innovation Contest'
+    org: 'Chaoyang Youth Science and Technology Innovation Competition'
   },
   {
     id: 'ccc-2025-regional-excellence', date: '2025.04', level: 'emerging', title: '加拿大化学竞赛 CCC · 区域优秀奖',

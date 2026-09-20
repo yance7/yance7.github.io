@@ -10,7 +10,7 @@ const contacts = [
 const locales = [
   { name: 'Simplified Chinese', path: '/index.html', homeHref: '/', contactLabel: '联系方式' },
   { name: 'Traditional Chinese', path: '/zh-hk/index.html', homeHref: '/zh-hk/', contactLabel: '聯絡方式' },
-  { name: 'English', path: '/en/index.html', homeHref: '/en/', contactLabel: 'Contact channels' }
+  { name: 'English', path: '/en/index.html', homeHref: '/en/', contactLabel: 'Contact' }
 ] as const
 
 for (const locale of locales) {
