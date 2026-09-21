@@ -81,6 +81,108 @@ test('concert poster coalesces sheen and tilt into one layout read per frame', {
   await expect(poster).not.toHaveCSS('--ry', '')
 })
 
+test('concert poster stages classify source ratios and contain the complete artwork', async ({ page }) => {
+  await page.goto('/concerts.html')
+
+  const expected = [
+    { id: 'jd-summer-2026-05-31', ratio: 'tall', frame: 9 / 16 },
+    { id: 'dengziqi-2024-08-25', ratio: 'portrait', frame: 3 / 4 },
+    { id: 'kpl-2025-11-08', ratio: 'landscape', frame: 16 / 9 }
+  ] as const
+
+  for (const item of expected) {
+    const poster = page.locator(`[data-concert-id="${item.id}"] .concert-poster`)
+    await expect(poster).toHaveAttribute('data-poster-ratio', item.ratio)
+    const state = await poster.evaluate((element) => {
+      const image = element.querySelector('img')!
+      const rect = element.getBoundingClientRect()
+      return {
+        frameRatio: rect.width / rect.height,
+        objectFit: getComputedStyle(image).objectFit,
+        width: image.getAttribute('width'),
+        height: image.getAttribute('height')
+      }
+    })
+
+    expect(state.frameRatio).toBeCloseTo(item.frame, 2)
+    expect(state.objectFit).toBe('contain')
+    expect(Number(state.width)).toBeGreaterThan(0)
+    expect(Number(state.height)).toBeGreaterThan(0)
+  }
+})
+
+test('concert poster pointer feedback stays bounded without changing geometry', { tag: '@fine-pointer' }, async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium', 'Fine-pointer interaction is intentionally disabled on touch projects')
+  await page.goto('/concerts.html')
+  const poster = page.locator('.concert-poster').first()
+  await poster.scrollIntoViewIfNeeded()
+  const before = await poster.boundingBox()
+  expect(before).not.toBeNull()
+
+  await poster.evaluate((element) => {
+    const bounds = element.getBoundingClientRect()
+    element.dispatchEvent(new PointerEvent('pointerenter', {
+      bubbles: true,
+      clientX: bounds.right - 1,
+      clientY: bounds.bottom - 1,
+      pointerType: 'mouse'
+    }))
+    element.dispatchEvent(new PointerEvent('pointermove', {
+      bubbles: true,
+      clientX: bounds.right - 1,
+      clientY: bounds.bottom - 1,
+      pointerType: 'mouse'
+    }))
+  })
+  await expect.poll(() => poster.evaluate((element) => getComputedStyle(element).getPropertyValue('--rx'))).not.toBe('')
+
+  const state = await poster.evaluate((element) => {
+    const styles = getComputedStyle(element)
+    const rect = element.getBoundingClientRect()
+    return {
+      rx: Math.abs(Number.parseFloat(styles.getPropertyValue('--rx'))),
+      ry: Math.abs(Number.parseFloat(styles.getPropertyValue('--ry'))),
+      width: rect.width,
+      height: rect.height
+    }
+  })
+  const after = await poster.boundingBox()
+  expect(after).not.toBeNull()
+  expect(Math.max(state.rx, state.ry)).toBeLessThanOrEqual(1.8)
+  expect(after!.width).toBeCloseTo(before!.width, 2)
+  expect(after!.height).toBeCloseTo(before!.height, 2)
+})
+
+test('concert poster motion is disabled for reduced-motion users', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/concerts.html')
+  const poster = page.locator('.concert-poster').first()
+  const before = await poster.evaluate((element) => {
+    const styles = getComputedStyle(element)
+    return { borderColor: styles.borderColor, boxShadow: styles.boxShadow }
+  })
+  await poster.hover()
+
+  const state = await poster.evaluate((element) => ({
+    posterTransition: getComputedStyle(element).transitionDuration,
+    posterTransform: getComputedStyle(element).transform,
+    posterBorderColor: getComputedStyle(element).borderColor,
+    posterBoxShadow: getComputedStyle(element).boxShadow,
+    buttonTransform: getComputedStyle(element.querySelector('.poster-open')!).transform,
+    imageTransition: getComputedStyle(element.querySelector('img')!).transitionDuration,
+    imageTransform: getComputedStyle(element.querySelector('img')!).transform,
+    hintOpacity: getComputedStyle(element.querySelector('.poster-hint')!).opacity
+  }))
+  expect(Number.parseFloat(state.posterTransition)).toBeLessThanOrEqual(0.001)
+  expect(state.posterTransform).toBe('none')
+  expect(state.posterBorderColor).toBe(before.borderColor)
+  expect(state.posterBoxShadow).toBe(before.boxShadow)
+  expect(state.buttonTransform).toBe('none')
+  expect(Number.parseFloat(state.imageTransition)).toBeLessThanOrEqual(0.001)
+  expect(state.imageTransform).toBe('none')
+  expect(state.hintOpacity).toBe('0')
+})
+
 test('album sleeve coalesces pointer tilt into one layout read per frame', { tag: '@fine-pointer' }, async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium', 'Fine-pointer interaction is intentionally disabled on touch projects')
   await page.goto('/concerts.html')
