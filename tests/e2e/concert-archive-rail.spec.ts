@@ -206,6 +206,21 @@ test('concert archive exposes a native horizontal scrolling contract', async ({ 
   expect(scrollState.overflowX).toMatch(/auto|scroll/)
 })
 
+test('concert poster hover feedback is disabled on coarse pointers', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'webkit-mobile', 'Coarse-pointer contract is verified on the mobile WebKit project')
+  await gotoConcerts(page)
+  const poster = page.locator('.concert-poster').first()
+  const state = await poster.evaluate((element) => ({
+    coarse: window.matchMedia('(hover: none), (pointer: coarse)').matches,
+    posterTransition: getComputedStyle(element).transitionDuration,
+    imageTransition: getComputedStyle(element.querySelector('img')!).transitionDuration
+  }))
+
+  expect(state.coarse).toBe(true)
+  expect(state.posterTransition).toBe('0s')
+  expect(state.imageTransition).toBe('0s')
+})
+
 test('concert archive opens each single poster in the lightbox', async ({ page }) => {
   await gotoConcerts(page)
   const card = page.locator('[data-concert-id="kpl-2025-11-08"]')

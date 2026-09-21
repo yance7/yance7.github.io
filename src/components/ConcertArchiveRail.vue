@@ -3,7 +3,7 @@ import { nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import type { Concert, LightboxPayload } from '../data/types'
 import type { ConcertLocaleCopy } from '../data/locales/types'
 import { useLocale } from '../i18n'
-import { originalImageUrl, thumbnailUrl } from '../utils/concertMedia'
+import { concertPosterPresentation, originalImageUrl, thumbnailUrl } from '../utils/concertMedia'
 import { sharedImagePreloader } from '../utils/imagePreload'
 
 const props = defineProps<{
@@ -189,9 +189,9 @@ onBeforeUnmount(() => {
         >
           <div
             class="concert-poster"
-            :data-poster-ratio="item.poster.width > item.poster.height ? 'landscape' : 'portrait'"
-            :style="{ aspectRatio: `${item.poster.width} / ${item.poster.height}` }"
-            v-pointer-sheen="{ tilt: 6 }"
+            :data-poster-ratio="concertPosterPresentation(item.poster).kind"
+            :style="{ aspectRatio: concertPosterPresentation(item.poster).aspectRatio }"
+            v-pointer-sheen="{ tilt: 3.5 }"
           >
             <button
               class="poster-open"
