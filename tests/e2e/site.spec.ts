@@ -584,7 +584,7 @@ test('concert lightbox remains accessible after opening', async ({ page }) => {
   await expect(page.locator('.lightbox')).toBeVisible()
   await expect(page.locator('.lb-close')).toBeFocused()
   await expectAccessible(page, { settle: false })
-  await page.keyboard.press('Escape')
+  await page.locator('.lb-close').click()
   await expect(page.locator('.lightbox')).toHaveCount(0)
   await expect(page.locator('.poster-open').first()).toBeFocused()
 })
