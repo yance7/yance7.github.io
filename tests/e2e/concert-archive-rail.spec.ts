@@ -120,6 +120,28 @@ test('concert archive deep links position the requested card', async ({ page }) 
   expect(page.url()).toContain(`#${targetId}`)
 })
 
+test('concert archive deep links do not overwrite a newer hash', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+
+  let releaseStyles!: () => void
+  const stylesReleased = new Promise<void>((resolve) => { releaseStyles = resolve })
+  await page.route(/(?:ConcertsPage-[^/]+\.css|styles\/concerts\.css)(?:\?.*)?$/, async (route) => {
+    const response = await route.fetch()
+    await stylesReleased
+    await route.fulfill({ response })
+  })
+
+  const concertsStyleRequest = page.waitForRequest(/(?:ConcertsPage-[^/]+\.css|styles\/concerts\.css)(?:\?.*)?$/)
+  const navigation = page.goto('/concerts.html#concert-kpl-2025-11-08')
+  await concertsStyleRequest
+  await page.evaluate(() => { window.location.hash = '#concert-archive' })
+  releaseStyles()
+  await navigation
+
+  await expect(page).toHaveURL(/concerts\.html#concert-archive$/)
+  await expect(page.locator('[data-anchor-id="concert-kpl-2025-11-08"][data-hash-target]')).toHaveCount(0)
+})
+
 test('concert archive buttons stay synchronized at both rail edges', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await gotoConcerts(page)
