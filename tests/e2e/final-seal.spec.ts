@@ -21,7 +21,6 @@ const viewports = [
 const criticalTouchTargetSelector = [
   '.menu-trigger',
   '.theme-orbit',
-  '.carousel-controls button',
   '.album-nav button',
   '.album-tile',
   '.poster-open',

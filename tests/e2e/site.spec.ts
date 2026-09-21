@@ -584,7 +584,7 @@ test('concert lightbox remains accessible after opening', async ({ page }) => {
   await expect(page.locator('.lightbox')).toBeVisible()
   await expect(page.locator('.lb-close')).toBeFocused()
   await expectAccessible(page, { settle: false })
-  await page.keyboard.press('Escape')
+  await page.locator('.lb-close').click()
   await expect(page.locator('.lightbox')).toHaveCount(0)
   await expect(page.locator('.poster-open').first()).toBeFocused()
 })
@@ -604,12 +604,14 @@ test('rapid control clicks settle without duplicate or stale state', async ({ pa
   await expect(page.locator('.method-disclosure').first()).not.toHaveClass(/open/)
 
   await page.goto('/concerts.html')
-  const carousel = page.locator('.concert-poster').filter({ has: page.locator('.carousel-controls') }).first()
-  const next = carousel.locator('button[aria-label="下一张"]')
-  await expect(next).toBeVisible()
-  await expect(next).toBeEnabled()
-  for (let i = 0; i < 8; i += 1) await next.dispatchEvent('click')
-  await expect(carousel.locator('.carousel-controls span')).toHaveText(/\d+ \/ \d+/)
+  const poster = page.locator('.concert-poster .poster-open').first()
+  for (let i = 0; i < 3; i += 1) {
+    await poster.click()
+    await expect(page.locator('.lightbox')).toHaveCount(1)
+    await expect(page.locator('.lb-meta-index')).toHaveText('1 / 1')
+    await page.locator('.lb-close').click()
+    await expect(page.locator('.lightbox')).toHaveCount(0)
+  }
 })
 
 test('Works wordmarks keep typography on hover', async ({ page }) => {

@@ -101,10 +101,10 @@ def render_card(slug, kicker, title, subtitle, detail, accent, image=None, colla
         draw.rounded_rectangle((735, 270, 1080, 492), radius=18, outline=f'{gold}88', width=2)
     elif collage:
         paths = [
-            ASSET_ROOT / 'concerts' / 'thumbs' / 'concert-202408-deng-ziqi.webp',
-            ASSET_ROOT / 'concerts' / 'thumbs' / 'concert-202504-zhang-jie.webp',
-            ASSET_ROOT / 'concerts' / 'thumbs' / 'concert-202606-zhou-jielun.webp',
-            ASSET_ROOT / 'concerts' / 'thumbs' / 'concert-202607-xue-zhiqian.webp',
+            ASSET_ROOT / 'concerts' / 'thumbs' / 'concert-20240825-deng-ziqi.webp',
+            ASSET_ROOT / 'concerts' / 'thumbs' / 'concert-20250418-zhang-jie.webp',
+            ASSET_ROOT / 'concerts' / 'thumbs' / 'concert-20260626-zhou-jielun.webp',
+            ASSET_ROOT / 'concerts' / 'thumbs' / 'concert-20260726-xue-zhiqian.webp',
         ]
         boxes = [(735, 270, 900, 375), (915, 270, 1080, 375), (735, 387, 900, 492), (915, 387, 1080, 492)]
         for path, box in zip(paths, boxes):

@@ -1,6 +1,6 @@
 # Privacy release checklist
 
-This checklist records only what the repository currently shows on 2026-08-21.
+This checklist records only what the repository currently shows on 2026-09-21.
 
 ## Current repository facts
 
@@ -20,4 +20,5 @@ This checklist records only what the repository currently shows on 2026-08-21.
 - EXIF and GPS removal: strip metadata from exported photos and screenshots before release.
 - Certificate identifiers: redact certificate numbers, student IDs, registration IDs, or verification codes unless disclosure is explicitly intended.
 - Concert ticket QR and seat review: inspect every ticket, poster, and venue screenshot for QR codes, barcodes, seat numbers, order numbers, or gate details.
+- Explicit public-event exception: the site owner approved publishing the 15 public promotional posters listed in `docs/concert-poster-sources.md`, plus the exact date and venue for Zhou Shen (`2026-09-27`, National Stadium) and FFOREVER (`2026-10-06`, National Stadium). Keep copyright and reuse rights marked pending, and do not generalize this exception to tickets, QR codes, seats, private contact details, or real-time location.
 - Asset audit result: record the command date and output, and stop release on GPS metadata or unreadable files until a human reviews the affected assets.

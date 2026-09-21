@@ -42,7 +42,7 @@ test('attended concert archive renders every past show in one horizontal rail', 
   expect(ids).toEqual(attendedIds)
   await expect(rail.locator('[data-concert-id="wangsulong-2026-08-30"]')).toHaveCount(0)
   await expect(page.locator('.next-up-card[href^="#concert-"]')).toHaveCount(0)
-  await expect(page.locator('.next-up-card')).toHaveCount(1)
+  await expect(page.locator('.next-up-card')).toHaveCount(3)
   await expect(page.locator('.next-up-card [aria-hidden="true"]')).toHaveCount(0)
   await expect(rail).toHaveCSS('scroll-snap-type', /x mandatory/)
 })
@@ -206,16 +206,15 @@ test('concert archive exposes a native horizontal scrolling contract', async ({ 
   expect(scrollState.overflowX).toMatch(/auto|scroll/)
 })
 
-test('concert archive preserves poster carousel and lightbox interactions', async ({ page }) => {
+test('concert archive opens each single poster in the lightbox', async ({ page }) => {
   await gotoConcerts(page)
   const card = page.locator('[data-concert-id="kpl-2025-11-08"]')
-  const counter = card.locator('.carousel-controls span')
 
-  await expect(counter).toHaveText('1 / 3')
-  await card.locator('button[aria-label="下一张"]').click()
-  await expect(counter).toHaveText('2 / 3')
+  await expect(card.locator('.carousel-controls')).toHaveCount(0)
   await card.locator('.poster-open').click()
   await expect(page.locator('.lightbox')).toBeVisible()
+  await expect(page.locator('.lb-meta-index')).toHaveText('1 / 1')
+  await expect(page.locator('.lb-nav')).toHaveCount(0)
   await page.keyboard.press('Escape')
   await expect(page.locator('.lightbox')).toHaveCount(0)
 })
