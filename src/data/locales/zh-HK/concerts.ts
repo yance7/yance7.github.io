@@ -19,9 +19,11 @@ export const concertsCopy = {
     'zhoujielun-2026-06-26': { artist: '周杰倫', tour: '龍拳 · 北京嘉年華 2026', venue: '鳥巢' },
     'xuezhiqian-2026-07-26': { artist: '薛之謙', tour: '萬獸之王演唱會', venue: '鳥巢' },
     'wangsulong-2026-08-19': { artist: '汪蘇瀧', tour: '明日世界演唱會', venue: '鳥巢' },
-    'wangsulong-2026-08-30': { artist: '汪蘇瀧', tour: '明日世界演唱會', venue: '鳥巢' }
+    'wangsulong-2026-08-30': { artist: '汪蘇瀧', tour: '明日世界演唱會', venue: '鳥巢' },
+    'zhou-shen-2026-09-27': { artist: '周深', tour: '2026「深深的」巡迴演唱會', venue: '鳥巢' },
+    'fforever-2026-10-06': { artist: 'FFOREVER', tour: '「恆星之城」銀河加冕 · 北京限定場演唱會', venue: '鳥巢' }
   },
   moods: { '2024': '第一次走進鳥巢，燈光亮起的瞬間，世界安靜了。', '2025': '從春到冬，五場現場，五次被音樂重新定義的夜晚。' },
   currentYearMood: (attended, upcoming) => `${attended} 場已赴約，${upcoming} 場待相見。`,
-  section: { label: 'LIVE ARCHIVE', title: '現場是', accent: '另一種記憶', copy: '點擊海報進入全屏檔案。每張圖都保留原始比例，輪播記錄同一場演出的不同視覺。', nextUp: 'NEXT UP', realTime: '現實時間', archive: '演唱會檔案', posterArchive: '開啟檔案', attended: '已赴約', upcoming: '待相見', venues: '場館', artists: '藝人', posters: '張海報', total: '總現場', recorded: '已記錄的演出', showUnit: '場' }
+  section: { label: 'LIVE ARCHIVE', title: '現場是', accent: '另一種記憶', copy: '點擊海報進入全屏檔案。每張圖都保留原始比例。', nextUp: 'NEXT UP', realTime: '現實時間', archive: '演唱會檔案', posterArchive: '開啟檔案', attended: '已赴約', upcoming: '待相見', venues: '場館', artists: '藝人', posters: '張海報', total: '總現場', recorded: '已記錄的演出', showUnit: '場' }
 } satisfies ConcertLocaleCopy

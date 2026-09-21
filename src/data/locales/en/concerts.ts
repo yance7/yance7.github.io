@@ -19,9 +19,11 @@ export const concertsCopy = {
     'zhoujielun-2026-06-26': { artist: 'Jay Chou', tour: 'Dragon Fist · Beijing Carnival 2026', venue: 'National Stadium' },
     'xuezhiqian-2026-07-26': { artist: 'Joker Xue', tour: 'King of Beasts Live', venue: 'National Stadium' },
     'wangsulong-2026-08-19': { artist: 'Silence Wang', tour: 'Tomorrow World Live', venue: 'National Stadium' },
-    'wangsulong-2026-08-30': { artist: 'Silence Wang', tour: 'Tomorrow World Live', venue: 'National Stadium' }
+    'wangsulong-2026-08-30': { artist: 'Silence Wang', tour: 'Tomorrow World Live', venue: 'National Stadium' },
+    'zhou-shen-2026-09-27': { artist: 'Zhou Shen', tour: '2026 Shenshen’s Concert Tour', venue: 'National Stadium' },
+    'fforever-2026-10-06': { artist: 'FFOREVER', tour: 'City of Stars · Beijing Limited Concert', venue: 'National Stadium' }
   },
   moods: { '2024': 'The first time I entered the National Stadium, the world went quiet when the lights came up.', '2025': 'Five shows from spring to winter—five nights that reset the scale of the world.' },
   currentYearMood: (attended, upcoming) => `${attended} attended, ${upcoming} upcoming.`,
-  section: { label: 'LIVE ARCHIVE', title: 'Live shows are', accent: 'another kind of memory', copy: 'Open a poster for the full archive. Original proportions stay intact; a carousel keeps the different views from one night together.', nextUp: 'NEXT UP', realTime: 'REAL TIME', archive: 'CONCERT ARCHIVE', posterArchive: 'OPEN ARCHIVE', attended: 'ATTENDED', upcoming: 'UPCOMING', venues: 'venues', artists: 'artists', posters: 'posters', total: 'total shows', recorded: 'shows logged', showUnit: 'shows' }
+  section: { label: 'LIVE ARCHIVE', title: 'Live shows are', accent: 'another kind of memory', copy: 'Open a poster for the full archive. Original proportions stay intact.', nextUp: 'NEXT UP', realTime: 'REAL TIME', archive: 'CONCERT ARCHIVE', posterArchive: 'OPEN ARCHIVE', attended: 'ATTENDED', upcoming: 'UPCOMING', venues: 'venues', artists: 'artists', posters: 'posters', total: 'total shows', recorded: 'shows logged', showUnit: 'shows' }
 } satisfies ConcertLocaleCopy

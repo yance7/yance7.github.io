@@ -80,9 +80,7 @@ describe('Lighthouse quality matrix', () => {
       'mobile-menu',
       'honor-filter',
       'album-selection',
-      'carousel-next',
       'lightbox-open',
-      'lightbox-next',
       'lightbox-close'
     ]) {
       expect(runner).toContain(interaction)
@@ -92,6 +90,7 @@ describe('Lighthouse quality matrix', () => {
     expect(runner).toContain('index.html')
     expect(runner).toContain('honors.html')
     expect(runner).toContain('concerts.html')
+    expect(runner).not.toContain('carousel-next')
     expect(runner).toContain('process.env.PLAYWRIGHT_PORT')
   })
 })

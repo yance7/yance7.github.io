@@ -87,7 +87,7 @@ test('coarse-pointer shared controls keep 44px touch targets', async ({ page }, 
   await closeButton.click()
 })
 
-test('compatibility menu, carousel, modal, and axe smoke remain usable', async ({ page }) => {
+test('compatibility menu, single-poster modal, and axe smoke remain usable', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/index.html')
   await page.locator('.menu-trigger').click()
@@ -97,49 +97,34 @@ test('compatibility menu, carousel, modal, and axe smoke remain usable', async (
 
   await page.goto('/concerts.html')
   await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
-  const carousel = page.locator('.concert-poster').filter({ has: page.locator('.carousel-controls') }).first()
-  const counter = carousel.locator('.carousel-controls span')
-  const next = carousel.locator('button[aria-label="下一张"]')
-  await carousel.scrollIntoViewIfNeeded()
-  await expect(carousel.locator('xpath=..')).toHaveClass(/revealed/)
-  await next.scrollIntoViewIfNeeded()
-  await expect(counter).toHaveText('1 / 2')
-  await next.click()
-  await expect(counter).toHaveText('2 / 2')
-
+  const poster = page.locator('.concert-poster').first()
+  await poster.scrollIntoViewIfNeeded()
+  await expect(poster.locator('xpath=..')).toHaveClass(/revealed/)
   await page.locator('.concert-poster .poster-open').first().click()
   await expect(page.locator('.lightbox')).toBeVisible()
+  await expect(page.locator('.lb-meta-index')).toHaveText('1 / 1')
+  await expect(page.locator('.lb-nav')).toHaveCount(0)
   await expect(new AxeBuilder({ page }).analyze()).resolves.toMatchObject({ violations: [] })
   await page.keyboard.press('Escape')
   await expect(page.locator('.lightbox')).toHaveCount(0)
 })
 
-test('Firefox carousel controls keep the poster geometry stable while hovered', async ({ page }, testInfo) => {
+test('Firefox poster geometry stays stable while focused', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'firefox-desktop-smoke', 'Firefox-specific pointer geometry proof')
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/concerts.html')
 
-  const carousel = page.locator('.concert-poster').filter({ has: page.locator('.carousel-controls') }).first()
-  const next = carousel.locator('button[aria-label="下一张"]')
-  await carousel.scrollIntoViewIfNeeded()
-  await expect(carousel.locator('xpath=..')).toHaveClass(/revealed/)
-  await next.scrollIntoViewIfNeeded()
-  const before = await carousel.evaluate((element) => {
-    const style = getComputedStyle(element)
-    return {
-      rotateX: style.getPropertyValue('--rx').trim(),
-      rotateY: style.getPropertyValue('--ry').trim()
-    }
-  })
-
-  await next.hover()
-  await expect.poll(() => carousel.evaluate((element) => {
-    const style = getComputedStyle(element)
-    return {
-      rotateX: style.getPropertyValue('--rx').trim(),
-      rotateY: style.getPropertyValue('--ry').trim()
-    }
-  })).toEqual(before)
+  const poster = page.locator('.concert-poster').first()
+  await poster.scrollIntoViewIfNeeded()
+  await expect(poster.locator('xpath=..')).toHaveClass(/revealed/)
+  const before = await poster.boundingBox()
+  expect(before).not.toBeNull()
+  await poster.locator('.poster-open').focus()
+  const after = await poster.boundingBox()
+  expect(after).not.toBeNull()
+  expect(after!.x).toBeCloseTo(before!.x, 1)
+  expect(after!.width).toBeCloseTo(before!.width, 1)
+  expect(after!.height).toBeCloseTo(before!.height, 1)
 })
 
 test('mobile menu typography follows the light-theme semantic text tokens', async ({ page }) => {
@@ -176,7 +161,7 @@ test('mobile menu typography follows the light-theme semantic text tokens', asyn
   expect(colors.description).toBe(colors.muted)
 })
 
-test('touch carousel hover suppression follows the active theme control tokens', async ({ page }) => {
+test('touch rail controls follow the active theme control tokens', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/concerts.html')
   const previousTheme = await page.locator('html').getAttribute('data-theme')
@@ -184,7 +169,7 @@ test('touch carousel hover suppression follows the active theme control tokens',
   await expect.poll(() => page.locator('html').getAttribute('data-theme')).not.toBe(previousTheme)
   await expect.poll(() => page.evaluate(() => {
     const root = getComputedStyle(document.documentElement)
-    const button = document.querySelector<HTMLElement>('.carousel-controls button')!
+    const button = document.querySelector<HTMLElement>('.concert-rail-controls button')!
     const probe = document.createElement('span')
     probe.style.backgroundColor = 'var(--media-control-bg)'
     probe.style.borderColor = 'var(--media-control-border)'
@@ -199,7 +184,7 @@ test('touch carousel hover suppression follows the active theme control tokens',
 
   const colors = await page.evaluate(() => {
     const root = getComputedStyle(document.documentElement)
-    const button = document.querySelector<HTMLElement>('.carousel-controls button')!
+    const button = document.querySelector<HTMLElement>('.concert-rail-controls button')!
     const resolveColor = (variable: string, property: 'backgroundColor' | 'borderColor') => {
       const probe = document.createElement('span')
       probe.style[property] = `var(${variable})`

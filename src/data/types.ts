@@ -118,9 +118,14 @@ export interface Concert {
   artist: string
   tour: string
   venue: string
-  images: NonEmptyArray<string>
-  land?: boolean
+  poster: ConcertPoster
   note?: string
+}
+
+export interface ConcertPoster {
+  file: string
+  width: number
+  height: number
 }
 
 export interface Album {

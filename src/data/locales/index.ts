@@ -168,7 +168,7 @@ export function getLocalizedConcertState(locale: Locale, now = new Date()): {
   const attended = localized.filter((concert) => !isConcertUpcoming(concert, now))
   const venues = [...new Set(localized.map((concert) => concert.venue))]
   const artists = [...new Set(localized.map((concert) => concert.artist))]
-  const posters = new Set(localized.flatMap((concert) => concert.images))
+  const posters = new Set(localized.map((concert) => concert.poster.file))
   const attended2026 = attended.filter((concert) => concert.date.startsWith('2026-')).length
   const upcoming2026 = upcoming.filter((concert) => concert.date.startsWith('2026-')).length
   return {

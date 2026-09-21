@@ -112,21 +112,19 @@ test('album sleeve coalesces pointer tilt into one layout read per frame', { tag
   await expect(sleeve).not.toHaveCSS('--tilt-y', '0deg')
 })
 
-test('concert carousel controls keep touch-sized targets', async ({ page }) => {
+test('concert poster triggers keep touch-sized targets', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/concerts.html')
   await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
-  await expect(page.locator('.carousel-controls button').first()).toBeAttached()
+  const poster = page.locator('.concert-poster .poster-open').first()
+  await expect(poster).toBeAttached()
 
-  const controls = await page.locator('.carousel-controls button').evaluateAll((elements) => elements.map((element) => {
-    const bounds = element.getBoundingClientRect()
-    return { width: bounds.width, height: bounds.height }
-  }))
-  expect(controls.length).toBeGreaterThan(0)
-  controls.forEach(({ width, height }) => {
-    expect(width).toBeGreaterThanOrEqual(44)
-    expect(height).toBeGreaterThanOrEqual(44)
+  const bounds = await poster.evaluate((element) => {
+    const rect = element.getBoundingClientRect()
+    return { width: rect.width, height: rect.height }
   })
+  expect(bounds.width).toBeGreaterThanOrEqual(44)
+  expect(bounds.height).toBeGreaterThanOrEqual(44)
 })
 
 test('concert album wall exposes 42 local releases and the default spotlight', async ({ page }) => {
@@ -428,7 +426,7 @@ test('concert album wall preserves theme and reduced-motion accessibility', asyn
   await expectAccessible(page)
 })
 
-test('concert thumbnails respond and carousel/lightbox controls work', async ({ page }) => {
+test('concert thumbnails respond and single-poster lightbox works', async ({ page }) => {
   await page.goto('/concerts.html')
   await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
   await expect(page.locator('.metric-strip .metric-card')).toHaveCount(4)
@@ -439,16 +437,11 @@ test('concert thumbnails respond and carousel/lightbox controls work', async ({ 
   expect(response.status()).toBe(200)
   expect(response.headers()['content-type']).toMatch(/^image\//)
 
-  const carousel = page.locator('.concert-poster').filter({ has: page.locator('.carousel-controls') }).first()
-  const counter = carousel.locator('.carousel-controls span')
-  await expect(counter).toHaveText('1 / 2')
-  await carousel.locator('button[aria-label="下一张"]').click()
-  await expect(counter).toHaveText('2 / 2')
-
-  await carousel.locator('.poster-open').click()
+  await expect(page.locator('.carousel-controls')).toHaveCount(0)
+  await page.locator('.concert-poster .poster-open').first().click()
   await expect(page.locator('.lightbox')).toBeVisible()
-  await page.keyboard.press('ArrowRight')
-  await expect(page.locator('.lightbox [aria-live="polite"]').last()).toContainText('第')
+  await expect(page.locator('.lb-meta-index')).toHaveText('1 / 1')
+  await expect(page.locator('.lb-nav')).toHaveCount(0)
   await page.keyboard.press('Escape')
   await expect(page.locator('.lightbox')).toHaveCount(0)
 })
@@ -483,13 +476,14 @@ test('concert visual surfaces use theme semantics and shared motion cadence', as
   await page.goto('/concerts.html', { waitUntil: 'domcontentloaded' })
   await expect(page.locator('.album-wall')).toBeVisible()
   await expect(page.locator('.album-tile').first()).toBeVisible()
-  await expect(page.locator('.carousel-controls').first()).toBeVisible()
+  await page.locator('.concert-poster .poster-open').first().hover()
+  await expect(page.locator('.poster-hint').first()).toBeVisible()
 
   const readVisualContract = () => page.evaluate(() => {
     const root = getComputedStyle(document.documentElement)
     const wall = document.querySelector<HTMLElement>('.album-wall')!
     const tile = document.querySelector<HTMLElement>('.album-tile')!
-    const controls = document.querySelector<HTMLElement>('.carousel-controls')!
+    const controls = document.querySelector<HTMLElement>('.poster-hint')!
     const resolveColor = (variable: string) => {
       const probe = document.createElement('span')
       probe.style.color = `var(${variable})`

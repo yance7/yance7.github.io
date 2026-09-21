@@ -53,8 +53,7 @@ test('reading progress exposes one non-interactive semantic surface', async ({ p
 
 test('lightbox keeps metadata and quiet control chrome bounded', async ({ page }) => {
   await page.goto('/concerts.html')
-  const carousel = page.locator('.concert-poster').filter({ has: page.locator('.carousel-controls') }).first()
-  await carousel.locator('.poster-open').click()
+  await page.locator('.concert-poster .poster-open').first().click()
 
   await expect(page.locator('.lightbox')).toBeVisible()
   await expect(page.locator('.lb-stage img')).toHaveClass(/loaded/)
@@ -63,7 +62,7 @@ test('lightbox keeps metadata and quiet control chrome bounded', async ({ page }
   await expect(page.locator('.lb-meta-copy small')).toHaveText('演唱会')
   await expect(page.locator('.lb-meta-index')).toHaveText(/\d+ \/ \d+/)
   await expect(page.locator('.lb-close')).toHaveClass(/y-button--icon/)
-  await expect(page.locator('.lb-nav').first()).toHaveClass(/y-button--icon/)
+  await expect(page.locator('.lb-nav')).toHaveCount(0)
 
   const geometry = await page.evaluate(() => ({
     viewport: { width: window.innerWidth, height: window.innerHeight },

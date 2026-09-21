@@ -1,10 +1,33 @@
 import { describe, expect, it } from 'vitest'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { activities, albums, concerts, concertGroups, getConcertState, honors, honorCategories, pageMetadata, projects, research, researchMethods, worlds } from '../src/data'
+import type { ConcertPoster } from '../src/data/types'
 import { concertsCopy as englishConcertsCopy } from '../src/data/locales/en/concerts'
+import { concertsCopy as simplifiedChineseConcertsCopy } from '../src/data/locales/zh-CN/concerts'
+import { concertsCopy as traditionalChineseConcertsCopy } from '../src/data/locales/zh-HK/concerts'
 import { albumCoverFallback, albumCoverSrcset, albumCoverWebp } from '../src/utils/albumMedia'
 import { thumbnailUrl } from '../src/utils/concertMedia'
+
+function readJpegDimensions(path: string) {
+  const bytes = readFileSync(path)
+  let offset = 2
+  while (offset < bytes.length) {
+    while (bytes[offset] === 0xff) offset += 1
+    const marker = bytes[offset++]
+    if (!marker || marker === 0xd8 || marker === 0xd9) continue
+    if (offset + 1 >= bytes.length) break
+    const segmentLength = bytes.readUInt16BE(offset)
+    if ((marker >= 0xc0 && marker <= 0xc3) || (marker >= 0xc5 && marker <= 0xc7) || (marker >= 0xc9 && marker <= 0xcb) || (marker >= 0xcd && marker <= 0xcf)) {
+      return {
+        width: bytes.readUInt16BE(offset + 5),
+        height: bytes.readUInt16BE(offset + 3)
+      }
+    }
+    offset += segmentLength
+  }
+  throw new Error(`Could not read JPEG dimensions from ${path}`)
+}
 
 describe('content contracts', () => {
   it('keeps the exact ordered album release catalogue stable', () => {
@@ -92,8 +115,8 @@ describe('content contracts', () => {
   })
 
   it('keeps concert media URLs rooted and thumbnail-safe', () => {
-    expect(thumbnailUrl('concert-202511-kpl-01.jpg')).toBe('/assets/concerts/thumbs/concert-202511-kpl-01.webp')
-    expect(concerts.every((concert) => concert.id && concert.images.length > 0)).toBe(true)
+    expect(thumbnailUrl('concert-202511-kpl-finals.jpg')).toBe('/assets/concerts/thumbs/concert-202511-kpl-finals.webp')
+    expect(concerts.every((concert) => concert.id && concert.poster.file)).toBe(true)
   })
 
   it('localizes both Jason Zhang concert tours as Bound for 1982', () => {
@@ -105,20 +128,72 @@ describe('content contracts', () => {
   })
 
   it('keeps every concert poster available in original and thumbnail formats', () => {
-    expect(concerts.every((concert) => concert.images.every((image) => {
-      const thumbnail = image.replace(/\.[^.]+$/, '.webp')
-      return existsSync(resolve(process.cwd(), 'public/assets/concerts', image))
-        && existsSync(resolve(process.cwd(), 'public/assets/concerts/thumbs', thumbnail))
-    }))).toBe(true)
+    const posterFiles = new Set(concerts.map((concert) => concert.poster.file))
+    const posterContracts: ConcertPoster[] = concerts.map((concert) => concert.poster)
+    expect(concerts).toHaveLength(16)
+    expect(posterContracts).toHaveLength(16)
+    expect(posterFiles).toHaveLength(15)
+    expect(concerts.filter((concert) => concert.date.startsWith('2026-'))).toHaveLength(10)
+    expect(concerts.every((concert) => !Object.prototype.hasOwnProperty.call(concert, 'images'))).toBe(true)
+    expect(concerts.every((concert) => !Object.prototype.hasOwnProperty.call(concert, 'land'))).toBe(true)
+    expect([...posterFiles].every((file) => /^[a-z0-9]+(?:-[a-z0-9]+)*\.jpg$/.test(file))).toBe(true)
+
+    for (const concert of concerts) {
+      const posterPath = resolve(process.cwd(), 'public/assets/concerts', concert.poster.file)
+      const thumbnailPath = resolve(process.cwd(), 'public/assets/concerts/thumbs', concert.poster.file.replace(/\.jpg$/, '.webp'))
+      expect(existsSync(posterPath)).toBe(true)
+      expect(existsSync(thumbnailPath)).toBe(true)
+      expect(readJpegDimensions(posterPath)).toEqual({ width: concert.poster.width, height: concert.poster.height })
+    }
+  })
+
+  it('publishes the approved 2026 concert details in all locales', () => {
+    const expected = {
+      'zhou-shen': {
+        date: '2026-09-27',
+        zhCN: { artist: '周深', tour: '2026「深深的」巡回演唱会', venue: '鸟巢' },
+        zhHK: { artist: '周深', tour: '2026「深深的」巡迴演唱會', venue: '鳥巢' },
+        en: { artist: 'Zhou Shen', tour: '2026 Shenshen’s Concert Tour', venue: 'National Stadium' }
+      },
+      fforever: {
+        date: '2026-10-06',
+        zhCN: { artist: 'FFOREVER', tour: '「恒星之城」银河加冕 · 北京限定场演唱会', venue: '鸟巢' },
+        zhHK: { artist: 'FFOREVER', tour: '「恆星之城」銀河加冕 · 北京限定場演唱會', venue: '鳥巢' },
+        en: { artist: 'FFOREVER', tour: 'City of Stars · Beijing Limited Concert', venue: 'National Stadium' }
+      }
+    } as const
+
+    for (const [id, details] of Object.entries(expected)) {
+      const concert = concerts.find((item) => item.id === `${id}-2026-09-27` || item.id === `${id}-2026-10-06`)
+      if (!concert) throw new Error(`Missing approved concert record for ${id}`)
+      const simplifiedId = concert.id as keyof typeof simplifiedChineseConcertsCopy.entities
+      const traditionalId = concert.id as keyof typeof traditionalChineseConcertsCopy.entities
+      const englishId = concert.id as keyof typeof englishConcertsCopy.entities
+      expect(concert?.date).toBe(details.date)
+      expect(simplifiedChineseConcertsCopy.entities[simplifiedId]).toEqual(details.zhCN)
+      expect(traditionalChineseConcertsCopy.entities[traditionalId]).toEqual(details.zhHK)
+      expect(englishConcertsCopy.entities[englishId]).toEqual(details.en)
+    }
+
+    expect(concerts.find((concert) => concert.id === 'jd-summer-2026-05-31')?.date).toBe('2026-05-31')
+  })
+
+  it('removes carousel presentation from the single-poster rail', () => {
+    const component = readFileSync(resolve(process.cwd(), 'src/components/ConcertArchiveRail.vue'), 'utf8')
+    expect(component).not.toContain('carousel-controls')
+    expect(component).not.toContain('carouselIndexes')
+    expect(component).toContain('item.poster.file')
   })
 
   it('derives concert state from a supplied Beijing date', () => {
     const state = getConcertState(new Date('2026-08-07T12:00:00+08:00'))
     expect(state.upcoming.map((concert) => concert.id)).toEqual([
       'wangsulong-2026-08-19',
-      'wangsulong-2026-08-30'
+      'wangsulong-2026-08-30',
+      'zhou-shen-2026-09-27',
+      'fforever-2026-10-06'
     ])
-    expect(concertGroups['2026']).toHaveLength(8)
+    expect(concertGroups['2026']).toHaveLength(10)
   })
 
   it('keeps featured home activities explicit and stable', () => {
@@ -144,8 +219,8 @@ describe('content contracts', () => {
   it('keeps content metadata and project/research contracts populated', () => {
     expect(projects.every((project) => project.updatedAt && project.status)).toBe(true)
     expect(research.every((item) => item.updatedAt && item.id)).toBe(true)
-    expect(pageMetadata.concerts.updatedAt).toBe('2026-08-08')
-    expect(pageMetadata.home.updatedAt).toBe('2026-08-11')
+    expect(pageMetadata.concerts.updatedAt).toBe('2026-09-21')
+    expect(pageMetadata.home.updatedAt).toBe('2026-09-21')
     expect(pageMetadata.academics.updatedAt).toBe('2026-08-08')
     expect(pageMetadata.research).toEqual({ updatedAt: '2026-08-08' })
   })

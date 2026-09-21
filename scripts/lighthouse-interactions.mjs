@@ -11,7 +11,7 @@ const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)))
 const PORT = Number(process.env.PLAYWRIGHT_PORT ?? 4174)
 const BASE_URL = `http://127.0.0.1:${PORT}`
 const INP_BUDGET = 200
-const concertPosterSelector = '.concert-rail-card:has(.carousel-controls)'
+const concertPosterSelector = '.concert-rail-card .concert-poster'
 
 const scenarios = [
   {
@@ -47,24 +47,13 @@ const scenarios = [
             run: (page) => page.click('.album-tile:nth-of-type(2)')
           },
           {
-            name: 'carousel-next',
-            selector: '.carousel-controls button[aria-label="下一张"]',
-            prepare: warmConcertPoster,
-            run: (page) => page.click('.carousel-controls button[aria-label="下一张"]')
-          },
-          {
             name: 'lightbox-open',
-            selector: '.concert-rail-card:has(.carousel-controls) .poster-open',
+            selector: '.concert-rail-card .poster-open',
             prepare: warmLightbox,
             run: async (page) => {
-              await page.click('.concert-rail-card:has(.carousel-controls) .poster-open')
+              await page.click('.concert-rail-card .poster-open')
               await page.waitForSelector('.lightbox')
             }
-          },
-          {
-            name: 'lightbox-next',
-            selector: '.lb-next',
-            run: (page) => page.click('.lb-next')
           },
           {
             name: 'lightbox-close',
@@ -121,24 +110,13 @@ const scenarios = [
             run: (page) => page.click('.album-tile:nth-of-type(2)')
           },
           {
-            name: 'carousel-next',
-            selector: '.carousel-controls button[aria-label="下一张"]',
-            prepare: warmConcertPoster,
-            run: (page) => page.click('.carousel-controls button[aria-label="下一张"]')
-          },
-          {
             name: 'lightbox-open',
-            selector: '.concert-rail-card:has(.carousel-controls) .poster-open',
+            selector: '.concert-rail-card .poster-open',
             prepare: warmLightbox,
             run: async (page) => {
-              await page.click('.concert-rail-card:has(.carousel-controls) .poster-open')
+              await page.click('.concert-rail-card .poster-open')
               await page.waitForSelector('.lightbox')
             }
-          },
-          {
-            name: 'lightbox-next',
-            selector: '.lb-next',
-            run: (page) => page.click('.lb-next')
           },
           {
             name: 'lightbox-close',
@@ -168,13 +146,6 @@ async function waitForConcertPoster(page) {
 async function warmConcertPoster(page) {
   await page.$eval(concertPosterSelector, (element) => element.scrollIntoView({ block: 'center' }))
   await page.hover(concertPosterSelector)
-  await waitForConcertPoster(page)
-
-  const nextButton = `${concertPosterSelector} .carousel-controls button[aria-label="下一张"]`
-  const previousButton = `${concertPosterSelector} .carousel-controls button[aria-label="上一张"]`
-  await page.click(nextButton)
-  await waitForConcertPoster(page)
-  await page.click(previousButton)
   await waitForConcertPoster(page)
   await delay(350)
 }

@@ -431,8 +431,6 @@
 }
 
 [data-theme='light'] .ambient { opacity: .2; }
-[data-theme='light'] .carousel-controls { background: rgba(24, 28, 35, .74); }
-
 [data-theme='dark'] .ambient { opacity: .72; }
 
 @media (max-width: 640px) {

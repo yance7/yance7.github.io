@@ -16,7 +16,6 @@ const emit = defineEmits<{
 }>()
 
 const railRef = ref<HTMLElement | null>(null)
-const carouselIndexes = reactive<Record<string, number>>({})
 const railControls = reactive({ previous: false, next: false })
 const reducedMotion = ref(false)
 const imagePreloader = sharedImagePreloader
@@ -28,30 +27,18 @@ function formatConcertDate(date: string) {
   return date.replaceAll('-', '.')
 }
 
-function currentImageName(item: Concert, fallbackIndex = 0) {
-  const index = carouselIndexes[item.id] ?? fallbackIndex
-  return item.images[index] ?? item.images[0]
-}
-
-function moveCarousel(item: Concert, step: number) {
-  const current = carouselIndexes[item.id] || 0
-  const next = (current + step + item.images.length) % item.images.length
-  carouselIndexes[item.id] = next
-}
-
-function openLightbox(item: Concert, index = 0, event?: MouseEvent) {
+function openLightbox(item: Concert, event?: MouseEvent) {
   if (event?.currentTarget instanceof HTMLElement) event.currentTarget.focus()
-  const [first, ...rest] = item.images.map(originalImageUrl)
-  if (!first) return
+  const image = originalImageUrl(item.poster.file)
   emit('open-lightbox', {
-    images: [first, ...rest],
-    index,
+    images: [image],
+    index: 0,
     meta: { artist: item.artist, tour: item.tour }
   })
 }
 
 function preloadItem(item: Concert) {
-  imagePreloader.preload(originalImageUrl(currentImageName(item)))
+  imagePreloader.preload(originalImageUrl(item.poster.file))
 }
 
 function updateRailControls() {
@@ -202,37 +189,31 @@ onBeforeUnmount(() => {
         >
           <div
             class="concert-poster"
-            :class="{ land: item.land }"
-            v-pointer-sheen="{ tilt: 6, tiltExclude: '.carousel-controls' }"
+            :data-poster-ratio="item.poster.width > item.poster.height ? 'landscape' : 'portrait'"
+            :style="{ aspectRatio: `${item.poster.width} / ${item.poster.height}` }"
+            v-pointer-sheen="{ tilt: 6 }"
           >
             <button
               class="poster-open"
               type="button"
               :aria-label="`${messages.lightbox.openArchive}: ${item.artist} ${item.tour}`"
-              @click="openLightbox(item, carouselIndexes[item.id] || 0, $event)"
+              @click="openLightbox(item, $event)"
             >
-              <Transition name="poster-fade" mode="out-in">
-                <picture :key="currentImageName(item)">
-                  <source :srcset="thumbnailUrl(currentImageName(item))" type="image/webp">
+              <picture>
+                <source :srcset="thumbnailUrl(item.poster.file)" type="image/webp">
                   <img
-                    :src="originalImageUrl(currentImageName(item))"
+                    :src="originalImageUrl(item.poster.file)"
                     :alt="`${item.artist} ${item.tour} ${messages.lightbox.posterAlt}`"
-                    :width="item.land ? 640 : 480"
-                    :height="item.land ? 360 : 640"
+                    :width="item.poster.width"
+                    :height="item.poster.height"
                     loading="lazy"
                     decoding="async"
                   >
-                </picture>
-              </Transition>
+              </picture>
               <span class="poster-hint" aria-hidden="true">
                 <span>{{ section.posterArchive }}</span><b>＋</b>
               </span>
             </button>
-            <div v-if="item.images.length > 1" class="carousel-controls">
-              <button type="button" :aria-label="messages.common.previous" @click.stop="moveCarousel(item, -1)">←</button>
-              <span>{{ (carouselIndexes[item.id] || 0) + 1 }} / {{ item.images.length }}</span>
-              <button type="button" :aria-label="messages.common.next" @click.stop="moveCarousel(item, 1)">→</button>
-            </div>
           </div>
 
           <div class="concert-rail-card-info">

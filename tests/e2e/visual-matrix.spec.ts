@@ -260,14 +260,14 @@ for (const theme of themes) {
     await page.goto('/concerts.html')
     await settlePage(page)
 
-    await page.locator('.concert-poster.land .poster-open').first().click()
+    await page.locator('.concert-poster[data-poster-ratio="landscape"] .poster-open').first().click()
     await expect(page.locator('.lb-stage img')).toHaveClass(/loaded/)
     await expectLightboxGeometry(page)
     await expect(page.locator('.lightbox')).toHaveScreenshot(`${theme}-lightbox-landscape.png`, componentScreenshotOptions)
     await page.keyboard.press('Escape')
     await expect(page.locator('.lightbox')).toHaveCount(0)
 
-    await page.locator('.concert-poster:not(.land) .poster-open').first().click()
+    await page.locator('.concert-poster:not([data-poster-ratio="landscape"]) .poster-open').first().click()
     await expect(page.locator('.lb-stage img')).toHaveClass(/loaded/)
     await expectLightboxGeometry(page)
     await expect(page.locator('.lightbox')).toHaveScreenshot(`${theme}-lightbox-portrait.png`, componentScreenshotOptions)
@@ -275,7 +275,7 @@ for (const theme of themes) {
     await expect(page.locator('.lightbox')).toHaveCount(0)
 
     await page.setViewportSize({ width: 390, height: 844 })
-    await page.locator('.concert-poster:not(.land) .poster-open').first().click()
+    await page.locator('.concert-poster:not([data-poster-ratio="landscape"]) .poster-open').first().click()
     await expect(page.locator('.lb-stage img')).toHaveClass(/loaded/)
     await expectLightboxGeometry(page)
     await expect(page.locator('.lightbox')).toHaveScreenshot(`${theme}-lightbox-mobile.png`, componentScreenshotOptions)

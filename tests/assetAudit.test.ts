@@ -80,6 +80,12 @@ describe('media release contracts', () => {
     }
   })
 
+  it('keeps concert poster ICC conversion compatible with the pinned Pillow API', () => {
+    const processor = readFileSync(resolve(root, 'scripts/process-concert-poster.py'), 'utf8')
+    expect(processor).toContain("outputMode='RGB'")
+    expect(processor).not.toContain("output_mode='RGB'")
+  })
+
   it('executes the auditor against sensitive, technical, GPS, and corrupt fixtures', () => {
     const fixtureRoot = mkdtempSync(join(tmpdir(), 'yance-asset-audit-'))
     const scriptPath = join(fixtureRoot, 'scripts', 'audit-assets.py')
