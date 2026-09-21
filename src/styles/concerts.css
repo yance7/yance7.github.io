@@ -118,6 +118,30 @@
 }
 .concert-poster:hover .poster-hint { opacity: 1; transform: none; }
 .poster-hint b { color: var(--gold); font-size: 14px; }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .poster-hint {
+    background: var(--media-overlay-bg-strong);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+@supports not (mix-blend-mode: soft-light) {
+  .concert-poster::after {
+    background: none;
+    opacity: 0;
+    mix-blend-mode: normal;
+  }
+}
+@media (forced-colors: active) {
+  .concert-poster::after { display: none; }
+  .poster-hint {
+    background: Canvas;
+    border: 1px solid CanvasText;
+    color: CanvasText;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
 .concert-info > span { display: block; font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: var(--tracking-latin-wide); color: var(--aqua); text-transform: uppercase; }
 .concert-info .concert-status.upcoming { color: var(--gold); }
 .concert-info .concert-venue { margin-top: 5px; color: var(--dim); font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: .08em; }

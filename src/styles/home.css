@@ -323,7 +323,10 @@ html[data-locale='en'] .beyond-leadership small { grid-column: 2; }
 }
 
 @media (orientation: landscape) and (max-height: 520px) {
-  .home-hero { min-height: calc(100svh - 68px); }
+  .home-hero {
+    min-height: calc(100vh - 68px);
+    min-height: calc(100svh - 68px);
+  }
   .home-stage { padding-block: 16px 12px; }
   .home-stage-body { padding: 16px 0 10px; }
   .home-stage-heading { font-size: var(--type-meta-size); }

@@ -211,6 +211,7 @@ html[data-locale='en'] .section-copy {
   display: flex; align-items: center; justify-content: center; gap: var(--space-4); padding: 44px;
   overflow: hidden;
   --lb-meta-reserve: 132px;
+  --lb-stage-max: calc(100vh - var(--lb-meta-reserve) - 88px);
   --lb-stage-max: calc(100dvh - var(--lb-meta-reserve) - 88px);
   background: var(--lb-bg); will-change: opacity, transform;
 }
@@ -235,6 +236,7 @@ html[data-locale='en'] .section-copy {
   left: 50%;
   height: auto;
   max-width: min(80vw, 1080px);
+  max-height: min(100%, 82vh);
   max-height: min(100%, 82vh, calc(100dvh - var(--lb-meta-reserve) - 72px), var(--lb-stage-max));
   object-fit: contain;
   transform: translate(-50%, -50%);
@@ -258,6 +260,21 @@ html[data-locale='en'] .section-copy {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   pointer-events: none;
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .lb-meta-dock {
+    background: var(--surface-strong);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+@media (forced-colors: active) {
+  .lb-meta-dock {
+    background: Canvas;
+    border-top: 1px solid CanvasText;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 .lb-meta {
   position: fixed; left: max(24px, env(safe-area-inset-left)); right: max(24px, env(safe-area-inset-right)); bottom: max(20px, env(safe-area-inset-bottom)); z-index: 3;

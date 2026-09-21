@@ -81,6 +81,10 @@
   .archive-hero { padding-top: var(--space-hero-block); }
   .hero-title { font-size: 3rem; }
   .hero-title.hero-lyric:not(.hero-works-title) { font-size: clamp(1.6rem, 8vw, 2.1rem); }
+  .hero-title.hero-lyric .lyric-char {
+    animation-duration: .42s;
+    animation-delay: calc(50ms + var(--ci) * 20ms);
+  }
   html[data-locale='en'] .hero-title.hero-lyric {
     max-width: min(100%, 24ch);
     line-height: 1.28;
@@ -95,10 +99,12 @@
   .lightbox { padding: var(--space-4) var(--space-3); gap: var(--space-2); }
   .lightbox {
     --lb-meta-reserve: 118px;
+    --lb-stage-max: calc(100vh - var(--lb-meta-reserve) - 32px);
     --lb-stage-max: calc(100dvh - var(--lb-meta-reserve) - 32px);
   }
   .lightbox img {
     max-width: 82vw;
+    max-height: min(100%, 76vh);
     max-height: min(100%, 76vh, calc(100dvh - var(--lb-meta-reserve) - 72px), var(--lb-stage-max));
   }
   .lb-stage {
