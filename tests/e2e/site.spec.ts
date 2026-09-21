@@ -609,7 +609,7 @@ test('rapid control clicks settle without duplicate or stale state', async ({ pa
     await poster.click()
     await expect(page.locator('.lightbox')).toHaveCount(1)
     await expect(page.locator('.lb-meta-index')).toHaveText('1 / 1')
-    await page.keyboard.press('Escape')
+    await page.locator('.lb-close').click()
     await expect(page.locator('.lightbox')).toHaveCount(0)
   }
 })
