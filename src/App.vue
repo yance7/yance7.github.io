@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { getLocalizedPageMeta } from './data/locales'
 import { isPageKey } from './data'
 import { useLocale } from './i18n'
@@ -32,7 +32,16 @@ type PageLoadState = 'loading' | 'ready' | 'error'
 const pageLoader = page ? getPageLoader(page) : undefined
 const pageLoadState = ref<PageLoadState>(pageLoader ? 'loading' : 'ready')
 let hashScrolled = false
+let hashScrollCancelled = false
+let hashScrollFrame: number | undefined
+let hashScrollAttempts = 0
+let pendingHashTarget: HTMLElement | undefined
+const hashScrollMaxAttempts = 120
 const initialHash = document.documentElement.dataset.initialHash || window.location.hash
+
+function clearInitialHashMarker() {
+  delete document.documentElement.dataset.initialHash
+}
 
 function restoreInitialHash() {
   if (!initialHash) return
@@ -43,7 +52,7 @@ function restoreInitialHash() {
       `${window.location.pathname}${window.location.search}${initialHash}`
     )
   }
-  delete document.documentElement.dataset.initialHash
+  clearInitialHashMarker()
 }
 
 function findHorizontalScroller(target: HTMLElement) {
@@ -83,8 +92,61 @@ function findHashTarget(id: string) {
     ?? null
 }
 
-function scrollToHashTarget() {
-  if (hashScrolled || !initialHash) return
+function horizontalLayoutIsReady(scroller: HTMLElement) {
+  if (!scroller.hasAttribute('data-horizontal-scroll')) return true
+  const anchorCount = scroller.querySelectorAll('[data-anchor-id]').length
+  return anchorCount <= 1 || scroller.scrollWidth > scroller.clientWidth
+}
+
+function isHashTargetVisible(target: HTMLElement, horizontalScroller: HTMLElement | null) {
+  const targetRect = target.getBoundingClientRect()
+  const isVerticallyVisible = targetRect.bottom > 0 && targetRect.top < window.innerHeight
+  if (!horizontalScroller) return isVerticallyVisible
+
+  const scrollerRect = horizontalScroller.getBoundingClientRect()
+  return isVerticallyVisible
+    && targetRect.left >= scrollerRect.left
+    && targetRect.right <= scrollerRect.right
+}
+
+function cancelPendingHashScroll() {
+  if (hashScrolled || hashScrollCancelled || !initialHash) return
+  hashScrollCancelled = true
+  if (pendingHashTarget) {
+    delete pendingHashTarget.dataset.hashTarget
+    pendingHashTarget = undefined
+  }
+  if (hashScrollFrame !== undefined) {
+    window.cancelAnimationFrame(hashScrollFrame)
+    hashScrollFrame = undefined
+  }
+  clearInitialHashMarker()
+}
+
+function handleHashChange() {
+  if (window.location.hash !== initialHash) cancelPendingHashScroll()
+}
+
+function scheduleHashScroll() {
+  if (hashScrollFrame !== undefined) return
+  if (hashScrollAttempts >= hashScrollMaxAttempts) {
+    scrollToHashTarget(true)
+    return
+  }
+
+  hashScrollFrame = window.requestAnimationFrame(() => {
+    hashScrollFrame = undefined
+    hashScrollAttempts += 1
+    scrollToHashTarget()
+  })
+}
+
+function scrollToHashTarget(force = false) {
+  if (hashScrolled || hashScrollCancelled || !initialHash || hashScrollFrame !== undefined) return
+  if (window.location.hash && window.location.hash !== initialHash) {
+    cancelPendingHashScroll()
+    return
+  }
   const id = decodeHashTarget(initialHash)
   if (!id) {
     restoreInitialHash()
@@ -97,9 +159,15 @@ function scrollToHashTarget() {
     hashScrolled = true
     return
   }
+  pendingHashTarget = target
   target.dataset.hashTarget = 'true'
 
   const horizontalScroller = findHorizontalScroller(target)
+  if (!force && horizontalScroller && !horizontalLayoutIsReady(horizontalScroller)) {
+    scheduleHashScroll()
+    return
+  }
+
   if (!horizontalScroller) {
     target.scrollIntoView({ block: 'start', behavior: 'auto' })
   } else {
@@ -112,12 +180,30 @@ function scrollToHashTarget() {
       scrollTargetVertically(target)
     }
   }
+
+  if (!isHashTargetVisible(target, horizontalScroller)) {
+    if (force) {
+      hashScrolled = true
+      pendingHashTarget = undefined
+      restoreInitialHash()
+      return
+    }
+    scheduleHashScroll()
+    return
+  }
+
   hashScrolled = true
+  pendingHashTarget = undefined
   restoreInitialHash()
 }
 
 onMounted(() => {
   initTheme()
+  window.addEventListener('hashchange', handleHashChange)
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('hashchange', handleHashChange)
+  if (hashScrollFrame !== undefined) window.cancelAnimationFrame(hashScrollFrame)
 })
 watch(pageLoadState, async (state) => {
   if (state !== 'ready') return

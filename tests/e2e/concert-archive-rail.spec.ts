@@ -120,6 +120,35 @@ test('concert archive deep links position the requested card', async ({ page }) 
   expect(page.url()).toContain(`#${targetId}`)
 })
 
+test('concert archive deep links do not overwrite a newer hash', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+
+  await page.addInitScript(() => {
+    const nativeScrollWidth = Object.getOwnPropertyDescriptor(Element.prototype, 'scrollWidth')?.get
+    const state = globalThis as typeof globalThis & { __holdHashLayout?: boolean }
+    state.__holdHashLayout = true
+    Object.defineProperty(Element.prototype, 'scrollWidth', {
+      configurable: true,
+      get() {
+        if (this.matches('[data-horizontal-scroll]') && state.__holdHashLayout) return this.clientWidth
+        return nativeScrollWidth?.call(this) ?? 0
+      },
+    })
+  })
+
+  await page.goto('/concerts.html#concert-kpl-2025-11-08')
+  const originalTarget = page.locator('[data-anchor-id="concert-kpl-2025-11-08"]')
+  await expect(originalTarget).toHaveAttribute('data-hash-target', 'true')
+  await page.evaluate(() => { window.location.hash = '#concert-archive' })
+  await expect(originalTarget).not.toHaveAttribute('data-hash-target', 'true')
+  await page.evaluate(() => {
+    (globalThis as typeof globalThis & { __holdHashLayout?: boolean }).__holdHashLayout = false
+  })
+
+  await expect(page).toHaveURL(/concerts\.html#concert-archive$/)
+  await expect(originalTarget).not.toHaveAttribute('data-hash-target', 'true')
+})
+
 test('concert archive buttons stay synchronized at both rail edges', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await gotoConcerts(page)
