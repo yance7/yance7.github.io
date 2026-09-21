@@ -23,5 +23,8 @@
 - [源码结构](../src/)
 - [页面组件](../src/pages/)
 - [共享内容](../src/data/)
+- [自定义指令](../src/directives/)
+- [页面多语言内容](../src/data/locales/)
+- [界面翻译与语言状态](../src/i18n/)
 - [测试套件](../tests/)
 - [构建与审计脚本](../scripts/)
