@@ -332,6 +332,7 @@
 .home-hero {
   position: relative;
   display: flex;
+  min-height: clamp(640px, calc(100vh - 88px), 920px);
   min-height: clamp(640px, calc(100svh - 88px), 920px);
   overflow: clip;
   isolation: isolate;
