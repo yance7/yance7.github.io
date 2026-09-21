@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { activities, albums, concerts, concertGroups, getConcertState, honors, honorCategories, pageMetadata, projects, research, researchMethods, worlds } from '../src/data'
+import { concertsCopy as englishConcertsCopy } from '../src/data/locales/en/concerts'
 import { albumCoverFallback, albumCoverSrcset, albumCoverWebp } from '../src/utils/albumMedia'
 import { thumbnailUrl } from '../src/utils/concertMedia'
 
@@ -93,6 +94,14 @@ describe('content contracts', () => {
   it('keeps concert media URLs rooted and thumbnail-safe', () => {
     expect(thumbnailUrl('concert-202511-kpl-01.jpg')).toBe('/assets/concerts/thumbs/concert-202511-kpl-01.webp')
     expect(concerts.every((concert) => concert.id && concert.images.length > 0)).toBe(true)
+  })
+
+  it('localizes both Jason Zhang concert tours as Bound for 1982', () => {
+    const zhangJieIds = ['zhangjie-2025-04-18', 'zhangjie-2026-04-19'] as const
+    const tours = zhangJieIds.map((id) => englishConcertsCopy.entities[id]?.tour)
+
+    expect(tours).toEqual(['未·Live — Bound for 1982', '未·Live — Bound for 1982'])
+    expect(tours.join(' ')).not.toContain('Kai Wang')
   })
 
   it('keeps every concert poster available in original and thumbnail formats', () => {
