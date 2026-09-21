@@ -27,6 +27,9 @@
 | 浏览线上网站 | [www.yance777.com](https://www.yance777.com) |
 | 修改页面结构或路由视图 | [`src/pages/`](src/pages/) |
 | 修改页面共享内容与多语言文案 | [`src/data/`](src/data/) |
+| 修改自定义 Vue 指令 | [`src/directives/`](src/directives/) |
+| 修改页面多语言内容 | [`src/data/locales/`](src/data/locales/) |
+| 修改界面翻译与语言状态 | [`src/i18n/`](src/i18n/) |
 | 修改通用界面组件 | [`src/components/`](src/components/) |
 | 调整全站或页面样式 | [`src/styles/`](src/styles/) |
 | 修改 HTML 入口源 | [`html-src/`](html-src/) |
@@ -69,7 +72,10 @@ src/
 ├── components/       可复用 Vue 组件
 ├── pages/             页面级组件
 ├── composables/       可复用组合式逻辑
+├── directives/        自定义 Vue 指令
 ├── data/              页面共享内容与类型
+│   └── locales/       页面多语言内容
+├── i18n/              界面翻译与语言状态
 ├── styles/            全局与页面样式
 └── utils/             导航、媒体与预加载工具
 html-src/              HTML 源文件
