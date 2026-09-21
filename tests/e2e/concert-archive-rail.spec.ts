@@ -123,23 +123,30 @@ test('concert archive deep links position the requested card', async ({ page }) 
 test('concert archive deep links do not overwrite a newer hash', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
 
-  let releaseStyles!: () => void
-  const stylesReleased = new Promise<void>((resolve) => { releaseStyles = resolve })
-  await page.route(/(?:ConcertsPage-[^/]+\.css|styles\/concerts\.css)(?:\?.*)?$/, async (route) => {
-    const response = await route.fetch()
-    await stylesReleased
-    await route.fulfill({ response })
+  await page.addInitScript(() => {
+    const nativeScrollWidth = Object.getOwnPropertyDescriptor(Element.prototype, 'scrollWidth')?.get
+    const state = globalThis as typeof globalThis & { __holdHashLayout?: boolean }
+    state.__holdHashLayout = true
+    Object.defineProperty(Element.prototype, 'scrollWidth', {
+      configurable: true,
+      get() {
+        if (this.matches('[data-horizontal-scroll]') && state.__holdHashLayout) return this.clientWidth
+        return nativeScrollWidth?.call(this) ?? 0
+      },
+    })
   })
 
-  const concertsStyleRequest = page.waitForRequest(/(?:ConcertsPage-[^/]+\.css|styles\/concerts\.css)(?:\?.*)?$/)
-  const navigation = page.goto('/concerts.html#concert-kpl-2025-11-08')
-  await concertsStyleRequest
+  await page.goto('/concerts.html#concert-kpl-2025-11-08')
+  const originalTarget = page.locator('[data-anchor-id="concert-kpl-2025-11-08"]')
+  await expect(originalTarget).toHaveAttribute('data-hash-target', 'true')
   await page.evaluate(() => { window.location.hash = '#concert-archive' })
-  releaseStyles()
-  await navigation
+  await expect(originalTarget).not.toHaveAttribute('data-hash-target', 'true')
+  await page.evaluate(() => {
+    (globalThis as typeof globalThis & { __holdHashLayout?: boolean }).__holdHashLayout = false
+  })
 
   await expect(page).toHaveURL(/concerts\.html#concert-archive$/)
-  await expect(page.locator('[data-anchor-id="concert-kpl-2025-11-08"][data-hash-target]')).toHaveCount(0)
+  await expect(originalTarget).not.toHaveAttribute('data-hash-target', 'true')
 })
 
 test('concert archive buttons stay synchronized at both rail edges', async ({ page }) => {
