@@ -1,3 +1,6 @@
+import { existsSync, readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import {
   auditRepository,
@@ -7,6 +10,8 @@ import {
   forbiddenTrackedPrefixes,
   requiredIgnoreEntries
 } from '../scripts/check-repository-hygiene'
+
+const repositoryRoot = resolve(fileURLToPath(new URL('..', import.meta.url)))
 
 describe('repository hygiene', () => {
   it('keeps internal collaboration paths out of the tracked public tree', () => {
@@ -47,5 +52,22 @@ describe('repository hygiene', () => {
       'local absolute path',
       'temporary run id'
     ])
+  })
+
+  it('documents the actual source tree and declares the repository line-ending policy', () => {
+    const readme = readFileSync(resolve(repositoryRoot, 'README.md'), 'utf8')
+    const attributesPath = resolve(repositoryRoot, '.gitattributes')
+
+    expect(existsSync(attributesPath)).toBe(true)
+    expect(readme).toContain('src/directives/')
+    expect(readme).toContain('src/data/locales/')
+    expect(readme).toContain('src/i18n/')
+
+    const attributes = readFileSync(attributesPath, 'utf8')
+    expect(attributes).toContain('* text=auto eol=lf')
+    expect(attributes).toContain('*.png binary')
+    expect(attributes).toContain('*.jpg binary')
+    expect(attributes).toContain('*.woff2 binary')
+    expect(attributes).toContain('*.pdf binary')
   })
 })
