@@ -159,6 +159,17 @@
   .poster-open,
   .concert-poster img,
   .poster-hint { transition: none; }
-  .concert-poster:hover { --ty: 0px; }
-  .concert-poster:hover img { transform: none; filter: none; }
+  .concert-poster:hover:not(:focus-visible) {
+    --ty: 0px;
+    border-color: var(--line);
+    box-shadow: var(--shadow-1);
+  }
+  .poster-open {
+    --rx: 0deg;
+    --ry: 0deg;
+    --ty: 0px;
+    transform: none;
+  }
+  .concert-poster:hover:not(:focus-visible) img { transform: none; filter: none; }
+  .concert-poster:hover:not(:focus-visible) .poster-hint { opacity: 0; transform: translateY(8px); }
 }
