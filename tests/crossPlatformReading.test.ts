@@ -13,22 +13,16 @@ function expectFallbackBeforeEnhanced(source: string, fallback: string, enhanced
 }
 
 describe('cross-platform reading fallbacks', () => {
-  const shell = read('src/styles/shell.css')
-  const home = read('src/styles/home.css')
+  const homeHero = read('src/styles/home-hero.css')
   const components = read('src/styles/components.css')
   const responsive = read('src/styles/responsive.css')
   const concerts = read('src/styles/concerts.css')
 
   it('keeps legacy viewport fallbacks before dynamic viewport units', () => {
     expectFallbackBeforeEnhanced(
-      shell,
-      'min-height: clamp(640px, calc(100vh - 88px), 920px);',
-      'min-height: clamp(640px, calc(100svh - 88px), 920px);'
-    )
-    expectFallbackBeforeEnhanced(
-      home,
-      'min-height: calc(100vh - 68px);',
-      'min-height: calc(100svh - 68px);'
+      homeHero,
+      'min-height: clamp(560px, calc(100vh - 88px), 820px);',
+      'min-height: clamp(560px, calc(100svh - 88px), 820px);'
     )
     expectFallbackBeforeEnhanced(
       components,

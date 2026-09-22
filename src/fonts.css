@@ -10,6 +10,22 @@
 @import '@fontsource-variable/noto-serif-hk/index.css';
 @import '@fontsource-variable/inter/index.css';
 
+@font-face {
+  font-family: 'LXGW WenKai Hero SC';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/assets/fonts/lxgw-wenkai-hero-sc.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'LXGW WenKai Hero TC';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/assets/fonts/lxgw-wenkai-hero-tc.woff2') format('woff2');
+}
+
 :lang(zh-HK) {
   --font-prose: "Inter Variable", "Noto Sans HK Variable", sans-serif;
   --font-editorial: "Inter Variable", "Noto Serif HK Variable", serif;

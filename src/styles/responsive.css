@@ -125,7 +125,6 @@
 
 @media (max-width: 420px) {
   .archive-hero { padding-inline: max(var(--w-pad), env(safe-area-inset-left)) max(var(--w-pad), env(safe-area-inset-right)); }
-  .hero-action { width: 100%; justify-content: space-between; }
 }
 
 @media (max-width: 300px) {
@@ -174,13 +173,6 @@
   .theme-orbit:hover:not(:focus-visible) {
     border-color: var(--control-border); background: var(--control-bg); transform: none; box-shadow: var(--control-shadow);
   }
-  .hero-action:hover:not(:focus-visible) {
-    transform: none; border-color: var(--control-border); background: var(--control-bg); color: var(--ink); box-shadow: var(--control-shadow);
-  }
-  .hero-action.primary:hover:not(:focus-visible) {
-    border-color: var(--action-fill); background: var(--action-fill); color: var(--accent-contrast); box-shadow: 0 8px 26px var(--glow-gold);
-  }
-  .hero-action:hover:not(:focus-visible) span { transform: none; }
   .metric-card:hover:not(:focus-visible) { background: var(--surface-strong); transform: none; box-shadow: none; }
   .foot-mark:hover:not(:focus-visible) { color: var(--ink); transform: none; }
   .foot-contact:hover:not(:focus-visible) {
@@ -228,11 +220,8 @@
   }
   .reveal { opacity: 1; transform: none; animation: none !important; }
   .lyric-char { opacity: 1; transform: none; animation: none !important; }
-  .hero-action:hover,
-  .hero-action:focus-visible,
   .lb-nav:hover,
   .lb-close:hover { transform: none !important; }
-  .hero-action:hover span { transform: none !important; }
   button:not(:disabled):active,
   a[href]:active { transform: none !important; }
 }

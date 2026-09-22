@@ -101,9 +101,8 @@ async function expectEnglishLayoutSurfacesInsideViewport(page: Page) {
 async function expectEnglishTextSurfacesReadable(page: Page) {
   const violations = await page.evaluate(() => {
     const selectors = [
-      '.home-stage-heading',
-      '.home-stage-title',
-      '.home-stage-copy',
+      '.home-hero-kicker',
+      '.home-hero-typewriter',
       '.hero-title',
       '.hero-copy',
       '.section-head h2',

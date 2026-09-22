@@ -25,7 +25,7 @@ export const siteCopy = {
     concerts: { no: '05', label: '演唱会', icon: '♪', desc: '演唱会足迹与海报，记录那些被灯光和合唱重新定义的夜晚。', accent: 'gold' }
   },
   home: {
-    heroTitle: '研究、构建，', heroAccent: '与现场相遇',
+    heroGreeting: '你好，我是 Yance', heroStatement: '研究、构建，与现场相遇',
     selectedTitle: '研究如何', selectedAccent: '离开纸面', selectedCopy: '先看正在被继续推进的研究，再看已经可以打开使用的产品。',
     worldsTitle: '五个', worldsAccent: '小世界', worldsCopy: '把探索、荣誉、研究、作品与音乐分别收进五间屋子。',
     beyondTitle: '在集体中', beyondAccent: '继续生长', beyondCopy: '精选领导力与活动经历，保留那些最能说明组织、协作与行动力的片段。'
