@@ -22,6 +22,8 @@ def main():
         with Image.open(source) as image:
             image.thumbnail(MAX_SIZE, Image.Resampling.LANCZOS)
             image.save(output, 'WEBP', quality=78, method=6)
+            fallback = image.convert('RGB') if image.mode not in ('RGB', 'L') else image
+            fallback.save(OUTPUT_DIR / source.name, 'JPEG', quality=82, optimize=True, progressive=True)
         generated += 1
     print(f'generated {generated} concert thumbnails in {OUTPUT_DIR}')
 

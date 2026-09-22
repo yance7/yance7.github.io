@@ -44,6 +44,7 @@ const concertArtists = [...new Set(concerts.map((concert) => concert.artist))]
 const concertPosters = new Set(concerts.map((concert) => concert.poster.file))
 
 export function getConcertState(now = new Date()) {
+  const archive = [...concerts].sort((a, b) => b.date.localeCompare(a.date))
   const upcoming = concerts
     .filter((concert) => isConcertUpcoming(concert, now))
     .sort((a, b) => a.date.localeCompare(b.date))
@@ -53,6 +54,7 @@ export function getConcertState(now = new Date()) {
 
   return {
     now,
+    archive,
     upcoming,
     moods: {
       ...baseConcertMoods,

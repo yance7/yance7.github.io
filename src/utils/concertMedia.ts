@@ -8,6 +8,10 @@ export function thumbnailUrl(name: string) {
   return `/assets/concerts/thumbs/${name.replace(/\.[^.]+$/, '.webp')}`
 }
 
+export function thumbnailFallbackUrl(name: string) {
+  return `/assets/concerts/thumbs/${name.replace(/\.[^.]+$/, '.jpg')}`
+}
+
 type ConcertPosterRatio = 'tall' | 'portrait' | 'landscape'
 
 export interface ConcertPosterPresentation {

@@ -141,8 +141,10 @@ describe('content contracts', () => {
     for (const concert of concerts) {
       const posterPath = resolve(process.cwd(), 'public/assets/concerts', concert.poster.file)
       const thumbnailPath = resolve(process.cwd(), 'public/assets/concerts/thumbs', concert.poster.file.replace(/\.jpg$/, '.webp'))
+      const thumbnailFallbackPath = resolve(process.cwd(), 'public/assets/concerts/thumbs', concert.poster.file)
       expect(existsSync(posterPath)).toBe(true)
       expect(existsSync(thumbnailPath)).toBe(true)
+      expect(existsSync(thumbnailFallbackPath)).toBe(true)
       expect(readJpegDimensions(posterPath)).toEqual({ width: concert.poster.width, height: concert.poster.height })
     }
   })
@@ -187,6 +189,24 @@ describe('content contracts', () => {
 
   it('derives concert state from a supplied Beijing date', () => {
     const state = getConcertState(new Date('2026-08-07T12:00:00+08:00'))
+    expect(state.archive.map((concert) => concert.id)).toEqual([
+      'fforever-2026-10-06',
+      'zhou-shen-2026-09-27',
+      'wangsulong-2026-08-30',
+      'wangsulong-2026-08-19',
+      'xuezhiqian-2026-07-26',
+      'zhoujielun-2026-06-26',
+      'jd-summer-2026-05-31',
+      'mayday-2026-05-15',
+      'zhangjie-2026-04-19',
+      'huangzihongfan-2026-03-14',
+      'kpl-2025-11-08',
+      'zhangyixing-2025-10-06',
+      'taozhe-2025-09-19',
+      'xietingfeng-2025-08-10',
+      'zhangjie-2025-04-18',
+      'dengziqi-2024-08-25'
+    ])
     expect(state.upcoming.map((concert) => concert.id)).toEqual([
       'wangsulong-2026-08-19',
       'wangsulong-2026-08-30',

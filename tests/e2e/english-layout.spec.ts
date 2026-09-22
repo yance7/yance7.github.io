@@ -133,8 +133,8 @@ async function expectEnglishTextSurfacesReadable(page: Page) {
       '.sc-chapter strong',
       '.sc-chapter p',
       '.sc-role > span:last-child',
-      '.next-up-card strong',
-      '.next-up-card small',
+      '.concert-info h3',
+      '.concert-info p',
       '.concert-venue',
       '.foot-contact-value',
       '.hero-action'

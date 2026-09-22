@@ -157,6 +157,7 @@ export function getLocalizedConcertSection(locale: Locale) {
 
 export function getLocalizedConcertState(locale: Locale, now = new Date()): {
   now: Date
+  archive: Concert[]
   upcoming: Concert[]
   attended: Concert[]
   moods: Record<string, string>
@@ -164,6 +165,7 @@ export function getLocalizedConcertState(locale: Locale, now = new Date()): {
   venueCount: number
 } {
   const localized = getLocalizedConcerts(locale)
+  const archive = [...localized].sort((a, b) => b.date.localeCompare(a.date))
   const upcoming = localized.filter((concert) => isConcertUpcoming(concert, now)).sort((a, b) => a.date.localeCompare(b.date))
   const attended = localized.filter((concert) => !isConcertUpcoming(concert, now))
   const venues = [...new Set(localized.map((concert) => concert.venue))]
@@ -173,6 +175,7 @@ export function getLocalizedConcertState(locale: Locale, now = new Date()): {
   const upcoming2026 = upcoming.filter((concert) => concert.date.startsWith('2026-')).length
   return {
     now,
+    archive,
     upcoming,
     attended,
     moods: { ...content(locale).concerts.moods, '2026': content(locale).concerts.currentYearMood(attended2026, upcoming2026) },

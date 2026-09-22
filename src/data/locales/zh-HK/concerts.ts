@@ -25,5 +25,5 @@ export const concertsCopy = {
   },
   moods: { '2024': '第一次走進鳥巢，燈光亮起的瞬間，世界安靜了。', '2025': '從春到冬，五場現場，五次被音樂重新定義的夜晚。' },
   currentYearMood: (attended, upcoming) => `${attended} 場已赴約，${upcoming} 場待相見。`,
-  section: { label: 'LIVE ARCHIVE', title: '現場是', accent: '另一種記憶', copy: '點擊海報進入全屏檔案。每張圖都保留原始比例。', nextUp: 'NEXT UP', realTime: '現實時間', archive: '演唱會檔案', posterArchive: '開啟檔案', attended: '已赴約', upcoming: '待相見', venues: '場館', artists: '藝人', posters: '張海報', total: '總現場', recorded: '已記錄的演出', showUnit: '場' }
+  section: { label: 'LIVE ARCHIVE', title: '現場是', accent: '另一種記憶', copy: '點擊海報進入全屏檔案。每張圖都保留原始比例。', archive: '演唱會檔案', posterArchive: '開啟檔案', attended: '已赴約', upcoming: '待相見', venues: '場館', artists: '藝人', posters: '張海報', total: '總現場', recorded: '已記錄的演出', showUnit: '場' }
 } satisfies ConcertLocaleCopy
