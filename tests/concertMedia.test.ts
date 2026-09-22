@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { concertPosterPresentation } from '../src/utils/concertMedia'
+import { concertPosterPresentation, thumbnailFallbackUrl } from '../src/utils/concertMedia'
 
 describe('concert poster presentation', () => {
   it.each([
@@ -9,5 +9,9 @@ describe('concert poster presentation', () => {
     [{ width: 101, height: 100 }, { kind: 'landscape', aspectRatio: '16 / 9' }]
   ])('maps poster width/height ratio to a stable presentation frame', (poster, expected) => {
     expect(concertPosterPresentation(poster)).toEqual(expected)
+  })
+
+  it('derives a JPEG fallback beside the WebP thumbnail', () => {
+    expect(thumbnailFallbackUrl('concert-202511-kpl-finals.jpg')).toBe('/assets/concerts/thumbs/concert-202511-kpl-finals.jpg')
   })
 })

@@ -345,8 +345,7 @@ describe('page stylesheet boundaries', () => {
       '.method-',
       '.toolchain-',
       '.sc-',
-      '.concert-',
-      '.next-up'
+      '.concert-'
     ]) {
       expect(responsiveStyles).not.toContain(selector)
     }

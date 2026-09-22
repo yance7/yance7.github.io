@@ -25,5 +25,5 @@ export const concertsCopy = {
   },
   moods: { '2024': 'The first time I entered the National Stadium, the world went quiet when the lights came up.', '2025': 'Five shows from spring to winter—five nights that reset the scale of the world.' },
   currentYearMood: (attended, upcoming) => `${attended} attended, ${upcoming} upcoming.`,
-  section: { label: 'LIVE ARCHIVE', title: 'Live shows are', accent: 'another kind of memory', copy: 'Open a poster for the full archive. Original proportions stay intact.', nextUp: 'NEXT UP', realTime: 'REAL TIME', archive: 'CONCERT ARCHIVE', posterArchive: 'OPEN ARCHIVE', attended: 'ATTENDED', upcoming: 'UPCOMING', venues: 'venues', artists: 'artists', posters: 'posters', total: 'total shows', recorded: 'shows logged', showUnit: 'shows' }
+  section: { label: 'LIVE ARCHIVE', title: 'Live shows are', accent: 'another kind of memory', copy: 'Open a poster for the full archive. Original proportions stay intact.', archive: 'CONCERT ARCHIVE', posterArchive: 'OPEN ARCHIVE', attended: 'ATTENDED', upcoming: 'UPCOMING', venues: 'venues', artists: 'artists', posters: 'posters', total: 'total shows', recorded: 'shows logged', showUnit: 'shows' }
 } satisfies ConcertLocaleCopy

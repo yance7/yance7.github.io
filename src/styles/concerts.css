@@ -1,21 +1,4 @@
 /* ===== 演唱会 ===== */
-.next-up {
-  margin-top: 34px; padding: var(--space-4) var(--space-5) var(--space-5);
-  border: 1px solid var(--line); border-left: 2px solid var(--gold);
-  background: var(--surface); box-shadow: var(--shadow-1);
-}
-.next-up-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
-.next-up-label { font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: var(--tracking-latin-wide); color: var(--gold); }
-.next-up-note { font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: .08em; color: var(--dim); }
-.next-up-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.next-up-card {
-  display: grid; grid-template-columns: 72px minmax(0, 1fr); align-items: center; gap: 14px;
-  min-width: 0; padding: 13px 14px; border: 1px solid var(--line); color: var(--ink);
-}
-.next-up-card time { font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: .08em; color: var(--gold); }
-.next-up-card strong, .next-up-card small { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.next-up-card strong { font-family: var(--font-editorial); font-size: 1.05rem; font-weight: 400; white-space: nowrap; }
-.next-up-card small { margin-top: 3px; color: var(--dim); font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: .03em; line-height: 1.4; overflow-wrap: anywhere; }
 .concert-group { padding-bottom: 60px; }
 .group-header {
   display: flex; align-items: baseline; gap: 20px; flex-wrap: wrap;
@@ -61,6 +44,7 @@
 .concert-rail-card-info .concert-info h3 { margin-top: 8px; font-size: clamp(1.45rem, 2.1vw, 2.15rem); }
 .concert-rail-card-info .concert-info p { font-size: 1rem; }
 .concert-rail-card[data-concert-status='attended'] .concert-status { color: var(--aqua); }
+.concert-rail-card[data-concert-status='upcoming'] .concert-status { color: var(--gold); }
 
 .concert-date { font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: .1em; color: var(--gold); }
 .concert-date span { display: block; width: 34px; height: 1px; margin-top: 12px; background: var(--gold); }
@@ -152,7 +136,6 @@
 
 /* ===== 现场页面级响应式补丁 ===== */
 @media (max-width: 640px) {
-  .next-up-list { grid-template-columns: 1fr; }
   .concert-date { display: flex; align-items: center; gap: 12px; }
   .concert-date span { margin: 0; }
   .concert-poster { max-width: 280px; }

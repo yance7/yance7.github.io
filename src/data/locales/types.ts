@@ -70,7 +70,7 @@ export interface ConcertLocaleCopy {
   entities: Record<string, Pick<Concert, 'artist' | 'tour' | 'venue' | 'note'>>
   moods: Record<string, string>
   currentYearMood: (attended: number, upcoming: number) => string
-  section: { label: string; title: string; accent: string; copy: string; nextUp: string; realTime: string; archive: string; posterArchive: string; attended: string; upcoming: string; venues: string; artists: string; posters: string; total: string; recorded: string; showUnit: string }
+  section: { label: string; title: string; accent: string; copy: string; archive: string; posterArchive: string; attended: string; upcoming: string; venues: string; artists: string; posters: string; total: string; recorded: string; showUnit: string }
 }
 
 export interface AlbumLocaleCopy {

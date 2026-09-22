@@ -1,6 +1,9 @@
 import { expect, test, type Page } from '@playwright/test'
 
-const attendedIds = [
+const archiveIds = [
+  'fforever-2026-10-06',
+  'zhou-shen-2026-09-27',
+  'wangsulong-2026-08-30',
   'wangsulong-2026-08-19',
   'xuezhiqian-2026-07-26',
   'zhoujielun-2026-06-26',
@@ -28,7 +31,7 @@ async function gotoConcertRoute(page: Page, path: string) {
   await page.goto(path)
 }
 
-test('attended concert archive renders every past show in one horizontal rail', async ({ page }) => {
+test('concert archive renders every show in one reverse-chronological horizontal rail', async ({ page }) => {
   await gotoConcerts(page)
 
   const archive = page.locator('#concert-archive')
@@ -39,12 +42,27 @@ test('attended concert archive renders every past show in one horizontal rail', 
   const ids = await rail.locator('.concert-rail-card').evaluateAll((cards) => (
     cards.map((card) => card.getAttribute('data-concert-id'))
   ))
-  expect(ids).toEqual(attendedIds)
-  await expect(rail.locator('[data-concert-id="wangsulong-2026-08-30"]')).toHaveCount(0)
-  await expect(page.locator('.next-up-card[href^="#concert-"]')).toHaveCount(0)
-  await expect(page.locator('.next-up-card')).toHaveCount(3)
-  await expect(page.locator('.next-up-card [aria-hidden="true"]')).toHaveCount(0)
+  expect(ids).toEqual(archiveIds)
+  await expect(rail.locator('[data-concert-status="upcoming"]')).toHaveCount(3)
+  await expect(rail.locator('[data-concert-status="attended"]')).toHaveCount(13)
+  await expect(page.locator('.next-up')).toHaveCount(0)
   await expect(rail).toHaveCSS('scroll-snap-type', /x mandatory/)
+})
+
+test('concert archive keeps original posters out of the initial request set', async ({ page }) => {
+  const originalRequests: string[] = []
+  page.on('request', (request) => {
+    if (request.url().match(/\/assets\/concerts\/[^/]+\.jpg$/)) originalRequests.push(request.url())
+  })
+
+  await gotoConcerts(page)
+  await expect(page.locator('.concert-rail-card').first()).toBeVisible()
+  expect(originalRequests).toEqual([])
+  await expect(page.locator('.concert-rail-card').first().locator('img')).toHaveAttribute('src', /\/assets\/concerts\/thumbs\/[^/]+\.jpg$/)
+
+  await page.locator('.concert-rail-card').first().locator('.poster-open').click()
+  await expect(page.locator('.lightbox')).toBeVisible()
+  await expect.poll(() => originalRequests.length).toBe(1)
 })
 
 test('concert archive keeps normal wheel native and maps Shift+wheel horizontally', async ({ page }) => {

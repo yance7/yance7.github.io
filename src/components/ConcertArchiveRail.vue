@@ -2,12 +2,13 @@
 import { nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import type { Concert, LightboxPayload } from '../data/types'
 import type { ConcertLocaleCopy } from '../data/locales/types'
+import { isConcertUpcoming } from '../data/concerts'
 import { useLocale } from '../i18n'
-import { concertPosterPresentation, originalImageUrl, thumbnailUrl } from '../utils/concertMedia'
-import { sharedImagePreloader } from '../utils/imagePreload'
+import { concertPosterPresentation, originalImageUrl, thumbnailFallbackUrl, thumbnailUrl } from '../utils/concertMedia'
 
 const props = defineProps<{
   concerts: Concert[]
+  now: Date
   section: ConcertLocaleCopy['section']
 }>()
 
@@ -18,7 +19,6 @@ const emit = defineEmits<{
 const railRef = ref<HTMLElement | null>(null)
 const railControls = reactive({ previous: false, next: false })
 const reducedMotion = ref(false)
-const imagePreloader = sharedImagePreloader
 const { messages } = useLocale()
 let resizeObserver: ResizeObserver | undefined
 let reducedMotionQuery: MediaQueryList | undefined
@@ -37,8 +37,8 @@ function openLightbox(item: Concert, event?: MouseEvent) {
   })
 }
 
-function preloadItem(item: Concert) {
-  imagePreloader.preload(originalImageUrl(item.poster.file))
+function statusFor(item: Concert) {
+  return isConcertUpcoming(item, props.now) ? 'upcoming' : 'attended'
 }
 
 function updateRailControls() {
@@ -182,10 +182,8 @@ onBeforeUnmount(() => {
           class="concert-rail-card"
           :data-anchor-id="`concert-${item.id}`"
           :data-concert-id="item.id"
-          data-concert-status="attended"
+          :data-concert-status="statusFor(item)"
           v-reveal="{ delay: Math.min(i, 4) * 60 }"
-          @mouseenter="preloadItem(item)"
-          @focusin="preloadItem(item)"
         >
           <div
             class="concert-poster"
@@ -202,7 +200,7 @@ onBeforeUnmount(() => {
               <picture>
                 <source :srcset="thumbnailUrl(item.poster.file)" type="image/webp">
                   <img
-                    :src="originalImageUrl(item.poster.file)"
+                    :src="thumbnailFallbackUrl(item.poster.file)"
                     :alt="`${item.artist} ${item.tour} ${messages.lightbox.posterAlt}`"
                     :width="item.poster.width"
                     :height="item.poster.height"
@@ -221,7 +219,9 @@ onBeforeUnmount(() => {
               {{ formatConcertDate(item.date) }}<span></span>
             </time>
             <div class="concert-info">
-              <span class="concert-status">{{ section.attended }}</span>
+              <span class="concert-status" :class="{ upcoming: statusFor(item) === 'upcoming' }">
+                {{ statusFor(item) === 'upcoming' ? section.upcoming : section.attended }}
+              </span>
               <span class="concert-venue">{{ item.venue }}</span>
               <h3>{{ item.artist }}</h3>
               <p>{{ item.tour }}</p>

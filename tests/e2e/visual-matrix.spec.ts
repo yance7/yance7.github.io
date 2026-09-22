@@ -133,7 +133,7 @@ async function settleStableConcertLayout(page: Page) {
   await page.locator('main#main').scrollIntoViewIfNeeded()
   await movePointerAway(page)
   await expect.poll(() => page.evaluate(() => new Promise<boolean>((resolve) => {
-    const selectors = ['#concert-archive', '#album-frequencies', '.album-wall', '.next-up']
+    const selectors = ['#concert-archive', '#album-frequencies', '.album-wall']
     const round = (value: number) => Math.round(value * 100) / 100
     const snapshot = () => JSON.stringify({
       documentHeight: document.documentElement.scrollHeight,
@@ -175,10 +175,6 @@ async function settleConcertVisualState(page: Page) {
   await expect(page.locator('.album-visual-slot')).toHaveAttribute('data-spotlight-state', 'ready')
   await settleImages(page, '.album-tile img')
   await settleImages(page, '.album-spotlight img')
-  await expect.poll(() => page.locator('.next-up').count()).toBeGreaterThan(0)
-  await expect.poll(() => page.locator('.next-up').evaluateAll((elements) => (
-    elements.every((element) => element.classList.contains('revealed'))
-  ))).toBe(true)
   await settleStableConcertLayout(page)
 }
 
