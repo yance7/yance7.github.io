@@ -56,11 +56,13 @@ test('concert archive keeps original posters out of the initial request set', as
   })
 
   await gotoConcerts(page)
-  await expect(page.locator('.concert-rail-card').first()).toBeVisible()
+  const firstCard = page.locator('.concert-rail-card').first()
+  await expect(firstCard).toBeVisible()
   expect(originalRequests).toEqual([])
-  await expect(page.locator('.concert-rail-card').first().locator('img')).toHaveAttribute('src', /\/assets\/concerts\/thumbs\/[^/]+\.jpg$/)
+  await expect(firstCard.locator('.poster-foreground')).toHaveAttribute('src', /\/assets\/concerts\/thumbs\/[^/]+\.jpg$/)
+  await expect(firstCard.locator('.poster-backdrop')).toHaveAttribute('src', /\/assets\/concerts\/thumbs\/[^/]+\.jpg$/)
 
-  await page.locator('.concert-rail-card').first().locator('.poster-open').click()
+  await firstCard.locator('.poster-open').click()
   await expect(page.locator('.lightbox')).toBeVisible()
   await expect.poll(() => originalRequests.length).toBe(1)
 })

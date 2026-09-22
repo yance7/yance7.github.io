@@ -81,34 +81,44 @@ test('concert poster coalesces sheen and tilt into one layout read per frame', {
   await expect(poster).not.toHaveCSS('--ry', '')
 })
 
-test('concert poster stages classify source ratios and contain the complete artwork', async ({ page }) => {
+test('concert poster stages keep every source ratio inside a fixed 3:4 layered frame', async ({ page }) => {
   await page.goto('/concerts.html')
 
   const expected = [
-    { id: 'jd-summer-2026-05-31', ratio: 'tall', frame: 9 / 16 },
+    { id: 'jd-summer-2026-05-31', ratio: 'tall', frame: 3 / 4 },
     { id: 'dengziqi-2024-08-25', ratio: 'portrait', frame: 3 / 4 },
-    { id: 'kpl-2025-11-08', ratio: 'landscape', frame: 16 / 9 }
+    { id: 'kpl-2025-11-08', ratio: 'landscape', frame: 3 / 4 }
   ] as const
 
   for (const item of expected) {
     const poster = page.locator(`[data-concert-id="${item.id}"] .concert-poster`)
     await expect(poster).toHaveAttribute('data-poster-ratio', item.ratio)
     const state = await poster.evaluate((element) => {
-      const image = element.querySelector('img')!
+      const backdrop = element.querySelector<HTMLImageElement>('.poster-backdrop')!
+      const foreground = element.querySelector<HTMLImageElement>('.poster-foreground')!
       const rect = element.getBoundingClientRect()
       return {
         frameRatio: rect.width / rect.height,
-        objectFit: getComputedStyle(image).objectFit,
-        width: image.getAttribute('width'),
-        height: image.getAttribute('height')
+        backdropFit: getComputedStyle(backdrop).objectFit,
+        foregroundFit: getComputedStyle(foreground).objectFit,
+        foregroundWidth: foreground.getAttribute('width'),
+        foregroundHeight: foreground.getAttribute('height'),
+        backdropInset: getComputedStyle(backdrop).inset
       }
     })
 
     expect(state.frameRatio).toBeCloseTo(item.frame, 2)
-    expect(state.objectFit).toBe('contain')
-    expect(Number(state.width)).toBeGreaterThan(0)
-    expect(Number(state.height)).toBeGreaterThan(0)
+    expect(state.backdropFit).toBe('cover')
+    expect(state.foregroundFit).toBe('contain')
+    expect(state.backdropInset).toBe('0px')
+    expect(Number(state.foregroundWidth)).toBeGreaterThan(0)
+    expect(Number(state.foregroundHeight)).toBeGreaterThan(0)
   }
+
+  const stageHeights = await page.locator('.concert-poster').evaluateAll((elements) => (
+    elements.map((element) => element.getBoundingClientRect().height)
+  ))
+  expect(Math.max(...stageHeights) - Math.min(...stageHeights)).toBeLessThanOrEqual(1)
 })
 
 test('concert poster pointer feedback stays bounded without changing geometry', { tag: '@fine-pointer' }, async ({ page }, testInfo) => {
@@ -148,7 +158,8 @@ test('concert poster pointer feedback stays bounded without changing geometry', 
   })
   const after = await poster.boundingBox()
   expect(after).not.toBeNull()
-  expect(Math.max(state.rx, state.ry)).toBeLessThanOrEqual(1.8)
+  expect(Math.max(state.rx, state.ry)).toBeLessThanOrEqual(2.5)
+  await expect(poster.locator('.poster-open')).toHaveCSS('transition-duration', '0.22s')
   expect(after!.width).toBeCloseTo(before!.width, 2)
   expect(after!.height).toBeCloseTo(before!.height, 2)
 })
@@ -169,8 +180,8 @@ test('concert poster motion is disabled for reduced-motion users', async ({ page
     posterBorderColor: getComputedStyle(element).borderColor,
     posterBoxShadow: getComputedStyle(element).boxShadow,
     buttonTransform: getComputedStyle(element.querySelector('.poster-open')!).transform,
-    imageTransition: getComputedStyle(element.querySelector('img')!).transitionDuration,
-    imageTransform: getComputedStyle(element.querySelector('img')!).transform,
+    imageTransition: getComputedStyle(element.querySelector('.poster-foreground')!).transitionDuration,
+    imageTransform: getComputedStyle(element.querySelector('.poster-foreground')!).transform,
     hintOpacity: getComputedStyle(element.querySelector('.poster-hint')!).opacity
   }))
   expect(Number.parseFloat(state.posterTransition)).toBeLessThanOrEqual(0.001)

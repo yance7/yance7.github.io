@@ -189,24 +189,38 @@ onBeforeUnmount(() => {
             class="concert-poster"
             :data-poster-ratio="concertPosterPresentation(item.poster).kind"
             :style="{ aspectRatio: concertPosterPresentation(item.poster).aspectRatio }"
-            v-pointer-sheen="{ tilt: 3.5 }"
+            v-pointer-sheen="{ tilt: 2.5 }"
           >
+            <picture class="poster-backdrop-layer" aria-hidden="true">
+              <source :srcset="thumbnailUrl(item.poster.file)" type="image/webp">
+              <img
+                class="poster-backdrop"
+                :src="thumbnailFallbackUrl(item.poster.file)"
+                alt=""
+                :width="item.poster.width"
+                :height="item.poster.height"
+                loading="lazy"
+                decoding="async"
+              >
+            </picture>
             <button
               class="poster-open"
               type="button"
               :aria-label="`${messages.lightbox.openArchive}: ${item.artist} ${item.tour}`"
               @click="openLightbox(item, $event)"
             >
-              <picture>
+              <picture class="poster-foreground-layer">
                 <source :srcset="thumbnailUrl(item.poster.file)" type="image/webp">
-                  <img
-                    :src="thumbnailFallbackUrl(item.poster.file)"
-                    :alt="`${item.artist} ${item.tour} ${messages.lightbox.posterAlt}`"
-                    :width="item.poster.width"
-                    :height="item.poster.height"
-                    loading="lazy"
-                    decoding="async"
-                  >
+                <img
+                  class="poster-foreground"
+                  :src="thumbnailFallbackUrl(item.poster.file)"
+                  :data-original-src="originalImageUrl(item.poster.file)"
+                  :alt="`${item.artist} ${item.tour} ${messages.lightbox.posterAlt}`"
+                  :width="item.poster.width"
+                  :height="item.poster.height"
+                  loading="lazy"
+                  decoding="async"
+                >
               </picture>
               <span class="poster-hint" aria-hidden="true">
                 <span>{{ section.posterArchive }}</span><b>＋</b>

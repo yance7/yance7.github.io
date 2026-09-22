@@ -16,12 +16,12 @@ type ConcertPosterRatio = 'tall' | 'portrait' | 'landscape'
 
 export interface ConcertPosterPresentation {
   kind: ConcertPosterRatio
-  aspectRatio: '9 / 16' | '3 / 4' | '16 / 9'
+  aspectRatio: '3 / 4'
 }
 
 export function concertPosterPresentation(poster: Pick<ConcertPoster, 'width' | 'height'>): ConcertPosterPresentation {
   const ratio = poster.width / poster.height
-  if (ratio < 0.6) return { kind: 'tall', aspectRatio: '9 / 16' }
+  if (ratio < 0.6) return { kind: 'tall', aspectRatio: '3 / 4' }
   if (ratio <= 1) return { kind: 'portrait', aspectRatio: '3 / 4' }
-  return { kind: 'landscape', aspectRatio: '16 / 9' }
+  return { kind: 'landscape', aspectRatio: '3 / 4' }
 }

@@ -334,6 +334,14 @@ for (const theme of themes) {
       const project = page.locator('#project-ap-microeconomics-notes')
       await project.scrollIntoViewIfNeeded()
       await expect(project).toHaveClass(/revealed/)
+      await page.locator('.skip-link').evaluate((element) => {
+        const skipLink = element as HTMLElement
+        skipLink.blur()
+        skipLink.style.visibility = 'hidden'
+      })
+      await page.locator('.site-nav').evaluate((element) => {
+        (element as HTMLElement).style.visibility = 'hidden'
+      })
       await expect(project).toHaveScreenshot(`works-ap-${theme}-${viewport.name}.png`, componentScreenshotOptions)
     })
   }
