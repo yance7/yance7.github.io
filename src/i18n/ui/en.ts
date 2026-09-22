@@ -12,7 +12,7 @@ export const enMessages = {
   honors: { filterLabel: 'Filter honors by site tier', all: 'All', peak: 'Pioneer tier', excellent: 'Distinguished tier', emerging: 'Emerging tier', honorsUnit: 'honors' },
   lightbox: { gallery: 'Concert poster gallery', close: 'Close lightbox', previous: 'Previous image', next: 'Next image', position: (current, total) => ` · image ${current} of ${total}`, loading: 'Loading image', failed: 'Image failed to load', retry: 'Retry', posterAlt: 'poster', openArchive: 'Open archive' },
   albums: { collection: 'Album collection wall', navigation: 'Album navigation', previous: 'Previous album', next: 'Next album', select: 'Select an album', selected: 'Selected', nowSpinning: 'Now spinning', album: 'ALBUM', ep: 'EP' },
-  footer: { homeLabel: 'Back to home', contactsLabel: 'Contact', archive: 'PERSONAL ARCHIVE / 2026', identity: 'RESEARCHER / BUILDER / MUSIC LISTENER', email: 'Email', github: 'GitHub', instagram: 'Instagram', x: 'X' },
+  footer: { homeLabel: 'Back to home', contactsLabel: 'Contact', archive: 'PERSONAL ARCHIVE / 2026', identity: 'RESEARCHER / BUILDER / MUSIC LISTENER', email: 'Email', github: 'GitHub' },
   error404: { kicker: 'SIGNAL LOST', title: 'This page wandered off', copy: 'The page you requested does not exist or has moved. Return home and choose another room.', home: 'Return home', research: 'Explore research' },
   loadError: { title: 'This page could not load', copy: 'The page resources did not finish loading. Please try again.', retry: 'Reload page' },
   status: { active: 'Active', published: 'Published', completed: 'Completed', deployed: 'Deployed', 'open-source': 'Open source', planned: 'Planned', archived: 'Archived' },
