@@ -50,35 +50,46 @@
 .concert-date span { display: block; width: 34px; height: 1px; margin-top: 12px; background: var(--gold); }
 .concert-poster {
   --pointer-x: 50%; --pointer-y: 50%; --pointer-active: 0;
-  position: relative; aspect-ratio: 3/4; overflow: hidden;
+  position: relative; aspect-ratio: 3 / 4; overflow: hidden; isolation: isolate;
   background: var(--surface-strong); border: 1px solid var(--line); box-shadow: var(--shadow-1);
-  border-radius: var(--radius-small);
-  transition: box-shadow var(--dur-base), border-color var(--dur-base);
+  border-radius: var(--radius-large);
+  transition: box-shadow 220ms var(--ease-apple), border-color 220ms var(--ease-apple);
 }
-.concert-poster:hover {
-  --ty: -2px;
-  border-color: var(--gold);
-  box-shadow: var(--interactive-shadow);
+.poster-backdrop-layer {
+  position: absolute; inset: 0; z-index: 0; display: block; overflow: hidden;
+  border-radius: inherit; pointer-events: none; background: var(--surface-strong);
+}
+.poster-backdrop-layer::after {
+  content: ''; position: absolute; inset: 0;
+  background: color-mix(in srgb, var(--bg) 26%, transparent);
+}
+.poster-backdrop {
+  position: absolute; inset: 0; display: block; width: 100%; height: 100%;
+  object-fit: cover; filter: blur(20px) saturate(.78) brightness(.7);
+  transform: scale(1.08);
+  transition: filter 220ms var(--ease-apple), transform 220ms var(--ease-apple);
 }
 .concert-poster::after {
   content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
   border-radius: inherit;
   background: radial-gradient(260px circle at var(--pointer-x) var(--pointer-y), var(--interactive-sheen), transparent 58%);
   mix-blend-mode: soft-light; opacity: calc(var(--pointer-active) * .7);
-  transition: opacity var(--dur-fast);
+  transition: opacity 220ms var(--ease-apple);
 }
-  .poster-open {
-      position: absolute; inset: 0; z-index: 1; display: block; width: 100%; height: 100%;
-      appearance: none; padding: 0; border: 0; border-radius: inherit; background: transparent; color: inherit; font: inherit; text-align: left;
-      transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--ty, 0px));
-      transition: transform var(--dur-base) var(--ease-spring);
-    }
-  .poster-open:focus-visible { outline: 2px solid var(--focus); outline-offset: -3px; box-shadow: inset 0 0 0 4px var(--bg); }
-.concert-poster img {
-    display: block; width: 100%; height: 100%; object-fit: contain; cursor: pointer;
-  transition: transform var(--dur-slow) var(--ease-apple), filter var(--dur-slow);
+.poster-open {
+  position: absolute; inset: 0; z-index: 1; display: block; width: 100%; height: 100%;
+  appearance: none; padding: 0; border: 0; border-radius: inherit;
+  background: transparent; color: inherit; font: inherit; text-align: left;
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--ty, 0px));
+  transition: transform 220ms var(--ease-apple);
 }
-.concert-poster picture { display: block; width: 100%; height: 100%; }
+.poster-open:focus-visible { outline: 2px solid var(--focus); outline-offset: -3px; box-shadow: inset 0 0 0 4px var(--bg); }
+.poster-foreground-layer { position: absolute; inset: 0; display: block; width: 100%; height: 100%; pointer-events: none; }
+.poster-foreground {
+  position: absolute; inset: 0; display: block; width: 100%; height: 100%;
+  object-fit: contain; cursor: pointer; filter: drop-shadow(0 12px 18px rgba(0, 0, 0, .16));
+  transition: transform 220ms var(--ease-apple), filter 220ms var(--ease-apple);
+}
 .poster-fade-enter-active,
 .poster-fade-leave-active {
   transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
@@ -88,8 +99,7 @@
   opacity: 0;
   transform: scale(.985);
 }
-.concert-poster:hover img { transform: scale(var(--motion-media-scale)); filter: saturate(1.04); }
-  .poster-hint {
+.poster-hint {
     position: absolute; left: 12px; top: 12px; z-index: 2;
   display: flex; align-items: center; justify-content: space-between;
   pointer-events: none;
@@ -100,8 +110,16 @@
   opacity: 0; transform: translateY(8px);
   transition: opacity var(--dur-base), transform var(--dur-base) var(--ease-apple);
 }
-.concert-poster:hover .poster-hint { opacity: 1; transform: none; }
 .poster-hint b { color: var(--gold); font-size: 14px; }
+@media (hover: hover) and (pointer: fine) {
+  .concert-poster:hover {
+    --ty: -2px;
+    border-color: var(--gold);
+    box-shadow: var(--interactive-shadow);
+  }
+  .concert-poster:hover .poster-foreground { transform: scale(var(--motion-media-scale)); filter: saturate(1.04) drop-shadow(0 14px 20px rgba(0, 0, 0, .2)); }
+  .concert-poster:hover .poster-hint { opacity: 1; transform: none; }
+}
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .poster-hint {
     background: var(--media-overlay-bg-strong);
@@ -116,8 +134,12 @@
     mix-blend-mode: normal;
   }
 }
+@supports not (background: color-mix(in srgb, var(--bg) 26%, transparent)) {
+  .poster-backdrop-layer::after { background: rgba(10, 13, 18, .26); }
+}
 @media (forced-colors: active) {
   .concert-poster::after { display: none; }
+  .poster-backdrop-layer::after { display: none; }
   .poster-hint {
     background: Canvas;
     border: 1px solid CanvasText;
@@ -146,10 +168,11 @@
 @media (hover: none), (pointer: coarse) {
   .concert-poster { transition: none; }
   .poster-open { transition: none; }
-  .concert-poster img,
+  .poster-foreground,
+  .poster-backdrop,
   .poster-hint { transition: none; }
   .concert-poster:hover:not(:focus-visible) { --ty: 0px; border-color: var(--line); box-shadow: var(--shadow-1); }
-  .concert-poster:hover:not(:focus-visible) img { transform: none; }
+  .concert-poster:hover:not(:focus-visible) .poster-foreground { transform: none; }
   .concert-poster:hover:not(:focus-visible) .poster-hint { opacity: 0; transform: translateY(8px); }
   .concert-rail-controls button:hover:not(:focus-visible) { border-color: var(--media-control-border); background: var(--media-control-bg); color: inherit; transform: none; }
   .concert-rail-card:hover:not(:focus-within) { border-color: var(--line); box-shadow: var(--shadow-1); transform: none; }
@@ -164,7 +187,8 @@
   .concert-rail-controls button { transition: none; }
   .concert-poster,
   .poster-open,
-  .concert-poster img,
+  .poster-foreground,
+  .poster-backdrop,
   .poster-hint { transition: none; }
   .concert-poster:hover:not(:focus-visible) {
     --ty: 0px;
@@ -177,6 +201,6 @@
     --ty: 0px;
     transform: none;
   }
-  .concert-poster:hover:not(:focus-visible) img { transform: none; filter: none; }
+  .concert-poster:hover:not(:focus-visible) .poster-foreground { transform: none; filter: drop-shadow(0 12px 18px rgba(0, 0, 0, .16)); }
   .concert-poster:hover:not(:focus-visible) .poster-hint { opacity: 0; transform: translateY(8px); }
 }
