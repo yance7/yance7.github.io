@@ -144,8 +144,6 @@ export interface UiMessages {
     identity: string
     email: string
     github: string
-    instagram: string
-    x: string
   }
   error404: {
     kicker: string

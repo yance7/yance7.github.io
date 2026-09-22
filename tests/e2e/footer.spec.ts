@@ -2,9 +2,7 @@ import { expect, test } from '@playwright/test'
 
 const contacts = [
   { label: '邮箱', href: 'mailto:yance777@outlook.com', value: 'yance777@outlook.com', external: false },
-  { label: 'GitHub', href: 'https://github.com/yance7', value: '@yance7', external: true },
-  { label: 'Instagram', href: 'https://www.instagram.com/andreasyan.826/', value: '@andreasyan.826', external: true },
-  { label: 'X', href: 'https://x.com/CeYan77777', value: '@CeYan77777', external: true }
+  { label: 'GitHub', href: 'https://github.com/yance7', value: '@yance7', external: true }
 ] as const
 
 const locales = [
@@ -14,7 +12,7 @@ const locales = [
 ] as const
 
 for (const locale of locales) {
-  test(`footer exposes the localized four-contact system: ${locale.name}`, async ({ page }) => {
+  test(`footer exposes the localized two-contact system: ${locale.name}`, async ({ page }) => {
     await page.goto(locale.path)
 
     const footer = page.locator('footer.site-footer')
@@ -28,7 +26,9 @@ for (const locale of locales) {
     await expect(footer.locator('.foot-meta p')).toHaveCount(2)
     await expect(footer).not.toContainText('Yance.')
     await expect(contactGrid).toHaveAttribute('aria-label', locale.contactLabel)
-    await expect(links).toHaveCount(4)
+    await expect(links).toHaveCount(2)
+    await expect(contactGrid.locator('a[href^="https://www.instagram.com/"]')).toHaveCount(0)
+    await expect(contactGrid.locator('a[href^="https://x.com/"]')).toHaveCount(0)
 
     for (const [index, contact] of contacts.entries()) {
       const link = links.nth(index)
@@ -80,12 +80,10 @@ for (const width of [320, 390, 768, 1024, 1440]) {
     })
 
     expect(geometry.documentWidth, `${width}px footer overflow`).toBeLessThanOrEqual(geometry.viewportWidth)
-    expect(geometry.svgCount).toBe(4)
+    expect(geometry.svgCount).toBe(2)
     expect(geometry.hitAreas.every(({ width: hitWidth, height }) => hitWidth >= 44 && height >= 44)).toBe(true)
     expect(geometry.rowHeights.every((height) => Math.abs(height - geometry.rowHeights[0]!) <= 1)).toBe(true)
-    if (width >= 961) {
-      expect(geometry.gridColumns, `${width}px contact grid`).toBe(4)
-    } else if (width >= 320) {
+    if (width >= 320) {
       expect(geometry.gridColumns, `${width}px contact grid`).toBe(2)
       expect(geometry.firstRowTopDelta, `${width}px contact first row`).toBeLessThanOrEqual(1)
     }

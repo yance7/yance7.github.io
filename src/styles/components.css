@@ -169,7 +169,7 @@ html[data-locale='en'] .section-copy {
 .foot-mark:hover .brand-mark-image { filter: var(--brand-mark-hover-filter); }
 .foot-contacts {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   flex: 1 1 720px;
   width: min(100%, 720px);

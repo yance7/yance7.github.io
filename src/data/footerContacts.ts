@@ -1,4 +1,4 @@
-export type FooterContactKey = 'email' | 'github' | 'instagram' | 'x'
+export type FooterContactKey = 'email' | 'github'
 
 export interface FooterContact {
   key: FooterContactKey
@@ -18,18 +18,6 @@ export const footerContacts: readonly FooterContact[] = [
     key: 'github',
     href: 'https://github.com/yance7',
     value: '@yance7',
-    external: true
-  },
-  {
-    key: 'instagram',
-    href: 'https://www.instagram.com/andreasyan.826/',
-    value: '@andreasyan.826',
-    external: true
-  },
-  {
-    key: 'x',
-    href: 'https://x.com/CeYan77777',
-    value: '@CeYan77777',
     external: true
   }
 ]
