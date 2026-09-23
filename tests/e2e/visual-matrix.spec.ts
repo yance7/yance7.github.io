@@ -9,6 +9,11 @@ const englishHomeViewports = [
   { name: 'mobile', width: 390, height: 844 },
   { name: 'desktop', width: 1440, height: 900 }
 ] as const
+const homeHeroLocales = [
+  { name: 'zh-cn', route: '/index.html' },
+  { name: 'zh-hk', route: '/zh-hk/index.html' },
+  { name: 'en', route: '/en/' }
+] as const
 const englishArchiveHeroRoutes = [
   { name: 'academics', route: '/en/academics.html' },
   { name: 'honors', route: '/en/honors.html' },
@@ -246,6 +251,31 @@ for (const viewport of viewports) {
         }
       }
     })
+  }
+}
+
+for (const locale of homeHeroLocales) {
+  for (const viewport of viewports) {
+    for (const theme of themes) {
+      test(`captures ${locale.name} HomeHero ${theme} ${viewport.name} visual baseline`, async ({ page }, testInfo) => {
+        await page.setViewportSize({ width: viewport.width, height: viewport.height })
+        await installTheme(page, theme)
+        await page.goto(locale.route)
+        await settlePage(page)
+
+        const hero = page.locator('.home-hero')
+        await expect(hero).toBeVisible()
+        await page.screenshot({
+          ...pageScreenshotOptions,
+          path: testInfo.outputPath(`home-hero-${locale.name}-${theme}-${viewport.name}-review.png`),
+          fullPage: false
+        })
+        await expect(hero).toHaveScreenshot(
+          `home-hero-${locale.name}-${theme}-${viewport.name}.png`,
+          componentScreenshotOptions
+        )
+      })
+    }
   }
 }
 

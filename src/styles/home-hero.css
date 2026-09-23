@@ -39,10 +39,10 @@
 }
 
 .home-hero-inner {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, .86fr);
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: clamp(44px, 7vw, 96px);
+  row-gap: clamp(44px, 4vw, 56px);
   width: min(1260px, 100%);
   min-width: 0;
   margin: 0 auto;
@@ -50,7 +50,9 @@
 }
 
 .home-hero-copy {
+  width: 100%;
   min-width: 0;
+  text-align: center;
 }
 
 .home-hero-kicker {
@@ -65,8 +67,10 @@
 
 .home-hero-typewriter {
   display: grid;
+  justify-items: center;
   gap: clamp(18px, 2.2vw, 28px);
-  max-width: 12ch;
+  width: 100%;
+  max-width: 100%;
   color: var(--ink);
   font-family: 'LXGW WenKai Hero SC', var(--font-editorial);
   font-size: clamp(2.5rem, 4.2vw, 4.5rem);
@@ -74,6 +78,7 @@
   letter-spacing: -.055em;
   line-height: 1.1;
   overflow-wrap: break-word;
+  text-align: center;
 }
 
 .home-hero-typewriter-line {
@@ -100,7 +105,6 @@ html[data-locale='zh-HK'] .home-hero-typewriter {
 }
 
 html[data-locale='en'] .home-hero-typewriter {
-  max-width: 13ch;
   font-family: Georgia, 'Times New Roman', serif;
   font-size: clamp(2rem, 4.1vw, 4.35rem);
   letter-spacing: -.045em;
@@ -108,14 +112,16 @@ html[data-locale='en'] .home-hero-typewriter {
 }
 
 html[data-locale='en'] .home-hero-typewriter-line-accent {
-  max-width: 15ch;
+  max-width: 100%;
   font-size: clamp(2rem, 3.6vw, 3.7rem);
   line-height: 1.14;
 }
 
 .home-hero-actions {
   display: flex;
+  justify-content: center;
   flex-wrap: wrap;
+  width: 100%;
   gap: 12px;
   margin-top: clamp(36px, 4vw, 44px);
 }
@@ -181,6 +187,7 @@ html[data-locale='en'] .home-hero-typewriter-line-accent {
   position: relative;
   display: grid;
   place-items: center;
+  width: 100%;
   min-width: 0;
   min-height: clamp(320px, 33vw, 480px);
   overflow: hidden;
@@ -262,11 +269,6 @@ html[data-locale='en'] .home-hero-typewriter-line-accent {
   letter-spacing: .15em;
 }
 
-@media (max-width: 900px) {
-  .home-hero-inner { grid-template-columns: minmax(0, 1fr) minmax(280px, .76fr); gap: 44px; }
-  .home-hero-particles { min-height: clamp(300px, 38vw, 400px); }
-}
-
 @media (max-width: 760px) {
   .home-hero { min-height: auto; }
   .home-hero-inner {
@@ -299,14 +301,8 @@ html[data-locale='en'] .home-hero-typewriter-line-accent {
     min-height: calc(100vh - 68px);
     min-height: calc(100svh - 68px);
   }
-  .home-hero-inner { gap: 28px; padding-block: 16px 12px; }
+  .home-hero-inner { padding-block: 16px 12px; }
   .home-hero-kicker { margin-bottom: 12px; }
-  .home-hero-typewriter { gap: 12px; font-size: clamp(2rem, 8vh, 2.65rem); }
-  .home-hero-typewriter-line-accent { font-size: clamp(1.85rem, 7vh, 2.35rem); }
-  html[data-locale='en'] .home-hero-typewriter { font-size: clamp(2rem, 8vh, 2.65rem); }
-  html[data-locale='en'] .home-hero-typewriter-line-accent { font-size: clamp(1.8rem, 6.4vh, 2.25rem); }
-  .home-hero-actions { margin-top: 18px; }
-  .home-hero-particles { min-height: min(280px, calc(100vh - 100px)); }
 }
 
 @media (forced-colors: active) {
