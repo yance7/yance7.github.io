@@ -100,6 +100,10 @@ jobs:
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-primitives
         run: npm run test:e2e -- tests/e2e/ui-primitives.spec.ts --project=webkit-desktop --workers=4 --retries=0
+      - name: WebKit desktop HomeHero geometry quality
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-home-hero
+        run: npm run test:e2e -- tests/e2e/home-hero-layout.spec.ts --project=webkit-desktop --workers=4 --retries=0
       - name: WebKit mobile ScrollProgress quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-scroll-progress
@@ -132,6 +136,10 @@ jobs:
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-primitives
         run: npm run test:e2e -- tests/e2e/ui-primitives.spec.ts --project=webkit-mobile --workers=4 --retries=0
+      - name: WebKit mobile HomeHero geometry quality
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-home-hero
+        run: npm run test:e2e -- tests/e2e/home-hero-layout.spec.ts --project=webkit-mobile --workers=4 --retries=0
       - name: Chromium visual quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/visual

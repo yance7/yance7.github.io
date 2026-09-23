@@ -397,6 +397,13 @@ describe('release workflow contracts', () => {
     expect(qualityWorkflow).toContain('include-hidden-files: true')
   })
 
+  it('runs HomeHero geometry checks in desktop and mobile WebKit quality jobs', () => {
+    const qualityWorkflow = readFileSync(resolve(process.cwd(), '.github/workflows/quality.yml'), 'utf8')
+
+    expect(qualityWorkflow).toContain('npm run test:e2e -- tests/e2e/home-hero-layout.spec.ts --project=webkit-desktop --workers=4 --retries=0')
+    expect(qualityWorkflow).toContain('npm run test:e2e -- tests/e2e/home-hero-layout.spec.ts --project=webkit-mobile --workers=4 --retries=0')
+  })
+
 })
 
 describe('shared UI correction contracts', () => {
