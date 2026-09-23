@@ -12,6 +12,7 @@ REQUIRED_GLYPHS = {
     "sc": "你好，我是 Yance研究、构建与现场相遇",
     "tc": "你好，我是 Yance研究、建構與現場相遇",
 }
+UNIX_EPOCH_FONT_TIMESTAMP = 0x7C259DC0
 
 
 def font_codepoints(font: ttLib.TTFont) -> set[int]:
@@ -46,9 +47,10 @@ def subset_font(source: Path, output: Path, required: str, label: str) -> None:
     subsetter.subset(font)
 
     if "head" in font:
-        font["head"].modified = 0
+        font["head"].modified = UNIX_EPOCH_FONT_TIMESTAMP
     font.recalcTimestamp = False
     output.parent.mkdir(parents=True, exist_ok=True)
+    font.flavor = "woff2"
     font.save(output)
 
     built = ttLib.TTFont(output)

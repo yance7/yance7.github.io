@@ -86,6 +86,35 @@ describe('media release contracts', () => {
     expect(processor).not.toContain("output_mode='RGB'")
   })
 
+  it('writes Hero font subsets with the WOFF2 container signature', () => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'yance-home-hero-fonts-'))
+    const outputDir = join(fixtureRoot, 'fonts')
+    const scriptPath = resolve(root, 'scripts/subset-home-hero-fonts.py')
+    const scSource = resolve(root, 'public/assets/fonts/lxgw-wenkai-hero-sc.woff2')
+    const tcSource = resolve(root, 'public/assets/fonts/lxgw-wenkai-hero-tc.woff2')
+
+    try {
+      const result = spawnSync('python', [
+        scriptPath,
+        '--sc-source', scSource,
+        '--tc-source', tcSource,
+        '--output-dir', outputDir
+      ], { cwd: root, encoding: 'utf8' })
+      const output = `${result.stdout}${result.stderr}`
+
+      expect(result.status).toBe(0)
+      expect(output).not.toContain('timestamp seems very low')
+
+      const scSignature = readFileSync(join(outputDir, 'lxgw-wenkai-hero-sc.woff2')).subarray(0, 4).toString('ascii')
+      const tcSignature = readFileSync(join(outputDir, 'lxgw-wenkai-hero-tc.woff2')).subarray(0, 4).toString('ascii')
+
+      expect(scSignature).toBe('wOF2')
+      expect(tcSignature).toBe('wOF2')
+    } finally {
+      rmSync(fixtureRoot, { recursive: true, force: true })
+    }
+  })
+
   it('executes the auditor against sensitive, technical, GPS, and corrupt fixtures', () => {
     const fixtureRoot = mkdtempSync(join(tmpdir(), 'yance-asset-audit-'))
     const scriptPath = join(fixtureRoot, 'scripts', 'audit-assets.py')
