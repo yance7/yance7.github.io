@@ -3,17 +3,17 @@ import { expect, test } from '@playwright/test'
 const locales = [
   {
     route: '/index.html',
-    semanticTitle: '你好，我是 Yance研究、构建，与现场相遇',
+    semanticTitle: '你好，我是 Yance 研究、构建，与现场相遇',
     displayFont: 'LXGW WenKai Hero SC'
   },
   {
     route: '/zh-hk/index.html',
-    semanticTitle: '你好，我是 Yance研究、建構，與現場相遇',
+    semanticTitle: '你好，我是 Yance 研究、建構，與現場相遇',
     displayFont: 'LXGW WenKai Hero TC'
   },
   {
     route: '/en/',
-    semanticTitle: 'Hi, I’m YanceResearch, build, and meet the live world',
+    semanticTitle: 'Hi, I’m Yance Research, build, and meet the live world',
     displayFont: 'Georgia'
   }
 ] as const
@@ -51,7 +51,9 @@ for (const locale of locales) {
       }))
 
       const semanticTitle = page.locator('h1.home-hero-title')
+      await expect(semanticTitle).toHaveAccessibleName(locale.semanticTitle)
       await expect(semanticTitle).toHaveText(locale.semanticTitle)
+      expect(await semanticTitle.textContent()).toBe(locale.semanticTitle)
       await expect(semanticTitle).not.toContainText('_')
       await expect(page.locator('.home-hero-typewriter')).toHaveAttribute('aria-hidden', 'true')
       await expect(page.locator('.home-hero-actions a[href="#selected-work"]')).toBeVisible()

@@ -18,10 +18,7 @@ const home = computed(() => getLocalizedHomeCopy(locale.value))
       <div class="home-hero-copy">
         <p class="home-hero-kicker">{{ messages.page.home.kicker }}</p>
 
-        <h1 id="home-hero-title" class="home-hero-title sr-only">
-          <span>{{ home.heroGreeting }}</span>
-          <span>{{ home.heroStatement }}</span>
-        </h1>
+        <h1 id="home-hero-title" class="home-hero-title sr-only">{{ home.heroGreeting }} {{ home.heroStatement }}</h1>
 
         <HomeHeroTypewriter
           :greeting="home.heroGreeting"

@@ -26,17 +26,17 @@ test('home hero copy stays exact across all supported locales', async ({ page })
   const locales = [
     {
       route: '/index.html',
-      semantic: '你好，我是 Yance研究、构建，与现场相遇',
+      semantic: '你好，我是 Yance 研究、构建，与现场相遇',
       visual: '研究、构建，与现场相遇_'
     },
     {
       route: '/zh-hk/index.html',
-      semantic: '你好，我是 Yance研究、建構，與現場相遇',
+      semantic: '你好，我是 Yance 研究、建構，與現場相遇',
       visual: '研究、建構，與現場相遇_'
     },
     {
       route: '/en/',
-      semantic: 'Hi, I’m YanceResearch, build, and meet the live world',
+      semantic: 'Hi, I’m Yance Research, build, and meet the live world',
       visual: 'Research, build, and meet the live world_'
     }
   ]
