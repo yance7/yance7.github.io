@@ -180,6 +180,7 @@ test('concert archive buttons stay synchronized at both rail edges', async ({ pa
   await expect(page.locator('.site-shell[data-page-load-state="ready"]')).toBeVisible()
   await expect(previous).toBeDisabled()
   await expect(next).toBeEnabled()
+  await next.scrollIntoViewIfNeeded()
   await next.click()
   await expect(previous).toBeEnabled()
   await expect.poll(() => rail.evaluate((element) => (element as HTMLElement).scrollLeft)).toBeGreaterThan(0)
