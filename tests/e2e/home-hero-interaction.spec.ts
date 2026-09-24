@@ -124,13 +124,17 @@ test('keeps the static brand visual when Canvas initialization fails', async ({ 
 
 test('uses an 80px hover ring only inside the fine-pointer Hero', async ({ page }) => {
   test.skip(!(await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)))
+  await page.addInitScript(() => sessionStorage.setItem('yance-home-hero-intro-v1', 'played'))
   await page.goto('/index.html')
+  await page.evaluate(() => { document.documentElement.style.scrollBehavior = 'auto' })
 
   const cursor = page.locator('.home-hero-pointer')
   await page.locator('.home-hero').hover()
   await expect(cursor).toHaveCSS('opacity', '1')
   expect(await cursor.evaluate((element) => element.getBoundingClientRect().width)).toBe(32)
-  await page.locator('.home-hero-actions a').first().hover()
+  const action = page.locator('.home-hero-actions a').first()
+  await action.hover()
+  await expect.poll(() => action.evaluate((element) => element.matches(':hover'))).toBe(true)
   await expect.poll(() => cursor.evaluate((element) => element.getBoundingClientRect().width)).toBe(80)
   await expect(cursor).toHaveCSS('pointer-events', 'none')
   await page.locator('header').hover()
