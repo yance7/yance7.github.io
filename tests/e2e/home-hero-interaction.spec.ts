@@ -1,4 +1,75 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
+
+type HomeHeroIntroFrame = {
+  introState: string | null
+  finalState: string | null
+  greetingAnimationName: string
+  greetingAnimationDuration: string
+  statementAnimationName: string
+  statementAnimationDuration: string
+  statementAnimationDelay: string
+}
+
+async function observeHomeHeroIntro(page: Page) {
+  await page.addInitScript(() => {
+    const history: HomeHeroIntroFrame[] = []
+    Object.defineProperty(window, '__homeHeroIntroHistory', { configurable: true, value: history })
+
+    function recordHomeHero(node: Node) {
+      if (!(node instanceof Element)) return
+
+      const hero = node.matches('.home-hero') ? node : node.closest('.home-hero')
+      const heroes = hero ? [hero] : Array.from(node.querySelectorAll('.home-hero'))
+
+      heroes.forEach((element) => {
+        const typewriter = element.querySelector('.home-hero-typewriter')
+        const greeting = element.querySelector('.home-hero-typewriter-line-greeting')
+        const statement = element.querySelector('.home-hero-typewriter-line-statement')
+        const frame = {
+          introState: element.getAttribute('data-intro-state'),
+          finalState: typewriter?.getAttribute('data-final-state') ?? null,
+          greetingAnimationName: greeting ? getComputedStyle(greeting).animationName : '',
+          greetingAnimationDuration: greeting ? getComputedStyle(greeting).animationDuration : '',
+          statementAnimationName: statement ? getComputedStyle(statement).animationName : '',
+          statementAnimationDuration: statement ? getComputedStyle(statement).animationDuration : '',
+          statementAnimationDelay: statement ? getComputedStyle(statement).animationDelay : ''
+        }
+
+        if (JSON.stringify(history.at(-1)) !== JSON.stringify(frame)) history.push(frame)
+      })
+    }
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes') recordHomeHero(mutation.target)
+        mutation.addedNodes.forEach(recordHomeHero)
+      })
+    })
+
+    observer.observe(document, {
+      attributes: true,
+      attributeFilter: ['data-intro-state', 'data-final-state'],
+      childList: true,
+      subtree: true
+    })
+  })
+}
+
+async function expectHomeHeroIntroFrame(page: Page, expected: Partial<HomeHeroIntroFrame>) {
+  await expect.poll(() => page.evaluate(() => (
+    (window as Window & { __homeHeroIntroHistory?: HomeHeroIntroFrame[] }).__homeHeroIntroHistory ?? []
+  ))).toContainEqual(expect.objectContaining(expected))
+}
+
+const activeTypingFrame: Partial<HomeHeroIntroFrame> = {
+  introState: 'typing',
+  finalState: 'false',
+  greetingAnimationName: 'home-hero-line-reveal',
+  greetingAnimationDuration: '0.72s',
+  statementAnimationName: 'home-hero-line-reveal',
+  statementAnimationDuration: '1.5s',
+  statementAnimationDelay: '0.88s'
+}
 
 const locales = [
   { route: '/', title: '你好，我是 Yance 研究、构建，与现场相遇' },
@@ -8,35 +79,30 @@ const locales = [
 
 for (const locale of locales) {
   test(`${locale.route} types the first-visit copy without delaying semantics or keyboard access`, async ({ page }) => {
+    await observeHomeHeroIntro(page)
     await page.goto(locale.route)
+    await expectHomeHeroIntroFrame(page, activeTypingFrame)
 
     const hero = page.locator('.home-hero')
     const typewriter = page.locator('.home-hero-typewriter')
-    const firstLine = typewriter.locator('.home-hero-typewriter-line').first()
-    const secondLine = typewriter.locator('.home-hero-typewriter-line').nth(1)
     const title = page.locator('h1.home-hero-title')
     const firstAction = page.locator('.home-hero-actions a').first()
 
-    await expect(hero).toHaveAttribute('data-intro-state', 'typing')
     await expect(typewriter).toHaveAttribute('aria-hidden', 'true')
-    await expect(typewriter).toHaveAttribute('data-final-state', 'false')
-    await expect(firstLine).toHaveCSS('animation-name', 'home-hero-line-reveal')
-    await expect(firstLine).toHaveCSS('animation-duration', '0.72s')
-    await expect(secondLine).toHaveCSS('animation-name', 'home-hero-line-reveal')
-    await expect(secondLine).toHaveCSS('animation-duration', '1.5s')
-    await expect(secondLine).toHaveCSS('animation-delay', '0.88s')
     await expect(title).toHaveAccessibleName(locale.title)
     await expect(firstAction).toBeVisible()
     await firstAction.focus()
     await expect(firstAction).toBeFocused()
+    await expect(page.locator('.home-hero-actions')).toHaveCSS('opacity', '1')
     await expect(hero).toHaveAttribute('data-intro-state', 'complete', { timeout: 4000 })
     await expect(typewriter).toHaveAttribute('data-final-state', 'true')
   })
 }
 
 test('replays the intro in a new tab while a same-tab return stays final', async ({ context, page }) => {
+  await observeHomeHeroIntro(page)
   await page.goto('/')
-  await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'typing')
+  await expectHomeHeroIntroFrame(page, { introState: 'typing', finalState: 'false' })
   await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'complete', { timeout: 4000 })
 
   await page.goto('/research/')
@@ -44,8 +110,9 @@ test('replays the intro in a new tab while a same-tab return stays final', async
   await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'static')
 
   const newTab = await context.newPage()
+  await observeHomeHeroIntro(newTab)
   await newTab.goto('/')
-  await expect(newTab.locator('.home-hero')).toHaveAttribute('data-intro-state', 'typing')
+  await expectHomeHeroIntroFrame(newTab, { introState: 'typing', finalState: 'false' })
   await newTab.close()
 })
 
