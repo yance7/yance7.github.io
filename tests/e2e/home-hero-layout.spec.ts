@@ -112,3 +112,86 @@ for (const locale of locales) {
     }
   })
 }
+
+const desktopViewports = viewports.filter((viewport) => viewport.width > 760)
+
+for (const locale of locales) {
+  test(`${locale.route} Home hero implements the specified desktop geometry`, async ({ page }) => {
+    await page.goto(locale.route)
+
+    for (const viewport of desktopViewports) {
+      await page.setViewportSize(viewport)
+      await page.evaluate(() => new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      }))
+
+      const context = `${locale.route} at ${viewport.width}×${viewport.height}`
+      expect(await page.locator('.home-hero-inner').count(), `${context} PR4 content container`).toBe(1)
+
+      const layout = await page.evaluate(() => {
+        const rect = (selector: string) => document.querySelector(selector)!.getBoundingClientRect()
+        const inner = document.querySelector('.home-hero-inner') as HTMLElement
+        const innerStyle = getComputedStyle(inner)
+        const title = rect('.home-hero-typewriter')
+        const titleLines = [...document.querySelector('.home-hero-typewriter')!.children]
+          .map((line) => line.getBoundingClientRect())
+        const actions = rect('.home-hero-actions')
+        const ctas = [...document.querySelectorAll('.home-hero-actions a')]
+          .map((cta) => cta.getBoundingClientRect())
+        const firstTitleLine = titleLines[0]
+        const secondTitleLine = titleLines[1]
+        const firstCta = ctas[0]
+        const secondCta = ctas[1]
+        const stageElement = document.querySelector('.home-hero-particles')
+        const stage = stageElement?.getBoundingClientRect()
+
+        return {
+          titleLineGap: firstTitleLine && secondTitleLine
+            ? secondTitleLine.top - firstTitleLine.bottom
+            : null,
+          titleToActionsGap: actions.top - title.bottom,
+          ctaWidths: ctas.map((cta) => cta.width),
+          ctaLabelHeights: [...document.querySelectorAll('.home-hero-actions a > span:first-child')]
+            .map((label) => label.getBoundingClientRect().height),
+          ctaGap: firstCta && secondCta ? secondCta.left - firstCta.right : null,
+          contentWidth: inner.clientWidth - parseFloat(innerStyle.paddingLeft) - parseFloat(innerStyle.paddingRight),
+          stageWidth: stage?.width ?? null,
+          topPadding: parseFloat(innerStyle.paddingTop),
+          stageRadius: stageElement
+            ? parseFloat(getComputedStyle(stageElement).borderTopLeftRadius)
+            : null
+        }
+      })
+
+      expect(layout.titleLineGap, `${context} title lines exist`).not.toBeNull()
+      expect(layout.ctaWidths, `${context} desktop CTAs`).toHaveLength(2)
+      expect(layout.ctaGap, `${context} desktop CTAs exist`).not.toBeNull()
+      if (layout.titleLineGap === null || layout.ctaGap === null) continue
+      expect(layout.titleLineGap, `${context} title line spacing`).toBeGreaterThanOrEqual(17)
+      expect(layout.titleLineGap, `${context} title line spacing`).toBeLessThanOrEqual(29)
+      expect(layout.titleToActionsGap, `${context} title-to-CTA spacing`).toBeGreaterThanOrEqual(35)
+      expect(layout.titleToActionsGap, `${context} title-to-CTA spacing`).toBeLessThanOrEqual(45)
+      for (const width of layout.ctaWidths) {
+        expect(width, `${context} desktop CTA width`).toBeGreaterThanOrEqual(178)
+        expect(width, `${context} desktop CTA width`).toBeLessThanOrEqual(240)
+      }
+      for (const height of layout.ctaLabelHeights) {
+        expect(height, `${context} desktop CTA label remains on one line`).toBeLessThanOrEqual(18)
+      }
+      expect(layout.ctaGap, `${context} desktop CTA spacing`).toBeGreaterThanOrEqual(11)
+      expect(layout.ctaGap, `${context} desktop CTA spacing`).toBeLessThanOrEqual(13)
+      expect(layout.contentWidth, `${context} maximum content width`).toBeLessThanOrEqual(1262)
+      expect(layout.stageWidth, `${context} visual stage exists`).not.toBeNull()
+      expect(layout.stageRadius, `${context} visual stage exists`).not.toBeNull()
+      if (layout.stageWidth === null || layout.stageRadius === null) continue
+      expect(Math.abs(layout.stageWidth - layout.contentWidth), `${context} stage fills content width`).toBeLessThanOrEqual(2)
+
+      const isShortLandscape = viewport.width > viewport.height && viewport.height <= 520
+      const expectedTopPadding = isShortLandscape
+        ? 16
+        : Math.max(72, Math.min(128, viewport.width * 0.08))
+      expect(Math.abs(layout.topPadding - expectedTopPadding), `${context} hero top padding`).toBeLessThanOrEqual(1)
+      expect(Math.abs(layout.stageRadius - 24), `${context} stage corner radius`).toBeLessThanOrEqual(2)
+    }
+  })
+}

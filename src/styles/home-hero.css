@@ -131,7 +131,8 @@ html[data-locale='en'] .home-hero-typewriter-line-accent {
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  width: 180px;
+  width: max-content;
+  min-width: 180px;
   min-height: 44px;
   padding: 0 16px;
   border: 1px solid var(--control-border);
