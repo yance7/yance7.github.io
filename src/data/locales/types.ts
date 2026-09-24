@@ -5,8 +5,8 @@ type LocalizedNav = Omit<SiteNavItem, 'href' | 'key'>
 type LocalizedWorld = Omit<World, 'href' | 'key'>
 
 interface HomeCopy {
-  heroTitle: string
-  heroAccent: string
+  heroGreeting: string
+  heroStatement: string
   selectedTitle: string
   selectedAccent: string
   selectedCopy: string

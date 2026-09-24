@@ -267,8 +267,6 @@ function moveLightbox(step: number) {
 
       <HomeHero
         v-if="isHome"
-        :kicker="kicker"
-        :copy="heroCopy"
       />
 
       <ArchiveHero

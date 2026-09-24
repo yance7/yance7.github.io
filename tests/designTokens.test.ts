@@ -9,6 +9,7 @@ describe('archive design tokens', () => {
   const base = read('src/styles/base.css')
   const components = read('src/styles/components.css')
   const home = read('src/styles/home.css')
+  const homeHero = read('src/styles/home-hero.css')
   const academics = read('src/styles/academics.css')
   const honors = read('src/styles/honors.css')
   const research = read('src/styles/research.css')
@@ -105,8 +106,8 @@ describe('archive design tokens', () => {
     expect(components).not.toContain('padding: 9px 12px; border-radius: var(--radius-sm);')
     expect(shell).toContain('padding: 5px 12px 5px 6px; border-radius: var(--radius-pill);')
     expect(shell).not.toContain('padding: 5px 12px 5px 6px; border-radius: var(--radius-full);')
-    expect(shell).toContain('padding: var(--space-3) var(--space-4); border: 1px solid var(--control-border); border-radius: var(--radius-pill);')
-    expect(shell).not.toContain('padding: 11px 18px; border: 1px solid var(--control-border); border-radius: var(--radius-full);')
+    expect(homeHero).toMatch(/padding: 0 16px;[\s\S]*border: 1px solid var\(--control-border\);[\s\S]*border-radius: var\(--radius-pill\)/)
+    expect(homeHero).not.toContain('padding: 11px 18px; border: 1px solid var(--control-border); border-radius: var(--radius-full);')
     expect(responsive).not.toContain('grid-template-areas: "index icon";')
   })
 

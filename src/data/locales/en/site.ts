@@ -25,7 +25,7 @@ export const siteCopy = {
     concerts: { no: '05', label: 'Concerts', icon: '♪', desc: 'Live shows and posters: the personal archive beyond the lab.', accent: 'gold' }
   },
   home: {
-    heroTitle: 'Research, build,', heroAccent: 'then meet the live world',
+    heroGreeting: 'Hi, I’m Yance', heroStatement: 'Research, build, and meet the live world',
     selectedTitle: 'Turning research', selectedAccent: 'into something usable', selectedCopy: 'Start with work still moving forward, then follow the path to a product people can open.',
     worldsTitle: 'Five', worldsAccent: 'ways in', worldsCopy: 'A compact map of academics, honors, research, works, and music.',
     beyondTitle: 'Beyond the lab', beyondAccent: 'keep growing', beyondCopy: 'Selected leadership and activities that show organization, collaboration, and follow-through.'

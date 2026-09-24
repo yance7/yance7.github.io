@@ -161,6 +161,7 @@ html[data-locale='en'] .section-copy {
 .brand-mark-image { display: block; width: 100%; height: 100%; object-fit: contain; filter: var(--brand-mark-filter); }
 .brand-mark-header { width: 44px; height: 44px; }
 .brand-mark-footer { width: 42px; height: 42px; }
+.brand-mark-full { width: 100%; height: 100%; }
 .foot-meta { display: grid; gap: 5px; min-width: 0; }
 .foot-meta p { margin: 0; min-width: 0; }
 .foot-meta p:first-child { color: var(--ink); font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: var(--tracking-latin-meta); }
