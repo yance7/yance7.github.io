@@ -46,9 +46,6 @@ for (const locale of locales) {
 
     for (const viewport of viewports) {
       await page.setViewportSize(viewport)
-      await page.evaluate(() => new Promise<void>((resolve) => {
-        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
-      }))
 
       const semanticTitle = page.locator('h1.home-hero-title')
       await expect(semanticTitle).toHaveAccessibleName(locale.semanticTitle)
@@ -90,6 +87,8 @@ for (const locale of locales) {
       })
 
       const context = `${locale.route} at ${viewport.width}×${viewport.height}`
+      expect(layout.viewportWidth, `${context} viewport width`).toBe(viewport.width)
+      expect(layout.viewportHeight, `${context} viewport height`).toBe(viewport.height)
       expect(layout.documentWidth, `${context} horizontal overflow`).toBeLessThanOrEqual(layout.viewportWidth)
       expect(layout.titleOverflow, `${context} title overflow`).toBe(false)
       expect(layout.minimumCtaHeight, `${context} CTA height`).toBeGreaterThanOrEqual(44)
@@ -113,6 +112,28 @@ for (const locale of locales) {
   })
 }
 
+test('keeps coarse-pointer CTA hover states free of motion', async ({ page }) => {
+  await page.goto('/index.html')
+  const isCoarse = await page.evaluate(() => window.matchMedia('(hover: none), (pointer: coarse)').matches)
+  test.skip(!isCoarse)
+
+  const action = page.locator('.home-hero-actions a').first()
+  await action.hover()
+  await expect.poll(() => action.evaluate((element) => element.matches(':hover'))).toBe(true)
+  await expect(action).toHaveCSS('transform', 'none')
+  await expect(action.locator('span[aria-hidden="true"]')).toHaveCSS('transform', 'none')
+})
+
+test('keeps CTA hover states free of motion when reduced motion is requested', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/index.html')
+
+  const action = page.locator('.home-hero-actions a').first()
+  await action.hover()
+  await expect(action).toHaveCSS('transform', 'none')
+  await expect(action.locator('span[aria-hidden="true"]')).toHaveCSS('transform', 'none')
+})
+
 const desktopViewports = viewports.filter((viewport) => viewport.width > 760)
 
 for (const locale of locales) {
@@ -121,9 +142,6 @@ for (const locale of locales) {
 
     for (const viewport of desktopViewports) {
       await page.setViewportSize(viewport)
-      await page.evaluate(() => new Promise<void>((resolve) => {
-        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
-      }))
 
       const context = `${locale.route} at ${viewport.width}×${viewport.height}`
       expect(await page.locator('.home-hero-inner').count(), `${context} PR4 content container`).toBe(1)
@@ -146,6 +164,8 @@ for (const locale of locales) {
         const stage = stageElement?.getBoundingClientRect()
 
         return {
+          viewportWidth: window.innerWidth,
+          viewportHeight: window.innerHeight,
           titleLineGap: firstTitleLine && secondTitleLine
             ? secondTitleLine.top - firstTitleLine.bottom
             : null,
@@ -163,6 +183,8 @@ for (const locale of locales) {
         }
       })
 
+      expect(layout.viewportWidth, `${context} viewport width`).toBe(viewport.width)
+      expect(layout.viewportHeight, `${context} viewport height`).toBe(viewport.height)
       expect(layout.titleLineGap, `${context} title lines exist`).not.toBeNull()
       expect(layout.ctaWidths, `${context} desktop CTAs`).toHaveLength(2)
       expect(layout.ctaGap, `${context} desktop CTAs exist`).not.toBeNull()
