@@ -86,7 +86,7 @@ describe('media release contracts', () => {
     expect(processor).not.toContain("output_mode='RGB'")
   })
 
-  it('writes Hero font subsets with the WOFF2 container signature', () => {
+  it('preserves required Chinese punctuation in Hero WOFF2 subsets', () => {
     const fixtureRoot = mkdtempSync(join(tmpdir(), 'yance-home-hero-fonts-'))
     const outputDir = join(fixtureRoot, 'fonts')
     const scriptPath = resolve(root, 'scripts/subset-home-hero-fonts.py')
@@ -110,6 +110,33 @@ describe('media release contracts', () => {
 
       expect(scSignature).toBe('wOF2')
       expect(tcSignature).toBe('wOF2')
+
+      const coverageCheck = spawnSync('python', [
+        '-c',
+        `from pathlib import Path
+from fontTools.ttLib import TTFont
+from runpy import run_path
+import sys
+
+fonts = Path(sys.argv[1])
+script = Path(sys.argv[2])
+comma = '，'
+required_glyphs = run_path(script)['REQUIRED_GLYPHS']
+missing_manifest = [locale for locale, text in required_glyphs.items() if comma not in text]
+missing = [
+    name for name in ('lxgw-wenkai-hero-sc.woff2', 'lxgw-wenkai-hero-tc.woff2')
+    if ord(comma) not in set(TTFont(fonts / name).getBestCmap())
+]
+if missing_manifest:
+    raise SystemExit(f'Full-width comma missing from required glyphs: {", ".join(missing_manifest)}')
+if missing:
+    raise SystemExit(f'Full-width comma missing from: {", ".join(missing)}')
+`,
+        outputDir,
+        scriptPath
+      ], { cwd: root, encoding: 'utf8' })
+
+      expect(coverageCheck.status, `${coverageCheck.stdout}${coverageCheck.stderr}`).toBe(0)
     } finally {
       rmSync(fixtureRoot, { recursive: true, force: true })
     }
