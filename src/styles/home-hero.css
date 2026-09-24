@@ -184,6 +184,32 @@ html[data-locale='en'] .home-hero-typewriter-line-accent {
 .hero-action.secondary:hover span,
 .hero-action.secondary:focus-visible span { transform: translate(2px, -1px); }
 
+@media (hover: none), (pointer: coarse) {
+  .hero-action:hover:not(:focus-visible) {
+    transform: none;
+    border-color: var(--control-border);
+    background: var(--control-bg);
+    color: var(--ink);
+    box-shadow: var(--control-shadow);
+  }
+
+  .hero-action.primary:hover:not(:focus-visible) {
+    border-color: var(--action-fill);
+    background: var(--action-fill);
+    color: var(--accent-contrast);
+    box-shadow: 0 8px 26px var(--glow-gold);
+  }
+
+  .hero-action:hover:not(:focus-visible) span { transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-action:hover,
+  .hero-action:focus-visible { transform: none !important; }
+
+  .hero-action:is(:hover, :focus-visible) span { transform: none !important; }
+}
+
 .home-hero-particles {
   position: relative;
   display: grid;

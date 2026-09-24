@@ -112,6 +112,28 @@ for (const locale of locales) {
   })
 }
 
+test('keeps coarse-pointer CTA hover states free of motion', async ({ page }) => {
+  await page.goto('/index.html')
+  const isCoarse = await page.evaluate(() => window.matchMedia('(hover: none), (pointer: coarse)').matches)
+  test.skip(!isCoarse)
+
+  const action = page.locator('.home-hero-actions a').first()
+  await action.hover()
+  await expect.poll(() => action.evaluate((element) => element.matches(':hover'))).toBe(true)
+  await expect(action).toHaveCSS('transform', 'none')
+  await expect(action.locator('span[aria-hidden="true"]')).toHaveCSS('transform', 'none')
+})
+
+test('keeps CTA hover states free of motion when reduced motion is requested', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/index.html')
+
+  const action = page.locator('.home-hero-actions a').first()
+  await action.hover()
+  await expect(action).toHaveCSS('transform', 'none')
+  await expect(action.locator('span[aria-hidden="true"]')).toHaveCSS('transform', 'none')
+})
+
 const desktopViewports = viewports.filter((viewport) => viewport.width > 760)
 
 for (const locale of locales) {
