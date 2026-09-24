@@ -93,6 +93,7 @@ for (const locale of locales) {
     await expect(firstAction).toBeVisible()
     await firstAction.focus()
     await expect(firstAction).toBeFocused()
+    await expect(page.locator('.home-hero-actions')).toHaveCSS('opacity', '1')
     await expect(hero).toHaveAttribute('data-intro-state', 'complete', { timeout: 4000 })
     await expect(typewriter).toHaveAttribute('data-final-state', 'true')
   })
