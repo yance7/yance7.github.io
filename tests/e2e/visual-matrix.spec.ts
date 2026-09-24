@@ -88,6 +88,14 @@ async function settlePage(page: Page) {
   }))
 }
 
+async function settleHomeHero(page: Page) {
+  const hero = page.locator('.home-hero')
+  if (!await hero.count()) return
+  await expect(hero).toHaveAttribute('data-intro-state', /static|complete/)
+  const canvas = page.locator('.home-hero-particles-canvas')
+  if (await canvas.count()) await expect(canvas).toHaveAttribute('data-particle-state', /settled|paused/)
+}
+
 async function settleImages(page: Page, imageSelector: string) {
   await expect.poll(() => page.locator(imageSelector).count()).toBeGreaterThan(0)
   await page.evaluate(async (selector) => {
@@ -223,6 +231,7 @@ for (const viewport of viewports) {
         await page.goto(`/${route}.html`)
         if (route === 'concerts') await stabilizeVisualContext(page)
         await settlePage(page)
+        if (route === 'index') await settleHomeHero(page)
         await expect(page.locator('main#main')).toBeVisible()
         await expect(page.locator('.site-footer')).toHaveCount(1)
 
@@ -262,6 +271,7 @@ for (const locale of homeHeroLocales) {
         await installTheme(page, theme)
         await page.goto(locale.route)
         await settlePage(page)
+        await settleHomeHero(page)
 
         const hero = page.locator('.home-hero')
         await expect(hero).toBeVisible()
@@ -315,6 +325,7 @@ for (const viewport of englishHomeViewports) {
       await installTheme(page, theme)
       await page.goto('/en/')
       await settlePage(page)
+      await settleHomeHero(page)
 
       const leadershipColumn = page.locator('#home-beyond .beyond-column').first()
       await leadershipColumn.scrollIntoViewIfNeeded()

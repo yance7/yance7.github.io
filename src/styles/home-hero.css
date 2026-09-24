@@ -86,6 +86,20 @@
   min-width: 0;
 }
 
+.home-hero-typewriter[data-final-state='false'] .home-hero-typewriter-line-greeting {
+  clip-path: inset(0 100% 0 0);
+  animation: home-hero-line-reveal var(--home-hero-greeting-duration) steps(var(--home-hero-greeting-steps), end) both;
+}
+
+.home-hero-typewriter[data-final-state='false'] .home-hero-typewriter-line-statement {
+  clip-path: inset(0 100% 0 0);
+  animation: home-hero-line-reveal var(--home-hero-statement-duration) steps(var(--home-hero-statement-steps), end) var(--home-hero-statement-delay) both;
+}
+
+@keyframes home-hero-line-reveal {
+  to { clip-path: inset(0 0 0 0); }
+}
+
 .home-hero-typewriter-line-accent {
   color: var(--gold);
   font-size: clamp(2.15rem, 3.9vw, 4rem);
@@ -98,6 +112,39 @@
   color: var(--aqua);
   font-family: Georgia, 'Times New Roman', serif;
   font-weight: 400;
+}
+
+.home-hero-typewriter[data-final-state='false'] .home-hero-cursor {
+  animation: home-hero-cursor-blink 1s steps(2, jump-none) infinite;
+}
+
+@keyframes home-hero-cursor-blink {
+  50% { opacity: 0; }
+}
+
+.home-hero[data-intro-state='typing'] .home-hero-actions {
+  opacity: 0;
+  transition: none;
+}
+
+.home-hero[data-intro-state='typing'] .home-hero-actions:focus-within,
+.home-hero[data-intro-state='revealing-actions'] .home-hero-actions:focus-within {
+  opacity: 1;
+  transform: none;
+  animation: none;
+}
+
+.home-hero[data-intro-state='revealing-actions'] .home-hero-actions {
+  animation: home-hero-actions-in 320ms var(--ease-out) both;
+}
+
+.home-hero[data-intro-state='complete'] .home-hero-actions {
+  opacity: 1;
+}
+
+@keyframes home-hero-actions-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 html[data-locale='zh-HK'] .home-hero-typewriter {
@@ -198,6 +245,75 @@ html[data-locale='en'] .home-hero-typewriter-line-accent {
     radial-gradient(circle at 50% 45%, var(--surface-tint), transparent 56%),
     linear-gradient(145deg, color-mix(in srgb, var(--bg-deep) 76%, var(--surface)), var(--surface));
   box-shadow: var(--shadow-1);
+}
+
+.home-hero-particles-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: pan-y;
+}
+
+.home-hero-particles[data-render-mode='canvas'] .home-hero-particles-mark,
+.home-hero-particles[data-render-mode='canvas'] .home-hero-particles-labels {
+  opacity: 0;
+  transition: opacity 180ms var(--ease-out);
+}
+
+.home-hero-pointer,
+.home-hero-touch-ripple {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.home-hero-pointer {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid color-mix(in srgb, var(--gold) 72%, var(--line));
+  border-radius: 50%;
+  opacity: 0;
+  transform: translate3d(var(--pointer-x, 0px), var(--pointer-y, 0px), 0) translate(-50%, -50%);
+  transition: width 240ms var(--ease-out), height 240ms var(--ease-out), opacity 120ms ease, border-color 240ms ease;
+  will-change: transform;
+}
+
+.home-hero-pointer.is-visible { opacity: 1; }
+.home-hero-pointer.is-over-interactive { width: 80px; height: 80px; border-color: var(--aqua); }
+
+.home-hero-pointer-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 14px var(--glow-gold);
+}
+
+.home-hero-touch-ripple {
+  width: 64px;
+  height: 64px;
+  border: 1px solid color-mix(in srgb, var(--aqua) 68%, transparent);
+  border-radius: 50%;
+  opacity: 0;
+  transform: translate3d(var(--touch-x, 0px), var(--touch-y, 0px), 0) translate(-50%, -50%) scale(.72);
+  transition: opacity 480ms ease, transform 540ms var(--ease-out);
+}
+
+.home-hero-touch-ripple.is-active {
+  opacity: .72;
+  transform: translate3d(var(--touch-x, 0px), var(--touch-y, 0px), 0) translate(-50%, -50%) scale(1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .home-hero-custom-pointer,
+  .home-hero-custom-pointer * { cursor: none; }
 }
 
 .home-hero-particles::before,
@@ -314,4 +430,22 @@ html[data-locale='en'] .home-hero-typewriter-line-accent {
   .home-hero-particles-orbit { border-color: CanvasText; }
   .hero-action,
   .hero-action.primary { background: ButtonFace; border-color: ButtonText; color: ButtonText; box-shadow: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-hero-typewriter-line-greeting,
+  .home-hero-typewriter-line-statement {
+    clip-path: none;
+    animation: none;
+  }
+
+  .home-hero-typewriter[data-final-state='false'] .home-hero-cursor,
+  .home-hero[data-intro-state='revealing-actions'] .home-hero-actions {
+    animation: none;
+  }
+
+  .home-hero-pointer,
+  .home-hero-touch-ripple {
+    transition: none;
+  }
 }

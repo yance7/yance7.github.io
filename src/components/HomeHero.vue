@@ -2,16 +2,21 @@
 import '../styles/home-hero.css'
 import { computed } from 'vue'
 import { getLocalizedHomeCopy } from '../data/locales'
+import { useHomeHeroIntro } from '../composables/useHomeHeroIntro'
 import { useLocale } from '../i18n'
 import HomeHeroParticles from './HomeHeroParticles.vue'
+import HomeHeroPointer from './HomeHeroPointer.vue'
 import HomeHeroTypewriter from './HomeHeroTypewriter.vue'
 
 const { locale, messages } = useLocale()
 const home = computed(() => getLocalizedHomeCopy(locale.value))
+const greeting = computed(() => home.value.heroGreeting)
+const statement = computed(() => home.value.heroStatement)
+const { state, animateParticles, isIntroActive } = useHomeHeroIntro(greeting, statement)
 </script>
 
 <template>
-  <section class="home-hero" aria-labelledby="home-hero-title">
+  <section class="home-hero" :data-intro-state="state" aria-labelledby="home-hero-title">
     <div class="home-hero-grid" aria-hidden="true"></div>
 
     <div class="home-hero-inner">
@@ -21,8 +26,9 @@ const home = computed(() => getLocalizedHomeCopy(locale.value))
         <h1 id="home-hero-title" class="home-hero-title sr-only">{{ home.heroGreeting }} {{ home.heroStatement }}</h1>
 
         <HomeHeroTypewriter
-          :greeting="home.heroGreeting"
-          :statement="home.heroStatement"
+          :greeting="greeting"
+          :statement="statement"
+          :final-state="!isIntroActive"
         />
 
         <div class="home-hero-actions">
@@ -37,7 +43,9 @@ const home = computed(() => getLocalizedHomeCopy(locale.value))
         </div>
       </div>
 
-      <HomeHeroParticles />
+      <HomeHeroParticles :animate-intro="animateParticles" />
     </div>
+
+    <HomeHeroPointer />
   </section>
 </template>
