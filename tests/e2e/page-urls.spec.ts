@@ -55,6 +55,31 @@ test('legacy HTML URLs redirect to canonical pages and preserve query and hash',
   await expect(page.locator('body')).toHaveAttribute('data-page', 'concerts')
 })
 
+const legacyHomeRoutes = [
+  { legacy: '/index.html', canonical: '/' },
+  { legacy: '/zh-hk/index.html', canonical: '/zh-hk/' },
+  { legacy: '/en/index.html', canonical: '/en/' }
+] as const
+
+for (const route of legacyHomeRoutes) {
+  test(`legacy home URL ${route.legacy} redirects and preserves query and hash`, async ({ page }) => {
+    await page.goto(`${route.legacy}?year=2026#selected-work`)
+
+    const currentUrl = new URL(page.url())
+    expect(`${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`).toBe(
+      `${route.canonical}?year=2026#selected-work`
+    )
+    await expect(page.locator('body')).toHaveAttribute('data-page', 'home')
+    await expect(page.locator('.home-hero')).toBeVisible()
+    if (useProductionPreview) {
+      await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+        'href',
+        `https://www.yance777.com${route.canonical}`
+      )
+    }
+  })
+}
+
 async function localeLink(page: Page, hreflang: string) {
   const desktop = page.locator('.locale-switcher-desktop')
   if (await desktop.isVisible()) return desktop.locator(`a[hreflang="${hreflang}"]`)

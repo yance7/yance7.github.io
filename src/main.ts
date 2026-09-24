@@ -10,7 +10,7 @@ import './theme.css'
 
 const initialHash = document.documentElement.dataset.initialHash || window.location.hash
 if (initialHash) document.documentElement.dataset.initialHash = initialHash
-if (initialHash && window.location.hash) {
+if (initialHash && window.location.hash && document.documentElement.dataset.homeAliasCanonicalized !== 'true') {
   window.history.replaceState(
     window.history.state,
     '',
