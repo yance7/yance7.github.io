@@ -1,9 +1,9 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
-import { htmlPageEntries, pageEntries } from '../../src/data/pageRegistry'
+import { pageEntries } from '../../src/data/pageRegistry'
 
-const archiveRoutes = htmlPageEntries.map(({ htmlName }) => `${htmlName}.html`)
+const archiveRoutes = [...pageEntries.map(({ routePath }) => routePath), '/404.html']
 
 const documentEndBuffer = 240
 const documentEndSettlementPasses = 3
@@ -137,7 +137,7 @@ async function prepareMobileReducedMotion(page: Page) {
 }
 
 test('brand mark links header and footer back to the localized home page', async ({ page }) => {
-  await page.goto('/en/research.html')
+  await page.goto('/en/research/')
 
   const headerBrand = page.locator('.site-nav .wordmark')
   const footerBrand = page.locator('.site-footer .foot-mark')
@@ -167,7 +167,7 @@ test('brand mark links header and footer back to the localized home page', async
 })
 
 test('shared navigation mark keeps its identity across light and dark themes', async ({ page }) => {
-  await page.goto('/en/research.html')
+  await page.goto('/en/research/')
 
   for (const theme of ['light', 'dark']) {
     await page.evaluate((value) => localStorage.setItem('yance-theme', value), theme)
@@ -199,7 +199,7 @@ const brandGeometryViewports = [
   { width: 768, height: 1024 },
   { width: 390, height: 844 }
 ]
-const brandGeometryRoutes = ['/research.html', '/zh-hk/research.html', '/en/research.html']
+const brandGeometryRoutes = ['/research/', '/zh-hk/research/', '/en/research/']
 
 for (const viewport of brandGeometryViewports) {
   for (const route of brandGeometryRoutes) {
@@ -250,19 +250,19 @@ for (const viewport of brandGeometryViewports) {
 }
 
 test('brand mark preserves zh-HK localized home navigation', async ({ page }) => {
-  await page.goto('/zh-hk/research.html')
+  await page.goto('/zh-hk/research/')
 
   await expect(page.locator('.site-nav .wordmark')).toHaveAttribute('href', '/zh-hk/')
 })
 
 test('brand mark preserves root locale home navigation', async ({ page }) => {
-  await page.goto('/research.html')
+  await page.goto('/research/')
 
   await expect(page.locator('.site-nav .wordmark')).toHaveAttribute('href', '/')
 })
 
 test('canonical brand icons are wired for browser shells and PWA metadata', async ({ page }) => {
-  await page.goto('/en/research.html')
+  await page.goto('/en/research/')
 
   await expect(page.locator('link[rel="icon"][sizes="16x16"]')).toHaveAttribute(
     'href',
@@ -289,7 +289,7 @@ test('canonical brand icons are wired for browser shells and PWA metadata', asyn
 
 test('all archive pages boot and expose the main landmark', async ({ page }) => {
   for (const route of archiveRoutes) {
-    await page.goto(`/${route}`)
+    await page.goto(route)
     await expect(page.locator('main#main')).toBeVisible()
   }
 })
@@ -298,7 +298,7 @@ test('archive layouts avoid horizontal overflow on narrow screens', async ({ pag
   for (const width of [320, 390]) {
     await page.setViewportSize({ width, height: 844 })
     for (const route of archiveRoutes) {
-      await page.goto(`/${route}`)
+      await page.goto(route)
       const layout = await page.evaluate(() => ({
         documentWidth: document.documentElement.scrollWidth,
         bodyWidth: document.body.scrollWidth,
@@ -312,7 +312,7 @@ test('archive layouts avoid horizontal overflow on narrow screens', async ({ pag
 
 test('mobile navigation opens, traps focus, and closes explicitly', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/index.html')
+  await page.goto('/')
   await page.locator('.menu-trigger').click()
   await expect(page.locator('.mobile-menu-overlay')).toBeVisible()
   await expect(page.locator('.mobile-menu-close')).toBeFocused()
@@ -324,7 +324,7 @@ test('mobile navigation opens, traps focus, and closes explicitly', async ({ pag
 })
 
 test('theme preference persists after reload', async ({ page }) => {
-  await page.goto('/index.html')
+  await page.goto('/')
   await page.evaluate(() => localStorage.removeItem('yance-theme'))
   await page.reload()
   await page.locator('.theme-orbit').click()
@@ -334,7 +334,7 @@ test('theme preference persists after reload', async ({ page }) => {
 })
 
 test('rapid theme toggles commit deterministically', async ({ page }) => {
-  await page.goto('/index.html')
+  await page.goto('/')
   await page.evaluate(() => localStorage.setItem('yance-theme', 'light'))
   await page.reload()
 
@@ -371,7 +371,7 @@ test('deferred fonts do not cause material late layout shift', async ({ page }, 
     }).observe({ type: 'layout-shift', buffered: true })
   })
 
-  await page.goto('/index.html')
+  await page.goto('/')
   await expect.poll(() => page.locator('html').getAttribute('data-fonts-ready')).toBe('ready')
   await page.evaluate(() => new Promise<void>((resolve) => {
     requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
@@ -397,7 +397,7 @@ test('deferred fonts do not cause material late layout shift', async ({ page }, 
 })
 
 test('static metric surfaces do not advertise elevation on hover', async ({ page }) => {
-  await page.goto('/academics.html')
+  await page.goto('/academics/')
   const metric = page.locator('.metric-card').first()
   await metric.scrollIntoViewIfNeeded()
   await expect.poll(() => metric.evaluate((element) => getComputedStyle(element).transform)).toBe('none')
@@ -409,7 +409,7 @@ test('static metric surfaces do not advertise elevation on hover', async ({ page
 
 test('research timeline highlights the item in the reading zone', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/research.html')
+  await page.goto('/research/')
 
   const items = page.locator('.tl-item')
   await expect(items.first()).toBeVisible()
@@ -424,7 +424,7 @@ test('research timeline highlights the item in the reading zone', async ({ page 
 
 test('research timeline clears current state outside the reading zone', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/research.html')
+  await page.goto('/research/')
 
   await page.evaluate(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'auto' }))
   await expect.poll(() => page.locator('.tl-item[data-reading-state="current"]').count()).toBe(0)
@@ -432,7 +432,7 @@ test('research timeline clears current state outside the reading zone', async ({
 
 test('research status markers keep a static hierarchy without competing pulses', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/research.html')
+  await page.goto('/research/')
 
   const contentMarkers = page.locator('.status-badge .status-dot, .tc-head-status i, .tl-item.is-current .tl-node i')
   await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
@@ -454,7 +454,7 @@ test('research status markers keep a static hierarchy without competing pulses',
 test('research timeline removes breathing motion when reduced motion is enabled', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto('/research.html')
+  await page.goto('/research/')
 
   const firstItem = page.locator('.tl-item').first()
   await firstItem.evaluate((element) => element.scrollIntoView({ block: 'center', behavior: 'auto' }))
@@ -470,7 +470,7 @@ test('slow page chunks still settle deep links', async ({ page }) => {
     await route.continue()
   })
 
-  await page.goto('/works.html#project-fresheye')
+  await page.goto('/works/#project-fresheye')
   await expect(page.locator('#project-fresheye')).toBeVisible({ timeout: 30000 })
   expect(requestCount).toBeGreaterThan(0)
   await expect.poll(() => page.locator('#project-fresheye').evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBeGreaterThanOrEqual(12)
@@ -483,7 +483,7 @@ test('failed page chunks render a controlled error without a reload loop', async
     await route.abort('failed')
   })
 
-  await page.goto('/works.html')
+  await page.goto('/works/')
   await expect(page.locator('[data-page-load-state="error"]')).toBeVisible({ timeout: 15000 })
   await expect(page.locator('.page-load-error')).toBeVisible()
   expect(requestCount).toBeLessThanOrEqual(3)
@@ -494,13 +494,13 @@ test('failed page chunks render a controlled error without a reload loop', async
 test('signature surfaces track fine-pointer sheen without changing typography', { tag: '@fine-pointer' }, async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium', 'Fine-pointer interaction is intentionally disabled on touch projects')
   const targets = [
-    ['index.html', '.focus-card'],
-    ['works.html', '.showcase'],
-    ['concerts.html', '.concert-poster']
+    ['/', '.focus-card'],
+    ['/works/', '.showcase'],
+    ['/concerts/', '.concert-poster']
   ] as const
 
   for (const [route, selector] of targets) {
-    await page.goto(`/${route}`)
+    await page.goto(route)
     const surface = page.locator(selector).first()
     await surface.scrollIntoViewIfNeeded()
     await expect(surface).toHaveAttribute('data-pointer-sheen', '')
@@ -526,7 +526,7 @@ test('signature surfaces track fine-pointer sheen without changing typography', 
 
 test('signature pointer sheen stays static with reduced motion', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto('/index.html')
+  await page.goto('/')
   const surface = page.locator('.focus-card').first()
   await surface.scrollIntoViewIfNeeded()
   const box = await surface.boundingBox()
@@ -536,9 +536,9 @@ test('signature pointer sheen stays static with reduced motion', async ({ page }
 })
 
 test('page registry section IDs remain deep-link targets', async ({ page }) => {
-  for (const { htmlName, sectionIds } of pageEntries) {
+  for (const { routePath, htmlName, sectionIds } of pageEntries) {
     await page.setViewportSize({ width: 390, height: 844 })
-    await page.goto(`/${htmlName}.html`)
+    await page.goto(routePath)
 
     for (const sectionId of sectionIds) {
       await expect(page.locator(`#${sectionId}`), `${htmlName} #${sectionId}`).toHaveCount(1)
@@ -551,7 +551,7 @@ test('page registry section IDs remain deep-link targets', async ({ page }) => {
 
 test('mobile menu remains accessible after opening', async ({ page }) => {
   await prepareMobileReducedMotion(page)
-  await page.goto('/index.html')
+  await page.goto('/')
   await page.locator('.menu-trigger').click()
   await expectAccessible(page)
   await page.locator('.mobile-menu-close').click()
@@ -559,27 +559,27 @@ test('mobile menu remains accessible after opening', async ({ page }) => {
 
 test('honors page remains accessible after loading', async ({ page }) => {
   await prepareMobileReducedMotion(page)
-  await page.goto('/honors.html')
+  await page.goto('/honors/')
   await expect(page.locator('.honor-card').first()).toBeVisible()
   await expectAccessible(page)
 })
 
 test('research method disclosure remains accessible after opening', async ({ page }) => {
   await prepareMobileReducedMotion(page)
-  await page.goto('/research.html')
+  await page.goto('/research/')
   await page.locator('.method-toggle').first().click()
   await expectAccessible(page)
 })
 
 test('works page remains accessible after loading', async ({ page }) => {
   await prepareMobileReducedMotion(page)
-  await page.goto('/works.html')
+  await page.goto('/works/')
   await expectAccessible(page)
 })
 
 test('concert lightbox remains accessible after opening', async ({ page }) => {
   await prepareMobileReducedMotion(page)
-  await page.goto('/concerts.html')
+  await page.goto('/concerts/')
   await page.locator('.poster-open').first().click()
   await expect(page.locator('.lightbox')).toBeVisible()
   await expect(page.locator('.lb-close')).toBeFocused()
@@ -591,19 +591,19 @@ test('concert lightbox remains accessible after opening', async ({ page }) => {
 
 test('rapid control clicks settle without duplicate or stale state', async ({ page }) => {
   test.setTimeout(60000)
-  await page.goto('/honors.html')
+  await page.goto('/honors/')
   const filter = page.locator('.filter-btn').filter({ hasText: '卓越级' })
   for (let i = 0; i < 5; i += 1) await filter.click()
   await expect(filter).toHaveAttribute('aria-pressed', 'true')
   await expect(page.locator('.honor-card')).toHaveCount(2)
 
-  await page.goto('/research.html')
+  await page.goto('/research/')
   const method = page.locator('.method-toggle').first()
   for (let i = 0; i < 4; i += 1) await method.dispatchEvent('click')
   await expect(method).toHaveAttribute('aria-expanded', 'false')
   await expect(page.locator('.method-disclosure').first()).not.toHaveClass(/open/)
 
-  await page.goto('/concerts.html')
+  await page.goto('/concerts/')
   const poster = page.locator('.concert-poster .poster-open').first()
   for (let i = 0; i < 3; i += 1) {
     await poster.click()
@@ -615,7 +615,7 @@ test('rapid control clicks settle without duplicate or stale state', async ({ pa
 })
 
 test('Works wordmarks keep typography on hover', async ({ page }) => {
-  await page.goto('/works.html')
+  await page.goto('/works/')
   const showcases = page.locator('.showcase')
   await expect(showcases).toHaveCount(2)
 
@@ -653,7 +653,7 @@ test('Works wordmarks keep typography on hover', async ({ page }) => {
 
 for (const route of archiveRoutes) {
   test(`axe audit: ${route}`, async ({ page }) => {
-    await page.goto(`/${route}`)
+    await page.goto(route)
     await expectAccessible(page)
   })
 }

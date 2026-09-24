@@ -2,11 +2,11 @@
   "ci": {
     "collect": {
       "url": [
-        "http://127.0.0.1:4173/index.html",
-        "http://127.0.0.1:4173/academics.html",
-        "http://127.0.0.1:4173/research.html",
-        "http://127.0.0.1:4173/works.html",
-        "http://127.0.0.1:4173/concerts.html"
+        "http://127.0.0.1:4173/",
+        "http://127.0.0.1:4173/academics/",
+        "http://127.0.0.1:4173/research/",
+        "http://127.0.0.1:4173/works/",
+        "http://127.0.0.1:4173/concerts/"
       ],
       "startServerCommand": "npm run preview -- --host 127.0.0.1 --port 4173",
       "startServerReadyPattern": "4173",

@@ -31,11 +31,11 @@ describe('Lighthouse quality matrix', () => {
     const assertions = config.ci.assert.assertions
 
     expect(config.ci.collect.url).toEqual([
-      'http://127.0.0.1:4173/index.html',
-      'http://127.0.0.1:4173/academics.html',
-      'http://127.0.0.1:4173/research.html',
-      'http://127.0.0.1:4173/works.html',
-      'http://127.0.0.1:4173/concerts.html'
+      'http://127.0.0.1:4173/',
+      'http://127.0.0.1:4173/academics/',
+      'http://127.0.0.1:4173/research/',
+      'http://127.0.0.1:4173/works/',
+      'http://127.0.0.1:4173/concerts/'
     ])
     expect(config.ci.collect.numberOfRuns).toBe(3)
     expect(getThreshold(assertions, 'categories:performance').minScore).toBe(.8)
@@ -53,9 +53,9 @@ describe('Lighthouse quality matrix', () => {
     const assertions = config.ci.assert.assertions
 
     expect(config.ci.collect.url).toEqual([
-      'http://127.0.0.1:4173/index.html',
-      'http://127.0.0.1:4173/research.html',
-      'http://127.0.0.1:4173/concerts.html'
+      'http://127.0.0.1:4173/',
+      'http://127.0.0.1:4173/research/',
+      'http://127.0.0.1:4173/concerts/'
     ])
     expect(config.ci.collect.numberOfRuns).toBe(3)
     expect(config.ci.collect.settings.formFactor).toBe('mobile')
@@ -87,9 +87,9 @@ describe('Lighthouse quality matrix', () => {
     }
     expect(runner).toContain('interaction-to-next-paint')
     expect(runner).toContain('200')
-    expect(runner).toContain('index.html')
-    expect(runner).toContain('honors.html')
-    expect(runner).toContain('concerts.html')
+    expect(runner).toContain("page: '/'")
+    expect(runner).toContain("page: '/honors/'")
+    expect(runner).toContain("page: '/concerts/'")
     expect(runner).not.toContain('carousel-next')
     expect(runner).toContain('process.env.PLAYWRIGHT_PORT')
   })

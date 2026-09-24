@@ -2,12 +2,12 @@ import { expect, test } from '@playwright/test'
 
 const locales = [
   {
-    route: '/index.html',
+    route: '/',
     semanticTitle: '你好，我是 Yance 研究、构建，与现场相遇',
     displayFont: 'LXGW WenKai Hero SC'
   },
   {
-    route: '/zh-hk/index.html',
+    route: '/zh-hk/',
     semanticTitle: '你好，我是 Yance 研究、建構，與現場相遇',
     displayFont: 'LXGW WenKai Hero TC'
   },

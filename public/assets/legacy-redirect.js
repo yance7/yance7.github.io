@@ -1,0 +1,18 @@
+const redirectScript = document.currentScript
+if (redirectScript instanceof HTMLScriptElement) {
+  const target = redirectScript.dataset.target
+  if (target?.startsWith('/') && !target.startsWith('//')) {
+    const destination = new URL(target, window.location.origin)
+    if (destination.origin === window.location.origin) {
+      destination.search = window.location.search
+      destination.hash = window.location.hash
+      const nextUrl = `${destination.pathname}${destination.search}${destination.hash}`
+      const manualLink = document.querySelector('[data-redirect-link]')
+      if (manualLink) manualLink.href = nextUrl
+      const alreadyAtDestination = window.location.pathname === destination.pathname
+        && window.location.search === destination.search
+        && window.location.hash === destination.hash
+      if (!alreadyAtDestination) window.location.replace(nextUrl)
+    }
+  }
+}

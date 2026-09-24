@@ -3,16 +3,19 @@ import vue from '@vitejs/plugin-vue'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 import { THEME_COLORS } from './src/themeColors.ts'
-import { htmlPageEntries, isPageKey } from './src/data/pageRegistry.ts'
+import { htmlPageEntries, isPageKey, pageEntries } from './src/data/pageRegistry.ts'
 import { getLocalizedSeo } from './src/data/seo.ts'
 
 const rootDir = dirname(fileURLToPath(import.meta.url))
 const htmlRoot = resolve(rootDir, 'html-src')
-const pageNames = htmlPageEntries.map(({ htmlName }) => htmlName)
 const THEME_BOOTSTRAP_HASH = 'sha256-qitwqlI10vu96/QuP/2uODumC43vvFpscxk/zXDGK2o='
+const localePrefixes = ['/en', '/zh-hk']
 
 const htmlInputs = Object.fromEntries(
-  pageNames.map((name) => [name, resolve(rootDir, 'html-src', `${name}.html`)])
+  htmlPageEntries.map(({ htmlName }) => [
+    htmlName,
+    resolve(rootDir, 'html-src', `${htmlName}.html`)
+  ])
 )
 
 function themeTokenPlugin() {
@@ -45,6 +48,7 @@ function pageMetadataPlugin() {
         .replaceAll('__OG_LOCALE__', seo.ogLocale)
         .replaceAll('__OG_IMAGE__', seo.ogImage)
         .replaceAll('__OG_IMAGE_ALT__', seo.ogImageAlt)
+        .replaceAll('__OG_URL__', seo.canonical)
         .replaceAll('__CANONICAL_URL__', seo.canonical)
         .replaceAll('__JSONLD_URL__', seo.canonical)
         .replaceAll('__JSONLD_LANGUAGE__', seo.jsonLdLanguage)
@@ -54,32 +58,58 @@ function pageMetadataPlugin() {
 }
 
 function localeDevRewritePlugin(): Plugin {
-  const localePrefixes = ['/en', '/zh-hk']
-  const knownPages = new Set([...pageNames.map((name) => `${name}.html`), '404.html'])
+  function splitUrl(rawUrl: string) {
+    const parsed = new URL(rawUrl, 'http://vite.local')
+    const pathname = parsed.pathname
+    const prefix = localePrefixes.find((candidate) => (
+      pathname.toLowerCase() === candidate || pathname.toLowerCase().startsWith(`${candidate}/`)
+    )) ?? ''
+    const localPath = prefix ? pathname.slice(prefix.length) || '/' : pathname
+    return { pathname, prefix, localPath, search: parsed.search }
+  }
 
-  function rewriteUrl(rawUrl: string, localizedRoot = false) {
-    const [rawPathname, query = ''] = rawUrl.split('?')
-    const pathname = rawPathname ?? '/'
-    const prefix = localePrefixes.find((candidate) => pathname === `${candidate}/` || pathname.startsWith(`${candidate}/`))
-    if (!prefix) return null
-    const suffix = pathname.slice(prefix.length).replace(/^\//, '')
-    const page = suffix && knownPages.has(suffix) ? suffix : suffix ? '404.html' : 'index.html'
-    const target = localizedRoot ? `${prefix}/${page}` : `/${page}`
-    return `${target}${query ? `?${query}` : ''}`
+  function isStaticAsset(pathname: string) {
+    return pathname.startsWith('/assets/') || /\.(?:css|js|mjs|png|jpe?g|webp|avif|svg|ico|woff2?|xml|txt|webmanifest)$/i.test(pathname)
+  }
+
+  function developmentRewrite(rawUrl: string) {
+    const { localPath, search } = splitUrl(rawUrl)
+    if (
+      localPath.startsWith('/@') ||
+      localPath.startsWith('/node_modules/.vite/') ||
+      /\.(?:ts|tsx|vue)$/i.test(localPath)
+    ) return null
+    if (isStaticAsset(localPath)) return null
+    if (localPath === '/404.html') return `/404.html${search}`
+    const entry = pageEntries.find(({ routePath, legacyPath }) => (
+      localPath === routePath || localPath === legacyPath
+    ))
+    if (entry) return `/${entry.htmlName}.html${search}`
+    return `/404.html${search}`
+  }
+
+  function previewRewrite(rawUrl: string) {
+    const { prefix, localPath, search } = splitUrl(rawUrl)
+    if (isStaticAsset(localPath) || localPath === '/404.html') return null
+    const knownPage = pageEntries.some(({ routePath, legacyPath }) => (
+      localPath === routePath || localPath === legacyPath
+    ))
+    if (knownPage) return null
+    return `${prefix}/404.html${search}`
   }
 
   return {
     name: 'locale-dev-rewrite',
     configureServer(server) {
       server.middlewares.use((request, _response, next) => {
-        const rewritten = rewriteUrl(request.url ?? '/')
+        const rewritten = developmentRewrite(request.url ?? '/')
         if (rewritten) request.url = rewritten
         next()
       })
     },
     configurePreviewServer(server) {
       server.middlewares.use((request, _response, next) => {
-        const rewritten = rewriteUrl(request.url ?? '/', true)
+        const rewritten = previewRewrite(request.url ?? '/')
         if (rewritten) request.url = rewritten
         next()
       })
@@ -100,7 +130,6 @@ function devSourceScriptPlugin(): Plugin {
     }
   }
 }
-
 export default defineConfig({
   root: htmlRoot,
   plugins: [themeTokenPlugin(), pageMetadataPlugin(), localeDevRewritePlugin(), devSourceScriptPlugin(), vue()],

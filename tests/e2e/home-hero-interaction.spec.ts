@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test'
 
 const locales = [
-  { route: '/index.html', title: '你好，我是 Yance 研究、构建，与现场相遇' },
-  { route: '/zh-hk/index.html', title: '你好，我是 Yance 研究、建構，與現場相遇' },
+  { route: '/', title: '你好，我是 Yance 研究、构建，与现场相遇' },
+  { route: '/zh-hk/', title: '你好，我是 Yance 研究、建構，與現場相遇' },
   { route: '/en/', title: 'Hi, I’m Yance Research, build, and meet the live world' }
 ] as const
 
@@ -35,23 +35,23 @@ for (const locale of locales) {
 }
 
 test('replays the intro in a new tab while a same-tab return stays final', async ({ context, page }) => {
-  await page.goto('/index.html')
+  await page.goto('/')
   await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'typing')
   await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'complete', { timeout: 4000 })
 
-  await page.goto('/research.html')
-  await page.goto('/index.html')
+  await page.goto('/research/')
+  await page.goto('/')
   await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'static')
 
   const newTab = await context.newPage()
-  await newTab.goto('/index.html')
+  await newTab.goto('/')
   await expect(newTab.locator('.home-hero')).toHaveAttribute('data-intro-state', 'typing')
   await newTab.close()
 })
 
 test('shows the final Hero state when reduced motion is requested', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto('/index.html')
+  await page.goto('/')
 
   await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'static')
   await expect(page.locator('.home-hero-typewriter')).toHaveAttribute('data-final-state', 'true')
@@ -63,14 +63,14 @@ test('keeps the Hero static when the browser requests data saving', async ({ pag
   await page.addInitScript(() => {
     Object.defineProperty(navigator, 'connection', { configurable: true, value: { saveData: true } })
   })
-  await page.goto('/index.html')
+  await page.goto('/')
 
   await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'static')
   await expect(page.locator('.home-hero-particles-canvas')).toHaveCount(0)
 })
 
 test('uses a bounded Canvas particle field and pauses it when the Hero leaves view', async ({ page }) => {
-  await page.goto('/index.html')
+  await page.goto('/')
 
   const canvas = page.locator('.home-hero-particles-canvas')
   await expect(canvas).toBeVisible()
@@ -91,7 +91,7 @@ test('uses a bounded Canvas particle field and pauses it when the Hero leaves vi
 })
 
 test('resumes particle drawing when the hidden page becomes visible', async ({ page }) => {
-  await page.goto('/index.html')
+  await page.goto('/')
   const canvas = page.locator('.home-hero-particles-canvas')
   await expect(canvas).toBeVisible()
 
@@ -115,7 +115,7 @@ test('keeps the static brand visual when Canvas initialization fails', async ({ 
       value: () => null
     })
   })
-  await page.goto('/index.html')
+  await page.goto('/')
 
   await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-render-mode', 'static-fallback')
   await expect(page.locator('.home-hero-particles-mark')).toBeVisible()
@@ -125,7 +125,7 @@ test('keeps the static brand visual when Canvas initialization fails', async ({ 
 test('uses an 80px hover ring only inside the fine-pointer Hero', async ({ page }) => {
   test.skip(!(await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)))
   await page.addInitScript(() => sessionStorage.setItem('yance-home-hero-intro-v1', 'played'))
-  await page.goto('/index.html')
+  await page.goto('/')
   await page.evaluate(() => { document.documentElement.style.scrollBehavior = 'auto' })
 
   const cursor = page.locator('.home-hero-pointer')
@@ -144,7 +144,7 @@ test('uses an 80px hover ring only inside the fine-pointer Hero', async ({ page 
 test('updates the hover ring when scrolling changes the element under a stationary pointer', async ({ page }) => {
   test.skip(!(await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)))
   await page.addInitScript(() => sessionStorage.setItem('yance-home-hero-intro-v1', 'played'))
-  await page.goto('/index.html')
+  await page.goto('/')
 
   const cursor = page.locator('.home-hero-pointer')
   const action = page.locator('.home-hero-actions a').first()
@@ -167,7 +167,7 @@ test('updates the hover ring when scrolling changes the element under a stationa
 
 test('uses a touch ripple without creating a custom pointer on coarse devices', async ({ page }) => {
   test.skip(!await page.evaluate(() => window.matchMedia('(pointer: coarse)').matches))
-  await page.goto('/index.html')
+  await page.goto('/')
 
   await expect(page.locator('.home-hero-pointer')).toHaveCount(0)
   await page.locator('.home-hero-particles').tap()
@@ -177,7 +177,7 @@ test('uses a touch ripple without creating a custom pointer on coarse devices', 
 
 test('does not trigger a touch ripple for input outside the Hero', async ({ page }) => {
   test.skip(!await page.evaluate(() => window.matchMedia('(pointer: coarse)').matches))
-  await page.goto('/index.html')
+  await page.goto('/')
 
   const ripple = page.locator('.home-hero-touch-ripple')
   const footer = page.locator('footer')

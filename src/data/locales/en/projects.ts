@@ -20,7 +20,7 @@ export const projectsCopy = {
         note: 'I kept pushing one model experiment until it became a tool anyone could open.',
         chapters: [
           { label: '01 / QUESTION', title: 'Move freshness assessment beyond the lab', detail: 'Traditional assessment depends on manual judgment or lab methods; daily use needs a faster, reviewable entry point.' },
-          { label: '02 / MODEL', title: 'FishFreshNet V2', detail: '99.29% accuracy · 4.095M parameters', href: 'research.html#fishfreshnet-v2' },
+          { label: '02 / MODEL', title: 'FishFreshNet V2', detail: '99.29% accuracy · 4.095M parameters', href: '/research/#fishfreshnet-v2' },
           { label: '03 / DELIVERY', title: 'From inference to an explainable report', detail: 'Confidence, Grad-CAM heatmaps, and PDF export form one complete decision flow.' }
         ],
         sequenceLabel: 'PRODUCT FLOW', sequence: ['Upload', 'Inference', 'Confidence', 'Grad-CAM', 'PDF'],

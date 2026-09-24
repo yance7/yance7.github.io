@@ -1,9 +1,9 @@
 import { expect, test, type Page } from '@playwright/test'
 
 const routes = [
-  { name: 'zh-CN', path: '/research.html' },
-  { name: 'zh-HK', path: '/zh-hk/research.html' },
-  { name: 'en', path: '/en/research.html' }
+  { name: 'zh-CN', path: '/research/' },
+  { name: 'zh-HK', path: '/zh-hk/research/' },
+  { name: 'en', path: '/en/research/' }
 ] as const
 
 const viewports = [
@@ -130,7 +130,7 @@ for (const route of routes) {
 }
 
 test('Research mobile methodology disclosure remains explicit after layout balancing', async ({ page }) => {
-  await expectResearchReady(page, '/research.html', 390, 844)
+  await expectResearchReady(page, '/research/', 390, 844)
 
   const toggle = page.locator('.method-toggle').first()
   const disclosureId = await toggle.getAttribute('aria-controls')

@@ -11,7 +11,7 @@ async function settleHonorAnimations(page: Page) {
 }
 
 async function settleHonorsPage(page: Page) {
-  await page.goto('/honors.html')
+  await page.goto('/honors/')
   await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
   await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
   await page.evaluate(async () => {
@@ -26,7 +26,7 @@ async function settleHonorsPage(page: Page) {
 }
 
 test('honors archive keeps source coordinates when filtered', async ({ page }) => {
-  await page.goto('/honors.html')
+  await page.goto('/honors/')
 
   await expect(page.locator('.honor-card')).toHaveCount(13)
   await expect(page.locator('.honor-coordinate')).toHaveText(sourceCoordinates)
@@ -81,7 +81,7 @@ test('honors filter counts keep fixed circles and centered numerals', async ({ p
 })
 
 test('honors cards stay presentational and use the default cursor', async ({ page }) => {
-  await page.goto('/honors.html')
+  await page.goto('/honors/')
 
   const cardSemantics = await page.locator('.honor-card').evaluateAll((cards) => cards.map((card) => ({
     descendants: card.querySelectorAll('a, button, [tabindex]').length,
@@ -207,7 +207,7 @@ test.describe('honors cards with reduced motion', () => {
 
   test('pressed filter controls stay still under reduced motion', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' })
-    await page.goto('/honors.html')
+    await page.goto('/honors/')
 
     const filter = page.locator('[data-honor-filter="peak"]')
     await expect(filter).toBeVisible()
@@ -229,7 +229,7 @@ test('honors archive fits the required viewport and theme matrix', async ({ page
 
     for (const width of [320, 390, 768, 1024, 1440]) {
       await page.setViewportSize({ width, height: width < 640 ? 844 : 900 })
-      await page.goto('/honors.html')
+      await page.goto('/honors/')
       await expect(page.locator('.honor-card')).toHaveCount(13)
 
       const geometry = await page.evaluate(() => ({

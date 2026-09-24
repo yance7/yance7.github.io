@@ -24,7 +24,7 @@ const rapidSelectionSequence = [
 ] as const
 
 test('album wall keeps displayed metadata stable while a new cover decodes', async ({ page }) => {
-  await page.goto('/concerts.html')
+  await page.goto('/concerts/')
   await page.evaluate(() => {
     let decodeBlocked = true
     const pendingDecodes: Array<() => void> = []
@@ -71,7 +71,7 @@ test('album wall keeps displayed metadata stable while a new cover decodes', asy
 
 test('album wall commits the final choice after twenty rapid selections', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto('/concerts.html')
+  await page.goto('/concerts/')
   await page.evaluate(() => {
     const nativeDecode = HTMLImageElement.prototype.decode
     const pendingDecodes = new Set<() => void>()

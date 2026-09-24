@@ -10,7 +10,7 @@
   "packageManager": "npm@10.9.0",
   "scripts": {
     "dev": "vite",
-    "build": "npm run sitemap && vite build && tsx scripts/generate-localized-pages.ts",
+    "build": "npm run sitemap && vite build && tsx scripts/normalize-page-output.ts && tsx scripts/generate-localized-pages.ts && tsx scripts/generate-legacy-pages.ts",
     "preview": "vite preview",
     "smoke": "tsx scripts/smoke-test.ts",
     "sitemap": "tsx scripts/generate-sitemap.ts",

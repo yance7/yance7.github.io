@@ -8,6 +8,9 @@
     "@fontsource-variable/noto-serif-sc",
     "@fontsource/ibm-plex-mono"
   ],
+  "ignoreFiles": [
+    "public/assets/legacy-redirect.js"
+  ],
   "ignoreIssues": {
     "src/data/locales/types.ts": ["types"]
   }

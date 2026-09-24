@@ -24,7 +24,7 @@ export const projects = [
           label: '02 / MODEL',
           title: 'FishFreshNet V2',
           detail: '99.29% accuracy · 4.095M parameters',
-          href: 'research.html#fishfreshnet-v2'
+          href: '/research/#fishfreshnet-v2'
         },
         {
           label: '03 / DELIVERY',

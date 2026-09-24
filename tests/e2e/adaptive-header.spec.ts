@@ -88,7 +88,7 @@ async function waitForFloatingSurfaceSettled(page: Page) {
 
 test('floating header uses translucent glass, compact geometry, and stable brand spacing', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
-  await page.goto('/en/research.html')
+  await page.goto('/en/research/')
   await waitForReady(page)
   await scrollHeader(page, 260)
   await expect.poll(() => page.locator('.site-nav-surface').evaluate((element) => element.getBoundingClientRect().height))
@@ -168,7 +168,7 @@ test('floating header uses translucent glass, compact geometry, and stable brand
 
 test('floating header hover and focus preserve navigation geometry', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
-  await page.goto('/en/research.html')
+  await page.goto('/en/research/')
   await waitForReady(page)
   await scrollHeader(page, 260)
   await waitForFloatingSurfaceSettled(page)
@@ -195,7 +195,7 @@ test('floating header hover and focus preserve navigation geometry', async ({ pa
 
 test('desktop header morphs in place and reverses without changing outer geometry', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
-  await page.goto('/en/research.html')
+  await page.goto('/en/research/')
   await waitForReady(page)
 
   const header = page.locator('.site-nav')
@@ -242,7 +242,7 @@ test('desktop header morphs in place and reverses without changing outer geometr
 test('English navigation stays inside the viewport across desktop widths', async ({ page }) => {
   for (const width of [768, 900, 1024, 1280, 1440]) {
     await page.setViewportSize({ width, height: 900 })
-    await page.goto('/en/research.html')
+    await page.goto('/en/research/')
     await waitForReady(page)
 
     const geometry = await page.evaluate(() => {
@@ -278,7 +278,7 @@ test('English navigation stays inside the viewport across desktop widths', async
 test('desktop header uses centered navigation and a right-hand control group', async ({ page }) => {
   for (const width of [1440, 1024, 768]) {
     await page.setViewportSize({ width, height: 900 })
-    await page.goto('/en/research.html')
+    await page.goto('/en/research/')
     await waitForReady(page)
 
     const geometry = await page.evaluate(() => {
@@ -317,7 +317,7 @@ test('desktop header uses centered navigation and a right-hand control group', a
 test('floating header preserves light and dark themes and reduced-motion state changes', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 900 })
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto('/en/research.html')
+  await page.goto('/en/research/')
   await waitForReady(page)
 
   const surface = page.locator('.site-nav-surface')
@@ -346,7 +346,7 @@ test('floating header preserves light and dark themes and reduced-motion state c
 
 test('mobile floating header keeps controls touchable and preserves the existing modal menu', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/en/research.html')
+  await page.goto('/en/research/')
   await waitForReady(page)
 
   const header = page.locator('.site-nav')
@@ -382,14 +382,14 @@ test('adaptive header keeps localized controls and deep-link anchors stable', as
   await page.setViewportSize({ width: 1024, height: 900 })
 
   const destinations = [
-    ['/index.html#home-worlds', '#home-worlds'],
-    ['/academics.html#sec-ap-archive', '#sec-ap-archive'],
-    ['/honors.html#sec-honors-archive', '#sec-honors-archive'],
-    ['/research.html#sec-toolchain', '#sec-toolchain'],
-    ['/works.html#project-fresheye', '#project-fresheye'],
-    ['/concerts.html#concert-archive', '#concert-archive'],
-    ['/en/research.html#sec-toolchain', '#sec-toolchain'],
-    ['/zh-hk/honors.html#sec-honors-archive', '#sec-honors-archive']
+    ['/#home-worlds', '#home-worlds'],
+    ['/academics/#sec-ap-archive', '#sec-ap-archive'],
+    ['/honors/#sec-honors-archive', '#sec-honors-archive'],
+    ['/research/#sec-toolchain', '#sec-toolchain'],
+    ['/works/#project-fresheye', '#project-fresheye'],
+    ['/concerts/#concert-archive', '#concert-archive'],
+    ['/en/research/#sec-toolchain', '#sec-toolchain'],
+    ['/zh-hk/honors/#sec-honors-archive', '#sec-honors-archive']
   ] as const
 
   for (const [route, targetSelector] of destinations) {
@@ -405,11 +405,11 @@ test('adaptive header keeps localized controls and deep-link anchors stable', as
     })).toBeGreaterThanOrEqual(8)
   }
 
-  await page.goto('/en/research.html')
+  await page.goto('/en/research/')
   await waitForReady(page)
   const zhHkLink = page.locator('.locale-switcher-desktop a[hreflang="zh-HK"]')
-  await expect(zhHkLink).toHaveAttribute('href', '/zh-hk/research.html')
+  await expect(zhHkLink).toHaveAttribute('href', '/zh-hk/research/')
   await zhHkLink.click()
-  await expect(page).toHaveURL(/\/zh-hk\/research\.html$/)
+  await expect(page).toHaveURL(/\/zh-hk\/research\/$/)
   await expect(page.locator('.site-nav')).toHaveAttribute('data-header-state', 'resting')
 })

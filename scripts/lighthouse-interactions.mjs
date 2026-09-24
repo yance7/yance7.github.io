@@ -20,13 +20,13 @@ const scenarios = [
     height: 900,
     routes: [
       {
-        page: 'index.html',
+        page: '/',
         interactions: [
           { name: 'theme-toggle', selector: '.theme-orbit', run: (page) => page.click('.theme-orbit') }
         ]
       },
       {
-        page: 'honors.html',
+        page: '/honors/',
         interactions: [
           {
             name: 'honor-filter',
@@ -39,7 +39,7 @@ const scenarios = [
         ]
       },
       {
-        page: 'concerts.html',
+        page: '/concerts/',
         interactions: [
           {
             name: 'album-selection',
@@ -73,7 +73,7 @@ const scenarios = [
     height: 844,
     routes: [
       {
-        page: 'index.html',
+        page: '/',
         interactions: [
           { name: 'theme-toggle', selector: '.theme-orbit', run: (page) => page.click('.theme-orbit') },
           {
@@ -89,7 +89,7 @@ const scenarios = [
         ]
       },
       {
-        page: 'honors.html',
+        page: '/honors/',
         interactions: [
           {
             name: 'honor-filter',
@@ -102,7 +102,7 @@ const scenarios = [
         ]
       },
       {
-        page: 'concerts.html',
+        page: '/concerts/',
         interactions: [
           {
             name: 'album-selection',
@@ -271,7 +271,7 @@ async function runScenario(browser, scenario, route) {
     config: lighthouseConfig(scenario),
     flags: { usePassiveGathering: false }
   })
-  await flow.navigate(`${BASE_URL}/${route.page}`, { name: `navigate:${route.page}` })
+  await flow.navigate(`${BASE_URL}${route.page}`, { name: `navigate:${route.page}` })
   await page.evaluate(() => document.fonts?.ready)
   await delay(1000)
   for (const interaction of route.interactions) {
@@ -301,7 +301,7 @@ async function main() {
   let browser
   const failures = []
   try {
-    await waitForPreview(`${BASE_URL}/index.html`, preview)
+    await waitForPreview(`${BASE_URL}/`, preview)
     browser = await puppeteer.launch({
       executablePath: chromeExecutable(),
       headless: true,

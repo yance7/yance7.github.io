@@ -4,6 +4,7 @@ import {
   getLocalePrefix,
   localeRegistry,
   resolveLocaleFromPath,
+  resolvePageFromPath,
   stripLocalePrefix,
   uiMessages
 } from '../src/i18n'
@@ -21,11 +22,11 @@ function nestedKeys(value: unknown, prefix = ''): string[] {
 describe('locale path resolution', () => {
   it.each([
     ['/', 'zh-CN'],
-    ['/research.html', 'zh-CN'],
+    ['/research/', 'zh-CN'],
     ['/zh-hk/', 'zh-HK'],
-    ['/zh-hk/research.html', 'zh-HK'],
+    ['/zh-hk/research/', 'zh-HK'],
     ['/en/', 'en'],
-    ['/en/research.html', 'en'],
+    ['/en/research/', 'en'],
     ['/en/does-not-exist', 'en']
   ] as const)('resolves %s to %s', (pathname, expected) => {
     expect(resolveLocaleFromPath(pathname)).toBe(expected)
@@ -33,13 +34,27 @@ describe('locale path resolution', () => {
 
   it('strips only an explicit locale prefix', () => {
     expect(stripLocalePrefix('/')).toBe('/')
-    expect(stripLocalePrefix('/research.html')).toBe('/research.html')
+    expect(stripLocalePrefix('/research/')).toBe('/research/')
     expect(stripLocalePrefix('/zh-hk/')).toBe('/')
-    expect(stripLocalePrefix('/zh-hk/research.html')).toBe('/research.html')
-    expect(stripLocalePrefix('/en/research.html')).toBe('/research.html')
+    expect(stripLocalePrefix('/zh-hk/research/')).toBe('/research/')
+    expect(stripLocalePrefix('/en/research/')).toBe('/research/')
   })
 })
 
+describe('canonical page path resolution', () => {
+  it.each([
+    ['/', 'home'],
+    ['/academics/', 'academics'],
+    ['/honors/', 'honors'],
+    ['/research/', 'research'],
+    ['/works/', 'works'],
+    ['/concerts/', 'concerts'],
+    ['/zh-hk/research/', 'research'],
+    ['/en/concerts/', 'concerts']
+  ] as const)('resolves %s to %s', (pathname, expected) => {
+    expect(resolvePageFromPath(pathname)).toBe(expected)
+  })
+})
 describe('localized page hrefs', () => {
   it('uses locale home paths without index.html', () => {
     expect(getLocalePrefix('zh-CN')).toBe('')
@@ -54,9 +69,9 @@ describe('localized page hrefs', () => {
     expect(buildLocalizedPageHref('research', 'en', {
       search: '?from=nav',
       hash: '#sec-toolchain'
-    })).toBe('/en/research.html?from=nav#sec-toolchain')
+    })).toBe('/en/research/?from=nav#sec-toolchain')
     expect(buildLocalizedPageHref('honors', 'zh-HK', { hash: '#sec-honors-archive' }))
-      .toBe('/zh-hk/honors.html#sec-honors-archive')
+      .toBe('/zh-hk/honors/#sec-honors-archive')
   })
 })
 
@@ -72,7 +87,7 @@ describe('typed UI dictionaries', () => {
 describe('stable registry and localized content contracts', () => {
   it('keeps route facts separate from localized navigation and section copy', () => {
     expect(pageRegistry.research).toMatchObject({
-      href: 'research.html',
+      routePath: '/research/',
       sectionIds: ['sec-research-timeline', 'sec-toolchain']
     })
     expect(pageRegistry.works.sectionIds).toEqual([
@@ -94,6 +109,15 @@ describe('stable registry and localized content contracts', () => {
     })
     expect(ids('zh-HK')).toEqual(ids('zh-CN'))
     expect(ids('en')).toEqual(ids('zh-CN'))
+    const englishDeployment = getLocalizedResearch('en')
+      .find((item) => item.id === 'fresheye')
+      ?.proof?.find((proof) => proof.type === 'deployment')
+    expect(englishDeployment?.href).toBe('/en/works/#project-fresheye')
+
+    const englishProjectLink = getLocalizedProjects('en')
+      .flatMap((project) => project.story.chapters)
+      .find((chapter) => chapter.href?.includes('fishfreshnet-v2'))
+    expect(englishProjectLink?.href).toBe('/en/research/#fishfreshnet-v2')
   })
 
   it('provides one-language navigation and stable section IDs', () => {
@@ -121,7 +145,8 @@ describe('localized SEO contracts', () => {
   it('emits six pages for each locale without localized index.html URLs', () => {
     expect(localizedSitemapEntries).toHaveLength(18)
     expect(new Set(localizedSitemapEntries.map((entry) => entry.path)).size).toBe(18)
-    expect(localizedSitemapEntries.some((entry) => entry.path.includes('/index.html'))).toBe(false)
+    expect(localizedSitemapEntries.some((entry) => entry.path.includes('.html'))).toBe(false)
+    expect(localizedSitemapEntries.map((entry) => entry.path)).toContain('research/')
     expect(localizedSitemapEntries.filter((entry) => entry.path === '' || entry.path === 'zh-hk/' || entry.path === 'en/')).toHaveLength(3)
   })
 
