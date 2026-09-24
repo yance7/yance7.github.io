@@ -61,7 +61,8 @@ test('shows the final Hero state when reduced motion is requested', async ({ pag
 
 test('keeps the Hero static when the browser requests data saving', async ({ page }) => {
   await page.addInitScript(() => {
-    Object.defineProperty(navigator, 'connection', { configurable: true, value: { saveData: true } })
+    const connection = Object.assign(new EventTarget(), { saveData: true })
+    Object.defineProperty(navigator, 'connection', { configurable: true, value: connection })
   })
   await page.goto('/')
 
