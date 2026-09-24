@@ -111,10 +111,13 @@ test('footer contact feedback is scoped to pointer capabilities', async ({ page 
   ))
 
   if (!touchLike) {
+    const contactGrid = page.locator('.foot-contacts')
+    await page.evaluate(() => { document.documentElement.style.scrollBehavior = 'auto' })
+    await link.scrollIntoViewIfNeeded()
+    await expect(contactGrid).toHaveClass(/revealed/)
+    await expect(contactGrid).toHaveCSS('transform', 'none')
+    await expect(link).toBeInViewport()
     await link.hover()
-    await page.evaluate(() => new Promise<void>((resolve) => {
-      requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
-    }))
     await expect(link).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, -1)')
     await expect(link.locator('.foot-contact-arrow')).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 2, -2)')
   }
