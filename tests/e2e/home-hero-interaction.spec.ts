@@ -320,32 +320,34 @@ test('keeps the static vector and labels when Path2D is unavailable', async ({ p
   await expect(page.locator('.home-hero-actions a')).toHaveCount(2)
 })
 
-test('uses an 80px hover ring only inside the fine-pointer Hero', async ({ page }) => {
+test('uses the shared hover ring on the Hero and gives its actions clear feedback', async ({ page }) => {
   test.skip(!(await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)))
   await page.goto('/')
   await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'complete', { timeout: 5000 })
   await page.evaluate(() => { document.documentElement.style.scrollBehavior = 'auto' })
 
-  const cursor = page.locator('.home-hero-pointer')
+  const cursor = page.locator('.sitewide-cursor')
   await expect(cursor).toHaveCount(1)
-  await page.locator('.home-hero').hover()
+  await page.locator('.home-hero').hover({ position: { x: 8, y: 8 } })
   await expect(cursor).toHaveCSS('opacity', '1')
-  expect(await cursor.evaluate((element) => element.getBoundingClientRect().width)).toBe(32)
+  await expect(cursor).toHaveAttribute('data-context', 'surface')
+  expect(await cursor.evaluate((element) => element.getBoundingClientRect().width)).toBe(30)
   const action = page.locator('.home-hero-actions a').first()
   await action.hover()
   await expect.poll(() => action.evaluate((element) => element.matches(':hover'))).toBe(true)
-  await expect.poll(() => cursor.evaluate((element) => element.getBoundingClientRect().width)).toBe(80)
+  await expect(cursor).toHaveAttribute('data-context', 'interactive')
+  await expect.poll(() => cursor.evaluate((element) => element.getBoundingClientRect().width)).toBe(40)
   await expect(cursor).toHaveCSS('pointer-events', 'none')
-  await page.locator('header').hover()
+  await page.mouse.move(-1, -1)
   await expect(cursor).toHaveCSS('opacity', '0')
 })
 
-test('updates the hover ring when scrolling changes the element under a stationary pointer', async ({ page }) => {
+test('updates the shared pointer context when scrolling changes the element under a stationary pointer', async ({ page }) => {
   test.skip(!(await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)))
   await page.goto('/')
   await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'complete', { timeout: 5000 })
 
-  const cursor = page.locator('.home-hero-pointer')
+  const cursor = page.locator('.sitewide-cursor')
   await expect(cursor).toHaveCount(1)
   const action = page.locator('.home-hero-actions a').first()
   const point = await action.evaluate((element) => {
@@ -354,7 +356,7 @@ test('updates the hover ring when scrolling changes the element under a stationa
   })
 
   await page.mouse.move(point.x, point.y)
-  await expect.poll(() => cursor.evaluate((element) => element.getBoundingClientRect().width)).toBe(80)
+  await expect(cursor).toHaveAttribute('data-context', 'interactive')
   await page.evaluate(() => window.scrollBy({ top: 100, behavior: 'instant' }))
 
   await expect.poll(() => page.evaluate(({ x, y }) => {
@@ -362,14 +364,14 @@ test('updates the hover ring when scrolling changes the element under a stationa
     const target = document.elementFromPoint(x, y)
     return Boolean(hero && target && hero.contains(target) && !target.closest('a, button, [role="button"], input, select, textarea, summary, [tabindex]:not([tabindex="-1"])'))
   }, point)).toBe(true)
-  await expect.poll(() => cursor.evaluate((element) => element.getBoundingClientRect().width)).toBe(32)
+  await expect(cursor).toHaveAttribute('data-context', 'particle')
 })
 
 test('uses a touch ripple without creating a custom pointer on coarse devices', async ({ page }) => {
   test.skip(!await page.evaluate(() => window.matchMedia('(pointer: coarse)').matches))
   await page.goto('/')
 
-  await expect(page.locator('.home-hero-pointer')).toHaveCount(0)
+  await expect(page.locator('.sitewide-cursor')).toHaveCount(0)
   await page.locator('.home-hero-particles').tap()
   await expect(page.locator('.home-hero-touch-ripple')).toHaveAttribute('data-active', 'true')
   await expect(page.locator('.home-hero-particles-canvas')).toHaveAttribute('data-last-input', 'touch')

@@ -112,13 +112,24 @@ test('Research toolchain groups expose a passive accent without lifting the grou
 
   const group = page.locator('.toolchain-group').first()
 
+  await page.evaluate(() => {
+    document.documentElement.style.scrollBehavior = 'auto'
+  })
   await group.scrollIntoViewIfNeeded()
+  await expect.poll(() => group.evaluate((element) => {
+    const rect = element.getBoundingClientRect()
+    const headerBottom = document.querySelector('.site-nav')?.getBoundingClientRect().bottom ?? 0
+    return rect.top >= headerBottom && rect.bottom <= window.innerHeight
+  })).toBe(true)
   await expect(group).toHaveClass(/revealed/)
+  await expect(group).toHaveCSS('transform', 'none')
   await group.hover()
 
-  await expect.poll(() => group.evaluate((element) => (
-    Number.parseFloat(getComputedStyle(element, '::after').opacity)
-  ))).toBeGreaterThan(0)
+  await expect.poll(() => group.evaluate((element) => {
+    const hovered = element.matches(':hover')
+    const opacity = Number.parseFloat(getComputedStyle(element, '::after').opacity)
+    return hovered && opacity > 0
+  })).toBe(true)
 
   const state = await group.evaluate((element) => ({
     content: getComputedStyle(element, '::after').content,

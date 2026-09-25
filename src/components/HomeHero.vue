@@ -5,7 +5,7 @@ import { getLocalizedHomeCopy } from '../data/locales'
 import { useHomeHeroIntro } from '../composables/useHomeHeroIntro'
 import { useLocale } from '../i18n'
 import HomeHeroParticles from './HomeHeroParticles.vue'
-import HomeHeroPointer from './HomeHeroPointer.vue'
+import HomeHeroTouchFeedback from './HomeHeroTouchFeedback.vue'
 import HomeHeroTypewriter from './HomeHeroTypewriter.vue'
 
 const { locale, messages } = useLocale()
@@ -46,6 +46,6 @@ const { state, animateParticles, isIntroActive, introStartedAt } = useHomeHeroIn
       <HomeHeroParticles :animate-intro="animateParticles" :intro-started-at="introStartedAt" />
     </div>
 
-    <HomeHeroPointer />
+    <HomeHeroTouchFeedback />
   </section>
 </template>
