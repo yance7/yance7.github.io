@@ -99,8 +99,8 @@ for (const locale of locales) {
 
       const isDesktop = viewport.width > 760
       const expectedStageHeight = isDesktop
-        ? Math.max(320, Math.min(480, viewport.width * 0.33))
-        : 240
+        ? Math.max(340, Math.min(480, viewport.width * 0.36))
+        : 300
       expect(Math.abs(layout.stageHeight - expectedStageHeight), `${context} stage height`).toBeLessThanOrEqual(2)
 
       if (isDesktop) {
@@ -213,7 +213,7 @@ for (const locale of locales) {
         ? 16
         : Math.max(72, Math.min(128, viewport.width * 0.08))
       expect(Math.abs(layout.topPadding - expectedTopPadding), `${context} hero top padding`).toBeLessThanOrEqual(1)
-      expect(Math.abs(layout.stageRadius - 24), `${context} stage corner radius`).toBeLessThanOrEqual(2)
+      expect(Math.abs(layout.stageRadius - 28), `${context} stage corner radius`).toBeLessThanOrEqual(2)
     }
   })
 }
