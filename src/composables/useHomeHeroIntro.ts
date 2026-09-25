@@ -1,10 +1,17 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch, type ComputedRef } from 'vue'
 import {
   HOME_HERO_INTRO_TIMINGS,
-  shouldAnimateHomeHeroIntro
+  getHomeHeroIntroState,
+  shouldAnimateHomeHeroIntro,
+  type HomeHeroIntroState
 } from '../utils/homeHeroIntro'
 
-type IntroState = 'static' | 'typing' | 'revealing-actions' | 'complete'
+type IntroState = 'static' | HomeHeroIntroState
+
+const typingDurationMs = HOME_HERO_INTRO_TIMINGS.firstLineMs
+  + HOME_HERO_INTRO_TIMINGS.linePauseMs
+  + HOME_HERO_INTRO_TIMINGS.secondLineMs
+const completeDurationMs = typingDurationMs + HOME_HERO_INTRO_TIMINGS.actionsMs
 
 interface NetworkInformation extends EventTarget {
   saveData?: boolean
@@ -30,6 +37,7 @@ export function useHomeHeroIntro(greeting: ComputedRef<string>, statement: Compu
   const timers = new Set<number>()
   let motionPreference: MediaQueryList | null = null
   let connection: NetworkInformation | undefined
+  let introStartedAt: number | null = null
 
   function clearTimers() {
     timers.forEach((timer) => window.clearTimeout(timer))
@@ -46,15 +54,32 @@ export function useHomeHeroIntro(greeting: ComputedRef<string>, statement: Compu
 
   function showFinalState() {
     clearTimers()
+    introStartedAt = null
     animateParticles.value = false
     state.value = 'static'
   }
 
+  function updateIntroState() {
+    if (introStartedAt === null) return
+
+    const elapsedMs = window.performance.now() - introStartedAt
+    const nextState = getHomeHeroIntroState(elapsedMs)
+    state.value = nextState
+
+    const nextDeadlineMs = nextState === 'typing'
+      ? typingDurationMs
+      : nextState === 'revealing-actions'
+        ? completeDurationMs
+        : null
+
+    if (nextDeadlineMs !== null) {
+      schedule(updateIntroState, Math.max(0, nextDeadlineMs - elapsedMs))
+    }
+  }
+
   function startIntro() {
-    schedule(() => {
-      state.value = 'revealing-actions'
-      schedule(() => { state.value = 'complete' }, HOME_HERO_INTRO_TIMINGS.actionsMs)
-    }, HOME_HERO_INTRO_TIMINGS.firstLineMs + HOME_HERO_INTRO_TIMINGS.linePauseMs + HOME_HERO_INTRO_TIMINGS.secondLineMs)
+    introStartedAt = window.performance.now()
+    schedule(updateIntroState, typingDurationMs)
   }
 
   function stopForMotionPreference() {
