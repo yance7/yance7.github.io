@@ -158,15 +158,80 @@ test('uses a bounded Canvas particle field and pauses it when the Hero leaves vi
   const particleCount = Number(await canvas.getAttribute('data-particle-count'))
   const mobile = await page.evaluate(() => window.matchMedia('(pointer: coarse)').matches)
   expect(particleCount).toBeGreaterThan(0)
-  expect(particleCount).toBeLessThanOrEqual(mobile ? 1400 : 3200)
+  expect(particleCount).toBeLessThanOrEqual(mobile ? 1000 : 1900)
   const pixelRatio = await canvas.evaluate((element) => (
     (element as HTMLCanvasElement).width / element.getBoundingClientRect().width
   ))
-  expect(pixelRatio).toBeLessThanOrEqual(1.52)
+  expect(pixelRatio).toBeLessThanOrEqual(2.02)
   await expect(canvas).toHaveAttribute('data-particle-state', 'settled', { timeout: 4000 })
 
   await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }))
   await expect(canvas).toHaveAttribute('data-particle-state', 'paused')
+})
+
+test('keeps a sharp but bounded Canvas backing store on high-DPI displays', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'devicePixelRatio', { configurable: true, value: 3 })
+  })
+  await page.goto('/')
+
+  const canvas = page.locator('.home-hero-particles-canvas')
+  await expect(canvas).toBeVisible()
+  await expect(canvas).toHaveAttribute('data-particle-state', 'settled', { timeout: 4000 })
+
+  const pixelRatio = await canvas.evaluate((element) => (
+    (element as HTMLCanvasElement).width / element.getBoundingClientRect().width
+  ))
+  expect(pixelRatio).toBeGreaterThanOrEqual(1)
+  expect(pixelRatio).toBeLessThanOrEqual(2.02)
+})
+
+test('redistributes particles under a fine pointer and lets them settle after it leaves', async ({ page }) => {
+  test.skip(!(await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)))
+  await page.goto('/')
+
+  const canvas = page.locator('.home-hero-particles-canvas')
+  await expect(canvas).toHaveAttribute('data-particle-state', 'settled', { timeout: 4000 })
+  await canvas.evaluate((element) => {
+    const bounds = element.getBoundingClientRect()
+    window.scrollBy({ top: bounds.top + bounds.height / 2 - window.innerHeight / 2, behavior: 'instant' })
+  })
+  await expect(canvas).toHaveAttribute('data-particle-state', 'settled', { timeout: 4000 })
+  const readCanvasGrid = () => canvas.evaluate((element) => {
+    const target = element as HTMLCanvasElement
+    const context = target.getContext('2d')!
+    const pixels = context.getImageData(0, 0, target.width, target.height).data
+    const gridSize = 96
+    const grid = new Uint16Array(gridSize * gridSize)
+    for (let y = 0; y < target.height; y += 2) {
+      for (let x = 0; x < target.width; x += 2) {
+        if (!pixels[(y * target.width + x) * 4 + 3]) continue
+        const gridX = Math.min(gridSize - 1, Math.floor(x * gridSize / target.width))
+        const gridY = Math.min(gridSize - 1, Math.floor(y * gridSize / target.height))
+        const gridIndex = gridY * gridSize + gridX
+        grid[gridIndex] = (grid[gridIndex] ?? 0) + 1
+      }
+    }
+    return Array.from(grid)
+  })
+  const pixelDistance = (first: number[], second: number[]) => first.reduce(
+    (distance, value, index) => distance + Math.abs(value - (second[index] ?? 0)),
+    0
+  )
+  const baseline = await readCanvasGrid()
+  const bounds = await canvas.boundingBox()
+  expect(bounds).not.toBeNull()
+
+  await page.mouse.move(bounds!.x + bounds!.width / 2, bounds!.y + bounds!.height / 2)
+  await expect.poll(async () => pixelDistance(baseline, await readCanvasGrid())).toBeGreaterThan(0)
+  const disturbed = await readCanvasGrid()
+  const disturbedDistance = pixelDistance(baseline, disturbed)
+
+  await page.mouse.move(bounds!.x + bounds!.width + 24, bounds!.y + bounds!.height + 24)
+  await expect.poll(
+    async () => pixelDistance(baseline, await readCanvasGrid()),
+    { timeout: 4000 }
+  ).toBeLessThan(disturbedDistance * 0.2)
 })
 
 test('resumes particle drawing when the hidden page becomes visible', async ({ page }) => {
@@ -189,35 +254,34 @@ test('resumes particle drawing when the hidden page becomes visible', async ({ p
   await expect(canvas).toHaveAttribute('data-particle-state', /gathering|settled/)
 })
 
-test('uses the original intro clock when Canvas image decoding finishes late', async ({ page }) => {
-  await page.addInitScript(() => {
-    const decodeImage = HTMLImageElement.prototype.decode
-    const testWindow = window as Window & { releaseHomeHeroMarkDecode?: () => void }
+test('samples the centered vector Y and keeps the three stage labels as crisp DOM text', async ({ page }) => {
+  await page.goto('/')
+  const stage = page.locator('.home-hero-particles')
+  const mark = stage.locator('.home-hero-particles-mark')
+  const canvas = stage.locator('.home-hero-particles-canvas')
+  const labels = stage.locator('.home-hero-particles-labels')
 
-    HTMLImageElement.prototype.decode = function () {
-      if (!this.src.endsWith('/assets/brand/yance-mark-fallback.png')) {
-        return decodeImage.call(this)
-      }
+  await expect(stage).toHaveAttribute('data-render-mode', 'canvas', { timeout: 4000 })
+  await expect(canvas).toHaveAttribute('data-particle-state', 'settled', { timeout: 4000 })
+  await expect(mark).toHaveAttribute('data-mark-source', 'vector')
+  await expect(mark.locator('path')).toHaveCount(3)
+  await expect(mark.locator('[data-y-branch="right"]')).toHaveAttribute('transform', 'translate(220 0) scale(-1 1)')
+  await expect(canvas).toHaveAttribute('data-target-source', 'vector-path')
+  await expect(stage.locator('img')).toHaveCount(0)
+  await expect(labels.locator('span')).toHaveText(['RESEARCH', 'BUILD', 'LIVE'])
+  await expect(labels).toHaveCSS('opacity', '1')
 
-      const decodedImage = decodeImage.call(this)
-      return new Promise<void>((resolve, reject) => {
-        testWindow.releaseHomeHeroMarkDecode = () => { void decodedImage.then(resolve, reject) }
-      })
+  const layout = await labels.evaluate((element) => {
+    const bounds = element.getBoundingClientRect()
+    const stageBounds = element.parentElement!.getBoundingClientRect()
+    return {
+      fontSize: Number.parseFloat(getComputedStyle(element).fontSize),
+      contained: bounds.left >= stageBounds.left && bounds.right <= stageBounds.right &&
+        bounds.top >= stageBounds.top && bounds.bottom <= stageBounds.bottom
     }
   })
-
-  await page.goto('/')
-  await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'complete', { timeout: 4000 })
-  await expect.poll(() => page.evaluate(() => (
-    typeof (window as Window & { releaseHomeHeroMarkDecode?: () => void }).releaseHomeHeroMarkDecode === 'function'
-  ))).toBe(true)
-
-  await page.evaluate(() => {
-    (window as Window & { releaseHomeHeroMarkDecode?: () => void }).releaseHomeHeroMarkDecode?.()
-  })
-
-  await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-render-mode', 'canvas', { timeout: 4000 })
-  await expect(page.locator('.home-hero-particles-canvas')).toHaveAttribute('data-particle-state', 'settled', { timeout: 1200 })
+  expect(layout.fontSize).toBeGreaterThanOrEqual(9)
+  expect(layout.contained).toBe(true)
 })
 
 test('keeps the static brand visual when Canvas initialization fails', async ({ page }) => {
@@ -234,15 +298,24 @@ test('keeps the static brand visual when Canvas initialization fails', async ({ 
   await expect(page.locator('.home-hero-actions a')).toHaveCount(2)
 })
 
-test('keeps a complete static fallback when the brand image cannot be decoded', async ({ page }) => {
+test('keeps the static vector and labels when Path2D is unavailable', async ({ page }) => {
   await page.addInitScript(() => {
-    HTMLImageElement.prototype.decode = () => Promise.reject(new Error('Image decoding is unavailable'))
+    Object.defineProperty(window, 'Path2D', {
+      configurable: true,
+      value: class {
+        constructor() {
+          throw new Error('SVG path support is unavailable')
+        }
+      }
+    })
   })
   await page.goto('/')
 
   const particles = page.locator('.home-hero-particles')
   await expect(particles).toHaveAttribute('data-render-mode', 'static-fallback')
   await expect(page.locator('.home-hero-particles-mark')).toBeVisible()
+  await expect(page.locator('.home-hero-particles-labels')).toBeVisible()
+  await expect(page.locator('.home-hero-particles-labels span')).toHaveText(['RESEARCH', 'BUILD', 'LIVE'])
   await expect(page.locator('h1.home-hero-title')).toHaveAccessibleName('你好，我是 Yance 研究、构建，与现场相遇')
   await expect(page.locator('.home-hero-actions a')).toHaveCount(2)
 })
