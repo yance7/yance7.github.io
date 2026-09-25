@@ -142,6 +142,14 @@ async function movePointerAway(page: Page) {
   await page.mouse.move(viewport.width - 1, viewport.height - 1)
 }
 
+async function resetPointerForVisualCapture(page: Page) {
+  await page.mouse.move(-1, -1)
+  await page.evaluate(() => new Promise<void>((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+  }))
+  await expect(page.locator('.sitewide-cursor.is-visible')).toHaveCount(0)
+}
+
 async function settleStableConcertLayout(page: Page) {
   await page.locator('main#main').scrollIntoViewIfNeeded()
   await movePointerAway(page)
@@ -231,6 +239,7 @@ for (const viewport of viewports) {
         await page.goto(route === 'index' ? '/' : `/${route}/`)
         if (route === 'concerts') await stabilizeVisualContext(page)
         await settlePage(page)
+        await resetPointerForVisualCapture(page)
         if (route === 'index') await settleHomeHero(page)
         await expect(page.locator('main#main')).toBeVisible()
         await expect(page.locator('.site-footer')).toHaveCount(1)
@@ -271,6 +280,7 @@ for (const locale of homeHeroLocales) {
         await installTheme(page, theme)
         await page.goto(locale.route)
         await settlePage(page)
+        await resetPointerForVisualCapture(page)
         await settleHomeHero(page)
 
         const hero = page.locator('.home-hero')
@@ -325,6 +335,7 @@ for (const viewport of englishHomeViewports) {
       await installTheme(page, theme)
       await page.goto('/en/')
       await settlePage(page)
+      await resetPointerForVisualCapture(page)
       await settleHomeHero(page)
 
       const leadershipColumn = page.locator('#home-beyond .beyond-column').first()

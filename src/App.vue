@@ -14,6 +14,7 @@ import SiteFooter from './components/SiteFooter.vue'
 import ImageLightbox from './components/ImageLightbox.vue'
 import ScrollProgress from './components/ScrollProgress.vue'
 import PageLoadError from './components/PageLoadError.vue'
+import SitewideCursor from './components/SitewideCursor.vue'
 
 import NotFoundPage from './pages/NotFoundPage.vue'
 
@@ -259,6 +260,7 @@ function moveLightbox(step: number) {
     <div class="ambient ambient-one"></div>
     <div class="ambient ambient-two"></div>
     <div class="grain"></div>
+    <SitewideCursor />
 
     <SiteHeader :page="page" />
 

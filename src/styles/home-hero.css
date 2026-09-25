@@ -331,37 +331,12 @@ html[data-theme='dark'] .home-hero-particles {
   opacity: .18;
 }
 
-.home-hero-pointer,
 .home-hero-touch-ripple {
   position: absolute;
   top: 0;
   left: 0;
   z-index: 10;
   pointer-events: none;
-}
-
-.home-hero-pointer {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border: 1px solid color-mix(in srgb, var(--gold) 72%, var(--line));
-  border-radius: 50%;
-  opacity: 0;
-  transform: translate3d(var(--pointer-x, 0px), var(--pointer-y, 0px), 0) translate(-50%, -50%);
-  transition: width 240ms var(--ease-out), height 240ms var(--ease-out), opacity 120ms ease, border-color 240ms ease;
-  will-change: transform;
-}
-
-.home-hero-pointer.is-visible { opacity: 1; }
-.home-hero-pointer.is-over-interactive { width: 80px; height: 80px; border-color: var(--aqua); }
-
-.home-hero-pointer-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--gold);
-  box-shadow: 0 0 14px var(--glow-gold);
 }
 
 .home-hero-touch-ripple {
@@ -377,11 +352,6 @@ html[data-theme='dark'] .home-hero-particles {
 .home-hero-touch-ripple.is-active {
   opacity: .72;
   transform: translate3d(var(--touch-x, 0px), var(--touch-y, 0px), 0) translate(-50%, -50%) scale(1);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .home-hero-custom-pointer,
-  .home-hero-custom-pointer * { cursor: none; }
 }
 
 .home-hero-particles-labels {
@@ -459,7 +429,6 @@ html[data-theme='dark'] .home-hero-particles {
     animation: none;
   }
 
-  .home-hero-pointer,
   .home-hero-touch-ripple {
     transition: none;
   }

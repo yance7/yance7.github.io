@@ -1,4 +1,67 @@
 /* ===== 内容区与章节标题 ===== */
+.sitewide-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: calc(var(--z-toast) + 1);
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid color-mix(in srgb, var(--gold) 74%, var(--line));
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--gold) 5%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--bg) 28%, transparent);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translate3d(var(--cursor-x, 0px), var(--cursor-y, 0px), 0) translate(-50%, -50%);
+  transition: width 180ms var(--ease-out), height 180ms var(--ease-out), border-color 180ms ease, background-color 180ms ease;
+}
+.sitewide-cursor.is-visible { opacity: 1; visibility: visible; }
+.sitewide-cursor[data-context='interactive'] {
+  width: 40px;
+  height: 40px;
+  border-color: var(--aqua);
+  background: color-mix(in srgb, var(--aqua) 8%, transparent);
+}
+.sitewide-cursor[data-context='particle'] {
+  width: 38px;
+  height: 38px;
+  border-color: color-mix(in srgb, var(--aqua) 82%, var(--gold));
+  background: color-mix(in srgb, var(--aqua) 7%, transparent);
+}
+.sitewide-cursor[data-context='text'] {
+  width: 16px;
+  height: 16px;
+  border-color: color-mix(in srgb, var(--aqua) 65%, var(--line));
+  background: transparent;
+  box-shadow: none;
+}
+.sitewide-cursor-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 10px var(--glow-gold);
+}
+.sitewide-cursor[data-context='interactive'] .sitewide-cursor-dot,
+.sitewide-cursor[data-context='particle'] .sitewide-cursor-dot { background: var(--aqua); }
+.sitewide-cursor[data-context='text'] .sitewide-cursor-dot { display: none; }
+
+html.sitewide-cursor-active,
+html.sitewide-cursor-active * { cursor: none !important; }
+
+html:not(.sitewide-cursor-active) :is(textarea, [contenteditable='true'], [role='textbox'], input:not([type]), input[type='text'], input[type='search'], input[type='email'], input[type='url'], input[type='tel'], input[type='password'], input[type='number']) {
+  cursor: text;
+}
+
+@media (forced-colors: active), (prefers-reduced-motion: reduce) {
+  .sitewide-cursor { display: none !important; }
+  html.sitewide-cursor-active,
+  html.sitewide-cursor-active * { cursor: auto !important; }
+}
+
 .content { max-width: var(--w-max); margin: 0 auto; padding: 0 var(--w-pad) var(--space-section-block); scroll-margin-top: var(--anchor-offset); }
 .section-head { position: relative; max-width: var(--w-editorial); margin-bottom: var(--space-section-head-gap); padding-top: var(--space-5); }
 .section-no {
