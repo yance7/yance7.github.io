@@ -108,6 +108,10 @@ jobs:
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-home-hero-interaction
         run: npm run test:e2e -- tests/e2e/home-hero-interaction.spec.ts --project=webkit-desktop --workers=4 --retries=0
+      - name: WebKit desktop sitewide cursor quality
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-sitewide-cursor
+        run: npm run test:e2e -- tests/e2e/sitewide-cursor.spec.ts --project=webkit-desktop --workers=4 --retries=0
       - name: WebKit mobile ScrollProgress quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-scroll-progress
@@ -148,6 +152,10 @@ jobs:
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-home-hero-interaction
         run: npm run test:e2e -- tests/e2e/home-hero-interaction.spec.ts --project=webkit-mobile --workers=4 --retries=0
+      - name: WebKit mobile sitewide cursor quality
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-sitewide-cursor
+        run: npm run test:e2e -- tests/e2e/sitewide-cursor.spec.ts --project=webkit-mobile --workers=4 --retries=0
       - name: Chromium visual quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/visual
