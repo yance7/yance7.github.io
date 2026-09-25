@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  HOME_HERO_INTRO_STORAGE_KEY,
   HOME_HERO_INTRO_TIMINGS,
   shouldAnimateHomeHeroIntro,
   splitGraphemes
@@ -15,12 +14,10 @@ describe('HomeHero intro utilities', () => {
     expect(splitGraphemes('e\u0301👩‍🔬🇭🇰', () => null)).toEqual(['e\u0301', '👩‍🔬', '🇭🇰'])
   })
 
-  it('plays once per tab only when motion and data preferences allow it', () => {
-    expect(HOME_HERO_INTRO_STORAGE_KEY).toBe('yance-home-hero-intro-v1')
-    expect(shouldAnimateHomeHeroIntro({ hasPlayed: false, reducedMotion: false, saveData: false })).toBe(true)
-    expect(shouldAnimateHomeHeroIntro({ hasPlayed: true, reducedMotion: false, saveData: false })).toBe(false)
-    expect(shouldAnimateHomeHeroIntro({ hasPlayed: false, reducedMotion: true, saveData: false })).toBe(false)
-    expect(shouldAnimateHomeHeroIntro({ hasPlayed: false, reducedMotion: false, saveData: true })).toBe(false)
+  it('animates each normal document load unless motion or data preferences opt out', () => {
+    expect(shouldAnimateHomeHeroIntro({ reducedMotion: false, saveData: false })).toBe(true)
+    expect(shouldAnimateHomeHeroIntro({ reducedMotion: true, saveData: false })).toBe(false)
+    expect(shouldAnimateHomeHeroIntro({ reducedMotion: false, saveData: true })).toBe(false)
   })
 
   it('keeps the complete intro within the specified 3.6 second limit', () => {

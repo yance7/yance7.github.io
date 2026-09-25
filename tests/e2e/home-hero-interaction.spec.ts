@@ -99,22 +99,27 @@ for (const locale of locales) {
   })
 }
 
-test('replays the intro in a new tab while a same-tab return stays final', async ({ context, page }) => {
-  await observeHomeHeroIntro(page)
-  await page.goto('/')
-  await expectHomeHeroIntroFrame(page, { introState: 'typing', finalState: 'false' })
-  await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'complete', { timeout: 4000 })
+for (const locale of locales) {
+  test(`${locale.route} replays the intro after reload and same-tab return`, async ({ page }) => {
+    await observeHomeHeroIntro(page)
+    await page.goto(locale.route)
+    await expectHomeHeroIntroFrame(page, activeTypingFrame)
+    const canvas = page.locator('.home-hero-particles-canvas')
+    await expect(canvas).toBeVisible()
+    await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'complete', { timeout: 4000 })
+    await expect(canvas).toHaveAttribute('data-particle-state', 'settled', { timeout: 4000 })
 
-  await page.goto('/research/')
-  await page.goto('/')
-  await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'static')
+    await page.reload()
+    await expectHomeHeroIntroFrame(page, activeTypingFrame)
+    await expect(canvas).toBeVisible()
+    await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'complete', { timeout: 4000 })
+    await expect(canvas).toHaveAttribute('data-particle-state', 'settled', { timeout: 4000 })
 
-  const newTab = await context.newPage()
-  await observeHomeHeroIntro(newTab)
-  await newTab.goto('/')
-  await expectHomeHeroIntroFrame(newTab, { introState: 'typing', finalState: 'false' })
-  await newTab.close()
-})
+    await page.goto('/research/')
+    await page.goto(locale.route)
+    await expectHomeHeroIntroFrame(page, activeTypingFrame)
+  })
+}
 
 test('shows the final Hero state when reduced motion is requested', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
@@ -124,6 +129,8 @@ test('shows the final Hero state when reduced motion is requested', async ({ pag
   await expect(page.locator('.home-hero-typewriter')).toHaveAttribute('data-final-state', 'true')
   await expect(page.locator('.home-hero-particles-canvas')).toHaveCount(0)
   await expect(page.locator('.home-hero-particles-mark')).toBeVisible()
+  await expect(page.locator('h1.home-hero-title')).toHaveAccessibleName('你好，我是 Yance 研究、构建，与现场相遇')
+  await expect(page.locator('.home-hero-actions a')).toHaveCount(2)
 })
 
 test('keeps the Hero static when the browser requests data saving', async ({ page }) => {
@@ -135,6 +142,10 @@ test('keeps the Hero static when the browser requests data saving', async ({ pag
 
   await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'static')
   await expect(page.locator('.home-hero-particles-canvas')).toHaveCount(0)
+  await expect(page.locator('.home-hero-particles-mark')).toBeVisible()
+  await expect(page.locator('.home-hero-typewriter')).toHaveAttribute('data-final-state', 'true')
+  await expect(page.locator('h1.home-hero-title')).toHaveAccessibleName('你好，我是 Yance 研究、构建，与现场相遇')
+  await expect(page.locator('.home-hero-actions a')).toHaveCount(2)
 })
 
 test('uses a bounded Canvas particle field and pauses it when the Hero leaves view', async ({ page }) => {
@@ -162,6 +173,8 @@ test('resumes particle drawing when the hidden page becomes visible', async ({ p
   await page.goto('/')
   const canvas = page.locator('.home-hero-particles-canvas')
   await expect(canvas).toBeVisible()
+  await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-render-mode', 'canvas')
+  await expect(canvas).toHaveAttribute('data-particle-state', 'settled', { timeout: 4000 })
 
   await page.evaluate(() => {
     Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' })
@@ -190,13 +203,27 @@ test('keeps the static brand visual when Canvas initialization fails', async ({ 
   await expect(page.locator('.home-hero-actions a')).toHaveCount(2)
 })
 
+test('keeps a complete static fallback when the brand image cannot be decoded', async ({ page }) => {
+  await page.addInitScript(() => {
+    HTMLImageElement.prototype.decode = () => Promise.reject(new Error('Image decoding is unavailable'))
+  })
+  await page.goto('/')
+
+  const particles = page.locator('.home-hero-particles')
+  await expect(particles).toHaveAttribute('data-render-mode', 'static-fallback')
+  await expect(page.locator('.home-hero-particles-mark')).toBeVisible()
+  await expect(page.locator('h1.home-hero-title')).toHaveAccessibleName('你好，我是 Yance 研究、构建，与现场相遇')
+  await expect(page.locator('.home-hero-actions a')).toHaveCount(2)
+})
+
 test('uses an 80px hover ring only inside the fine-pointer Hero', async ({ page }) => {
   test.skip(!(await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)))
-  await page.addInitScript(() => sessionStorage.setItem('yance-home-hero-intro-v1', 'played'))
   await page.goto('/')
+  await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'complete', { timeout: 5000 })
   await page.evaluate(() => { document.documentElement.style.scrollBehavior = 'auto' })
 
   const cursor = page.locator('.home-hero-pointer')
+  await expect(cursor).toHaveCount(1)
   await page.locator('.home-hero').hover()
   await expect(cursor).toHaveCSS('opacity', '1')
   expect(await cursor.evaluate((element) => element.getBoundingClientRect().width)).toBe(32)
@@ -211,10 +238,11 @@ test('uses an 80px hover ring only inside the fine-pointer Hero', async ({ page 
 
 test('updates the hover ring when scrolling changes the element under a stationary pointer', async ({ page }) => {
   test.skip(!(await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)))
-  await page.addInitScript(() => sessionStorage.setItem('yance-home-hero-intro-v1', 'played'))
   await page.goto('/')
+  await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'complete', { timeout: 5000 })
 
   const cursor = page.locator('.home-hero-pointer')
+  await expect(cursor).toHaveCount(1)
   const action = page.locator('.home-hero-actions a').first()
   const point = await action.evaluate((element) => {
     const bounds = element.getBoundingClientRect()

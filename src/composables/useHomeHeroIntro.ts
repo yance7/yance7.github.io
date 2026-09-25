@@ -1,6 +1,5 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch, type ComputedRef } from 'vue'
 import {
-  HOME_HERO_INTRO_STORAGE_KEY,
   HOME_HERO_INTRO_TIMINGS,
   shouldAnimateHomeHeroIntro
 } from '../utils/homeHeroIntro'
@@ -15,13 +14,9 @@ function getInitialMode() {
   if (typeof window === 'undefined') return false
 
   try {
-    const hasPlayed = window.sessionStorage.getItem(HOME_HERO_INTRO_STORAGE_KEY) === 'played'
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const saveData = (navigator as Navigator & { connection?: NetworkInformation }).connection?.saveData === true
-    if (!shouldAnimateHomeHeroIntro({ hasPlayed, reducedMotion, saveData })) return false
-
-    window.sessionStorage.setItem(HOME_HERO_INTRO_STORAGE_KEY, 'played')
-    return true
+    return shouldAnimateHomeHeroIntro({ reducedMotion, saveData })
   } catch {
     return false
   }

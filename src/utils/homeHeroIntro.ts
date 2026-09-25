@@ -1,5 +1,3 @@
-export const HOME_HERO_INTRO_STORAGE_KEY = 'yance-home-hero-intro-v1'
-
 export const HOME_HERO_INTRO_TIMINGS = {
   firstLineMs: 720,
   linePauseMs: 160,
@@ -14,7 +12,6 @@ interface GraphemeSegmenter {
 type GraphemeSegmenterFactory = () => GraphemeSegmenter | null
 
 export interface HomeHeroIntroEnvironment {
-  hasPlayed: boolean
   reducedMotion: boolean
   saveData: boolean
 }
@@ -74,5 +71,5 @@ export function splitGraphemes(
 }
 
 export function shouldAnimateHomeHeroIntro(environment: HomeHeroIntroEnvironment): boolean {
-  return !environment.hasPlayed && !environment.reducedMotion && !environment.saveData
+  return !environment.reducedMotion && !environment.saveData
 }
