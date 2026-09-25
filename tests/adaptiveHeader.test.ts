@@ -17,13 +17,15 @@ describe('adaptive header source contracts', () => {
     expect(header).toContain('class="nav-rail"')
   })
 
-  it('uses an IntersectionObserver-only state composable with cleanup', () => {
+  it('synchronizes sentinel state on scroll and cleans up both observers', () => {
     const composable = readFileSync(resolve(root, 'src/composables/useAdaptiveHeader.ts'), 'utf8')
 
     expect(composable).toContain('export type HeaderState = \'resting\' | \'floating\'')
     expect(composable).toContain('IntersectionObserver')
+    expect(composable).toContain("window.addEventListener('scroll', updateState, { passive: true })")
+    expect(composable).toContain("window.removeEventListener('scroll', updateState)")
+    expect(composable).toContain('sentinel.getBoundingClientRect()')
     expect(composable).toContain('observer?.disconnect()')
-    expect(composable).not.toContain("addEventListener('scroll'")
     expect(composable).not.toContain('useTheme')
   })
 
