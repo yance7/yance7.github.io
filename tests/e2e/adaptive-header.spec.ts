@@ -378,6 +378,56 @@ test('mobile floating header keeps controls touchable and preserves the existing
   await expect(header.locator('.menu-trigger')).toBeFocused()
 })
 
+test('adaptive header catches fragment scrolling after sentinel observation', async ({ page }) => {
+  await page.addInitScript(() => {
+    const NativeIntersectionObserver = window.IntersectionObserver
+
+    Object.defineProperty(window, 'IntersectionObserver', {
+      configurable: true,
+      value: class DelayedSentinelObserver {
+        private readonly observer: IntersectionObserver
+        private readonly sentinels = new WeakSet<Element>()
+
+        constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) {
+          this.observer = new NativeIntersectionObserver((entries, observer) => {
+            const updates = entries.filter((entry) => !this.sentinels.has(entry.target))
+            if (updates.length) callback(updates, observer)
+          }, options)
+        }
+
+        observe(target: Element) {
+          if (target.matches('.site-nav-sentinel')) this.sentinels.add(target)
+          this.observer.observe(target)
+        }
+
+        unobserve(target: Element) {
+          this.observer.unobserve(target)
+        }
+
+        disconnect() {
+          this.observer.disconnect()
+        }
+
+        takeRecords() {
+          return this.observer.takeRecords()
+        }
+      }
+    })
+  })
+
+  await page.goto('/')
+  await waitForReady(page)
+
+  const header = page.locator('.site-nav')
+  await expect(header).toHaveAttribute('data-header-state', 'resting')
+  await page.evaluate(() => {
+    history.replaceState(null, '', '#home-worlds')
+    document.querySelector('#home-worlds')?.scrollIntoView({ behavior: 'instant', block: 'start' })
+  })
+
+  await expect(header).toHaveAttribute('data-header-state', 'floating')
+})
+
 test('adaptive header keeps localized controls and deep-link anchors stable', async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 900 })
 
