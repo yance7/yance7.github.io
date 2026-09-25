@@ -5,6 +5,11 @@ export interface HomeHeroParticleTarget {
 }
 
 export const HOME_HERO_PARTICLE_GATHER_DURATION_MS = 1600
+export const HOME_HERO_Y_VECTOR_SIZE = 220
+export const HOME_HERO_Y_BRANCH_PATH = 'M 110 108 C 92 85 67 57 42 33'
+export const HOME_HERO_Y_STEM_PATH = 'M 110 102 C 110 128 110 158 110 188'
+export const HOME_HERO_Y_MIRROR_TRANSFORM = 'translate(220 0) scale(-1 1)'
+export const HOME_HERO_Y_STROKE_WIDTH = 21
 
 export type HomeHeroParticleState = 'gathering' | 'settled'
 
@@ -13,17 +18,51 @@ export function getHomeHeroParticleState(startedAt: number, now: number): HomeHe
 }
 
 const HOME_HERO_PARTICLE_LIMITS = {
-  desktop: 3200,
-  mobile: 1400
+  desktop: 1900,
+  mobile: 1000,
+  constrainedDesktop: 1000,
+  constrainedMobile: 420
 } as const
 
-export function getHomeHeroParticleLimit(isMobile: boolean): number {
-  return isMobile ? HOME_HERO_PARTICLE_LIMITS.mobile : HOME_HERO_PARTICLE_LIMITS.desktop
+function isConstrainedDevice(deviceMemory: number, hardwareConcurrency: number): boolean {
+  return (deviceMemory > 0 && deviceMemory <= 2) || (hardwareConcurrency > 0 && hardwareConcurrency <= 2)
 }
 
-export function getHomeHeroParticleCount(width: number, height: number, isMobile: boolean): number {
+export function getHomeHeroParticleLimit(
+  isMobile: boolean,
+  deviceMemory = 4,
+  hardwareConcurrency = 4
+): number {
+  const constrained = isConstrainedDevice(deviceMemory, hardwareConcurrency)
+  if (isMobile) return constrained ? HOME_HERO_PARTICLE_LIMITS.constrainedMobile : HOME_HERO_PARTICLE_LIMITS.mobile
+  return constrained ? HOME_HERO_PARTICLE_LIMITS.constrainedDesktop : HOME_HERO_PARTICLE_LIMITS.desktop
+}
+
+export function getHomeHeroParticleCount(
+  width: number,
+  height: number,
+  isMobile: boolean,
+  deviceMemory = 4,
+  hardwareConcurrency = 4
+): number {
   const density = isMobile ? 180 : 200
-  return Math.min(getHomeHeroParticleLimit(isMobile), Math.max(360, Math.floor(width * height / density)))
+  return Math.min(
+    getHomeHeroParticleLimit(isMobile, deviceMemory, hardwareConcurrency),
+    Math.max(360, Math.floor(width * height / density))
+  )
+}
+
+export function getHomeHeroParticlePixelRatio(
+  devicePixelRatio: number,
+  deviceMemory = 4,
+  hardwareConcurrency = 4
+): number {
+  const limit = isConstrainedDevice(deviceMemory, hardwareConcurrency) ? 1.25 : 2
+  return Math.min(Math.max(devicePixelRatio || 1, 1), limit)
+}
+
+export function getHomeHeroMotionEasing(deltaMs: number, responseMs = 80): number {
+  return 1 - Math.exp(-Math.max(0, deltaMs) / Math.max(1, responseMs))
 }
 
 export function createSeededRandom(seed: number): () => number {
