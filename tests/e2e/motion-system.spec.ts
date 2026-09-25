@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 test('Academics passive rows remain inside layout after pointer emphasis', async ({ page }) => {
-  await page.goto('/academics.html')
+  await page.goto('/academics/')
   const finePointer = await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)
   test.skip(!finePointer, 'Hover emphasis is only observable on fine-pointer projects')
 
@@ -25,7 +25,7 @@ test('Academics passive rows remain inside layout after pointer emphasis', async
 })
 
 test('Academics education rows expose emphasis without becoming controls', async ({ page }) => {
-  await page.goto('/academics.html')
+  await page.goto('/academics/')
   const finePointer = await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)
   test.skip(!finePointer, 'Hover emphasis is only observable on fine-pointer projects')
 
@@ -50,7 +50,7 @@ test('Academics education rows expose emphasis without becoming controls', async
 })
 
 test('Academics AP rows emphasize their result without shifting layout', async ({ page }) => {
-  await page.goto('/academics.html')
+  await page.goto('/academics/')
   const finePointer = await page.evaluate(() => (
     window.matchMedia('(hover: hover) and (pointer: fine)').matches
     && !window.matchMedia('(hover: none), (pointer: coarse)').matches
@@ -92,7 +92,7 @@ test('Academics AP rows emphasize their result without shifting layout', async (
 })
 
 test('Research toolchain groups use a bounded staggered reveal', async ({ page }) => {
-  await page.goto('/research.html')
+  await page.goto('/research/')
 
   const groups = page.locator('.toolchain-group')
 
@@ -106,7 +106,7 @@ test('Research toolchain groups use a bounded staggered reveal', async ({ page }
 })
 
 test('Research toolchain groups expose a passive accent without lifting the group', async ({ page }) => {
-  await page.goto('/research.html')
+  await page.goto('/research/')
   const finePointer = await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)
   test.skip(!finePointer, 'Hover emphasis is only observable on fine-pointer projects')
 
@@ -130,7 +130,7 @@ test('Research toolchain groups expose a passive accent without lifting the grou
 })
 
 test('Research tool tags remain flat information labels on hover', async ({ page }) => {
-  await page.goto('/research.html')
+  await page.goto('/research/')
 
   const tool = page.locator('.tc-tool').first()
 
@@ -144,7 +144,7 @@ test('Honor filter controls keep hover-only styling off coarse pointers', async 
   const coarsePointer = await page.evaluate(() => window.matchMedia('(hover: none), (pointer: coarse)').matches)
   test.skip(!coarsePointer, 'Hover-only styling is only observable on coarse-pointer projects')
 
-  await page.goto('/honors.html')
+  await page.goto('/honors/')
   const filter = page.locator('[data-honor-filter="peak"]')
   await expect(filter).toBeVisible()
   await page.mouse.move(0, 0)
@@ -178,7 +178,7 @@ test('Honor filter controls keep hover-only styling off coarse pointers', async 
 
 test('New interaction polish does not introduce motion under reduced motion', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto('/research.html')
+  await page.goto('/research/')
 
   const group = page.locator('.toolchain-group').first()
 
@@ -193,7 +193,7 @@ test('New interaction polish does not introduce motion under reduced motion', as
 })
 
 test('reveal content uses one-shot fade-up with a bounded stagger', async ({ page }) => {
-  await page.goto('/works.html')
+  await page.goto('/works/')
   await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
 
   const secondProject = page.locator('#project-ap-microeconomics-notes')
@@ -209,7 +209,7 @@ test('reveal content uses one-shot fade-up with a bounded stagger', async ({ pag
   await page.evaluate(() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' }))
   await expect.poll(() => secondProject.evaluate((element) => element.classList.contains('revealed'))).toBe(true)
 
-  for (const route of ['/index.html', '/honors.html']) {
+  for (const route of ['/', '/honors/']) {
     await page.goto(route)
     const delays = await page.locator('.reveal').evaluateAll((elements) => elements
       .map((element) => element.style.transitionDelay)
@@ -221,7 +221,7 @@ test('reveal content uses one-shot fade-up with a bounded stagger', async ({ pag
 
 test('reduced motion completes every reveal immediately', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto('/research.html')
+  await page.goto('/research/')
 
   await expect.poll(() => page.locator('.reveal').count()).toBeGreaterThan(0)
   await expect.poll(() => page.locator('.reveal:not(.revealed)').count()).toBe(0)
@@ -273,7 +273,7 @@ test('reduced motion removes delayed mobile menu entry motion', async ({ page })
 })
 
 test('quick hash navigation reveals the targeted Works project', async ({ page }) => {
-  await page.goto('/works.html#project-ap-microeconomics-notes', { waitUntil: 'domcontentloaded' })
+  await page.goto('/works/#project-ap-microeconomics-notes', { waitUntil: 'domcontentloaded' })
 
   const target = page.locator('#project-ap-microeconomics-notes')
   await expect(target).toHaveClass(/revealed/)
@@ -282,7 +282,7 @@ test('quick hash navigation reveals the targeted Works project', async ({ page }
 })
 
 test('scrolling to the document end reveals the footer and all remaining content', async ({ page }) => {
-  await page.goto('/concerts.html')
+  await page.goto('/concerts/')
 
   await page.locator('.site-footer').scrollIntoViewIfNeeded()
   await expect(page.locator('.site-footer')).toBeVisible()

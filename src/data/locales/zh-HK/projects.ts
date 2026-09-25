@@ -20,7 +20,7 @@ export const projectsCopy = {
         note: '把一次模型實驗，繼續做成任何人都能直接開啟的工具。',
         chapters: [
           { label: '01 / QUESTION', title: '讓新鮮度判斷走出實驗室', detail: '傳統評估依賴人工判斷或實驗室方法；日常場景需要更快、更容易覆核的入口。' },
-          { label: '02 / MODEL', title: 'FishFreshNet V2', detail: '99.29% accuracy · 4.095M parameters', href: 'research.html#fishfreshnet-v2' },
+          { label: '02 / MODEL', title: 'FishFreshNet V2', detail: '99.29% accuracy · 4.095M parameters', href: '/research/#fishfreshnet-v2' },
           { label: '03 / DELIVERY', title: '由推理結果到可解釋報告', detail: '信心度、Grad-CAM 熱力圖及 PDF 報告，共同構成完整判斷流程。' }
         ],
         sequenceLabel: '產品流程', sequence: ['上載', '推理', '信心度', 'Grad-CAM', 'PDF'],

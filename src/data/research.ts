@@ -13,7 +13,7 @@ export const research = [
     link: 'https://github.com/yance7/FreshEye',
     proof: [
       { type: 'source', label: 'SOURCE', value: 'GitHub', href: 'https://github.com/yance7/FreshEye', external: true },
-      { type: 'deployment', label: 'DEPLOYED AS', value: 'FreshEye', href: 'works.html#project-fresheye' }
+      { type: 'deployment', label: 'DEPLOYED AS', value: 'FreshEye', href: '/works/#project-fresheye' }
     ],
     metrics: [
       { value: '零安装', label: '浏览器端' },
@@ -41,7 +41,7 @@ export const research = [
     link: 'https://github.com/yance7/FishFreshNetV2',
     proof: [
       { type: 'experiment', label: 'EXPERIMENT', value: 'Five seeds', href: 'https://github.com/yance7/FishFreshNetV2', external: true },
-      { type: 'deployment', label: 'DEPLOYED AS', value: 'FreshEye', href: 'works.html#project-fresheye' }
+      { type: 'deployment', label: 'DEPLOYED AS', value: 'FreshEye', href: '/works/#project-fresheye' }
     ],
     metrics: [
       { value: '99.29%', label: '准确率', note: '5-seed mean' },

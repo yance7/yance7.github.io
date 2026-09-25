@@ -23,7 +23,7 @@ const FIXED_NOW = new Date('2026-08-21T12:00:00+08:00')
 
 async function gotoConcerts(page: Page, hash = '') {
   await page.clock.setFixedTime(FIXED_NOW)
-  await page.goto(`/concerts.html${hash}`)
+  await page.goto(`/concerts/${hash}`)
 }
 
 async function gotoConcertRoute(page: Page, path: string) {
@@ -156,7 +156,7 @@ test('concert archive deep links do not overwrite a newer hash', async ({ page }
     })
   })
 
-  await page.goto('/concerts.html#concert-kpl-2025-11-08')
+  await page.goto('/concerts/#concert-kpl-2025-11-08')
   const originalTarget = page.locator('[data-anchor-id="concert-kpl-2025-11-08"]')
   await expect(originalTarget).toHaveAttribute('data-hash-target', 'true')
   await page.evaluate(() => { window.location.hash = '#concert-archive' })
@@ -165,7 +165,7 @@ test('concert archive deep links do not overwrite a newer hash', async ({ page }
     (globalThis as typeof globalThis & { __holdHashLayout?: boolean }).__holdHashLayout = false
   })
 
-  await expect(page).toHaveURL(/concerts\.html#concert-archive$/)
+  await expect(page).toHaveURL(/concerts\/#concert-archive$/)
   await expect(originalTarget).not.toHaveAttribute('data-hash-target', 'true')
 })
 
@@ -180,6 +180,7 @@ test('concert archive buttons stay synchronized at both rail edges', async ({ pa
   await expect(page.locator('.site-shell[data-page-load-state="ready"]')).toBeVisible()
   await expect(previous).toBeDisabled()
   await expect(next).toBeEnabled()
+  await next.scrollIntoViewIfNeeded()
   await next.click()
   await expect(previous).toBeEnabled()
   await expect.poll(() => rail.evaluate((element) => (element as HTMLElement).scrollLeft)).toBeGreaterThan(0)
@@ -284,9 +285,9 @@ test('concert archive opens each single poster in the lightbox', async ({ page }
 })
 
 const concertRoutes = [
-  { locale: 'zh-CN', path: '/concerts.html' },
-  { locale: 'zh-HK', path: '/zh-hk/concerts.html' },
-  { locale: 'en', path: '/en/concerts.html' }
+  { locale: 'zh-CN', path: '/concerts/' },
+  { locale: 'zh-HK', path: '/zh-hk/concerts/' },
+  { locale: 'en', path: '/en/concerts/' }
 ]
 
 for (const route of concertRoutes) {

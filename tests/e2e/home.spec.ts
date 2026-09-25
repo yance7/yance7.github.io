@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 test('home leads with the quiet editorial stage', async ({ page }) => {
-  await page.goto('/index.html')
+  await page.goto('/')
   await expect(page.locator('.hero-name, .home-statement')).toHaveCount(0)
   await expect(page.locator('.home-hero-typewriter')).toHaveText(/你好，我是 Yance\s*研究、构建，与现场相遇_/)
   await expect(page.locator('h1.home-hero-title')).not.toContainText('_')
@@ -12,7 +12,7 @@ test('home leads with the quiet editorial stage', async ({ page }) => {
 })
 
 test('home keeps the complete semantic title beside the decorative static Hero layer', async ({ page }) => {
-  await page.goto('/index.html')
+  await page.goto('/')
 
   const semanticTitle = page.locator('h1.home-hero-title')
   await expect(semanticTitle).toHaveText(/你好，我是 Yance\s*研究、构建，与现场相遇/)
@@ -25,12 +25,12 @@ test('home keeps the complete semantic title beside the decorative static Hero l
 test('home hero copy stays exact across all supported locales', async ({ page }) => {
   const locales = [
     {
-      route: '/index.html',
+      route: '/',
       semantic: '你好，我是 Yance 研究、构建，与现场相遇',
       visual: '研究、构建，与现场相遇_'
     },
     {
-      route: '/zh-hk/index.html',
+      route: '/zh-hk/',
       semantic: '你好，我是 Yance 研究、建構，與現場相遇',
       visual: '研究、建構，與現場相遇_'
     },
@@ -50,7 +50,7 @@ test('home hero copy stays exact across all supported locales', async ({ page })
 })
 
 test('home keeps the Yance brand mark at both archive anchors', async ({ page }) => {
-  await page.goto('/index.html')
+  await page.goto('/')
   const mark = page.locator('header .wordmark .brand-mark-image')
   await expect(mark).toBeVisible()
   await expect(mark).toHaveAttribute('width', '128')
@@ -61,7 +61,7 @@ test('home keeps the Yance brand mark at both archive anchors', async ({ page })
 })
 
 test('home renders a focused stage with explicit entry actions', async ({ page }) => {
-  await page.goto('/index.html')
+  await page.goto('/')
   await expect(page.locator('.home-hero')).toBeVisible()
   await expect(page.locator('.home-hero-inner')).toBeVisible()
   await expect(page.locator('.home-hero-kicker')).toContainText('个人档案 / 北京 · 2026')
@@ -83,7 +83,7 @@ test('home stage keeps its visual hierarchy across desktop and narrow screens', 
 
   for (const viewport of viewports) {
     await page.setViewportSize(viewport)
-    await page.goto('/index.html')
+    await page.goto('/')
     await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
     await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready', { timeout: 10_000 })
     await page.evaluate(() => new Promise<void>((resolve) => {
@@ -112,7 +112,7 @@ test('home stage keeps its visual hierarchy across desktop and narrow screens', 
 })
 
 test('home assigns distinct font roles to prose, display and technical metadata', async ({ page }) => {
-  await page.goto('/index.html')
+  await page.goto('/')
   await expect(page.locator('.home-hero-typewriter')).toHaveCount(1)
   await page.evaluate(() => document.fonts.ready)
   const fonts = await page.evaluate(() => {
@@ -131,7 +131,7 @@ test('home assigns distinct font roles to prose, display and technical metadata'
   expect(fonts.technical).toContain('IBM Plex Mono')
   expect(fonts.action).toContain('Inter')
 
-  await page.goto('/research.html')
+  await page.goto('/research/')
   await expect(page.locator('.tl-body h3').first()).toBeAttached()
   await expect(page.locator('.tc-tool strong').first()).toBeAttached()
   await page.evaluate(() => document.fonts.ready)
@@ -149,7 +149,7 @@ test('home assigns distinct font roles to prose, display and technical metadata'
 })
 
 test('home entry actions preserve keyboard navigation and fragment targets', async ({ page }) => {
-  await page.goto('/index.html')
+  await page.goto('/')
   const primary = page.locator('.home-hero-actions a[href="#selected-work"]')
   const secondary = page.locator('.home-hero-actions a[href="#home-worlds"]')
   await primary.focus()
@@ -158,12 +158,12 @@ test('home entry actions preserve keyboard navigation and fragment targets', asy
   await secondary.focus()
   await expect(secondary).toBeFocused()
   await secondary.click()
-  await expect(page).toHaveURL(/index\.html#home-worlds$/)
+  await expect(page).toHaveURL(/\/#home-worlds$/)
 })
 
 test('home uses the shared page surface in both themes', async ({ page }) => {
   for (const theme of ['light', 'dark']) {
-    await page.goto('/index.html')
+    await page.goto('/')
     await page.evaluate((value) => localStorage.setItem('yance-theme', value), theme)
     await page.reload()
     const surfaces = await page.evaluate(() => {
@@ -182,13 +182,13 @@ test('home uses the shared page surface in both themes', async ({ page }) => {
 })
 
 test('home stage flows into selected work without a hard divider', async ({ page }) => {
-  await page.goto('/index.html')
+  await page.goto('/')
 
   await expect.poll(() => page.locator('.home-hero').evaluate((element) => getComputedStyle(element).borderBottomWidth)).toBe('0px')
 })
 
 test('bundled typography and reading progress stay explicit', async ({ page }) => {
-  await page.goto('/works.html')
+  await page.goto('/works/')
   await page.evaluate(() => document.fonts.ready)
   const bodyFont = await page.locator('body').evaluate((element) => getComputedStyle(element).fontFamily)
   const displayFont = await page.locator('.hero-title').evaluate((element) => getComputedStyle(element).fontFamily)
@@ -201,13 +201,13 @@ test('bundled typography and reading progress stay explicit', async ({ page }) =
 })
 
 test('home focus cards keep the research-product link on keyboard focus', async ({ page }) => {
-  await page.goto('/index.html')
+  await page.goto('/')
   await page.locator('.focus-product .focus-card-main').focus()
   await expect(page.locator('.home-focus-connector')).toHaveCSS('opacity', '1')
 })
 
 test('home removes duplicate archive navigation and keeps the five worlds as the only index', async ({ page }) => {
-  await page.goto('/index.html')
+  await page.goto('/')
   await expect(page.locator('.lyric-carousel, .home-signal, .home-signal-board')).toHaveCount(0)
   await expect(page.locator('.home-archive-index')).toHaveCount(0)
   await expect(page.locator('body')).not.toContainText('OPEN ARCHIVE')
@@ -215,7 +215,7 @@ test('home removes duplicate archive navigation and keeps the five worlds as the
 })
 
 test('home keeps pointer sheen on featured work but not on the five world cards', async ({ page }) => {
-  await page.goto('/index.html')
+  await page.goto('/')
   await expect(page.locator('.world-card')).toHaveCount(5)
   const featuredSheen = await page.locator('.focus-card').evaluateAll((elements) =>
     elements.map((element) => element.hasAttribute('data-pointer-sheen'))
@@ -230,7 +230,7 @@ test('home keeps pointer sheen on featured work but not on the five world cards'
 })
 
 test('home entry actions route to selected work and the five worlds', async ({ page }) => {
-  await page.goto('/index.html')
+  await page.goto('/')
   const primary = page.locator('.home-hero-actions a[href="#selected-work"]')
   const secondary = page.locator('.home-hero-actions a[href="#home-worlds"]')
   await expect(primary).toContainText('查看精选作品')
@@ -244,7 +244,7 @@ test('home entry actions route to selected work and the five worlds', async ({ p
 test('home quiet stage stays usable across themes, widths, and reduced motion', async ({ page }) => {
   for (const width of [1440, 1024, 768, 390, 320]) {
     await page.setViewportSize({ width, height: 844 })
-    await page.goto('/index.html')
+    await page.goto('/')
     const layout = await page.evaluate(() => ({
       documentWidth: document.documentElement.scrollWidth,
       viewportWidth: window.innerWidth
@@ -254,7 +254,7 @@ test('home quiet stage stays usable across themes, widths, and reduced motion', 
     await expect(page.locator('.home-archive-index, .home-hero-glow')).toHaveCount(0)
   }
 
-  await page.goto('/index.html')
+  await page.goto('/')
   const themeToggle = page.locator('.theme-toggle, .theme-orbit').first()
   if (await themeToggle.count()) {
     await themeToggle.click()
@@ -262,7 +262,7 @@ test('home quiet stage stays usable across themes, widths, and reduced motion', 
   await expect(page.locator('.home-hero-actions')).toBeVisible()
 
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto('/index.html')
+  await page.goto('/')
   await expect(page.locator('.home-hero-actions')).toBeVisible()
   const revealTransforms = await page.locator('.reveal').evaluateAll((elements) =>
     elements.map((element) => getComputedStyle(element).transform)

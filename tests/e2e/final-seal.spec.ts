@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { htmlPageEntries, pageEntries } from '../../src/data/pageRegistry'
 
+const routeForEntry = (entry: (typeof htmlPageEntries)[number]) => entry.routePath ?? '/404.html'
 const viewports = [
   { width: 320, height: 568 },
   { width: 360, height: 800 },
@@ -62,7 +63,7 @@ for (const viewport of viewports) {
       page.on('console', onConsole)
       page.on('pageerror', onPageError)
 
-      await page.goto(`/${entry.htmlName}.html`)
+      await page.goto(routeForEntry(entry))
       await expect(page.locator('main#main')).toBeVisible()
       const footer = page.locator('.site-footer')
       await expect(footer).toHaveCount(1)
@@ -114,7 +115,7 @@ test('section hashes clear the sticky navigation in portrait, landscape, and des
     await page.setViewportSize(viewport)
     for (const entry of pageEntries) {
       const sectionId = entry.sectionIds.at(-1)!
-      await page.goto(`/${entry.htmlName}.html#${sectionId}`, { waitUntil: 'domcontentloaded', timeout: 60000 })
+      await page.goto(`${entry.routePath}#${sectionId}`, { waitUntil: 'domcontentloaded', timeout: 60000 })
       const target = page.locator(`#${sectionId}`)
       await target.waitFor({ state: 'attached', timeout: 60000 })
       const placement = await target.evaluate((element) => {
@@ -135,7 +136,7 @@ test('dark theme and reduced motion preserve readable static content', async ({ 
   await page.emulateMedia({ reducedMotion: 'reduce' })
 
   for (const entry of htmlPageEntries) {
-    await page.goto(`/${entry.htmlName}.html`)
+    await page.goto(routeForEntry(entry))
     if (documentTheme(await page.locator('html').getAttribute('data-theme')) !== 'dark') {
       await page.locator('.theme-orbit').click()
     }
@@ -159,10 +160,10 @@ test('representative light and dark layouts remain axe-clean', async ({ page }) 
   test.setTimeout(120000)
   for (const theme of ['light', 'dark'] as const) {
     await page.setViewportSize(theme === 'light' ? viewports[9] : viewports[2])
-    await page.goto('/index.html')
+    await page.goto('/')
     await page.evaluate((nextTheme) => localStorage.setItem('yance-theme', nextTheme), theme)
     for (const entry of htmlPageEntries) {
-      await page.goto(`/${entry.htmlName}.html`)
+      await page.goto(routeForEntry(entry))
       await expect(page.locator('html')).toHaveAttribute('data-theme', theme)
       await waitForA11yReady(page)
       await expectAccessible(page)
@@ -173,7 +174,7 @@ test('representative light and dark layouts remain axe-clean', async ({ page }) 
 test('forced colors preserve selected and keyboard-focus boundaries', async ({ page, browserName }) => {
   test.skip(browserName !== 'chromium', 'Forced-colors emulation is provided by Chromium in this matrix')
   await page.emulateMedia({ forcedColors: 'active' })
-  await page.goto('/concerts.html')
+  await page.goto('/concerts/')
 
   const selected = page.locator('.album-tile.selected')
   const focusTarget = page.locator('.album-nav button').first()

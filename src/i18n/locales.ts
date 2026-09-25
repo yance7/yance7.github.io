@@ -45,9 +45,10 @@ export function stripLocalePrefix(pathname: string) {
   return stripped || '/'
 }
 
-function withPathSuffix(prefix: string, suffix: string) {
-  if (suffix === '/') return `${prefix}/`
-  return `${prefix}${suffix}`
+function withOptions(path: string, options: { search?: string; hash?: string }) {
+  const search = options.search ? (options.search.startsWith('?') ? options.search : `?${options.search}`) : ''
+  const hash = options.hash ? (options.hash.startsWith('#') ? options.hash : `#${options.hash}`) : ''
+  return `${path}${search}${hash}`
 }
 
 export function buildLocalizedPageHref(
@@ -55,15 +56,20 @@ export function buildLocalizedPageHref(
   locale: Locale,
   options: { search?: string; hash?: string } = {}
 ) {
-  const suffix = page === 'home' ? '/' : `/${pageRegistry[page].href}`
-  const path = withPathSuffix(getLocalePrefix(locale), suffix)
-  const search = options.search ? (options.search.startsWith('?') ? options.search : `?${options.search}`) : ''
-  const hash = options.hash ? (options.hash.startsWith('#') ? options.hash : `#${options.hash}`) : ''
-  return `${path}${search}${hash}`
+  return withOptions(`${getLocalePrefix(locale)}${pageRegistry[page].routePath}`, options)
+}
+
+export function buildLocalizedLegacyHref(
+  page: PageKey,
+  locale: Locale,
+  options: { search?: string; hash?: string } = {}
+) {
+  return withOptions(`${getLocalePrefix(locale)}${pageRegistry[page].legacyPath}`, options)
 }
 
 export function resolvePageFromPath(pathname: string): PageKey | undefined {
   const path = stripLocalePrefix(pathname)
-  if (path === '/' || path === '/index.html') return 'home'
-  return (Object.keys(pageRegistry) as PageKey[]).find((key) => `/${pageRegistry[key].href}` === path)
+  return (Object.keys(pageRegistry) as PageKey[]).find((key) => (
+    pageRegistry[key].routePath === path || pageRegistry[key].legacyPath === path
+  ))
 }

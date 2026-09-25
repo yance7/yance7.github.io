@@ -70,21 +70,33 @@ function rewriteLocalized404(source: string, locale: Locale) {
     .replace(/<meta name="description" content="[^"]*">/i, `<meta name="description" content="${escapeHtml(messages.error404.copy)}">`)
 }
 
-function writeLocalizedFile(locale: Locale, filename: string, content: string) {
+function sourcePagePath(page: (typeof pageEntries)[number]) {
+  const routeDirectory = page.routePath === '/' ? '' : page.routePath.slice(1, -1)
+  return join(dist, routeDirectory, 'index.html')
+}
+
+function writeLocalizedPage(locale: Locale, routePath: string, content: string) {
+  const localeDirectory = join(dist, localeRegistry[locale].pathPrefix.slice(1))
+  const pageDirectory = routePath === '/' ? localeDirectory : join(localeDirectory, routePath.slice(1, -1))
+  mkdirSync(pageDirectory, { recursive: true })
+  writeFileSync(join(pageDirectory, 'index.html'), content, 'utf8')
+}
+
+function writeLocalized404(locale: Locale, content: string) {
   const directory = join(dist, localeRegistry[locale].pathPrefix.slice(1))
   mkdirSync(directory, { recursive: true })
-  writeFileSync(join(directory, filename), content, 'utf8')
+  writeFileSync(join(directory, '404.html'), content, 'utf8')
 }
 
 if (!existsSync(dist)) throw new Error('dist/ 不存在，请先运行 vite build')
 
 for (const locale of localizedTargets) {
   for (const entry of pageEntries) {
-    const source = readFileSync(join(dist, `${entry.htmlName}.html`), 'utf8')
-    writeLocalizedFile(locale, `${entry.htmlName}.html`, rewriteLocalizedHtml(source, locale, entry.key))
+    const source = readFileSync(sourcePagePath(entry), 'utf8')
+    writeLocalizedPage(locale, entry.routePath, rewriteLocalizedHtml(source, locale, entry.key))
   }
   const notFound = readFileSync(join(dist, '404.html'), 'utf8')
-  writeLocalizedFile(locale, '404.html', rewriteLocalized404(notFound, locale))
+  writeLocalized404(locale, rewriteLocalized404(notFound, locale))
 }
 
-console.log(`localized-pages: generated ${pageEntries.length * localizedTargets.length} pages plus localized 404s`)
+console.log(`localized-pages: generated ${pageEntries.length * localizedTargets.length} directory pages plus localized 404s`)

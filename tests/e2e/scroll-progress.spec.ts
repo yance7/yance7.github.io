@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 test('content pages expose a localized transform-driven reading progress bar', async ({ page }) => {
-  await page.goto('/research.html')
+  await page.goto('/research/')
 
   const progress = page.locator('.scroll-progress')
   const bar = page.locator('.scroll-bar')

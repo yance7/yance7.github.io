@@ -10,16 +10,16 @@ const englishHomeViewports = [
   { name: 'desktop', width: 1440, height: 900 }
 ] as const
 const homeHeroLocales = [
-  { name: 'zh-cn', route: '/index.html' },
-  { name: 'zh-hk', route: '/zh-hk/index.html' },
+  { name: 'zh-cn', route: '/' },
+  { name: 'zh-hk', route: '/zh-hk/' },
   { name: 'en', route: '/en/' }
 ] as const
 const englishArchiveHeroRoutes = [
-  { name: 'academics', route: '/en/academics.html' },
-  { name: 'honors', route: '/en/honors.html' },
-  { name: 'research', route: '/en/research.html' },
-  { name: 'works', route: '/en/works.html' },
-  { name: 'concerts', route: '/en/concerts.html' }
+  { name: 'academics', route: '/en/academics/' },
+  { name: 'honors', route: '/en/honors/' },
+  { name: 'research', route: '/en/research/' },
+  { name: 'works', route: '/en/works/' },
+  { name: 'concerts', route: '/en/concerts/' }
 ] as const
 const themes = ['light', 'dark'] as const
 const FIXED_NOW = '2026-08-21T12:00:00+08:00'
@@ -228,7 +228,7 @@ for (const viewport of viewports) {
       await installTheme(page, theme)
 
       for (const route of routes) {
-        await page.goto(`/${route}.html`)
+        await page.goto(route === 'index' ? '/' : `/${route}/`)
         if (route === 'concerts') await stabilizeVisualContext(page)
         await settlePage(page)
         if (route === 'index') await settleHomeHero(page)
@@ -293,7 +293,7 @@ for (const theme of themes) {
   test(`captures ${theme} Lightbox landscape portrait and mobile states`, async ({ page }) => {
     await installTheme(page, theme)
     await page.setViewportSize({ width: 1440, height: 900 })
-    await page.goto('/concerts.html')
+    await page.goto('/concerts/')
     await settlePage(page)
 
     await page.locator('.concert-poster[data-poster-ratio="landscape"] .poster-open').first().click()
@@ -369,7 +369,7 @@ for (const theme of themes) {
     test(`captures AP Microeconomics dossier ${theme} ${viewport.name} visual baseline`, async ({ page }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height })
       await installTheme(page, theme)
-      await page.goto('/works.html#project-ap-microeconomics-notes')
+      await page.goto('/works/#project-ap-microeconomics-notes')
       await settlePage(page)
 
       const project = page.locator('#project-ap-microeconomics-notes')
@@ -394,7 +394,7 @@ for (const route of ['research', 'works'] as const) {
       test(`captures ${route} floating header ${theme} ${viewport.name} visual baseline`, async ({ page }) => {
         await page.setViewportSize({ width: viewport.width, height: viewport.height })
         await installTheme(page, theme)
-        await page.goto(`/${route}.html`)
+        await page.goto(`/${route}/`)
         await settlePage(page)
         await settleFloatingHeader(page, route)
         await expect(page.locator('.site-nav-surface')).toHaveScreenshot(
@@ -408,7 +408,7 @@ for (const route of ['research', 'works'] as const) {
 
 test('200 percent zoom-equivalent reflow keeps keyboard reading usable', async ({ page }) => {
   await page.setViewportSize({ width: 640, height: 844 })
-  await page.goto('/research.html')
+  await page.goto('/research/')
 
   const target = page.locator('.tl-link').first()
   await target.scrollIntoViewIfNeeded()

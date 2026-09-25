@@ -106,7 +106,13 @@ export function getLocalizedHonorStats(locale: Locale) {
 }
 
 export function getLocalizedResearch(locale: Locale): ResearchItem[] {
-  return mergeById(research, content(locale).research.entities, 'research')
+  return mergeById(research, content(locale).research.entities, 'research').map((item) => ({
+    ...item,
+    proof: item.proof?.map((proof) => ({
+      ...proof,
+      href: proof.external ? proof.href : localizeInternalHref(proof.href, locale)
+    }))
+  }))
 }
 
 export function getLocalizedResearchMethods(locale: Locale) {
@@ -191,6 +197,9 @@ export function getLocalizedCommunity(locale: Locale) {
 function localizeInternalHref(href: string, locale: Locale) {
   const match = href.match(/^([^#?]+)(\?[^#]*)?(#.*)?$/)
   if (!match) return href
-  const page = (Object.keys(pageRegistry) as PageKey[]).find((key) => pageRegistry[key].href === match[1])
+  const path = match[1]?.startsWith('/') ? match[1] : `/${match[1]}`
+  const page = (Object.keys(pageRegistry) as PageKey[]).find((key) => (
+    pageRegistry[key].routePath === path || pageRegistry[key].legacyPath === path
+  ))
   return page ? buildLocalizedPageHref(page, locale, { search: match[2], hash: match[3] }) : href
 }

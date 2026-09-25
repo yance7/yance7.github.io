@@ -6,9 +6,9 @@ const contacts = [
 ] as const
 
 const locales = [
-  { name: 'Simplified Chinese', path: '/index.html', homeHref: '/', contactLabel: '联系方式' },
-  { name: 'Traditional Chinese', path: '/zh-hk/index.html', homeHref: '/zh-hk/', contactLabel: '聯絡方式' },
-  { name: 'English', path: '/en/index.html', homeHref: '/en/', contactLabel: 'Contact' }
+  { name: 'Simplified Chinese', path: '/', homeHref: '/', contactLabel: '联系方式' },
+  { name: 'Traditional Chinese', path: '/zh-hk/', homeHref: '/zh-hk/', contactLabel: '聯絡方式' },
+  { name: 'English', path: '/en/', homeHref: '/en/', contactLabel: 'Contact' }
 ] as const
 
 for (const locale of locales) {
@@ -54,7 +54,7 @@ for (const locale of locales) {
 for (const width of [320, 390, 768, 1024, 1440]) {
   test(`footer keeps contact hit areas and document geometry at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 })
-    await page.goto('/index.html')
+    await page.goto('/')
     const footer = page.locator('footer.site-footer')
     await footer.scrollIntoViewIfNeeded()
     await expect(footer).toBeVisible()
@@ -91,7 +91,7 @@ for (const width of [320, 390, 768, 1024, 1440]) {
 }
 
 test('footer contact links expose a visible keyboard focus ring', async ({ page }) => {
-  await page.goto('/index.html')
+  await page.goto('/')
   const link = page.locator('.foot-contact').first()
   await link.focus()
   const focusStyle = await link.evaluate((element) => {
@@ -104,7 +104,7 @@ test('footer contact links expose a visible keyboard focus ring', async ({ page 
 })
 
 test('footer contact feedback is scoped to pointer capabilities', async ({ page }) => {
-  await page.goto('/index.html')
+  await page.goto('/')
   const link = page.locator('.foot-contact').first()
   const touchLike = await page.evaluate(() => (
     window.matchMedia('(hover: none)').matches || window.matchMedia('(pointer: coarse)').matches

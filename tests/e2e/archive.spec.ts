@@ -1,10 +1,10 @@
 import { expect, test } from '@playwright/test'
 import { pageEntries } from '../../src/data/pageRegistry'
 
-const contentRoutes = pageEntries.map(({ htmlName }) => `${htmlName}.html`)
+const contentRoutes = pageEntries.map(({ routePath }) => routePath)
 const archiveRoutes = pageEntries
   .filter(({ key }) => key !== 'home')
-  .map(({ htmlName }) => `${htmlName}.html`)
+  .map(({ routePath }) => routePath)
 
 test('archive titles keep balanced Chinese lines at narrow widths', async ({ page }) => {
   test.setTimeout(60000)
@@ -13,7 +13,7 @@ test('archive titles keep balanced Chinese lines at narrow widths', async ({ pag
   for (const width of [320, 360, 390, 414]) {
     await page.setViewportSize({ width, height: 844 })
     for (const route of archiveRoutes) {
-      await page.goto(`/${route}`)
+      await page.goto(route)
       await page.evaluate(() => document.fonts.ready)
       const lineSizes = await page.locator('.hero-title .lyric-char').evaluateAll((characters) => {
         const lines = new Map<number, number>()
@@ -55,7 +55,7 @@ test('archive titles keep balanced Chinese lines at narrow widths', async ({ pag
 })
 
 test('honors filtering renders compact cards without detail controls', async ({ page }) => {
-  await page.goto('/honors.html')
+  await page.goto('/honors/')
   const filter = page.locator('.filter-btn').filter({ hasText: '领航级' })
   await filter.scrollIntoViewIfNeeded()
   await filter.click()
@@ -65,7 +65,7 @@ test('honors filtering renders compact cards without detail controls', async ({ 
 })
 
 test('honor cards use a quiet reveal animation', async ({ page }) => {
-  await page.goto('/honors.html')
+  await page.goto('/honors/')
   const card = page.locator('.honor-card').first()
   await card.scrollIntoViewIfNeeded()
   await expect(card).toHaveClass(/revealed/)
@@ -73,7 +73,7 @@ test('honor cards use a quiet reveal animation', async ({ page }) => {
 })
 
 test('research methodology disclosure and proof links are reachable', async ({ page }) => {
-  await page.goto('/research.html')
+  await page.goto('/research/')
   const toggle = page.locator('.method-toggle').first()
   await toggle.click()
   await expect(toggle).toHaveAttribute('aria-expanded', 'true')
@@ -97,7 +97,7 @@ test('copy citation uses one explicit control system in both themes', async ({ p
   })
 
   for (const theme of ['light', 'dark']) {
-    await page.goto('/research.html')
+    await page.goto('/research/')
     await page.evaluate((value) => localStorage.setItem('yance-theme', value), theme)
     await page.reload()
     const button = page.locator('.copy-citation').first()
@@ -119,7 +119,7 @@ test('copy citation uses one explicit control system in both themes', async ({ p
 })
 
 test('research workbench groups tools without a trailing empty cell', async ({ page }) => {
-  await page.goto('/research.html')
+  await page.goto('/research/')
   await expect(page.locator('.toolchain-group')).toHaveCount(3)
   await expect(page.locator('.toolchain-group').nth(0).locator('.tc-tool')).toHaveCount(4)
   await expect(page.locator('.toolchain-group').nth(1).locator('.tc-tool')).toHaveCount(3)
@@ -127,14 +127,14 @@ test('research workbench groups tools without a trailing empty cell', async ({ p
 })
 
 test('research deployment link lands on the FreshEye case study', async ({ page }) => {
-  await page.goto('/research.html')
-  await page.locator('a[href="works.html#project-fresheye"]').first().click()
-  await expect(page).toHaveURL(/works\.html#project-fresheye/)
+  await page.goto('/research/')
+  await page.locator('a[href="/works/#project-fresheye"]').first().click()
+  await expect(page).toHaveURL(/works\/#project-fresheye/)
   await expect(page.locator('#project-fresheye')).toBeInViewport()
 })
 
 test('research project dates and statuses render the current records', async ({ page }) => {
-  await page.goto('/research.html')
+  await page.goto('/research/')
   await expect(page.locator('#fresheye .tl-date')).toHaveText('2026.06 — 2026.08')
   await expect(page.locator('#fresheye .status-badge')).toContainText('已完成')
   await expect(page.locator('#fishfreshnet-v2 .tl-date')).toHaveText('2026.05 — 2026.08')
@@ -144,7 +144,7 @@ test('research project dates and statuses render the current records', async ({ 
 })
 
 test('works uses typographic project dossiers without legacy icons', async ({ page }) => {
-  await page.goto('/works.html')
+  await page.goto('/works/')
   const lyric = page.locator('.hero-works-title')
   await expect(lyric).toHaveAttribute('aria-label', '「因为我已慢慢懂，努力就能成功」')
   if ((page.viewportSize()?.width ?? 0) > 640) {
@@ -219,7 +219,7 @@ test('works uses typographic project dossiers without legacy icons', async ({ pa
 
 test('reduced motion keeps project content immediately available', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto('/works.html')
+  await page.goto('/works/')
   const firstProject = page.locator('.showcase').first()
   await expect(firstProject).toHaveClass(/revealed/)
   await expect(firstProject).toHaveCSS('transform', 'none')
@@ -228,7 +228,7 @@ test('reduced motion keeps project content immediately available', async ({ page
 test('fast page jumps do not leave passed reveal content hidden', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 568 })
   for (const route of contentRoutes) {
-    await page.goto(`/${route}`)
+    await page.goto(route)
     await expect(page.locator('.content').first()).toBeVisible()
     await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
     await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
@@ -240,14 +240,14 @@ test('fast page jumps do not leave passed reveal content hidden', async ({ page 
 
 test('archive pages omit the visible last updated label', async ({ page }) => {
   for (const route of contentRoutes) {
-    await page.goto(`/${route}`)
+    await page.goto(route)
     await expect(page.locator('.content-updated')).toHaveCount(0)
     await expect(page.locator('body')).not.toContainText('LAST UPDATED')
   }
 })
 
 test('academics pending scores use a compact badge', async ({ page }) => {
-  await page.goto('/academics.html')
+  await page.goto('/academics/')
   const content = await page.locator('.ap-row.pending .ap-badge').first().evaluate((element) => getComputedStyle(element, '::after').content)
   expect(content).toBe('"?"')
 })
@@ -257,7 +257,7 @@ test('copy citation cleans up its textarea when the legacy copy command throws',
     Object.defineProperty(navigator, 'clipboard', { configurable: true, get: () => undefined })
     Object.defineProperty(document, 'execCommand', { configurable: true, value: () => { throw new Error('copy unavailable') } })
   })
-  await page.goto('/research.html')
+  await page.goto('/research/')
 
   await page.locator('.copy-citation').first().click()
 

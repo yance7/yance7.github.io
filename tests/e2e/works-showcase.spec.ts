@@ -1,16 +1,16 @@
 import { expect, test } from '@playwright/test'
 
 const locales = [
-  { name: 'zh-CN', path: '/works.html' },
-  { name: 'zh-HK', path: '/zh-hk/works.html' },
-  { name: 'en', path: '/en/works.html' }
+  { name: 'zh-CN', path: '/works/' },
+  { name: 'zh-HK', path: '/zh-hk/works/' },
+  { name: 'en', path: '/en/works/' }
 ] as const
 
 const viewports = [390, 768, 1024, 1440] as const
 const projectLocales = [
-  { name: 'zh-CN', path: '/works.html', title: 'AP Micro 讲义', action: '在 GitHub 查看' },
-  { name: 'zh-HK', path: '/zh-hk/works.html', title: 'AP Micro 講義', action: '在 GitHub 查看' },
-  { name: 'en', path: '/en/works.html', title: 'AP Micro Notes', action: 'View on GitHub' }
+  { name: 'zh-CN', path: '/works/', title: 'AP Micro 讲义', action: '在 GitHub 查看' },
+  { name: 'zh-HK', path: '/zh-hk/works/', title: 'AP Micro 講義', action: '在 GitHub 查看' },
+  { name: 'en', path: '/en/works/', title: 'AP Micro Notes', action: 'View on GitHub' }
 ] as const
 
 for (const locale of locales) {
@@ -73,9 +73,9 @@ for (const locale of projectLocales) {
 }
 
 test('home selected work keeps FreshEye only while the Works world reports two projects', async ({ page }) => {
-  await page.goto('/index.html')
+  await page.goto('/')
   await expect(page.locator('#selected-work .focus-product')).toHaveCount(1)
   await expect(page.locator('#selected-work')).toContainText('鲜眸')
   await expect(page.locator('#selected-work')).not.toContainText('AP Microeconomics')
-  await expect(page.locator('#home-worlds .world-card[href="/works.html"]')).toContainText('2 个持续构建的小世界')
+  await expect(page.locator('#home-worlds .world-card[href="/works/"]')).toContainText('2 个持续构建的小世界')
 })

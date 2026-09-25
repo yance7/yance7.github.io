@@ -3,11 +3,11 @@ import { expect, test } from '@playwright/test'
 
 const routes = [
   '/en/',
-  '/en/academics.html',
-  '/en/honors.html',
-  '/en/research.html',
-  '/en/works.html',
-  '/en/concerts.html'
+  '/en/academics/',
+  '/en/honors/',
+  '/en/research/',
+  '/en/works/',
+  '/en/concerts/'
 ] as const
 
 const viewports = [
@@ -29,31 +29,31 @@ const lyricViewports = [
 
 const archiveHeroContracts = [
   {
-    route: '/en/academics.html',
+    route: '/en/academics/',
     title: 'From here, tomorrow finds its course',
     words: ['From', 'here,', 'tomorrow', 'finds', 'its', 'course'],
     credit: { artist: 'JJ Lin', song: '明日坐标', album: '明日坐标' }
   },
   {
-    route: '/en/honors.html',
+    route: '/en/honors/',
     title: 'Step by step, I keep climbing',
     words: ['Step', 'by', 'step,', 'I', 'keep', 'climbing'],
     credit: { artist: 'Jay Chou', song: '蜗牛', album: 'Fantasy Plus' }
   },
   {
-    route: '/en/research.html',
+    route: '/en/research/',
     title: 'You share this imperfect dream with me',
     words: ['You', 'share', 'this', 'imperfect', 'dream', 'with', 'me'],
     credit: { artist: 'TFBOYS', song: '不完美小孩', album: '我们的时光' }
   },
   {
-    route: '/en/works.html',
+    route: '/en/works/',
     title: 'Little by little, I learned that effort can lead to success',
     words: ['Little', 'by', 'little,', 'I', 'learned', 'that', 'effort', 'can', 'lead', 'to', 'success'],
     credit: { artist: 'Silence Wang', song: '慢慢懂', album: '慢慢懂' }
   },
   {
-    route: '/en/concerts.html',
+    route: '/en/concerts/',
     title: 'Fate brought us together beyond this restless world',
     words: ['Fate', 'brought', 'us', 'together', 'beyond', 'this', 'restless', 'world'],
     credit: { artist: 'G.E.M.', song: '光年之外', album: 'Single' }
@@ -389,7 +389,7 @@ test('English lyric hero animation does not change layout geometry', async ({ pa
 })
 
 test('English research method groups do not duplicate the same label', async ({ page }) => {
-  await page.goto('/en/research.html')
+  await page.goto('/en/research/')
 
   const firstGroup = page.locator('.toolchain-group').first()
 
@@ -401,7 +401,7 @@ test('English research method groups do not duplicate the same label', async ({ 
 })
 
 test('English project identity does not render FreshEye twice', async ({ page }) => {
-  await page.goto('/en/works.html')
+  await page.goto('/en/works/')
 
   const identity = page.locator('.sc-identity').first()
 

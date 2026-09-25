@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 test('shared project actions expose stable keyboard targets', async ({ page }) => {
-  await page.goto('/works.html')
+  await page.goto('/works/')
 
   const projectLink = page.locator('.sc-actions .y-button').first()
   await projectLink.focus()
@@ -25,7 +25,7 @@ test('404 entry actions use the shared button primitive', async ({ page }) => {
 })
 
 test('status badges use compact semantic surfaces without pulse animation', async ({ page }) => {
-  await page.goto('/works.html')
+  await page.goto('/works/')
 
   const badges = page.locator('.status-badge')
   await expect(badges.first()).toBeVisible()
@@ -42,7 +42,7 @@ test('status badges use compact semantic surfaces without pulse animation', asyn
 })
 
 test('reading progress exposes one non-interactive semantic surface', async ({ page }) => {
-  await page.goto('/research.html')
+  await page.goto('/research/')
 
   const progress = page.locator('.scroll-progress')
   await expect(progress).toHaveRole('progressbar')
@@ -52,7 +52,7 @@ test('reading progress exposes one non-interactive semantic surface', async ({ p
 })
 
 test('lightbox keeps metadata and quiet control chrome bounded', async ({ page }) => {
-  await page.goto('/concerts.html')
+  await page.goto('/concerts/')
   await page.locator('.concert-poster .poster-open').first().click()
 
   await expect(page.locator('.lightbox')).toBeVisible()
@@ -104,15 +104,15 @@ test('lightbox keeps metadata and quiet control chrome bounded', async ({ page }
 })
 
 test('archive proof links share one semantic primitive across works and research', async ({ page }) => {
-  await page.goto('/works.html')
+  await page.goto('/works/')
   await expect(page.locator('.sc-proof-links .y-archive-link').first()).toBeVisible()
 
-  await page.goto('/research.html')
+  await page.goto('/research/')
   await expect(page.locator('.tl-proof-list .y-archive-link').first()).toBeVisible()
 })
 
 test('metric surfaces refine their boundary without adding elevation', async ({ page }) => {
-  await page.goto('/academics.html')
+  await page.goto('/academics/')
   await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
   await expect(page.locator('.metric-strip')).toHaveAttribute('data-metrics-ready', 'true')
   const metric = page.locator('.metric-card').first()
@@ -140,7 +140,7 @@ test('metric surfaces refine their boundary without adding elevation', async ({ 
 })
 
 test('shared control hover lift stays within the restrained motion token', async ({ page }) => {
-  await page.goto('/index.html')
+  await page.goto('/')
   const finePointer = await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)
   test.skip(!finePointer, 'Hover lift is only observable on fine-pointer projects')
 

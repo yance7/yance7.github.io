@@ -12,8 +12,16 @@ describe('security and privacy release policy', () => {
     expect(policy).toMatch(/不接入|无第三方/)
   })
 
+  it('keeps the legacy redirect template limited to a same-origin script', () => {
+    const redirect = readFileSync(resolve(root, 'html-src/legacy-redirect.html'), 'utf8')
+    expect(redirect).toContain("script-src 'self'")
+    expect(redirect).toContain('name="robots" content="noindex,follow"')
+    expect(redirect).toContain('/assets/legacy-redirect.js')
+    expect(redirect).not.toMatch(/<script\b(?![^>]*\bsrc\s*=)[^>]*>/i)
+  })
+
   it('keeps every HTML entry constrained to local scripts and the theme hash', () => {
-    const entries = readdirSync(resolve(root, 'html-src')).filter((file) => file.endsWith('.html'))
+    const entries = readdirSync(resolve(root, 'html-src')).filter((file) => file.endsWith('.html') && file !== 'legacy-redirect.html')
     expect(entries.length).toBeGreaterThan(0)
 
     for (const entry of entries) {

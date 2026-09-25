@@ -48,19 +48,19 @@ test('English chrome is localized without Chinese navigation fallbacks', async (
 })
 
 test('language switching preserves the current page and section hash', async ({ page }) => {
-  await page.goto('/research.html#sec-toolchain')
+  await page.goto('/research/#sec-toolchain')
   await (await openLocaleNav(page)).locator('a[hreflang="en"]').click()
-  await expect(page).toHaveURL(/\/en\/research\.html#sec-toolchain$/)
+  await expect(page).toHaveURL(/\/en\/research\/#sec-toolchain$/)
   await expect(page.locator('html')).toHaveAttribute('lang', 'en')
   await expect(page.locator('.scroll-progress')).toHaveRole('progressbar')
   await expect(page.locator('.scroll-progress')).toHaveAttribute('aria-label', 'Reading progress')
 
   await (await openLocaleNav(page)).locator('a[hreflang="zh-HK"]').click()
-  await expect(page).toHaveURL(/\/zh-hk\/research\.html#sec-toolchain$/)
+  await expect(page).toHaveURL(/\/zh-hk\/research\/#sec-toolchain$/)
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-HK')
 
   await (await openLocaleNav(page)).locator('a[hreflang="zh-CN"]').click()
-  await expect(page).toHaveURL(/\/research\.html#sec-toolchain$/)
+  await expect(page).toHaveURL(/\/research\/#sec-toolchain$/)
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN')
 })
 
@@ -78,26 +78,26 @@ test('theme preference survives a full locale navigation', async ({ page }) => {
 
 test('desktop locale orbit exposes three real language anchors and one active segment', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
-  await page.goto('/en/research.html?tab=tools#sec-toolchain')
+  await page.goto('/en/research/?tab=tools#sec-toolchain')
   const control = page.locator('.locale-switcher-desktop')
 
   await expect(control).toBeVisible()
   await expect(control.locator('a')).toHaveCount(3)
   await expect(control).toHaveAttribute('data-current-locale', 'en')
   await expect(control.locator('a[aria-current="page"]')).toHaveAttribute('hreflang', 'en')
-  await expect(control.locator('a[hreflang="zh-CN"]')).toHaveAttribute('href', '/research.html?tab=tools#sec-toolchain')
-  await expect(control.locator('a[hreflang="zh-HK"]')).toHaveAttribute('href', '/zh-hk/research.html?tab=tools#sec-toolchain')
+  await expect(control.locator('a[hreflang="zh-CN"]')).toHaveAttribute('href', '/research/?tab=tools#sec-toolchain')
+  await expect(control.locator('a[hreflang="zh-HK"]')).toHaveAttribute('href', '/zh-hk/research/?tab=tools#sec-toolchain')
 })
 
 test('locale intent registers one same-origin prefetch without intercepting the anchor', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
-  await page.goto('/en/research.html')
+  await page.goto('/en/research/')
   const target = page.locator('.locale-switcher-desktop a[hreflang="zh-HK"]')
 
   await target.hover()
   await expect.poll(() => page.locator('link[rel="prefetch"]').evaluateAll((links) => links
     .map((link) => (link as HTMLLinkElement).href)
-    .some((href) => /\/zh-hk\/research\.html(?:$|[?#])/.test(href))))
+    .some((href) => /\/zh-hk\/research\/(?:$|[?#])/.test(href))))
     .toBe(true)
   await target.focus()
   await expect(page.locator('link[rel="prefetch"]')).toHaveCount(1)
@@ -108,7 +108,7 @@ test('locale intent registers one same-origin prefetch without intercepting the 
 test('mobile locale pill keeps three real links inside narrow viewports', async ({ page }) => {
   for (const width of [320, 390, 640]) {
     await page.setViewportSize({ width, height: 844 })
-    await page.goto('/en/research.html?tab=tools#sec-toolchain')
+    await page.goto('/en/research/?tab=tools#sec-toolchain')
 
     const mobile = page.locator('.locale-switcher-mobile')
     await expect(mobile).toBeVisible()
@@ -145,7 +145,7 @@ test('mobile locale controls keep hover-only styling off coarse pointers', async
   const coarsePointer = await page.evaluate(() => window.matchMedia('(hover: none), (pointer: coarse)').matches)
   test.skip(!coarsePointer, 'Hover-only styling is only observable on coarse-pointer projects')
 
-  await page.goto('/en/research.html')
+  await page.goto('/en/research/')
 
   const mobile = page.locator('.locale-switcher-mobile')
   const summary = mobile.locator('summary')

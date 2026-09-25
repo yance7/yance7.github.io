@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
-import { htmlPageEntries } from '../../src/data/pageRegistry'
+import { pageEntries } from '../../src/data/pageRegistry'
 
-const archiveRoutes = htmlPageEntries.map(({ htmlName }) => `${htmlName}.html`)
+const archiveRoutes = [...pageEntries.map(({ routePath }) => routePath), '/404.html']
 
 function expectTouchTarget(box: { width: number; height: number }, label: string) {
   expect(Math.round(box.width), `${label} width`).toBeGreaterThanOrEqual(44)
@@ -11,7 +11,7 @@ function expectTouchTarget(box: { width: number; height: number }, label: string
 
 test('compatibility pages boot without horizontal overflow', async ({ page }) => {
   for (const route of archiveRoutes) {
-    await page.goto(`/${route}`)
+    await page.goto(route)
     await expect(page.locator('main#main')).toBeVisible()
     const layout = await page.evaluate(() => ({
       documentWidth: document.documentElement.scrollWidth,
@@ -25,10 +25,10 @@ test('compatibility pages boot without horizontal overflow', async ({ page }) =>
 
 test('compatibility hash navigation settles below the sticky header', async ({ page }) => {
   const targets = [
-    ['/works.html#project-fresheye', '#project-fresheye'],
-    ['/works.html#project-ap-microeconomics-notes', '#project-ap-microeconomics-notes'],
-    ['/zh-hk/works.html#project-ap-microeconomics-notes', '#project-ap-microeconomics-notes'],
-    ['/en/works.html#project-ap-microeconomics-notes', '#project-ap-microeconomics-notes']
+    ['/works/#project-fresheye', '#project-fresheye'],
+    ['/works/#project-ap-microeconomics-notes', '#project-ap-microeconomics-notes'],
+    ['/zh-hk/works/#project-ap-microeconomics-notes', '#project-ap-microeconomics-notes'],
+    ['/en/works/#project-ap-microeconomics-notes', '#project-ap-microeconomics-notes']
   ] as const
 
   for (const [route, selector] of targets) {
@@ -45,7 +45,7 @@ test('compatibility hash navigation settles below the sticky header', async ({ p
 
 test('keyboard focus targets stay clear of sticky navigation surfaces', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 })
-  await page.goto('/research.html')
+  await page.goto('/research/')
 
   const target = page.locator('.tl-link').first()
   await expect(target).toBeVisible()
@@ -69,7 +69,7 @@ test('keyboard focus targets stay clear of sticky navigation surfaces', async ({
 test('coarse-pointer shared controls keep 44px touch targets', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium-android-smoke', 'Android-specific coarse-pointer contract')
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/works.html')
+  await page.goto('/works/')
 
   for (const selector of ['.sc-actions .y-button', '.sc-proof-links .y-archive-link']) {
     const box = await page.locator(selector).first().boundingBox()
@@ -77,7 +77,7 @@ test('coarse-pointer shared controls keep 44px touch targets', async ({ page }, 
     expectTouchTarget(box!, selector)
   }
 
-  await page.goto('/index.html')
+  await page.goto('/')
   await page.locator('.menu-trigger').click()
   const closeButton = page.locator('.mobile-menu-close')
   await expect(closeButton).toBeVisible()
@@ -89,13 +89,13 @@ test('coarse-pointer shared controls keep 44px touch targets', async ({ page }, 
 
 test('compatibility menu, single-poster modal, and axe smoke remain usable', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/index.html')
+  await page.goto('/')
   await page.locator('.menu-trigger').click()
   await expect(page.locator('.mobile-menu-overlay')).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(page.locator('.mobile-menu-overlay')).toHaveCount(0)
 
-  await page.goto('/concerts.html')
+  await page.goto('/concerts/')
   await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
   const poster = page.locator('.concert-poster').first()
   await poster.scrollIntoViewIfNeeded()
@@ -112,7 +112,7 @@ test('compatibility menu, single-poster modal, and axe smoke remain usable', asy
 test('Firefox poster geometry stays stable while focused', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'firefox-desktop-smoke', 'Firefox-specific pointer geometry proof')
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/concerts.html')
+  await page.goto('/concerts/')
 
   const poster = page.locator('.concert-poster').first()
   await poster.scrollIntoViewIfNeeded()
@@ -129,7 +129,7 @@ test('Firefox poster geometry stays stable while focused', async ({ page }, test
 
 test('mobile menu typography follows the light-theme semantic text tokens', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/index.html')
+  await page.goto('/')
   await page.locator('.menu-trigger').click()
   await expect(page.locator('.mobile-menu .mm-num').first()).toBeVisible()
   await expect(page.locator('.mobile-menu .mm-label').first()).toBeVisible()
@@ -163,7 +163,7 @@ test('mobile menu typography follows the light-theme semantic text tokens', asyn
 
 test('touch rail controls follow the active theme control tokens', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/concerts.html')
+  await page.goto('/concerts/')
   const previousTheme = await page.locator('html').getAttribute('data-theme')
   await page.locator('.theme-orbit').click()
   await expect.poll(() => page.locator('html').getAttribute('data-theme')).not.toBe(previousTheme)
@@ -210,22 +210,22 @@ test('touch rail controls follow the active theme control tokens', async ({ page
 
 test('Firefox preserves direct hashes and theme state across navigation', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'firefox-desktop-smoke', 'Firefox-specific desktop compatibility proof')
-  await page.goto('/research.html#sec-toolchain')
+  await page.goto('/research/#sec-toolchain')
   await page.locator('.theme-orbit').click()
   const theme = await page.locator('html').getAttribute('data-theme')
-  await page.goto('/works.html#project-fresheye')
+  await page.goto('/works/#project-fresheye')
   await expect(page.locator('html')).toHaveAttribute('data-theme', theme!)
 })
 
 test('Android touch workflows survive portrait and landscape changes', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium-android-smoke', 'Android-specific touch compatibility proof')
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/index.html')
+  await page.goto('/')
   await page.locator('.menu-trigger').click()
   await expect(page.locator('.mobile-menu-overlay')).toBeVisible()
   await page.keyboard.press('Escape')
 
-  await page.goto('/concerts.html#album-frequencies')
+  await page.goto('/concerts/#album-frequencies')
   const targetAlbum = page.locator('[data-album-id="jay-ye-hui-mei"]')
   await targetAlbum.tap()
   await expect(targetAlbum).toHaveAttribute('aria-selected', 'true')

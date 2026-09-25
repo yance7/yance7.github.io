@@ -54,7 +54,7 @@ async function captureLightboxLeaveState(page: Page) {
 
 test('concert poster coalesces sheen and tilt into one layout read per frame', { tag: '@fine-pointer' }, async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium', 'Fine-pointer interaction is intentionally disabled on touch projects')
-  await page.goto('/concerts.html')
+  await page.goto('/concerts/')
   const poster = page.locator('.concert-poster').first()
   await poster.scrollIntoViewIfNeeded()
 
@@ -82,7 +82,7 @@ test('concert poster coalesces sheen and tilt into one layout read per frame', {
 })
 
 test('concert poster stages keep every source ratio inside a fixed 3:4 layered frame', async ({ page }) => {
-  await page.goto('/concerts.html')
+  await page.goto('/concerts/')
 
   const expected = [
     { id: 'jd-summer-2026-05-31', ratio: 'tall', frame: 3 / 4 },
@@ -123,7 +123,7 @@ test('concert poster stages keep every source ratio inside a fixed 3:4 layered f
 
 test('concert poster pointer feedback stays bounded without changing geometry', { tag: '@fine-pointer' }, async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium', 'Fine-pointer interaction is intentionally disabled on touch projects')
-  await page.goto('/concerts.html')
+  await page.goto('/concerts/')
   const poster = page.locator('.concert-poster').first()
   await poster.scrollIntoViewIfNeeded()
   const before = await poster.boundingBox()
@@ -166,7 +166,7 @@ test('concert poster pointer feedback stays bounded without changing geometry', 
 
 test('concert poster motion is disabled for reduced-motion users', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto('/concerts.html')
+  await page.goto('/concerts/')
   const poster = page.locator('.concert-poster').first()
   const before = await poster.evaluate((element) => {
     const styles = getComputedStyle(element)
@@ -196,7 +196,7 @@ test('concert poster motion is disabled for reduced-motion users', async ({ page
 
 test('album sleeve coalesces pointer tilt into one layout read per frame', { tag: '@fine-pointer' }, async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium', 'Fine-pointer interaction is intentionally disabled on touch projects')
-  await page.goto('/concerts.html')
+  await page.goto('/concerts/')
   const sleeve = page.locator('.album-sleeve')
   await sleeve.scrollIntoViewIfNeeded()
 
@@ -227,7 +227,7 @@ test('album sleeve coalesces pointer tilt into one layout read per frame', { tag
 
 test('concert poster triggers keep touch-sized targets', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/concerts.html')
+  await page.goto('/concerts/')
   await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
   const poster = page.locator('.concert-poster .poster-open').first()
   await expect(poster).toBeAttached()
@@ -241,7 +241,7 @@ test('concert poster triggers keep touch-sized targets', async ({ page }) => {
 })
 
 test('concert album wall exposes 42 local releases and the default spotlight', async ({ page }) => {
-  await page.goto('/concerts.html')
+  await page.goto('/concerts/')
   const wall = page.locator('.album-wall-section')
   await expect(wall).toHaveCount(1)
   await expect(wall.locator('.album-tile')).toHaveCount(42)
@@ -279,7 +279,7 @@ test('concert album wall exposes 42 local releases and the default spotlight', a
 })
 
 test('concert album wall selection and looping controls stay synchronized', async ({ page }) => {
-  await page.goto('/concerts.html')
+  await page.goto('/concerts/')
   const wall = page.locator('.album-wall-section')
   const selected = wall.locator('.album-tile[aria-selected="true"]')
   const spotlightState = () => wall.evaluate((element) => ({
@@ -331,7 +331,7 @@ test('concert album spotlight keeps a decoded cover during delayed rapid switchi
     if (route.request().url().includes('jay-ye-hui-mei-')) await targetRequestGate
     await route.continue()
   })
-  await page.goto('/concerts.html')
+  await page.goto('/concerts/')
   const wall = page.locator('.album-wall-section')
 
   await wall.locator('[data-album-id="jay-ye-hui-mei"]').click()
@@ -381,7 +381,7 @@ test('concert album spotlight retains the previous cover when both cover sources
     }
     await route.continue()
   })
-  await page.goto('/concerts.html')
+  await page.goto('/concerts/')
   const wall = page.locator('.album-wall-section')
 
   await wall.locator('[data-album-id="jay-ye-hui-mei"]').click()
@@ -401,7 +401,7 @@ test('concert album spotlight commits the latest rapid selection only', async ({
     if (url.includes('jay-common-jasmine-orange-')) await new Promise((resolve) => setTimeout(resolve, 100))
     await route.continue()
   })
-  await page.goto('/concerts.html')
+  await page.goto('/concerts/')
   const wall = page.locator('.album-wall-section')
 
   await wall.locator('[data-album-id="jay-ye-hui-mei"]').click()
@@ -418,7 +418,7 @@ test('concert album spotlight commits the latest rapid selection only', async ({
 
 test('concert album wall supports roving keyboard selection', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
-  await page.goto('/concerts.html')
+  await page.goto('/concerts/')
   const wall = page.locator('.album-wall-section')
   const tiles = wall.locator('.album-tile')
   const selected = wall.locator('.album-tile[aria-selected="true"]')
@@ -462,7 +462,7 @@ test('concert album wall uses 6 4 and 3 responsive columns', async ({ page }) =>
 
   for (const { width, columns } of responsiveColumns) {
     await page.setViewportSize({ width, height: 900 })
-    await page.goto('/concerts.html')
+    await page.goto('/concerts/')
     await expect(page.locator('.album-spotlight')).toBeVisible()
     const layout = await page.evaluate(() => {
       const spotlight = document.querySelector('.album-spotlight')!.getBoundingClientRect()
@@ -499,7 +499,7 @@ test('concert album wall uses 6 4 and 3 responsive columns', async ({ page }) =>
 })
 
 test('concert album wall preserves theme and reduced-motion accessibility', async ({ page }) => {
-  await page.goto('/concerts.html')
+  await page.goto('/concerts/')
   const wall = page.locator('.album-wall')
   const tiles = page.locator('.album-tile')
   await expectAccessible(page)
@@ -540,7 +540,7 @@ test('concert album wall preserves theme and reduced-motion accessibility', asyn
 })
 
 test('concert thumbnails respond and single-poster lightbox works', async ({ page }) => {
-  await page.goto('/concerts.html')
+  await page.goto('/concerts/')
   await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
   await expect(page.locator('.metric-strip .metric-card')).toHaveCount(4)
   const thumbnailSrcset = await page.locator('.concert-poster picture source').first().getAttribute('srcset')
@@ -560,7 +560,7 @@ test('concert thumbnails respond and single-poster lightbox works', async ({ pag
 })
 
 test('lightbox keeps the background inert and locked until leave finishes', async ({ page }) => {
-  await page.goto('/concerts.html')
+  await page.goto('/concerts/')
   const trigger = page.locator('.concert-poster .poster-open').first()
   await trigger.focus()
   await trigger.click()
@@ -586,7 +586,7 @@ test('lightbox keeps the background inert and locked until leave finishes', asyn
 })
 
 test('concert visual surfaces use theme semantics and shared motion cadence', async ({ page }) => {
-  await page.goto('/concerts.html', { waitUntil: 'domcontentloaded' })
+  await page.goto('/concerts/', { waitUntil: 'domcontentloaded' })
   await expect(page.locator('.album-wall')).toBeVisible()
   await expect(page.locator('.album-tile').first()).toBeVisible()
   await page.locator('.concert-poster .poster-open').first().hover()
