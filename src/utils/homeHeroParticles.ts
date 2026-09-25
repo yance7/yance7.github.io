@@ -4,6 +4,14 @@ export interface HomeHeroParticleTarget {
   delayMs: number
 }
 
+export const HOME_HERO_PARTICLE_GATHER_DURATION_MS = 1600
+
+export type HomeHeroParticleState = 'gathering' | 'settled'
+
+export function getHomeHeroParticleState(startedAt: number, now: number): HomeHeroParticleState {
+  return now - startedAt < HOME_HERO_PARTICLE_GATHER_DURATION_MS ? 'gathering' : 'settled'
+}
+
 const HOME_HERO_PARTICLE_LIMITS = {
   desktop: 3200,
   mobile: 1400

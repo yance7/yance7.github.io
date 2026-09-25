@@ -12,7 +12,7 @@ const { locale, messages } = useLocale()
 const home = computed(() => getLocalizedHomeCopy(locale.value))
 const greeting = computed(() => home.value.heroGreeting)
 const statement = computed(() => home.value.heroStatement)
-const { state, animateParticles, isIntroActive } = useHomeHeroIntro(greeting, statement)
+const { state, animateParticles, isIntroActive, introStartedAt } = useHomeHeroIntro(greeting, statement)
 </script>
 
 <template>
@@ -43,7 +43,7 @@ const { state, animateParticles, isIntroActive } = useHomeHeroIntro(greeting, st
         </div>
       </div>
 
-      <HomeHeroParticles :animate-intro="animateParticles" />
+      <HomeHeroParticles :animate-intro="animateParticles" :intro-started-at="introStartedAt" />
     </div>
 
     <HomeHeroPointer />

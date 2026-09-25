@@ -2,12 +2,14 @@
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import BrandMark from './BrandMark.vue'
 import {
+  HOME_HERO_PARTICLE_GATHER_DURATION_MS,
   createSeededRandom,
   getHomeHeroParticleCount,
+  getHomeHeroParticleState,
   sampleMaskTargets
 } from '../utils/homeHeroParticles'
 
-const props = defineProps<{ animateIntro: boolean }>()
+const props = defineProps<{ animateIntro: boolean; introStartedAt: number | null }>()
 
 interface Particle {
   targetX: number
@@ -31,7 +33,6 @@ interface ParticlePointer {
   maxDisplacement: number
 }
 
-const GATHER_DURATION_MS = 1600
 const FRAME_INTERVAL_MS = 1000 / 30
 const PARTICLE_SEED = 0x59a7ce
 
@@ -166,7 +167,7 @@ function drawParticles(now: number) {
   const groups = new Map<string, { color: string; opacity: number; particles: Particle[] }>()
 
   for (const particle of particles) {
-    const span = GATHER_DURATION_MS - particle.delayMs
+    const span = HOME_HERO_PARTICLE_GATHER_DURATION_MS - particle.delayMs
     const progress = Math.max(0, Math.min(1, (elapsed - particle.delayMs) / span))
     const easedProgress = progress * progress * (3 - 2 * progress)
     const x = particle.startX + (particle.targetX - particle.startX) * easedProgress
@@ -237,7 +238,7 @@ function renderFrame(now: number) {
 
   lastFrameAt = now
   const hasOffsetMotion = drawParticles(now)
-  const isGathering = now - startedAt < GATHER_DURATION_MS
+  const isGathering = getHomeHeroParticleState(startedAt, now) === 'gathering'
   particleState.value = isGathering ? 'gathering' : 'settled'
   if (isGathering || hasOffsetMotion) frameId = requestAnimationFrame(renderFrame)
 }
@@ -318,9 +319,11 @@ function useStaticFallback() {
 }
 
 async function initializeParticles() {
-  if (!props.animateIntro || !canvas.value || !stage.value) return
+  const introStartedAt = props.introStartedAt
+  if (!props.animateIntro || introStartedAt === null || !canvas.value || !stage.value) return
   disposed = false
   pageVisible = document.visibilityState === 'visible'
+  startedAt = introStartedAt
   readThemeColors()
 
   try {
@@ -328,16 +331,15 @@ async function initializeParticles() {
     maskCanvas = document.createElement('canvas')
     image = new Image()
     image.src = '/assets/brand/yance-mark-fallback.png'
-    await Promise.all([image.decode(), document.fonts?.ready])
+    await image.decode()
     if (!canvasContext || !maskCanvas.getContext('2d', { willReadFrequently: true })) {
       throw new Error('HomeHero Canvas 2D is unavailable')
     }
     if (disposed || !canvas.value) return
 
-    startedAt = performance.now()
     resizeCanvas()
     renderMode.value = 'canvas'
-    particleState.value = pageVisible ? 'gathering' : 'paused'
+    particleState.value = pageVisible ? getHomeHeroParticleState(startedAt, performance.now()) : 'paused'
 
     canvas.value.addEventListener('pointermove', handlePointerMove, { passive: true })
     canvas.value.addEventListener('pointerdown', handlePointerDown, { passive: true })

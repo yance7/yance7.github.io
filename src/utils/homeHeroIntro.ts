@@ -5,6 +5,19 @@ export const HOME_HERO_INTRO_TIMINGS = {
   actionsMs: 320
 } as const
 
+export type HomeHeroIntroState = 'typing' | 'revealing-actions' | 'complete'
+
+export function getHomeHeroIntroState(elapsedMs: number): HomeHeroIntroState {
+  const typingMs = HOME_HERO_INTRO_TIMINGS.firstLineMs
+    + HOME_HERO_INTRO_TIMINGS.linePauseMs
+    + HOME_HERO_INTRO_TIMINGS.secondLineMs
+  const completeMs = typingMs + HOME_HERO_INTRO_TIMINGS.actionsMs
+
+  if (elapsedMs < typingMs) return 'typing'
+  if (elapsedMs < completeMs) return 'revealing-actions'
+  return 'complete'
+}
+
 interface GraphemeSegmenter {
   segment(value: string): Iterable<{ segment: string }>
 }
