@@ -428,6 +428,34 @@ test('adaptive header catches fragment scrolling after sentinel observation', as
   await expect(header).toHaveAttribute('data-header-state', 'floating')
 })
 
+test('adaptive header tracks a cold fragment after the lazy page chunk mounts', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+
+  let homePageChunkRequested = false
+  let headerWasMountedBeforePageChunk = false
+
+  await page.route('**/assets/vue/HomePage-*.js', async (route) => {
+    homePageChunkRequested = true
+    await page.locator('.site-nav').waitFor({ state: 'attached' })
+    headerWasMountedBeforePageChunk = await page.locator('.site-nav').count() === 1
+    await route.continue()
+  })
+
+  await page.goto('/#home-worlds')
+  await waitForReady(page)
+
+  expect(homePageChunkRequested).toBe(true)
+  expect(headerWasMountedBeforePageChunk).toBe(true)
+
+  const target = page.locator('#home-worlds')
+  await expect(target).toBeAttached()
+  await expect(page.locator('.site-nav')).toHaveAttribute('data-header-state', 'floating')
+  await expect.poll(() => target.evaluate((element) => {
+    const header = document.querySelector<HTMLElement>('.site-nav')
+    return element.getBoundingClientRect().top - (header?.getBoundingClientRect().bottom ?? 0)
+  })).toBeGreaterThanOrEqual(8)
+})
+
 test('adaptive header keeps localized controls and deep-link anchors stable', async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 900 })
 
