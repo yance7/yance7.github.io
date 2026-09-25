@@ -189,6 +189,37 @@ test('resumes particle drawing when the hidden page becomes visible', async ({ p
   await expect(canvas).toHaveAttribute('data-particle-state', /gathering|settled/)
 })
 
+test('uses the original intro clock when Canvas image decoding finishes late', async ({ page }) => {
+  await page.addInitScript(() => {
+    const decodeImage = HTMLImageElement.prototype.decode
+    const testWindow = window as Window & { releaseHomeHeroMarkDecode?: () => void }
+
+    HTMLImageElement.prototype.decode = function () {
+      if (!this.src.endsWith('/assets/brand/yance-mark-fallback.png')) {
+        return decodeImage.call(this)
+      }
+
+      const decodedImage = decodeImage.call(this)
+      return new Promise<void>((resolve, reject) => {
+        testWindow.releaseHomeHeroMarkDecode = () => { void decodedImage.then(resolve, reject) }
+      })
+    }
+  })
+
+  await page.goto('/')
+  await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'complete', { timeout: 4000 })
+  await expect.poll(() => page.evaluate(() => (
+    typeof (window as Window & { releaseHomeHeroMarkDecode?: () => void }).releaseHomeHeroMarkDecode === 'function'
+  ))).toBe(true)
+
+  await page.evaluate(() => {
+    (window as Window & { releaseHomeHeroMarkDecode?: () => void }).releaseHomeHeroMarkDecode?.()
+  })
+
+  await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-render-mode', 'canvas', { timeout: 4000 })
+  await expect(page.locator('.home-hero-particles-canvas')).toHaveAttribute('data-particle-state', 'settled', { timeout: 1200 })
+})
+
 test('keeps the static brand visual when Canvas initialization fails', async ({ page }) => {
   await page.addInitScript(() => {
     Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {

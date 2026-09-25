@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
+  HOME_HERO_PARTICLE_GATHER_DURATION_MS,
   createSeededRandom,
   getHomeHeroParticleCount,
   getHomeHeroParticleLimit,
+  getHomeHeroParticleState,
   sampleMaskTargets
 } from '../src/utils/homeHeroParticles'
 
@@ -14,6 +16,14 @@ describe('HomeHero particle utilities', () => {
 
   it('keeps the mobile particle field to a lower density', () => {
     expect(getHomeHeroParticleCount(350, 240, true)).toBe(466)
+  })
+
+  it('settles from the shared intro start even when initialization finishes late', () => {
+    const startedAt = 1200
+
+    expect(getHomeHeroParticleState(startedAt, startedAt + HOME_HERO_PARTICLE_GATHER_DURATION_MS - 1)).toBe('gathering')
+    expect(getHomeHeroParticleState(startedAt, startedAt + HOME_HERO_PARTICLE_GATHER_DURATION_MS)).toBe('settled')
+    expect(getHomeHeroParticleState(startedAt, startedAt + HOME_HERO_PARTICLE_GATHER_DURATION_MS + 2400)).toBe('settled')
   })
 
   it('creates repeatable seeded random values', () => {

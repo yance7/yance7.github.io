@@ -34,10 +34,10 @@ export function useHomeHeroIntro(greeting: ComputedRef<string>, statement: Compu
   const state = ref<IntroState>(shouldAnimate ? 'typing' : 'static')
   const animateParticles = ref(shouldAnimate)
   const isIntroActive = computed(() => state.value === 'typing' || state.value === 'revealing-actions')
+  const introStartedAt = ref<number | null>(shouldAnimate ? window.performance.now() : null)
   const timers = new Set<number>()
   let motionPreference: MediaQueryList | null = null
   let connection: NetworkInformation | undefined
-  let introStartedAt: number | null = null
 
   function clearTimers() {
     timers.forEach((timer) => window.clearTimeout(timer))
@@ -54,15 +54,16 @@ export function useHomeHeroIntro(greeting: ComputedRef<string>, statement: Compu
 
   function showFinalState() {
     clearTimers()
-    introStartedAt = null
+    introStartedAt.value = null
     animateParticles.value = false
     state.value = 'static'
   }
 
   function updateIntroState() {
-    if (introStartedAt === null) return
+    const startedAt = introStartedAt.value
+    if (startedAt === null) return
 
-    const elapsedMs = window.performance.now() - introStartedAt
+    const elapsedMs = window.performance.now() - startedAt
     const nextState = getHomeHeroIntroState(elapsedMs)
     state.value = nextState
 
@@ -78,8 +79,11 @@ export function useHomeHeroIntro(greeting: ComputedRef<string>, statement: Compu
   }
 
   function startIntro() {
-    introStartedAt = window.performance.now()
-    schedule(updateIntroState, typingDurationMs)
+    const startedAt = introStartedAt.value
+    if (startedAt === null) return
+
+    const elapsedMs = window.performance.now() - startedAt
+    schedule(updateIntroState, Math.max(0, typingDurationMs - elapsedMs))
   }
 
   function stopForMotionPreference() {
@@ -115,5 +119,5 @@ export function useHomeHeroIntro(greeting: ComputedRef<string>, statement: Compu
     connection?.removeEventListener('change', stopForDataPreference)
   })
 
-  return { state, animateParticles, isIntroActive }
+  return { state, animateParticles, isIntroActive, introStartedAt }
 }
