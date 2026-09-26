@@ -566,15 +566,6 @@ test('erases cached source Y dots on a throttled first pointer frame', async ({ 
 
 test('redraws only local canvas regions while the fixed grid responds to a pointer', async ({ page }) => {
   test.skip(!(await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)))
-  await page.addInitScript(() => {
-    const clearRect = CanvasRenderingContext2D.prototype.clearRect
-    const calls: Array<{ className: string; width: number; height: number; area: number }> = []
-    Object.defineProperty(window, '__homeHeroCanvasClears', { configurable: true, value: calls })
-    CanvasRenderingContext2D.prototype.clearRect = function (x, y, width, height) {
-      calls.push({ className: this.canvas.className, width, height, area: Math.max(0, width) * Math.max(0, height) })
-      clearRect.call(this, x, y, width, height)
-    }
-  })
   await page.goto('/')
 
   const stage = page.locator('.home-hero-particles')
@@ -583,7 +574,13 @@ test('redraws only local canvas regions while the fixed grid responds to a point
   await expect(grid).toHaveAttribute('data-particle-state', 'settled', { timeout: 4000 })
   await expect(mark).toHaveAttribute('data-particle-state', 'settled', { timeout: 4000 })
   await page.evaluate(() => {
-    (window as unknown as { __homeHeroCanvasClears: unknown[] }).__homeHeroCanvasClears.length = 0
+    const clearRect = CanvasRenderingContext2D.prototype.clearRect
+    const calls: Array<{ className: string; width: number; height: number; area: number }> = []
+    Object.defineProperty(window, '__homeHeroCanvasClears', { configurable: true, value: calls })
+    CanvasRenderingContext2D.prototype.clearRect = function (x, y, width, height) {
+      calls.push({ className: this.canvas.className, width, height, area: Math.max(0, width) * Math.max(0, height) })
+      clearRect.call(this, x, y, width, height)
+    }
   })
   await stage.hover({ position: { x: 8, y: 8 } })
   await expect.poll(() => page.evaluate(() => (
