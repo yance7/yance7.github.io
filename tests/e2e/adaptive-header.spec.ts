@@ -91,6 +91,7 @@ test('floating header uses translucent glass, compact geometry, and stable brand
   await page.goto('/en/research/')
   await waitForReady(page)
   await scrollHeader(page, 260)
+  await waitForFloatingSurfaceSettled(page)
   await expect.poll(() => page.locator('.site-nav-surface').evaluate((element) => element.getBoundingClientRect().height))
     .toBeLessThanOrEqual(61)
   await expect.poll(() => page.locator('.site-nav-surface').evaluate((element) => {

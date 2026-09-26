@@ -72,7 +72,7 @@
   width: 100%;
   max-width: 100%;
   color: var(--ink);
-  font-family: 'LXGW WenKai Hero SC', var(--font-editorial);
+  font-family: var(--font-home-title);
   font-size: clamp(2.5rem, 4.2vw, 4.5rem);
   font-weight: 400;
   letter-spacing: -.055em;
@@ -147,12 +147,7 @@
   to { opacity: 1; }
 }
 
-html[data-locale='zh-HK'] .home-hero-typewriter {
-  font-family: 'LXGW WenKai Hero TC', var(--font-editorial);
-}
-
 html[data-locale='en'] .home-hero-typewriter {
-  font-family: Georgia, 'Times New Roman', serif;
   font-size: clamp(2rem, 4.1vw, 4.35rem);
   letter-spacing: -.045em;
   line-height: 1.08;
