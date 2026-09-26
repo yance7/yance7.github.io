@@ -68,8 +68,8 @@
   --dur-base: .28s;
   --dur-slow: .52s;
   --dur-page: .56s;
-  --reveal-distance: 18px;
-  --reveal-duration: .52s;
+  --reveal-distance: 28px;
+  --reveal-duration: .68s;
   --reveal-stagger-step: 60ms;
   --reveal-max-delay: 240ms;
 
