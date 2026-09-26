@@ -203,13 +203,30 @@ test('New interaction polish does not introduce motion under reduced motion', as
   expect(['0s', '0.01ms', '1e-05s']).toContain(pseudoTransition)
 })
 
-test('reveal content uses one-shot fade-up with a bounded stagger', async ({ page }) => {
+test('reveal content uses the shared fade-up tokens with a bounded stagger', async ({ page }) => {
   await page.goto('/works/')
   await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
 
   const secondProject = page.locator('#project-ap-microeconomics-notes')
   await expect(secondProject).toHaveClass(/reveal/)
   await expect(secondProject).not.toHaveClass(/revealed/)
+
+  const initialMotion = await secondProject.evaluate((element) => {
+    const style = getComputedStyle(element)
+    const properties = style.transitionProperty.split(',').map((property) => property.trim())
+    const durations = style.transitionDuration.split(',').map((duration) => duration.trim())
+    const transformDuration = durations[properties.indexOf('transform')] ?? '0s'
+    const durationMs = transformDuration.endsWith('ms')
+      ? Number.parseFloat(transformDuration)
+      : Number.parseFloat(transformDuration) * 1000
+
+    return {
+      distance: getComputedStyle(document.documentElement).getPropertyValue('--reveal-distance').trim(),
+      durationMs
+    }
+  })
+  expect(initialMotion.distance).toBe('28px')
+  expect(initialMotion.durationMs).toBe(680)
 
   await secondProject.evaluate((element) => {
     element.scrollIntoView({ behavior: 'instant', block: 'center', inline: 'nearest' })
@@ -238,9 +255,19 @@ test('reduced motion completes every reveal immediately', async ({ page }) => {
   await expect.poll(() => page.locator('.reveal:not(.revealed)').count()).toBe(0)
   const states = await page.locator('.reveal').evaluateAll((elements) => elements.map((element) => {
     const style = getComputedStyle(element)
-    return { opacity: Number.parseFloat(style.opacity), transform: style.transform }
+    return {
+      opacity: Number.parseFloat(style.opacity),
+      transform: style.transform,
+      transitionDuration: style.transitionDuration,
+      transitionDelay: style.transitionDelay
+    }
   }))
-  expect(states.every(({ opacity, transform }) => opacity === 1 && transform === 'none')).toBe(true)
+  expect(states.every(({ opacity, transform, transitionDuration, transitionDelay }) => (
+    opacity === 1
+      && transform === 'none'
+      && transitionDuration.split(',').every((duration) => Number.parseFloat(duration) <= 0.01)
+      && transitionDelay.split(',').every((delay) => Number.parseFloat(delay) === 0)
+  ))).toBe(true)
 })
 
 test('theme controls use bounded transitions for state changes', async ({ page }) => {
