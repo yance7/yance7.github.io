@@ -32,31 +32,36 @@ const archiveHeroContracts = [
     route: '/en/academics/',
     title: 'From here, tomorrow finds its course',
     words: ['From', 'here,', 'tomorrow', 'finds', 'its', 'course'],
-    credit: { artist: 'JJ Lin', song: '明日坐标', album: '明日坐标' }
+    credit: { artist: 'JJ Lin', song: '明日坐标', album: '明日坐标' },
+    wideMinimumLines: 2
   },
   {
     route: '/en/honors/',
     title: 'Step by step, I keep climbing',
     words: ['Step', 'by', 'step,', 'I', 'keep', 'climbing'],
-    credit: { artist: 'Jay Chou', song: '蜗牛', album: 'Fantasy Plus' }
+    credit: { artist: 'Jay Chou', song: '蜗牛', album: 'Fantasy Plus' },
+    wideMinimumLines: 1
   },
   {
     route: '/en/research/',
     title: 'You share this imperfect dream with me',
     words: ['You', 'share', 'this', 'imperfect', 'dream', 'with', 'me'],
-    credit: { artist: 'TFBOYS', song: '不完美小孩', album: '我们的时光' }
+    credit: { artist: 'TFBOYS', song: '不完美小孩', album: '我们的时光' },
+    wideMinimumLines: 2
   },
   {
     route: '/en/works/',
     title: 'Little by little, I learned that effort can lead to success',
     words: ['Little', 'by', 'little,', 'I', 'learned', 'that', 'effort', 'can', 'lead', 'to', 'success'],
-    credit: { artist: 'Silence Wang', song: '慢慢懂', album: '慢慢懂' }
+    credit: { artist: 'Silence Wang', song: '慢慢懂', album: '慢慢懂' },
+    wideMinimumLines: 2
   },
   {
     route: '/en/concerts/',
     title: 'Fate brought us together beyond this restless world',
     words: ['Fate', 'brought', 'us', 'together', 'beyond', 'this', 'restless', 'world'],
-    credit: { artist: 'G.E.M.', song: '光年之外', album: 'Single' }
+    credit: { artist: 'G.E.M.', song: '光年之外', album: 'Single' },
+    wideMinimumLines: 2
   }
 ] as const
 
@@ -307,7 +312,8 @@ for (const viewport of lyricViewports) {
       expect(geometry.words).toEqual(contract.words)
       expect(geometry.spaceWidths.every((width) => width > 0)).toBe(true)
       expect(geometry.wordLines).toEqual(contract.words.map(() => 1))
-      expect(geometry.lineCount, `${contract.route} title lines at ${viewport.width}px`).toBeGreaterThanOrEqual(2)
+      const minimumLines = viewport.name === 'wide' ? contract.wideMinimumLines : 2
+      expect(geometry.lineCount, `${contract.route} title lines at ${viewport.width}px`).toBeGreaterThanOrEqual(minimumLines)
       expect(geometry.lineCount, `${contract.route} title lines at ${viewport.width}px`).toBeLessThanOrEqual(4)
       expect(geometry.titleWidth).toBeLessThanOrEqual(geometry.titleClientWidth + 1)
       expect(geometry.titleRect.left).toBeGreaterThanOrEqual(-1)

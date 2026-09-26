@@ -5,10 +5,15 @@
 
 /* ---------- 全局设计令牌（与主题无关） ---------- */
 :root {
-  /* 字体族 */
-  --font-prose: "Inter Variable", "Noto Sans SC Variable", sans-serif;
-  --font-editorial: "Inter Variable", "Noto Serif SC Variable", serif;
-  --font-technical: "IBM Plex Mono", "Noto Sans SC Variable", monospace;
+  /* Bilingual type roles: Latin faces lead, device-native CJK faces precede bundled fallbacks. */
+  --font-latin-sans: "Inter Variable";
+  --font-latin-serif: Georgia, "Times New Roman";
+  --font-cjk-sans: "PingFang SC", -apple-system, "MiSans", "Noto Sans SC Variable";
+  --font-cjk-serif: "Noto Serif SC Variable";
+  --font-prose: var(--font-latin-sans), var(--font-cjk-sans), sans-serif;
+  --font-editorial: var(--font-latin-serif), var(--font-cjk-serif), serif;
+  --font-home-title: var(--font-latin-serif), "LXGW WenKai Hero SC", var(--font-cjk-serif), serif;
+  --font-technical: "IBM Plex Mono", var(--font-cjk-sans), monospace;
   --sans: var(--font-prose);
   --serif: var(--font-editorial);
   --display: var(--font-editorial);
@@ -141,6 +146,11 @@
   --signature-line-width: 1px;
   --signature-motion-duration: 18s;
 
+}
+
+html:lang(zh-CN),
+html:lang(zh-HK) {
+  --font-editorial: var(--font-latin-sans), var(--font-cjk-serif), serif;
 }
 
 /* ---------- 亮色 · 暖白纸（默认） ---------- */

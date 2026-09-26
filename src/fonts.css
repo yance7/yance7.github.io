@@ -1,8 +1,6 @@
 /*
- * One bundled type system for every script.
- * Noto Sans/Serif SC ship their CJK glyphs as unicode-range subsets, so the
- * browser requests only the characters used on a page while keeping the
- * fallback consistent across macOS, Windows, iOS and Android.
+ * Device-native CJK faces lead where available; bundled Noto SC/HK subsets
+ * provide cross-platform fallbacks and request only the page's used glyphs.
  */
 @import '@fontsource-variable/noto-sans-sc/index.css';
 @import '@fontsource-variable/noto-serif-sc/index.css';
@@ -26,9 +24,14 @@
   src: url('/assets/fonts/lxgw-wenkai-hero-tc.woff2') format('woff2');
 }
 
+:lang(en) {
+  --font-home-title: var(--font-editorial);
+}
+
 :lang(zh-HK) {
-  --font-prose: "Inter Variable", "Noto Sans HK Variable", sans-serif;
-  --font-editorial: "Inter Variable", "Noto Serif HK Variable", serif;
+  --font-cjk-sans: "PingFang TC", "PingFang HK", "PingFang SC", -apple-system, "MiSans", "Noto Sans HK Variable";
+  --font-cjk-serif: "Noto Serif HK Variable";
+  --font-home-title: var(--font-latin-serif), "LXGW WenKai Hero TC", var(--font-cjk-serif), serif;
 }
 
 @font-face {

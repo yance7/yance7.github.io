@@ -143,8 +143,8 @@ test('home assigns distinct font roles to prose, display and technical metadata'
       toolMeta: read('.tc-group-head small')
     }
   })
-  expect(researchFonts.title).toContain('Inter')
-  expect(researchFonts.tool).toContain('Inter')
+  expect(researchFonts.title).toContain('Inter Variable')
+  expect(researchFonts.tool).toContain('Inter Variable')
   expect(researchFonts.toolMeta).toContain('IBM Plex Mono')
 })
 
