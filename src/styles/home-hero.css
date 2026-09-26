@@ -253,11 +253,11 @@ html[data-locale='en'] .home-hero-typewriter-line-accent {
 }
 
 .home-hero-particles {
-  --hero-stage-center: #f7f3e9;
-  --hero-stage-edge: #eee9dc;
-  --hero-stage-glow: rgba(181, 132, 62, .12);
-  --hero-stage-ring: rgba(165, 104, 30, .28);
-  --hero-particle-light: #e9dfcb;
+  --hero-stage-center: #f6f7f0;
+  --hero-stage-edge: #edf1e9;
+  --hero-stage-glow: rgba(127, 153, 124, .1);
+  --hero-dot: rgba(83, 119, 91, .44);
+  --hero-mark: #294a3b;
   position: relative;
   display: grid;
   place-items: center;
@@ -265,65 +265,59 @@ html[data-locale='en'] .home-hero-typewriter-line-accent {
   min-width: 0;
   min-height: clamp(340px, 36vw, 480px);
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--line) 72%, var(--gold));
+  border: 1px solid color-mix(in srgb, var(--line) 68%, #9caf99);
   border-radius: 28px;
   background:
-    radial-gradient(ellipse at 50% 43%, var(--hero-stage-glow), transparent 58%),
-    radial-gradient(ellipse at 50% 76%, color-mix(in srgb, var(--aqua) 7%, transparent), transparent 48%),
-    linear-gradient(138deg, var(--hero-stage-center), var(--hero-stage-edge) 58%, color-mix(in srgb, var(--hero-stage-center) 70%, var(--bg)));
+    radial-gradient(ellipse at 50% 45%, var(--hero-stage-glow), transparent 60%),
+    linear-gradient(145deg, var(--hero-stage-center), var(--hero-stage-edge) 76%);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .46), var(--shadow-1);
-}
-
-html[data-theme='dark'] .home-hero-particles {
-  --hero-stage-center: #1d292a;
-  --hero-stage-edge: #111a1f;
-  --hero-stage-glow: rgba(232, 185, 98, .12);
-  --hero-stage-ring: rgba(232, 185, 98, .3);
-  --hero-particle-light: #d9c9a7;
-  box-shadow: inset 0 1px 0 rgba(241, 230, 207, .06), var(--shadow-1);
-}
-
-.home-hero-particles-canvas {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  display: block;
-  width: 100%;
-  height: 100%;
   touch-action: pan-y;
 }
 
-.home-hero-particles-ring {
+html[data-theme='dark'] .home-hero-particles {
+  --hero-stage-center: #1d2925;
+  --hero-stage-edge: #15201d;
+  --hero-stage-glow: rgba(138, 170, 140, .1);
+  --hero-dot: rgba(172, 198, 176, .34);
+  --hero-mark: #d4e0d2;
+  box-shadow: inset 0 1px 0 rgba(241, 230, 207, .06), var(--shadow-1);
+}
+
+.home-hero-particles-grid,
+.home-hero-particles-canvas {
   position: absolute;
-  z-index: 0;
-  width: clamp(220px, 58%, 310px);
-  aspect-ratio: 1;
-  border: 1px solid var(--hero-stage-ring);
-  border-radius: 50%;
-  background: radial-gradient(circle, color-mix(in srgb, var(--surface-strong) 22%, transparent), transparent 69%);
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
 }
 
+.home-hero-particles-grid { z-index: 1; }
+.home-hero-particles-canvas { z-index: 2; }
+
+.home-hero-particles-fallback-dot {
+  fill: var(--hero-dot);
+}
+
+.home-hero-particles-fallback-mark-dot {
+  fill: var(--hero-mark);
+}
+
 .home-hero-particles-mark {
-  position: relative;
+  position: absolute;
+  inset: 0;
   z-index: 1;
   display: block;
-  width: clamp(128px, 34%, 194px);
-  aspect-ratio: 1;
-  overflow: visible;
-  fill: none;
-  stroke: color-mix(in srgb, var(--gold) 82%, var(--ink));
-  stroke-width: 21px;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  width: 100%;
+  height: 100%;
   opacity: 1;
-  transform: translateY(-8px);
   transition: opacity 180ms ease-out;
   pointer-events: none;
 }
 
 .home-hero-particles[data-render-mode='canvas'] .home-hero-particles-mark {
-  opacity: .18;
+  opacity: 0;
 }
 
 .home-hero-touch-ripple {
@@ -382,8 +376,6 @@ html[data-theme='dark'] .home-hero-particles {
   .home-hero-actions { flex-direction: column; margin-top: 36px; }
   .hero-action { width: 100%; }
   .home-hero-particles { min-height: 300px; border-radius: 22px; }
-  .home-hero-particles-ring { width: min(68%, 260px); }
-  .home-hero-particles-mark { width: clamp(136px, 44%, 168px); }
 }
 
 @media (max-width: 420px) {
@@ -405,9 +397,12 @@ html[data-theme='dark'] .home-hero-particles {
 }
 
 @media (forced-colors: active) {
-  .home-hero-particles,
-  .home-hero-particles-mark,
-  .home-hero-particles-ring { background: Canvas; border-color: CanvasText; box-shadow: none; stroke: CanvasText; }
+  .home-hero-particles { background: Canvas; border-color: CanvasText; box-shadow: none; }
+  .home-hero-particles-grid,
+  .home-hero-particles-canvas { display: none; }
+  .home-hero-particles-mark { opacity: 1 !important; }
+  .home-hero-particles-fallback-dot,
+  .home-hero-particles-fallback-mark-dot { fill: CanvasText; }
   .hero-action,
   .hero-action.primary { background: ButtonFace; border-color: ButtonText; color: ButtonText; box-shadow: none; }
 }
