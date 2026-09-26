@@ -255,18 +255,23 @@ test('reduced motion completes every reveal immediately', async ({ page }) => {
   await expect.poll(() => page.locator('.reveal:not(.revealed)').count()).toBe(0)
   const states = await page.locator('.reveal').evaluateAll((elements) => elements.map((element) => {
     const style = getComputedStyle(element)
+    const toMilliseconds = (duration: string) => {
+      const value = Number.parseFloat(duration)
+      return duration.trim().endsWith('ms') ? value : value * 1000
+    }
+
     return {
       opacity: Number.parseFloat(style.opacity),
       transform: style.transform,
-      transitionDuration: style.transitionDuration,
-      transitionDelay: style.transitionDelay
+      transitionDuration: style.transitionDuration.split(',').map(toMilliseconds),
+      transitionDelay: style.transitionDelay.split(',').map(toMilliseconds)
     }
   }))
   expect(states.every(({ opacity, transform, transitionDuration, transitionDelay }) => (
     opacity === 1
       && transform === 'none'
-      && transitionDuration.split(',').every((duration) => Number.parseFloat(duration) <= 0.01)
-      && transitionDelay.split(',').every((delay) => Number.parseFloat(delay) === 0)
+      && transitionDuration.every((duration) => duration <= 0.01)
+      && transitionDelay.every((delay) => delay === 0)
   ))).toBe(true)
 })
 
