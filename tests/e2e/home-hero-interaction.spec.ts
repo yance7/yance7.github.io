@@ -84,6 +84,26 @@ async function countCanvasPixels(canvas: Locator, region: { x: number; y: number
   }, region)
 }
 
+async function countVisibleCanvasTargets(
+  canvas: Locator,
+  targets: readonly HomeHeroParticleTarget[],
+  canvasOffset: { x: number; y: number }
+) {
+  return canvas.evaluate((element, sample) => {
+    const target = element as HTMLCanvasElement
+    const bounds = target.getBoundingClientRect()
+    const ratio = target.width / bounds.width
+    const pixels = target.getContext('2d')!.getImageData(0, 0, target.width, target.height).data
+
+    return sample.targets.reduce((count, point) => {
+      const x = Math.round((point.x - sample.canvasOffset.x) * ratio)
+      const y = Math.round((point.y - sample.canvasOffset.y) * ratio)
+      const alpha = pixels[(y * target.width + x) * 4 + 3] ?? 0
+      return count + Number(alpha > 0)
+    }, 0)
+  }, { targets, canvasOffset })
+}
+
 async function installFrameTimestampOffset(page: Page) {
   await page.addInitScript(() => {
     const target = window as Window & { __homeHeroFrameOffsetMs?: number }
@@ -601,36 +621,36 @@ test('resumes particle drawing when the hidden page becomes visible', async ({ p
   await expect(canvas).toHaveAttribute('data-particle-state', /gathering|settled/)
 })
 
-test('completes a partially drawn Y after the hidden page outlasts the intro', async ({ page }) => {
+test('shows a complete Y when a hidden page returns after the intro', async ({ page }) => {
   await page.addInitScript(() => {
     Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' })
   })
   await page.goto('/')
 
   const hero = page.locator('.home-hero')
+  const stage = page.locator('.home-hero-particles')
   const canvas = page.locator('.home-hero-particles-canvas')
   await expect(canvas).toHaveAttribute('data-particle-state', 'paused')
   await expect(hero).toHaveAttribute('data-intro-state', 'complete', { timeout: 5000 })
+  const stageBounds = await stage.boundingBox()
   const bounds = await canvas.boundingBox()
+  expect(stageBounds).not.toBeNull()
   expect(bounds).not.toBeNull()
-  const sampleRegion = {
-    x: bounds!.width / 2,
-    y: bounds!.height / 2,
-    radius: Math.max(bounds!.width, bounds!.height)
-  }
-  const partialPixelCount = await countCanvasPixels(canvas, sampleRegion)
+  const scene = createHomeHeroParticleScene(Math.floor(stageBounds!.width), Math.floor(stageBounds!.height))
+  const canvasOffset = { x: bounds!.x - stageBounds!.x, y: bounds!.y - stageBounds!.y }
+  expect(scene.yPoints.length).toBeGreaterThan(80)
 
   await page.evaluate(() => {
     Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' })
     document.dispatchEvent(new Event('visibilitychange'))
   })
   await expect(canvas).toHaveAttribute('data-particle-state', 'settled')
-  const settledPixelCount = await countCanvasPixels(canvas, sampleRegion)
-  expect(settledPixelCount).toBeGreaterThan(partialPixelCount)
+  const settledTargetCount = await countVisibleCanvasTargets(canvas, scene.yPoints, canvasOffset)
+  expect(settledTargetCount).toBe(scene.yPoints.length)
 
   await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })))
-  const completePixelCount = await countCanvasPixels(canvas, sampleRegion)
-  expect(settledPixelCount).toBe(completePixelCount)
+  const completeTargetCount = await countVisibleCanvasTargets(canvas, scene.yPoints, canvasOffset)
+  expect(completeTargetCount).toBe(settledTargetCount)
 })
 
 test('restores a complete settled scene after focus and back-forward cache return', async ({ page }) => {
