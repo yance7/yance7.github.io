@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   HOME_HERO_PARTICLE_GATHER_DURATION_MS,
+  HOME_HERO_MARK_DOT_RADIUS_RATIO,
   HOME_HERO_BUTTERFLY_PATHS,
   createHomeHeroParticleScene,
   getHomeHeroMotionEasing,
@@ -13,10 +14,20 @@ import {
 describe('HomeHero particle geometry', () => {
   it('keeps four symmetrical wings around the open center from the supplied reference', () => {
     expect(HOME_HERO_BUTTERFLY_PATHS).toHaveLength(4)
+    expect(isHomeHeroButterflyPoint(0.3, 0.18)).toBe(true)
     expect(isHomeHeroButterflyPoint(0.5, 0.25)).toBe(false)
     expect(isHomeHeroButterflyPoint(0.5, 0.76)).toBe(false)
     expect(isHomeHeroButterflyPoint(0.2, 0.54)).toBe(false)
     expect(isHomeHeroButterflyPoint(0.8, 0.54)).toBe(false)
+  })
+
+  it('uses a visibly denser Y dot face without changing the shared lattice', () => {
+    expect(HOME_HERO_MARK_DOT_RADIUS_RATIO).toBe(0.32)
+  })
+
+  it('keeps the lower wings narrower than the upper wings like the supplied butterfly', () => {
+    expect(isHomeHeroButterflyPoint(0.08, 0.8)).toBe(false)
+    expect(isHomeHeroButterflyPoint(0.18, 0.8)).toBe(true)
   })
 
   it('keeps a dense, four-wing butterfly surface on the same lattice as the Y', () => {
@@ -49,7 +60,7 @@ describe('HomeHero particle geometry', () => {
     expect(desktopScene.yPoints.length).toBeGreaterThan(400)
 
     for (const scene of [mobileScene, desktopScene]) {
-      expect(scene.butterflyBounds.width / scene.butterflyBounds.height).toBeCloseTo(1.4, 1)
+      expect(scene.butterflyBounds.width / scene.butterflyBounds.height).toBeCloseTo(1.28, 2)
       expect(scene.butterflyBounds.x + scene.butterflyBounds.width / 2)
         .toBeCloseTo(scene.gridOriginX + (scene.columns - 1) * scene.gridStep / 2, 1)
       expect(scene.backgroundPoints.every((point) => {

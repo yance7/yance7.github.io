@@ -245,12 +245,14 @@ test('keeps the Y particle mark distinguishable in the dark theme', async ({ pag
     const halo = styles.getPropertyValue('--hero-mark-halo')
     return {
       markOnButterfly: ratio(mark, styles.getPropertyValue('--hero-butterfly')),
+      markOnCenter: ratio(mark, styles.getPropertyValue('--hero-stage-center')),
       haloOnCenter: ratio(halo, styles.getPropertyValue('--hero-stage-center')),
       haloOnEdge: ratio(halo, styles.getPropertyValue('--hero-stage-edge'))
     }
   })
 
   expect(contrast.markOnButterfly).toBeGreaterThanOrEqual(3)
+  expect(contrast.markOnCenter).toBeGreaterThanOrEqual(2.5)
   expect(contrast.haloOnCenter).toBeGreaterThanOrEqual(3)
   expect(contrast.haloOnEdge).toBeGreaterThanOrEqual(3)
 
@@ -286,18 +288,47 @@ test('keeps the Y particle mark distinguishable in the dark theme', async ({ pag
       const pixelY = Math.max(0, Math.min(mark.height - 1, Math.floor(y * ratio)))
       return Array.from(context.getImageData(pixelX, pixelY, 1, 1).data.slice(0, 3))
     }
+    const haloBounds = {
+      left: Math.max(0, Math.floor((targets.field.x - targets.haloRadius) * ratio)),
+      top: Math.max(0, Math.floor((targets.field.y - targets.haloRadius) * ratio)),
+      right: Math.min(mark.width, Math.ceil((targets.field.x + targets.haloRadius) * ratio)),
+      bottom: Math.min(mark.height, Math.ceil((targets.field.y + targets.haloRadius) * ratio))
+    }
+    const haloPixels = context.getImageData(
+      haloBounds.left,
+      haloBounds.top,
+      haloBounds.right - haloBounds.left,
+      haloBounds.bottom - haloBounds.top
+    )
+    let haloSample = [0, 0, 0]
+    let haloAlpha = 0
+    for (let y = 0; y < haloPixels.height; y += 1) {
+      for (let x = 0; x < haloPixels.width; x += 1) {
+        const logicalX = (haloBounds.left + x + 0.5) / ratio
+        const logicalY = (haloBounds.top + y + 0.5) / ratio
+        const distance = Math.hypot(logicalX - targets.field.x, logicalY - targets.field.y)
+        if (distance <= targets.dotRadius || distance >= targets.haloRadius) continue
+        const offset = (y * haloPixels.width + x) * 4
+        const alpha = haloPixels.data[offset + 3]!
+        if (alpha <= haloAlpha) continue
+        haloAlpha = alpha
+        haloSample = Array.from(haloPixels.data.slice(offset, offset + 3))
+      }
+    }
     const stage = document.querySelector('.home-hero-particles')!
     const styles = getComputedStyle(stage)
     return {
       core: read(targets.wing.x, targets.wing.y),
-      halo: read(targets.field.x + targets.haloSampleOffset, targets.field.y),
+      halo: haloSample,
+      haloAlpha,
       markColor: styles.getPropertyValue('--hero-mark').trim(),
       haloColor: styles.getPropertyValue('--hero-mark-halo').trim()
     }
   }, {
     wing: wingTarget!,
     field: fieldTarget!,
-    haloSampleOffset
+    dotRadius: scene.gridStep * HOME_HERO_MARK_DOT_RADIUS_RATIO,
+    haloRadius: scene.gridStep * HOME_HERO_MARK_DOT_HALO_RADIUS_RATIO
   })
   const channels = (color: string) => color.match(/^#([\da-f]{6})$/i)?.[1]
     ?.match(/../g)
@@ -308,6 +339,7 @@ test('keeps the Y particle mark distinguishable in the dark theme', async ({ pag
   )
 
   expect(colorDistance(pixels.core, pixels.markColor), JSON.stringify(pixels)).toBeLessThan(24)
+  expect(pixels.haloAlpha).toBeGreaterThanOrEqual(240)
   expect(colorDistance(pixels.halo, pixels.haloColor), JSON.stringify(pixels)).toBeLessThan(60)
 })
 

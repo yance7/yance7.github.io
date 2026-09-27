@@ -12,8 +12,8 @@ export interface HomeHeroGridPoint extends HomeHeroParticleTarget {
 
 export const HOME_HERO_PARTICLE_GATHER_DURATION_MS = 1600
 export const HOME_HERO_GRID_DOT_RADIUS_RATIO = 0.22
-export const HOME_HERO_MARK_DOT_RADIUS_RATIO = 0.25
-export const HOME_HERO_MARK_DOT_HALO_RADIUS_RATIO = 0.36
+export const HOME_HERO_MARK_DOT_RADIUS_RATIO = 0.32
+export const HOME_HERO_MARK_DOT_HALO_RADIUS_RATIO = 0.48
 
 export type HomeHeroParticleState = 'gathering' | 'settled'
 
@@ -47,33 +47,35 @@ export interface HomeHeroParticleScene {
   yPoints: HomeHeroParticleTarget[]
 }
 
-const HOME_HERO_BUTTERFLY_ASPECT_RATIO = 1.4
+const HOME_HERO_BUTTERFLY_ASPECT_RATIO = 1.28
 
 const HOME_HERO_BUTTERFLY_UPPER_LEFT_SHAPE: CubicShape = {
   width: 100,
   height: 100,
   start: { x: 48, y: 49 },
   segments: [
-    { control1: { x: 39, y: 40 }, control2: { x: 25, y: 12 }, end: { x: 15, y: 5 } },
-    { control1: { x: 8, y: 0 }, control2: { x: 3, y: 5 }, end: { x: 5, y: 14 } },
-    { control1: { x: 6, y: 21 }, control2: { x: 11, y: 25 }, end: { x: 8, y: 31 } },
-    { control1: { x: 6, y: 37 }, control2: { x: 12, y: 44 }, end: { x: 20, y: 47 } },
-    { control1: { x: 28, y: 51 }, control2: { x: 39, y: 53 }, end: { x: 47, y: 53 } },
-    { control1: { x: 45, y: 51 }, control2: { x: 44, y: 50 }, end: { x: 48, y: 49 } }
+    { control1: { x: 40, y: 43 }, control2: { x: 42, y: 17 }, end: { x: 13, y: 6 } },
+    { control1: { x: 7, y: 0 }, control2: { x: 2, y: 3 }, end: { x: 4, y: 12 } },
+    { control1: { x: 6, y: 17 }, control2: { x: 10, y: 20 }, end: { x: 7, y: 26 } },
+    { control1: { x: 5, y: 33 }, control2: { x: 10, y: 40 }, end: { x: 18, y: 46 } },
+    { control1: { x: 27, y: 51 }, control2: { x: 39, y: 53 }, end: { x: 47, y: 54 } },
+    { control1: { x: 46, y: 53 }, control2: { x: 46, y: 51 }, end: { x: 48, y: 49 } }
   ]
 }
 
 const HOME_HERO_BUTTERFLY_LOWER_LEFT_SHAPE: CubicShape = {
   width: 100,
   height: 100,
-  start: { x: 47, y: 55 },
+  start: { x: 47, y: 56 },
   segments: [
-    { control1: { x: 39, y: 52 }, control2: { x: 28, y: 51 }, end: { x: 21, y: 55 } },
-    { control1: { x: 11, y: 60 }, control2: { x: 7, y: 72 }, end: { x: 8, y: 82 } },
-    { control1: { x: 9, y: 94 }, control2: { x: 18, y: 100 }, end: { x: 26, y: 94 } },
-    { control1: { x: 36, y: 88 }, control2: { x: 41, y: 76 }, end: { x: 44, y: 65 } },
-    { control1: { x: 45, y: 61 }, control2: { x: 46, y: 58 }, end: { x: 48, y: 57 } },
-    { control1: { x: 48, y: 56 }, control2: { x: 47, y: 56 }, end: { x: 47, y: 55 } }
+    { control1: { x: 41, y: 54 }, control2: { x: 34, y: 53 }, end: { x: 28, y: 54 } },
+    { control1: { x: 20, y: 55 }, control2: { x: 13, y: 59 }, end: { x: 12, y: 66 } },
+    { control1: { x: 11, y: 72 }, control2: { x: 14, y: 78 }, end: { x: 17, y: 84 } },
+    { control1: { x: 19, y: 90 }, control2: { x: 22, y: 97 }, end: { x: 27, y: 99 } },
+    { control1: { x: 32, y: 100 }, control2: { x: 36, y: 97 }, end: { x: 40, y: 90 } },
+    { control1: { x: 44, y: 83 }, control2: { x: 46, y: 74 }, end: { x: 47, y: 66 } },
+    { control1: { x: 47, y: 60 }, control2: { x: 48, y: 57 }, end: { x: 48, y: 56 } },
+    { control1: { x: 48, y: 57 }, control2: { x: 47, y: 57 }, end: { x: 47, y: 56 } }
   ]
 }
 
