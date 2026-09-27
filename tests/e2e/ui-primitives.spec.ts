@@ -118,10 +118,15 @@ test('metric surfaces refine their boundary without adding elevation', async ({ 
   await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
   const metric = page.locator('.metric-card').first()
   await expect(metric).toBeVisible()
+  await page.evaluate(() => {
+    document.documentElement.style.scrollBehavior = 'auto'
+  })
   await metric.scrollIntoViewIfNeeded()
   await page.evaluate(async () => {
     await document.fonts.ready
   })
+  await expect(page.locator('.metric-strip')).toHaveClass(/revealed/)
+  await expect(page.locator('.metric-strip')).toHaveCSS('transform', 'none')
   await metric.hover()
 
   await expect(metric).toHaveCSS('transform', 'none')
