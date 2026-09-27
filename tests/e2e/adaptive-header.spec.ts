@@ -420,11 +420,16 @@ test('adaptive header catches fragment scrolling after sentinel observation', as
   await waitForReady(page)
 
   const header = page.locator('.site-nav')
+  const target = page.locator('#home-worlds')
   await expect(header).toHaveAttribute('data-header-state', 'resting')
+  await expect(target).toBeAttached()
+  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready', { timeout: 10_000 })
+  const targetScrollTop = await target.evaluate((element) => element.getBoundingClientRect().top + window.scrollY)
+
   await page.evaluate(() => {
     history.replaceState(null, '', '#home-worlds')
-    document.querySelector('#home-worlds')?.scrollIntoView({ behavior: 'instant', block: 'start' })
   })
+  await scrollHeader(page, targetScrollTop)
 
   await expect(header).toHaveAttribute('data-header-state', 'floating')
 })

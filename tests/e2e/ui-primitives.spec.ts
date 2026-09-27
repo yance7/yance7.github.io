@@ -55,7 +55,9 @@ test('lightbox keeps metadata and quiet control chrome bounded', async ({ page }
   await page.goto('/concerts/')
   await page.locator('.concert-poster .poster-open').first().click()
 
-  await expect(page.locator('.lightbox')).toBeVisible()
+  const lightbox = page.locator('.lightbox')
+  await expect(lightbox).toBeVisible()
+  await expect(lightbox).not.toHaveClass(/lightbox-enter-active/)
   await expect(page.locator('.lb-stage img')).toHaveClass(/loaded/)
   await expect(page.locator('.lb-meta-dock')).toHaveCount(1)
   await expect(page.locator('.lb-meta-copy')).toBeVisible()
@@ -100,7 +102,7 @@ test('lightbox keeps metadata and quiet control chrome bounded', async ({ page }
   expect(geometry.image.bottom, JSON.stringify(geometry)).toBeLessThanOrEqual(geometry.metadata.top - 12)
 
   await page.keyboard.press('Escape')
-  await expect(page.locator('.lightbox')).toHaveCount(0)
+  await expect(lightbox).toHaveCount(0)
 })
 
 test('archive proof links share one semantic primitive across works and research', async ({ page }) => {
@@ -115,9 +117,18 @@ test('metric surfaces refine their boundary without adding elevation', async ({ 
   await page.goto('/academics/')
   await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
   await expect(page.locator('.metric-strip')).toHaveAttribute('data-metrics-ready', 'true')
+  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
   const metric = page.locator('.metric-card').first()
   await expect(metric).toBeVisible()
-  await metric.evaluate((element) => element.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' }))
+  await page.evaluate(() => {
+    document.documentElement.style.scrollBehavior = 'auto'
+  })
+  await metric.scrollIntoViewIfNeeded()
+  await page.evaluate(async () => {
+    await document.fonts.ready
+  })
+  await expect(page.locator('.metric-strip')).toHaveClass(/revealed/)
+  await expect(page.locator('.metric-strip')).toHaveCSS('transform', 'none')
   await metric.hover()
 
   await expect(metric).toHaveCSS('transform', 'none')
