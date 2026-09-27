@@ -608,7 +608,7 @@ test('shows a complete Y when a hidden page returns after the intro', async ({ p
   expect(completeTargetCount).toBe(settledTargetCount)
 })
 
-test('restores a complete settled scene after focus and back-forward cache return', async ({ page }) => {
+test('restores a complete settled scene after window focus returns', async ({ page }) => {
   await page.goto('/')
   const canvas = page.locator('.home-hero-particles-canvas')
   await expect(canvas).toHaveAttribute('data-particle-state', 'settled', { timeout: 4000 })
@@ -618,9 +618,22 @@ test('restores a complete settled scene after focus and back-forward cache retur
   await page.evaluate(() => window.dispatchEvent(new Event('focus')))
   await expect(canvas).toHaveAttribute('data-particle-state', 'settled')
 
-  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })))
-  await expect(canvas).toHaveAttribute('data-particle-state', 'settled')
   await expect(page.locator('.home-hero-particles-grid')).toHaveAttribute('data-particle-state', 'settled')
+})
+
+test('returns to a settled particle scene after real back-forward navigation', async ({ page }) => {
+  await page.goto('/')
+  const canvas = page.locator('.home-hero-particles-canvas')
+  const grid = page.locator('.home-hero-particles-grid')
+  await expect(canvas).toHaveAttribute('data-particle-state', 'settled', { timeout: 5000 })
+
+  await page.goto('/academics/')
+  await expect(page.locator('main')).toBeVisible()
+  await page.goBack()
+
+  await expect(page.locator('.home-hero')).toBeVisible()
+  await expect(canvas).toHaveAttribute('data-particle-state', 'settled', { timeout: 5000 })
+  await expect(grid).toHaveAttribute('data-particle-state', 'settled')
 })
 
 test('renders one aligned dot grid with a butterfly opening and keeps labels as DOM text', async ({ page }) => {
