@@ -115,6 +115,7 @@ test('metric surfaces refine their boundary without adding elevation', async ({ 
   await page.goto('/academics/')
   await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
   await expect(page.locator('.metric-strip')).toHaveAttribute('data-metrics-ready', 'true')
+  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
   const metric = page.locator('.metric-card').first()
   await expect(metric).toBeVisible()
   await metric.evaluate((element) => element.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' }))
