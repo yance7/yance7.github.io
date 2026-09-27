@@ -35,31 +35,57 @@ export interface HomeHeroParticleScene {
   gridOriginX: number
   gridOriginY: number
   markBounds: { x: number; y: number; width: number; height: number }
+  butterflyBounds: { x: number; y: number; width: number; height: number }
   backgroundPoints: HomeHeroParticleTarget[]
   yPoints: HomeHeroParticleTarget[]
 }
 
-const HOME_HERO_BUTTERFLY_SHAPE: CubicShape = {
+const HOME_HERO_BUTTERFLY_ASPECT_RATIO = 1.28
+
+const HOME_HERO_BUTTERFLY_UPPER_LEFT_SHAPE: CubicShape = {
   width: 100,
   height: 100,
-  start: { x: 50, y: 22 },
+  start: { x: 48, y: 49 },
   segments: [
-    { control1: { x: 40, y: 10 }, control2: { x: 22, y: 2 }, end: { x: 16, y: 10 } },
-    { control1: { x: 5, y: 15 }, control2: { x: 6, y: 24 }, end: { x: 9, y: 30 } },
-    { control1: { x: 16, y: 41 }, control2: { x: 32, y: 49 }, end: { x: 43, y: 53 } },
-    { control1: { x: 31, y: 57 }, control2: { x: 18, y: 63 }, end: { x: 22, y: 70 } },
-    { control1: { x: 20, y: 79 }, control2: { x: 25, y: 88 }, end: { x: 32, y: 84 } },
-    { control1: { x: 36, y: 85 }, control2: { x: 40, y: 78 }, end: { x: 45, y: 74 } },
-    { control1: { x: 47, y: 78 }, control2: { x: 47, y: 88 }, end: { x: 50, y: 91 } },
-    { control1: { x: 53, y: 88 }, control2: { x: 53, y: 78 }, end: { x: 55, y: 74 } },
-    { control1: { x: 60, y: 78 }, control2: { x: 64, y: 85 }, end: { x: 68, y: 84 } },
-    { control1: { x: 75, y: 88 }, control2: { x: 80, y: 79 }, end: { x: 78, y: 70 } },
-    { control1: { x: 82, y: 63 }, control2: { x: 69, y: 57 }, end: { x: 57, y: 53 } },
-    { control1: { x: 68, y: 49 }, control2: { x: 84, y: 41 }, end: { x: 91, y: 30 } },
-    { control1: { x: 94, y: 24 }, control2: { x: 95, y: 15 }, end: { x: 84, y: 10 } },
-    { control1: { x: 78, y: 2 }, control2: { x: 60, y: 10 }, end: { x: 50, y: 22 } }
+    { control1: { x: 39, y: 38 }, control2: { x: 20, y: 8 }, end: { x: 7, y: 5 } },
+    { control1: { x: 1, y: 7 }, control2: { x: 7, y: 28 }, end: { x: 13, y: 38 } },
+    { control1: { x: 20, y: 48 }, control2: { x: 34, y: 51 }, end: { x: 46, y: 52 } },
+    { control1: { x: 44, y: 50 }, control2: { x: 42, y: 49 }, end: { x: 48, y: 49 } }
   ]
 }
+
+const HOME_HERO_BUTTERFLY_LOWER_LEFT_SHAPE: CubicShape = {
+  width: 100,
+  height: 100,
+  start: { x: 46, y: 57 },
+  segments: [
+    { control1: { x: 39, y: 55 }, control2: { x: 30, y: 54 }, end: { x: 24, y: 57 } },
+    { control1: { x: 17, y: 61 }, control2: { x: 15, y: 77 }, end: { x: 21, y: 89 } },
+    { control1: { x: 25, y: 98 }, control2: { x: 34, y: 97 }, end: { x: 39, y: 88 } },
+    { control1: { x: 44, y: 79 }, control2: { x: 45, y: 67 }, end: { x: 48, y: 60 } },
+    { control1: { x: 47, y: 59 }, control2: { x: 46, y: 58 }, end: { x: 46, y: 57 } }
+  ]
+}
+
+function mirrorButterflyShape(shape: CubicShape): CubicShape {
+  const mirrorPoint = ({ x, y }: VectorPoint) => ({ x: 100 - x, y })
+  return {
+    ...shape,
+    start: mirrorPoint(shape.start),
+    segments: shape.segments.map(({ control1, control2, end }) => ({
+      control1: mirrorPoint(control1),
+      control2: mirrorPoint(control2),
+      end: mirrorPoint(end)
+    }))
+  }
+}
+
+const HOME_HERO_BUTTERFLY_SHAPES = [
+  HOME_HERO_BUTTERFLY_UPPER_LEFT_SHAPE,
+  mirrorButterflyShape(HOME_HERO_BUTTERFLY_UPPER_LEFT_SHAPE),
+  HOME_HERO_BUTTERFLY_LOWER_LEFT_SHAPE,
+  mirrorButterflyShape(HOME_HERO_BUTTERFLY_LOWER_LEFT_SHAPE)
+] as const
 
 const HOME_HERO_Y_SHAPE: CubicShape = {
   width: 100,
@@ -142,24 +168,26 @@ function containsPoint(shape: CubicShape, points: readonly VectorPoint[], x: num
   return inside
 }
 
-const HOME_HERO_BUTTERFLY_POLYGON = flattenShape(HOME_HERO_BUTTERFLY_SHAPE)
 const HOME_HERO_Y_POLYGON = flattenShape(HOME_HERO_Y_SHAPE)
 
-export const HOME_HERO_BUTTERFLY_PATH = shapePath(HOME_HERO_BUTTERFLY_SHAPE)
+const HOME_HERO_BUTTERFLY_POLYGONS = HOME_HERO_BUTTERFLY_SHAPES.map((shape) => flattenShape(shape))
+
+export const HOME_HERO_BUTTERFLY_PATHS = HOME_HERO_BUTTERFLY_SHAPES.map((shape) => shapePath(shape))
 export const HOME_HERO_Y_PATH = shapePath(HOME_HERO_Y_SHAPE)
 
 export function isHomeHeroButterflyPoint(x: number, y: number): boolean {
-  return containsPoint(HOME_HERO_BUTTERFLY_SHAPE, HOME_HERO_BUTTERFLY_POLYGON, x * 100, y * 100)
+  if (x < 0 || x > 1 || y < 0 || y > 1) return false
+  return HOME_HERO_BUTTERFLY_SHAPES.some((shape, index) => (
+    containsPoint(shape, HOME_HERO_BUTTERFLY_POLYGONS[index]!, x * 100, y * 100)
+  ))
 }
 
 export function isHomeHeroYPoint(x: number, y: number): boolean {
   return containsPoint(HOME_HERO_Y_SHAPE, HOME_HERO_Y_POLYGON, x * 100, y * 120)
 }
 
-function getHomeHeroGridStep(width: number): number {
-  if (width <= 420) return 8
-  if (width <= 760) return 10
-  return 12
+function getHomeHeroGridStep(): number {
+  return 6
 }
 
 function getYParticleDelay(localX: number, localY: number, row: number, column: number): number {
@@ -173,7 +201,9 @@ function getHomeHeroParticleSceneLayout(width: number, height: number) {
   const safeHeight = Math.max(0, height)
   const markHeight = Math.min(safeHeight * 0.62, safeWidth * 0.8)
   const markWidth = markHeight * HOME_HERO_Y_SHAPE.width / HOME_HERO_Y_SHAPE.height
-  const gridStep = getHomeHeroGridStep(safeWidth)
+  const butterflyWidth = Math.min(safeWidth * 0.98, safeHeight * HOME_HERO_BUTTERFLY_ASPECT_RATIO * 0.94)
+  const butterflyHeight = butterflyWidth / HOME_HERO_BUTTERFLY_ASPECT_RATIO
+  const gridStep = getHomeHeroGridStep()
   const columns = safeWidth > 0 ? Math.max(1, Math.floor(safeWidth / gridStep)) : 0
   const rows = safeHeight > 0 ? Math.max(1, Math.floor(safeHeight / gridStep)) : 0
 
@@ -188,6 +218,12 @@ function getHomeHeroParticleSceneLayout(width: number, height: number) {
       y: safeHeight * 0.46 - markHeight / 2,
       width: markWidth,
       height: markHeight
+    },
+    butterflyBounds: {
+      x: (safeWidth - butterflyWidth) / 2,
+      y: safeHeight * 0.486 - butterflyHeight / 2,
+      width: butterflyWidth,
+      height: butterflyHeight
     }
   }
 }
@@ -209,7 +245,9 @@ export function createHomeHeroParticleScene(width: number, height: number): Home
     for (let column = 0; column < layout.columns; column += 1) {
       const x = layout.gridOriginX + column * layout.gridStep
       const y = layout.gridOriginY + row * layout.gridStep
-      const butterflyPoint = isHomeHeroButterflyPoint(x / width, y / height)
+      const butterflyX = (x - layout.butterflyBounds.x) / layout.butterflyBounds.width
+      const butterflyY = (y - layout.butterflyBounds.y) / layout.butterflyBounds.height
+      const butterflyPoint = isHomeHeroButterflyPoint(butterflyX, butterflyY)
       const localX = (x - layout.markBounds.x) / layout.markBounds.width
       const localY = (y - layout.markBounds.y) / layout.markBounds.height
       const yPoint = localX >= 0 && localX <= 1 && localY >= 0 && localY <= 1

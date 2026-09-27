@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {
-  HOME_HERO_BUTTERFLY_PATH,
+  HOME_HERO_BUTTERFLY_PATHS,
   HOME_HERO_PARTICLE_GATHER_DURATION_MS,
   HOME_HERO_Y_PATH,
   createHomeHeroParticleScene,
@@ -35,8 +35,8 @@ interface Rect {
 }
 
 const FRAME_INTERVAL_MS = 1000 / 60
-const GRID_DOT_RADIUS_RATIO = 0.14
-const MARK_DOT_RADIUS_RATIO = 0.16
+const GRID_DOT_RADIUS_RATIO = 0.22
+const MARK_DOT_RADIUS_RATIO = 0.25
 const CACHE_DOT_ERASE_OVERDRAW = 1
 const PARTICLE_SEED = 0x59a7ce
 
@@ -116,7 +116,9 @@ function markTransform() {
 }
 
 function butterflyTransform() {
-  return `scale(${logicalWidth / 100} ${logicalHeight / 100})`
+  if (!scene) return ''
+  const bounds = scene.butterflyBounds
+  return `translate(${bounds.x} ${bounds.y}) scale(${bounds.width / 100} ${bounds.height / 100})`
 }
 
 function stopFrame() {
@@ -996,7 +998,13 @@ onBeforeUnmount(cleanupCanvas)
         </pattern>
         <mask id="home-hero-butterfly-opening" maskUnits="userSpaceOnUse" :x="0" :y="0" :width="sceneWidth" :height="sceneHeight">
           <rect :width="sceneWidth" :height="sceneHeight" fill="white" />
-          <path :d="HOME_HERO_BUTTERFLY_PATH" :transform="butterflyTransform()" fill="black" />
+          <path
+            v-for="(path, index) in HOME_HERO_BUTTERFLY_PATHS"
+            :key="index"
+            :d="path"
+            :transform="butterflyTransform()"
+            fill="black"
+          />
         </mask>
       </defs>
       <rect :width="sceneWidth" :height="sceneHeight" fill="url(#home-hero-fixed-grid)" mask="url(#home-hero-butterfly-opening)" />

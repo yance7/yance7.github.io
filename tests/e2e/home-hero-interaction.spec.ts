@@ -1,7 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
 import {
   createHomeHeroParticleScene,
-  getHomeHeroMotionEasing,
   type HomeHeroParticleTarget
 } from '../../src/utils/homeHeroParticles'
 
@@ -115,58 +114,18 @@ async function installFrameTimestampOffset(page: Page) {
   })
 }
 
-function findClippedParticleSource(
+function findParticleSource(
   points: readonly HomeHeroParticleTarget[],
   width: number,
   height: number,
-  gridStep: number,
-  particleRadiusRatio: number
+  gridStep: number
 ) {
-  const pointerRadius = gridStep * 6.5
-  const maxDisplacement = gridStep * 0.8
-  const margin = gridStep * particleRadiusRatio + 2
-  const easing = getHomeHeroMotionEasing(120)
-
-  for (let pointerY = gridStep / 2; pointerY < height; pointerY += gridStep / 2) {
-    for (let pointerX = gridStep / 2; pointerX < width; pointerX += gridStep / 2) {
-      const displacedPoints: Array<{ point: HomeHeroParticleTarget; x: number; y: number }> = []
-      for (const point of points) {
-        let deltaX = point.x - pointerX
-        let deltaY = point.y - pointerY
-        let distance = Math.hypot(deltaX, deltaY)
-        if (distance >= pointerRadius) continue
-        if (distance < 0.1) {
-          deltaX = point.x - width / 2 || 1
-          deltaY = point.y - height / 2 || 1
-          distance = Math.hypot(deltaX, deltaY)
-        }
-        if (distance >= pointerRadius) continue
-
-        const force = (1 - distance / pointerRadius) ** 2
-        const targetX = deltaX / distance * maxDisplacement * force
-        const targetY = deltaY / distance * maxDisplacement * force
-        const offsetX = targetX * easing
-        const offsetY = targetY * easing
-        const moving = Math.abs(targetX - offsetX) > 0.12 || Math.abs(targetY - offsetY) > 0.12
-        const displaced = Math.abs(offsetX) > 0.12 || Math.abs(offsetY) > 0.12
-        if (moving || displaced) {
-          displacedPoints.push({ point, x: point.x + offsetX, y: point.y + offsetY })
-        }
-      }
-
-      if (!displacedPoints.length) continue
-      const left = Math.min(...displacedPoints.map(({ x }) => x - margin))
-      const right = Math.max(...displacedPoints.map(({ x }) => x + margin))
-      const top = Math.min(...displacedPoints.map(({ y }) => y - margin))
-      const bottom = Math.max(...displacedPoints.map(({ y }) => y + margin))
-      for (const { point } of displacedPoints) {
-        const gap = Math.max(left - point.x, point.x - right, top - point.y, point.y - bottom, 0)
-        if (gap > 0) return { pointer: { x: pointerX, y: pointerY }, point, gap }
-      }
-    }
-  }
-
-  return null
+  return points.find(({ x, y }) => (
+    x > gridStep * 3
+    && x < width - gridStep * 3
+    && y > gridStep * 3
+    && y < height - gridStep * 3
+  )) ?? null
 }
 
 const activeTypingFrame: Partial<HomeHeroIntroFrame> = {
@@ -258,7 +217,7 @@ test('rebuilds the reduced-motion SVG geometry after the viewport resizes', asyn
       viewBoxMatchesStage: viewBox[2] === Math.floor(bounds.width)
         && viewBox[3] === Math.floor(bounds.height)
     }
-  })).toEqual(expect.objectContaining({ gridStep: 8, viewBoxMatchesStage: true }))
+  })).toEqual(expect.objectContaining({ gridStep: 6, viewBoxMatchesStage: true }))
   await expect(mark.locator('[data-y-mark]')).toBeVisible()
 })
 
@@ -281,7 +240,7 @@ test('rebuilds the static fallback SVG geometry after the viewport resizes', asy
     const viewBox = element.querySelector('svg')!.getAttribute('viewBox')!.split(' ').map(Number)
     return viewBox[2] === Math.floor(bounds.width) && viewBox[3] === Math.floor(bounds.height)
   })).toBe(true)
-  await expect(stage).toHaveAttribute('data-grid-step', '8')
+  await expect(stage).toHaveAttribute('data-grid-step', '6')
   await expect(mark.locator('[data-y-mark]')).toBeVisible()
 })
 
@@ -499,19 +458,18 @@ test('erases cached source field dots on a throttled first pointer frame', async
     return { width: Math.floor(bounds.width), height: Math.floor(bounds.height) }
   })
   const scene = createHomeHeroParticleScene(geometry.width, geometry.height)
-  const reproduction = findClippedParticleSource(
+  const source = findParticleSource(
     scene.backgroundPoints,
     geometry.width,
     geometry.height,
-    scene.gridStep,
-    0.14
+    scene.gridStep
   )
-  expect(reproduction).not.toBeNull()
+  expect(source).not.toBeNull()
   const bounds = await stage.boundingBox()
   expect(bounds).not.toBeNull()
   const sourceRegion = {
-    x: reproduction!.point.x,
-    y: reproduction!.point.y,
+    x: source!.x,
+    y: source!.y,
     radius: scene.gridStep * 0.12
   }
   await expect.poll(() => countCanvasPixels(grid, sourceRegion)).toBeGreaterThan(0)
@@ -520,7 +478,7 @@ test('erases cached source field dots on a throttled first pointer frame', async
     const target = window as Window & { __homeHeroFrameOffsetMs?: number }
     target.__homeHeroFrameOffsetMs = 120
   })
-  await page.mouse.move(bounds!.x + reproduction!.pointer.x, bounds!.y + reproduction!.pointer.y)
+  await page.mouse.move(bounds!.x + source!.x - scene.gridStep * 0.5, bounds!.y + source!.y)
   await expect.poll(() => countCanvasPixels(grid, sourceRegion), { timeout: 2000 }).toBe(0)
 })
 
@@ -539,19 +497,18 @@ test('erases cached source Y dots on a throttled first pointer frame', async ({ 
     return { width: Math.floor(bounds.width), height: Math.floor(bounds.height) }
   })
   const scene = createHomeHeroParticleScene(geometry.width, geometry.height)
-  const reproduction = findClippedParticleSource(
+  const source = findParticleSource(
     scene.yPoints,
     geometry.width,
     geometry.height,
-    scene.gridStep,
-    0.16
+    scene.gridStep
   )
-  expect(reproduction).not.toBeNull()
+  expect(source).not.toBeNull()
   const bounds = await stage.boundingBox()
   expect(bounds).not.toBeNull()
   const sourceRegion = {
-    x: reproduction!.point.x,
-    y: reproduction!.point.y,
+    x: source!.x,
+    y: source!.y,
     radius: scene.gridStep * 0.12
   }
   await expect.poll(() => countCanvasPixels(mark, sourceRegion)).toBeGreaterThan(0)
@@ -560,7 +517,7 @@ test('erases cached source Y dots on a throttled first pointer frame', async ({ 
     const target = window as Window & { __homeHeroFrameOffsetMs?: number }
     target.__homeHeroFrameOffsetMs = 120
   })
-  await page.mouse.move(bounds!.x + reproduction!.pointer.x, bounds!.y + reproduction!.pointer.y)
+  await page.mouse.move(bounds!.x + source!.x - scene.gridStep * 0.5, bounds!.y + source!.y)
   await expect.poll(() => countCanvasPixels(mark, sourceRegion), { timeout: 2000 }).toBe(0)
 })
 
@@ -685,7 +642,12 @@ test('renders one aligned dot grid with a butterfly opening and keeps labels as 
   await expect(labels.locator('span')).toHaveText(['RESEARCH', 'BUILD', 'LIVE'])
   await expect(labels).toHaveCSS('opacity', '1')
 
-  const samples = await grid.evaluate((element) => {
+  const stageSize = await stage.evaluate((element) => ({
+    width: Math.floor(element.getBoundingClientRect().width),
+    height: Math.floor(element.getBoundingClientRect().height)
+  }))
+  const scene = createHomeHeroParticleScene(stageSize.width, stageSize.height)
+  const samples = await grid.evaluate((element, geometry) => {
     const canvas = element as HTMLCanvasElement
     const context = canvas.getContext('2d')!
     const bounds = canvas.getBoundingClientRect()
@@ -699,16 +661,25 @@ test('renders one aligned dot grid with a butterfly opening and keeps labels as 
       x: originX + Math.round((x - originX) / step) * step,
       y: originY + Math.round((y - originY) / step) * step
     })
-    const butterfly = alignedPoint(bounds.width * 0.5, bounds.height * 0.31)
+    const butterfly = alignedPoint(
+      geometry.x + geometry.width * 0.2,
+      geometry.y + geometry.height * 0.25
+    )
+    const centerChannel = alignedPoint(
+      geometry.x + geometry.width * 0.5,
+      geometry.y + geometry.height * 0.25
+    )
     const openField = alignedPoint(bounds.width * 0.08, bounds.height * 0.5)
     return {
       step,
       butterfly: sample(butterfly.x, butterfly.y),
+      centerChannel: sample(centerChannel.x, centerChannel.y),
       openField: sample(openField.x, openField.y)
     }
-  })
-  expect(samples.step).toBeGreaterThanOrEqual(8)
+  }, scene.butterflyBounds)
+  expect(samples.step).toBe(6)
   expect(samples.butterfly).toBe(0)
+  expect(samples.centerChannel).toBeGreaterThan(0)
   expect(samples.openField).toBeGreaterThan(0)
 
   const layout = await labels.evaluate((element) => {
