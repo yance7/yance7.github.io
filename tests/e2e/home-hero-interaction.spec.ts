@@ -525,8 +525,10 @@ test('erases cached source Y dots on a throttled first pointer frame', async ({ 
 test('redraws only local canvas regions while the fixed grid responds to a pointer', async ({ page }) => {
   test.skip(!(await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)))
   await page.goto('/')
+  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
 
   const stage = page.locator('.home-hero-particles')
+  await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'complete')
   const grid = page.locator('.home-hero-particles-grid')
   const mark = page.locator('.home-hero-particles-canvas')
   await expect(grid).toHaveAttribute('data-particle-state', 'settled', { timeout: 4000 })
