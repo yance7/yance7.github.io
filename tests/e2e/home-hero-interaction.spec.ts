@@ -311,7 +311,8 @@ test('lets Y dots respond to a central pointer and settle after it leaves', asyn
   await page.goto('/')
 
   const canvas = page.locator('.home-hero-particles-canvas')
-  await expect(canvas).toHaveAttribute('data-particle-state', 'settled', { timeout: 4000 })
+  await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'complete', { timeout: 10000 })
+  await expect(canvas).toHaveAttribute('data-particle-state', 'settled')
   await canvas.evaluate((element) => {
     const bounds = element.getBoundingClientRect()
     window.scrollBy({ top: bounds.top + bounds.height / 2 - window.innerHeight / 2, behavior: 'instant' })
