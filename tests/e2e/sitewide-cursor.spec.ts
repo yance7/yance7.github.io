@@ -77,7 +77,7 @@ test('restores the native cursor after keyboard use, reduced motion, and forced 
   await expect(page.locator('html')).not.toHaveClass(/sitewide-cursor-active/)
 })
 
-test('does not intercept navigation or remain visible through theme and lightbox changes', async ({ page }) => {
+test('does not intercept navigation or remain visible after route changes', async ({ page }) => {
   test.skip(!(await supportsCustomCursor(page)), 'custom pointer is only enabled for a fine, hovering pointer')
   await page.goto('/research/')
 
@@ -88,6 +88,11 @@ test('does not intercept navigation or remain visible through theme and lightbox
   await nextPageLink.click()
   await expect(page).toHaveURL(/\/works\/$/)
   await expect(page.locator('html')).not.toHaveClass(/sitewide-cursor-active/)
+})
+
+test('theme changes restore the native cursor until the pointer moves again', async ({ page }) => {
+  test.skip(!(await supportsCustomCursor(page)), 'custom pointer is only enabled for a fine, hovering pointer')
+  await page.goto('/works/')
 
   await page.locator('.theme-orbit').hover()
   await expect(page.locator('html')).toHaveClass(/sitewide-cursor-active/)
@@ -95,8 +100,12 @@ test('does not intercept navigation or remain visible through theme and lightbox
   await expect(page.locator('html')).not.toHaveClass(/sitewide-cursor-active/)
   await page.mouse.move(40, 190)
   await expect(page.locator('html')).toHaveClass(/sitewide-cursor-active/)
+})
 
+test('lightbox changes restore the native cursor after closing', async ({ page }) => {
+  test.skip(!(await supportsCustomCursor(page)), 'custom pointer is only enabled for a fine, hovering pointer')
   await page.goto('/concerts/')
+  const cursor = page.locator('.sitewide-cursor')
   await page.locator('.poster-open').first().click()
   await expect(page.locator('.lightbox')).toBeVisible()
   await expect(page.locator('html')).not.toHaveClass(/sitewide-cursor-active/)
