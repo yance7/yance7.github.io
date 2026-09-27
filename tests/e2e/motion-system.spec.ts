@@ -317,6 +317,7 @@ test('reduced motion removes delayed mobile menu entry motion', async ({ page })
 
 test('quick hash navigation reveals the targeted Works project', async ({ page }) => {
   await page.goto('/works/#project-ap-microeconomics-notes', { waitUntil: 'domcontentloaded' })
+  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
 
   const target = page.locator('#project-ap-microeconomics-notes')
   await expect(target).toHaveClass(/revealed/)
