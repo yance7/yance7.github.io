@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   HOME_HERO_PARTICLE_GATHER_DURATION_MS,
-  HOME_HERO_BUTTERFLY_VEIN_PATHS,
+  HOME_HERO_BUTTERFLY_PATHS,
   createHomeHeroParticleScene,
   getHomeHeroMotionEasing,
   getHomeHeroParticlePixelRatio,
@@ -11,9 +11,12 @@ import {
 } from '../src/utils/homeHeroParticles'
 
 describe('HomeHero particle geometry', () => {
-  it('includes restrained vein details across all four butterfly wings', () => {
-    expect(HOME_HERO_BUTTERFLY_VEIN_PATHS).toHaveLength(8)
-    expect(HOME_HERO_BUTTERFLY_VEIN_PATHS.every((path) => path.startsWith('M ') && path.includes('C '))).toBe(true)
+  it('keeps four symmetrical wings around the open center from the supplied reference', () => {
+    expect(HOME_HERO_BUTTERFLY_PATHS).toHaveLength(4)
+    expect(isHomeHeroButterflyPoint(0.5, 0.25)).toBe(false)
+    expect(isHomeHeroButterflyPoint(0.5, 0.76)).toBe(false)
+    expect(isHomeHeroButterflyPoint(0.2, 0.54)).toBe(false)
+    expect(isHomeHeroButterflyPoint(0.8, 0.54)).toBe(false)
   })
 
   it('keeps a dense, four-wing butterfly surface on the same lattice as the Y', () => {
@@ -96,7 +99,7 @@ describe('HomeHero particle geometry', () => {
     expect(isHomeHeroButterflyPoint(0.3, 0.76)).toBe(true)
     expect(isHomeHeroButterflyPoint(0.7, 0.76)).toBe(true)
     expect(isHomeHeroButterflyPoint(0.5, 0.25)).toBe(false)
-    expect(isHomeHeroButterflyPoint(0.5, 0.76)).toBe(true)
+    expect(isHomeHeroButterflyPoint(0.5, 0.76)).toBe(false)
     expect(isHomeHeroButterflyPoint(0.2, 0.54)).toBe(false)
     expect(isHomeHeroButterflyPoint(0.8, 0.54)).toBe(false)
     expect(isHomeHeroButterflyPoint(0.02, 0.5)).toBe(false)

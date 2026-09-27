@@ -259,8 +259,6 @@ html[data-locale='en'] .home-hero-typewriter-line-accent {
   --hero-dot: rgba(246, 246, 234, .52);
   --hero-butterfly: #f2f1e9;
   --hero-butterfly-dot: rgba(109, 132, 101, .3);
-  --hero-butterfly-vein: rgba(86, 107, 79, .18);
-  --hero-butterfly-antenna: #f2f1e9;
   --hero-mark: #31513e;
   --hero-mark-halo: transparent;
   --hero-label: rgba(38, 63, 48, .8);
@@ -287,8 +285,6 @@ html[data-theme='dark'] .home-hero-particles {
   --hero-dot: rgba(207, 223, 202, .38);
   --hero-butterfly: #c8d5c4;
   --hero-butterfly-dot: rgba(62, 91, 70, .36);
-  --hero-butterfly-vein: rgba(36, 58, 43, .24);
-  --hero-butterfly-antenna: #c8d5c4;
   --hero-mark: #304939;
   --hero-mark-halo: #c8d5c4;
   --hero-label: rgba(209, 222, 202, .74);
@@ -326,21 +322,6 @@ html[data-theme='dark'] .home-hero-particles {
 
 .home-hero-particles-butterfly-fill {
   fill: var(--hero-butterfly);
-}
-
-.home-hero-particles-butterfly-vein {
-  fill: none;
-  stroke: var(--hero-butterfly-vein);
-  stroke-linecap: round;
-  stroke-width: .72px;
-  vector-effect: non-scaling-stroke;
-}
-
-.home-hero-particles-butterfly-antenna {
-  fill: none;
-  stroke: var(--hero-butterfly-antenna);
-  stroke-linecap: round;
-  stroke-width: .35px;
 }
 
 .home-hero-particles-mark {
@@ -445,7 +426,6 @@ html[data-theme='dark'] .home-hero-particles {
   .home-hero-particles-fallback-mark-halo { fill: Canvas; }
   .home-hero-particles-fallback-butterfly-dot,
   .home-hero-particles-butterfly-fill { fill: Canvas; }
-  .home-hero-particles-butterfly-antenna { stroke: CanvasText; }
   .hero-action,
   .hero-action.primary { background: ButtonFace; border-color: ButtonText; color: ButtonText; box-shadow: none; }
 }
