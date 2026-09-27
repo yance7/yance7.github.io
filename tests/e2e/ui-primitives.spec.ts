@@ -55,7 +55,9 @@ test('lightbox keeps metadata and quiet control chrome bounded', async ({ page }
   await page.goto('/concerts/')
   await page.locator('.concert-poster .poster-open').first().click()
 
-  await expect(page.locator('.lightbox')).toBeVisible()
+  const lightbox = page.locator('.lightbox')
+  await expect(lightbox).toBeVisible()
+  await expect(lightbox).not.toHaveClass(/lightbox-enter-active/)
   await expect(page.locator('.lb-stage img')).toHaveClass(/loaded/)
   await expect(page.locator('.lb-meta-dock')).toHaveCount(1)
   await expect(page.locator('.lb-meta-copy')).toBeVisible()
@@ -100,7 +102,7 @@ test('lightbox keeps metadata and quiet control chrome bounded', async ({ page }
   expect(geometry.image.bottom, JSON.stringify(geometry)).toBeLessThanOrEqual(geometry.metadata.top - 12)
 
   await page.keyboard.press('Escape')
-  await expect(page.locator('.lightbox')).toHaveCount(0)
+  await expect(lightbox).toHaveCount(0)
 })
 
 test('archive proof links share one semantic primitive across works and research', async ({ page }) => {
