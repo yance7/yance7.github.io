@@ -33,8 +33,35 @@ test('compatibility hash navigation settles below the sticky header', async ({ p
 
   for (const [route, selector] of targets) {
     await page.goto(route)
+    await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready', { timeout: 10_000 })
     const target = page.locator(selector)
     await expect(target).toBeVisible()
+
+    let previousGeometry: { scrollY: number; targetTop: number } | undefined
+    let stableSamples = 0
+
+    await expect.poll(
+      async () => {
+        const currentGeometry = await target.evaluate((element) => ({
+          scrollY: window.scrollY,
+          targetTop: element.getBoundingClientRect().top
+        }))
+        const isStable = previousGeometry
+          && Math.abs(currentGeometry.scrollY - previousGeometry.scrollY) < 0.5
+          && Math.abs(currentGeometry.targetTop - previousGeometry.targetTop) < 0.5
+
+        stableSamples = isStable ? stableSamples + 1 : 0
+        previousGeometry = currentGeometry
+
+        return currentGeometry.scrollY > 0 && stableSamples >= 3
+      },
+      {
+        message: `${route} hash scrolling should settle before geometry is measured`,
+        intervals: [50, 100, 150, 200],
+        timeout: 10_000
+      }
+    ).toBe(true)
+
     const geometry = await target.evaluate((element) => ({
       targetTop: element.getBoundingClientRect().top,
       headerBottom: document.querySelector<HTMLElement>('.site-nav')?.getBoundingClientRect().bottom ?? 0
