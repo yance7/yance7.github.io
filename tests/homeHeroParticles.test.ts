@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   HOME_HERO_PARTICLE_GATHER_DURATION_MS,
+  HOME_HERO_GRID_DOT_RADIUS_RATIO,
   HOME_HERO_MARK_DOT_RADIUS_RATIO,
   HOME_HERO_BUTTERFLY_PATHS,
   createHomeHeroParticleScene,
@@ -21,8 +22,26 @@ describe('HomeHero particle geometry', () => {
     expect(isHomeHeroButterflyPoint(0.8, 0.54)).toBe(false)
   })
 
-  it('uses a visibly denser Y dot face without changing the shared lattice', () => {
-    expect(HOME_HERO_MARK_DOT_RADIUS_RATIO).toBe(0.32)
+  it('keeps the Y dot face dense enough to read as a solid mark against the shared lattice', () => {
+    expect(HOME_HERO_MARK_DOT_RADIUS_RATIO).toBeGreaterThan(HOME_HERO_GRID_DOT_RADIUS_RATIO * 1.7)
+  })
+
+  it('gives the Y focal weight while keeping butterfly wings clear of the lower labels', () => {
+    const sizes = [[360, 300], [390, 300], [844, 340], [390, 220]] as const
+
+    for (const [width, height] of sizes) {
+      const scene = createHomeHeroParticleScene(width, height)
+      const markBottom = scene.markBounds.y + scene.markBounds.height
+      const butterflyBottom = scene.butterflyBounds.y + scene.butterflyBounds.height
+
+      expect(scene.markBounds.height / height, `${width}×${height} Y scale`).toBeGreaterThanOrEqual(0.7)
+      expect(scene.markBounds.x, `${width}×${height} Y left edge`).toBeGreaterThanOrEqual(0)
+      expect(scene.markBounds.x + scene.markBounds.width, `${width}×${height} Y right edge`).toBeLessThanOrEqual(width)
+      expect(scene.markBounds.y, `${width}×${height} Y top edge`).toBeGreaterThanOrEqual(0)
+      expect(markBottom, `${width}×${height} Y bottom edge`).toBeLessThanOrEqual(height * 0.88)
+      expect(scene.markBounds.height, `${width}×${height} focal scale`).toBeGreaterThan(scene.butterflyBounds.height * 0.8)
+      expect(butterflyBottom, `${width}×${height} butterfly-label clearance`).toBeLessThanOrEqual(height * 0.92)
+    }
   })
 
   it('keeps the lower wings narrower than the upper wings like the supplied butterfly', () => {

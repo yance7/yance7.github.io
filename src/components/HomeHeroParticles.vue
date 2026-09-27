@@ -39,7 +39,7 @@ interface Rect {
   height: number
 }
 
-const FRAME_INTERVAL_MS = 1000 / 60
+const INITIAL_FRAME_DELTA_MS = 1000 / 60
 const CACHE_DOT_ERASE_OVERDRAW = 1
 const PARTICLE_SEED = 0x59a7ce
 
@@ -706,12 +706,7 @@ function renderFrame(now: number) {
     setPaused()
     return
   }
-  if (now - lastFrameAt < FRAME_INTERVAL_MS) {
-    frameId = requestAnimationFrame(renderFrame)
-    return
-  }
-
-  const deltaMs = Number.isFinite(lastFrameAt) ? Math.min(now - lastFrameAt, 120) : FRAME_INTERVAL_MS
+  const deltaMs = Number.isFinite(lastFrameAt) ? Math.min(now - lastFrameAt, 120) : INITIAL_FRAME_DELTA_MS
   lastFrameAt = now
   const gathering = hasIntroMotion(now)
   if (gathering) drawMarkFrame(now)

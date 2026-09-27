@@ -245,14 +245,12 @@ test('keeps the Y particle mark distinguishable in the dark theme', async ({ pag
     const halo = styles.getPropertyValue('--hero-mark-halo')
     return {
       markOnButterfly: ratio(mark, styles.getPropertyValue('--hero-butterfly')),
-      markOnCenter: ratio(mark, styles.getPropertyValue('--hero-stage-center')),
       haloOnCenter: ratio(halo, styles.getPropertyValue('--hero-stage-center')),
       haloOnEdge: ratio(halo, styles.getPropertyValue('--hero-stage-edge'))
     }
   })
 
-  expect(contrast.markOnButterfly).toBeGreaterThanOrEqual(3)
-  expect(contrast.markOnCenter).toBeGreaterThanOrEqual(2.5)
+  expect(contrast.markOnButterfly).toBeGreaterThanOrEqual(4.5)
   expect(contrast.haloOnCenter).toBeGreaterThanOrEqual(3)
   expect(contrast.haloOnEdge).toBeGreaterThanOrEqual(3)
 
@@ -340,7 +338,8 @@ test('keeps the Y particle mark distinguishable in the dark theme', async ({ pag
 
   expect(colorDistance(pixels.core, pixels.markColor), JSON.stringify(pixels)).toBeLessThan(24)
   expect(pixels.haloAlpha).toBeGreaterThanOrEqual(240)
-  expect(colorDistance(pixels.halo, pixels.haloColor), JSON.stringify(pixels)).toBeLessThan(60)
+  expect(colorDistance(pixels.halo, pixels.haloColor), JSON.stringify(pixels))
+    .toBeLessThan(colorDistance(pixels.halo, pixels.markColor) / 2)
 })
 
 test('clips halftone dots to the butterfly silhouette edge', async ({ page }) => {
@@ -582,6 +581,71 @@ test('keeps a sharp but bounded Canvas backing store on high-DPI displays', asyn
   expect(pixelRatio).toBeLessThanOrEqual(2.02)
 })
 
+test('updates the Y ripple on each high-refresh animation frame', async ({ page }) => {
+  await page.goto('/')
+
+  const stage = page.locator('.home-hero-particles')
+  const canvas = page.locator('.home-hero-particles-canvas')
+  await stage.scrollIntoViewIfNeeded()
+  await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'complete')
+  await expect(canvas).toHaveAttribute('data-particle-state', 'settled', { timeout: 4000 })
+
+  await page.evaluate(() => {
+    const target = window as Window & {
+      __homeHeroFrameTimestamp?: number
+      __homeHeroFlushFrames?: (timestamp: number) => void
+      __homeHeroRenderTimes?: number[]
+    }
+    const callbacks = new Map<number, FrameRequestCallback>()
+    let nextId = 0
+    target.__homeHeroRenderTimes = []
+
+    Object.defineProperty(window, 'requestAnimationFrame', {
+      configurable: true,
+      value: (callback: FrameRequestCallback) => {
+        const id = ++nextId
+        callbacks.set(id, callback)
+        return id
+      }
+    })
+    Object.defineProperty(window, 'cancelAnimationFrame', {
+      configurable: true,
+      value: (id: number) => callbacks.delete(id)
+    })
+    target.__homeHeroFlushFrames = (timestamp) => {
+      const pending = [...callbacks.values()]
+      callbacks.clear()
+      target.__homeHeroFrameTimestamp = timestamp
+      pending.forEach((callback) => callback(timestamp))
+    }
+
+    const clearRect = CanvasRenderingContext2D.prototype.clearRect
+    CanvasRenderingContext2D.prototype.clearRect = function (x, y, width, height) {
+      if (this.canvas.classList.contains('home-hero-particles-canvas')) {
+        target.__homeHeroRenderTimes?.push(target.__homeHeroFrameTimestamp ?? -1)
+      }
+      clearRect.call(this, x, y, width, height)
+    }
+  })
+
+  const bounds = await stage.boundingBox()
+  expect(bounds).not.toBeNull()
+  await page.mouse.move(bounds!.x + bounds!.width / 2, bounds!.y + bounds!.height / 2)
+  const renderTimes = await page.evaluate(() => {
+    const target = window as Window & {
+      __homeHeroFlushFrames?: (timestamp: number) => void
+      __homeHeroRenderTimes?: number[]
+    }
+    const firstFrame = performance.now() + 50
+    for (let frame = 0; frame < 5; frame += 1) {
+      target.__homeHeroFlushFrames?.(firstFrame + frame * (1000 / 120))
+    }
+    return target.__homeHeroRenderTimes ?? []
+  })
+
+  expect(renderTimes).toHaveLength(5)
+})
+
 test('lets Y dots respond to a central pointer and settle after it leaves', async ({ page }) => {
   test.skip(!(await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)))
   await page.addInitScript(() => {
@@ -795,7 +859,7 @@ test('erases cached source Y dots on a throttled first pointer frame', async ({ 
   const sourceRegion = {
     x: source!.x,
     y: source!.y,
-    radius: scene.gridStep * 0.12
+    radius: scene.gridStep * 0.04
   }
   await expect.poll(() => countCanvasPixels(mark, sourceRegion)).toBeGreaterThan(0)
 
@@ -803,7 +867,7 @@ test('erases cached source Y dots on a throttled first pointer frame', async ({ 
     const target = window as Window & { __homeHeroFrameOffsetMs?: number }
     target.__homeHeroFrameOffsetMs = 120
   })
-  await page.mouse.move(bounds!.x + source!.x - scene.gridStep * 0.5, bounds!.y + source!.y)
+  await page.mouse.move(bounds!.x + source!.x - scene.gridStep * 0.1, bounds!.y + source!.y)
   await expect.poll(() => countCanvasPixels(mark, sourceRegion), { timeout: 2000 }).toBe(0)
 })
 

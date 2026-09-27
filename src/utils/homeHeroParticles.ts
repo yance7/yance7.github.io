@@ -12,8 +12,8 @@ export interface HomeHeroGridPoint extends HomeHeroParticleTarget {
 
 export const HOME_HERO_PARTICLE_GATHER_DURATION_MS = 1600
 export const HOME_HERO_GRID_DOT_RADIUS_RATIO = 0.22
-export const HOME_HERO_MARK_DOT_RADIUS_RATIO = 0.32
-export const HOME_HERO_MARK_DOT_HALO_RADIUS_RATIO = 0.48
+export const HOME_HERO_MARK_DOT_RADIUS_RATIO = 0.4
+export const HOME_HERO_MARK_DOT_HALO_RADIUS_RATIO = 0.56
 
 export type HomeHeroParticleState = 'gathering' | 'settled'
 
@@ -233,9 +233,9 @@ function getYParticleDelay(localX: number, localY: number, row: number, column: 
 function getHomeHeroParticleSceneLayout(width: number, height: number) {
   const safeWidth = Math.max(0, width)
   const safeHeight = Math.max(0, height)
-  const markHeight = Math.min(safeHeight * 0.62, safeWidth * 0.8)
+  const markHeight = Math.min(safeHeight * 0.72, safeWidth * 0.82)
   const markWidth = markHeight * HOME_HERO_Y_SHAPE.width / HOME_HERO_Y_SHAPE.height
-  const butterflyWidth = Math.min(safeWidth * 0.98, safeHeight * HOME_HERO_BUTTERFLY_ASPECT_RATIO * 0.94)
+  const butterflyWidth = Math.min(safeWidth * 0.9, safeHeight * HOME_HERO_BUTTERFLY_ASPECT_RATIO * 0.8)
   const butterflyHeight = butterflyWidth / HOME_HERO_BUTTERFLY_ASPECT_RATIO
   const gridStep = getHomeHeroGridStep()
   const columns = safeWidth > 0 ? Math.max(1, Math.floor(safeWidth / gridStep)) : 0
@@ -249,13 +249,13 @@ function getHomeHeroParticleSceneLayout(width: number, height: number) {
     gridOriginY: (safeHeight - (rows - 1) * gridStep) / 2,
     markBounds: {
       x: (safeWidth - markWidth) / 2,
-      y: safeHeight * 0.46 - markHeight / 2,
+      y: safeHeight * 0.49 - markHeight / 2,
       width: markWidth,
       height: markHeight
     },
     butterflyBounds: {
       x: (safeWidth - butterflyWidth) / 2,
-      y: safeHeight * 0.486 - butterflyHeight / 2,
+      y: safeHeight * 0.48 - butterflyHeight / 2,
       width: butterflyWidth,
       height: butterflyHeight
     }
