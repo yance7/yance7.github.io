@@ -91,6 +91,13 @@ const HOME_HERO_BUTTERFLY_BODY_SHAPE: CubicShape = {
   ]
 }
 
+const HOME_HERO_BUTTERFLY_LEFT_VEINS = [
+  'M 47 49 C 38 42 31 32 22 22 C 16 16 11 12 8 9',
+  'M 46 51 C 38 50 29 47 22 44 C 15 41 11 38 8 35',
+  'M 48 57 C 42 64 37 72 30 80 C 25 86 21 90 17 92',
+  'M 49 59 C 46 69 42 78 38 85 C 36 89 34 92 31 94'
+] as const
+
 function mirrorButterflyShape(shape: CubicShape): CubicShape {
   const mirrorPoint = ({ x, y }: VectorPoint) => ({ x: 100 - x, y })
   return {
@@ -218,6 +225,13 @@ const HOME_HERO_Y_POLYGON = flattenShape(HOME_HERO_Y_SHAPE)
 const HOME_HERO_BUTTERFLY_POLYGONS = HOME_HERO_BUTTERFLY_SHAPES.map((shape) => flattenShape(shape))
 
 export const HOME_HERO_BUTTERFLY_PATHS = HOME_HERO_BUTTERFLY_SHAPES.map((shape) => shapePath(shape))
+export const HOME_HERO_BUTTERFLY_VEIN_PATHS = [
+  ...HOME_HERO_BUTTERFLY_LEFT_VEINS,
+  'M 53 49 C 62 42 69 32 78 22 C 84 16 89 12 92 9',
+  'M 54 51 C 62 50 71 47 78 44 C 85 41 89 38 92 35',
+  'M 52 57 C 58 64 63 72 70 80 C 75 86 79 90 83 92',
+  'M 51 59 C 54 69 58 78 62 85 C 64 89 66 92 69 94'
+]
 const HOME_HERO_BUTTERFLY_WINDING = getShapeWinding(HOME_HERO_BUTTERFLY_SHAPES[0]!)
 export const HOME_HERO_BUTTERFLY_CLIP_PATHS = HOME_HERO_BUTTERFLY_SHAPES.map((shape) => (
   shapePath(getShapeWinding(shape) === HOME_HERO_BUTTERFLY_WINDING ? shape : reverseShape(shape))

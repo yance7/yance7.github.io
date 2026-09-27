@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   HOME_HERO_PARTICLE_GATHER_DURATION_MS,
+  HOME_HERO_BUTTERFLY_VEIN_PATHS,
   createHomeHeroParticleScene,
   getHomeHeroMotionEasing,
   getHomeHeroParticlePixelRatio,
@@ -10,6 +11,11 @@ import {
 } from '../src/utils/homeHeroParticles'
 
 describe('HomeHero particle geometry', () => {
+  it('includes restrained vein details across all four butterfly wings', () => {
+    expect(HOME_HERO_BUTTERFLY_VEIN_PATHS).toHaveLength(8)
+    expect(HOME_HERO_BUTTERFLY_VEIN_PATHS.every((path) => path.startsWith('M ') && path.includes('C '))).toBe(true)
+  })
+
   it('keeps a dense, four-wing butterfly surface on the same lattice as the Y', () => {
     const mobileScene = createHomeHeroParticleScene(390, 320)
     const desktopScene = createHomeHeroParticleScene(1080, 430)

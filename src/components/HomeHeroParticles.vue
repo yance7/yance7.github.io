@@ -4,6 +4,7 @@ import {
   HOME_HERO_BUTTERFLY_ANTENNA_PATH,
   HOME_HERO_BUTTERFLY_CLIP_PATHS,
   HOME_HERO_BUTTERFLY_PATHS,
+  HOME_HERO_BUTTERFLY_VEIN_PATHS,
   HOME_HERO_GRID_DOT_RADIUS_RATIO,
   HOME_HERO_MARK_DOT_HALO_RADIUS_RATIO,
   HOME_HERO_MARK_DOT_RADIUS_RATIO,
@@ -93,6 +94,7 @@ let colors = {
   dot: '#e9efe0',
   butterfly: '#f2f2e9',
   butterflyDot: '#87977b',
+  butterflyVein: 'rgba(86, 107, 79, .16)',
   antenna: '#f2f2e9',
   mark: '#31513e',
   markHalo: 'transparent'
@@ -107,6 +109,7 @@ function readThemeColors() {
     dot: style.getPropertyValue('--hero-dot').trim() || colors.dot,
     butterfly: style.getPropertyValue('--hero-butterfly').trim() || colors.butterfly,
     butterflyDot: style.getPropertyValue('--hero-butterfly-dot').trim() || colors.butterflyDot,
+    butterflyVein: style.getPropertyValue('--hero-butterfly-vein').trim() || colors.butterflyVein,
     antenna: style.getPropertyValue('--hero-butterfly-antenna').trim() || colors.antenna,
     mark: style.getPropertyValue('--hero-mark').trim() || colors.mark,
     markHalo: style.getPropertyValue('--hero-mark-halo').trim() || colors.markHalo
@@ -256,6 +259,19 @@ function drawButterflyDotField(context: CanvasRenderingContext2D) {
   context.restore()
 }
 
+function drawButterflyVeins(context: CanvasRenderingContext2D) {
+  if (!scene) return
+  const bounds = scene.butterflyBounds
+  context.save()
+  context.translate(bounds.x, bounds.y)
+  context.scale(bounds.width / 100, bounds.height / 100)
+  context.strokeStyle = colors.butterflyVein
+  context.lineWidth = 0.72 / (bounds.height / 100)
+  context.lineCap = 'round'
+  for (const path of HOME_HERO_BUTTERFLY_VEIN_PATHS) context.stroke(new Path2D(path))
+  context.restore()
+}
+
 function drawDotField(
   context: CanvasRenderingContext2D,
   points: readonly HomeHeroGridPoint[],
@@ -284,6 +300,7 @@ function drawBackgroundCache() {
   drawButterflySilhouette(backgroundCacheContext)
   drawDotField(backgroundCacheContext, scene.backgroundPoints, colors.dot, 'field')
   drawButterflyDotField(backgroundCacheContext)
+  drawButterflyVeins(backgroundCacheContext)
 
   gridContext.clearRect(0, 0, logicalWidth, logicalHeight)
   gridContext.drawImage(
@@ -1111,6 +1128,7 @@ onBeforeUnmount(cleanupCanvas)
       </g>
       <rect :width="sceneWidth" :height="sceneHeight" fill="url(#home-hero-fixed-grid)" mask="url(#home-hero-butterfly-field-mask)" />
       <rect :width="sceneWidth" :height="sceneHeight" fill="url(#home-hero-butterfly-grid)" mask="url(#home-hero-butterfly-dot-mask)" />
+      <path v-for="(path, index) in HOME_HERO_BUTTERFLY_VEIN_PATHS" :key="`vein-${index}`" :d="path" :transform="butterflyTransform()" class="home-hero-particles-butterfly-vein" />
       <path :d="HOME_HERO_Y_PATH" :transform="markTransform()" class="home-hero-particles-fallback-mark-halo-path" fill="url(#home-hero-mark-halo-grid)" />
       <path data-y-mark="true" :d="HOME_HERO_Y_PATH" :transform="markTransform()" fill="url(#home-hero-mark-grid)" />
     </svg>

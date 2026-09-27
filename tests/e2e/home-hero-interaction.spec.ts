@@ -985,6 +985,7 @@ test('keeps a complete patterned vector scene when Canvas is unavailable', async
   await expect(particles).toHaveAttribute('data-render-mode', 'static-fallback')
   await expect(page.locator('.home-hero-particles-mark')).toBeVisible()
   await expect(page.locator('.home-hero-particles-mark pattern')).toHaveCount(4)
+  await expect(particles.locator('.home-hero-particles-butterfly-vein')).toHaveCount(8)
   await expect(page.locator('.home-hero-particles-mark [data-y-mark]')).toBeVisible()
   await expect(page.locator('.home-hero-particles-labels')).toBeVisible()
   await expect(page.locator('.home-hero-particles-labels span')).toHaveText(['RESEARCH', 'BUILD', 'LIVE'])
