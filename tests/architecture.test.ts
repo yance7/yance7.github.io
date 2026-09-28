@@ -38,7 +38,7 @@ describe('critical rendering contracts', () => {
       .toBeLessThan(main.indexOf("app.mount('#app')"))
   })
 
-  it('starts locale-matched font loading alongside the app and exposes its state', () => {
+  it('defers locale-matched font loading until after the app is mounted', () => {
     const main = readFileSync(resolve(process.cwd(), 'src/main.ts'), 'utf8').replace(/\r\n/g, '\n')
 
     expect(main).not.toContain("import './fonts.css'")
@@ -51,16 +51,8 @@ describe('critical rendering contracts', () => {
     expect(main).toContain("document.documentElement.dataset.fontsReady = 'ready'")
     expect(main).toContain("app.mount('#app')")
     expect(main).toContain("document.documentElement.dataset.fontsReady = 'fallback'")
-    expect(main.lastIndexOf('loadFonts()')).toBeLessThan(main.indexOf("app.mount('#app')"))
-    expect(main).not.toContain('requestAnimationFrame')
-  })
-
-  it('avoids a multi-second idle delay before loading first-view fonts', () => {
-    const main = readFileSync(resolve(process.cwd(), 'src/main.ts'), 'utf8')
-
-    expect(main).toContain('loadFonts()')
-    expect(main).not.toContain('fontLoadTimeout')
-    expect(main).not.toContain('requestIdleCallback')
+    expect(main.indexOf("app.mount('#app')")).toBeLessThan(main.lastIndexOf('scheduleFonts()'))
+    expect(main).toContain('idleWindow.requestIdleCallback(loadFonts, { timeout: fontLoadTimeout })')
   })
 
   it('contains the album grid before it enters the viewport', () => {

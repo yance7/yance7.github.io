@@ -27,6 +27,8 @@ const fontStylesheets = {
   en: () => import('./fonts-en.css')
 } as const
 
+const fontLoadTimeout = document.body.dataset.page === 'concerts' ? 0 : 2400
+
 function loadFonts() {
   void fontStylesheets[locale]().then(async () => {
     await document.fonts.ready
@@ -36,11 +38,29 @@ function loadFonts() {
   })
 }
 
+function scheduleFonts() {
+  const idleWindow = window as Window & {
+    requestIdleCallback?: (callback: () => void, options?: { timeout?: number }) => number
+  }
+
+  if (fontLoadTimeout === 0) {
+    loadFonts()
+    return
+  }
+
+  if (idleWindow.requestIdleCallback) {
+    idleWindow.requestIdleCallback(loadFonts, { timeout: fontLoadTimeout })
+    return
+  }
+
+  window.setTimeout(loadFonts, fontLoadTimeout)
+}
+
 const app = createApp(App)
 app.directive('reveal', reveal)
 app.directive('magnetic', magnetic)
 app.directive('pointer-sheen', pointerSheen)
 document.documentElement.dataset.fontsReady = 'loading'
 preloadPage(document.body.dataset.page)
-loadFonts()
 app.mount('#app')
+scheduleFonts()

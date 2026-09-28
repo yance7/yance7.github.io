@@ -43,6 +43,12 @@ jobs:
           cache-dependency-path: requirements-tools.txt
       - name: Install Python tools
         run: python -m pip install -r requirements-tools.txt
+      - name: Install system CJK fallback fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends --yes fonts-noto-cjk
+          fc-match --format='%{family}\n' "Noto Sans CJK SC" | grep -F "Noto Sans CJK SC"
+          fc-match --format='%{family}\n' "Noto Sans CJK TC" | grep -F "Noto Sans CJK TC"
       - name: Brand asset consistency
         run: npm run brand:assets:check
       - name: Repository hygiene
@@ -62,12 +68,6 @@ jobs:
           echo "CHROME_PATH=$chrome_path" >> "$GITHUB_ENV"
       - name: Lighthouse quality budget
         run: npm run lighthouse
-      - name: Install system CJK fallback fonts
-        run: |
-          sudo apt-get update
-          sudo apt-get install --no-install-recommends --yes fonts-noto-cjk
-          fc-match --format='%{family}\n' "Noto Sans CJK SC" | grep -F "Noto Sans CJK SC"
-          fc-match --format='%{family}\n' "Noto Sans CJK TC" | grep -F "Noto Sans CJK TC"
       - name: Lighthouse interaction budget
         run: npm run lighthouse:interactions
       - name: Chromium browser and axe quality
