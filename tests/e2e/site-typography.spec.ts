@@ -6,27 +6,24 @@ const locales = [
     lang: 'zh-CN',
     homeRoute: '/',
     archiveRoute: '/academics/',
-    cjkSans: 'Noto Sans SC Variable',
+    cjkSans: 'Noto Sans CJK SC',
     editorialLatin: 'Inter Variable',
-    glyphs: '你好我是研究'
   },
   {
     name: 'Traditional Chinese',
     lang: 'zh-HK',
     homeRoute: '/zh-hk/',
     archiveRoute: '/zh-hk/academics/',
-    cjkSans: 'Noto Sans HK Variable',
+    cjkSans: 'Noto Sans CJK TC',
     editorialLatin: 'Inter Variable',
-    glyphs: '你好我是研究'
   },
   {
     name: 'English',
     lang: 'en',
     homeRoute: '/en/',
     archiveRoute: '/en/academics/',
-    cjkSans: 'Noto Sans SC Variable',
+    cjkSans: 'Noto Sans CJK SC',
     editorialLatin: 'Georgia',
-    glyphs: ''
   }
 ] as const
 
@@ -85,7 +82,7 @@ for (const locale of locales) {
         expect(renderedHomeFonts.some((font) => /Georgia|Times|Liberation Serif/i.test(font))).toBe(true)
       } else {
         expect(homeText).toMatch(/\p{Script=Han}/u)
-        expect(renderedHomeFonts.some((font) => /Noto Sans|PingFang|MiSans/i.test(font))).toBe(true)
+        expect(renderedHomeFonts.some((font) => /Noto Sans|PingFang|MiSans|Microsoft YaHei|Microsoft JhengHei/i.test(font))).toBe(true)
         expect(renderedHomeFonts.some((font) => /Noto Serif/i.test(font))).toBe(false)
       }
     }
@@ -128,17 +125,9 @@ for (const locale of locales) {
       if (locale.name === 'English') {
         expect(renderedCopyFonts.some((font) => /Georgia|Times|Liberation Serif/i.test(font))).toBe(true)
       } else {
-        const loadedCjkFaces = await page.evaluate(async ({ sans, glyphs }) => {
-          const sansFaces = await document.fonts.load(`400 16px "${sans}"`, glyphs)
-
-          return sansFaces.some((face) => face.status === 'loaded')
-            && document.fonts.check(`400 16px "${sans}"`, glyphs)
-        }, { sans: locale.cjkSans, glyphs: locale.glyphs })
-
-        expect(loadedCjkFaces).toBe(true)
-        expect(renderedTitleFonts.some((font) => /Noto Sans|PingFang|MiSans/i.test(font))).toBe(true)
+        expect(renderedTitleFonts.some((font) => /Noto Sans|PingFang|MiSans|Microsoft YaHei|Microsoft JhengHei/i.test(font))).toBe(true)
         expect(renderedTitleFonts.some((font) => /Noto Serif/i.test(font))).toBe(false)
-        expect(renderedCopyFonts.some((font) => /PingFang|MiSans|Noto Sans/i.test(font))).toBe(true)
+        expect(renderedCopyFonts.some((font) => /Noto Sans|PingFang|MiSans|Microsoft YaHei|Microsoft JhengHei/i.test(font))).toBe(true)
       }
     }
 

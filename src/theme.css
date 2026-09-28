@@ -8,7 +8,7 @@
   /* Bilingual type roles: Latin faces lead, device-native CJK faces precede bundled fallbacks. */
   --font-latin-sans: "Inter Variable";
   --font-latin-serif: Georgia, "Times New Roman";
-  --font-cjk-sans: "PingFang SC", -apple-system, "MiSans", "Noto Sans SC Variable";
+  --font-cjk-sans: "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", -apple-system, "MiSans", "Noto Sans CJK SC", "Noto Sans CJK TC", "Noto Sans SC Variable";
   --font-prose: var(--font-latin-sans), var(--font-cjk-sans), sans-serif;
   --font-interface: var(--font-latin-sans), var(--font-cjk-sans), sans-serif;
   --font-editorial: var(--font-latin-serif), var(--font-cjk-sans), sans-serif;
@@ -154,7 +154,7 @@ html:lang(zh-HK) {
 }
 
 html:lang(zh-HK) {
-  --font-cjk-sans: "PingFang TC", "PingFang HK", "PingFang SC", -apple-system, "MiSans", "Noto Sans HK Variable";
+  --font-cjk-sans: "PingFang TC", "PingFang HK", "PingFang SC", "Microsoft JhengHei UI", "Microsoft JhengHei", "Microsoft YaHei UI", "Microsoft YaHei", -apple-system, "MiSans", "Noto Sans CJK TC", "Noto Sans CJK SC", "Noto Sans HK Variable";
 }
 
 /* ---------- 亮色 · 暖白纸（默认） ---------- */

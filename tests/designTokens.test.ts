@@ -27,7 +27,7 @@ describe('archive design tokens', () => {
     expect(theme).toContain('--type-meta-size: .75rem')
     expect(theme).toContain('--font-latin-sans: "Inter Variable"')
     expect(theme).toContain('--font-latin-serif: Georgia, "Times New Roman"')
-    expect(theme).toContain('--font-cjk-sans: "PingFang SC", -apple-system, "MiSans", "Noto Sans SC Variable"')
+    expect(theme).toContain('--font-cjk-sans: "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", -apple-system, "MiSans", "Noto Sans CJK SC", "Noto Sans CJK TC", "Noto Sans SC Variable"')
     expect(theme).not.toContain('--font-cjk-serif')
     expect(theme).toContain('--font-prose: var(--font-latin-sans), var(--font-cjk-sans), sans-serif')
     expect(theme).toContain('--font-editorial: var(--font-latin-serif), var(--font-cjk-sans), sans-serif')

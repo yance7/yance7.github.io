@@ -5,7 +5,6 @@ import { dirname, resolve } from 'node:path'
 import { THEME_COLORS } from './src/themeColors.ts'
 import { htmlPageEntries, isPageKey, pageEntries } from './src/data/pageRegistry.ts'
 import { getLocalizedSeo } from './src/data/seo.ts'
-import { optionalCjkFontDisplayPostcssPlugin } from './scripts/cjk-font-display.ts'
 
 const rootDir = dirname(fileURLToPath(import.meta.url))
 const htmlRoot = resolve(rootDir, 'html-src')
@@ -134,11 +133,6 @@ function devSourceScriptPlugin(): Plugin {
 export default defineConfig({
   root: htmlRoot,
   plugins: [themeTokenPlugin(), pageMetadataPlugin(), localeDevRewritePlugin(), devSourceScriptPlugin(), vue()],
-  css: {
-    postcss: {
-      plugins: [optionalCjkFontDisplayPostcssPlugin()]
-    }
-  },
   build: {
     outDir: resolve(rootDir, 'dist'),
     emptyOutDir: true,
