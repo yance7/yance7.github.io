@@ -53,7 +53,7 @@ export interface HomeHeroParticleScene {
   yPoints: HomeHeroParticleTarget[]
 }
 
-const HOME_HERO_BUTTERFLY_ASPECT_RATIO = 1.28
+const HOME_HERO_BUTTERFLY_ASPECT_RATIO = 1.39
 
 const HOME_HERO_BUTTERFLY_UPPER_LEFT_SHAPE: CubicShape = {
   width: 100,

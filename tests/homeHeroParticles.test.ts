@@ -97,7 +97,7 @@ describe('HomeHero particle geometry', () => {
     expect(desktopScene.yPoints.length).toBeGreaterThan(400)
 
     for (const scene of [mobileScene, desktopScene]) {
-      expect(scene.butterflyBounds.width / scene.butterflyBounds.height).toBeCloseTo(1.28, 2)
+      expect(scene.butterflyBounds.width / scene.butterflyBounds.height).toBeCloseTo(1.39, 2)
       expect(scene.butterflyBounds.x + scene.butterflyBounds.width / 2)
         .toBeCloseTo(scene.gridOriginX + (scene.columns - 1) * scene.gridStep / 2, 1)
       expect(scene.backgroundPoints.every((point) => {
