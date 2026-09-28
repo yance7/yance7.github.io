@@ -69,6 +69,7 @@ let backgroundCacheContext: CanvasRenderingContext2D | null = null
 let markCache: HTMLCanvasElement | null = null
 let markCacheContext: CanvasRenderingContext2D | null = null
 let scene: HomeHeroParticleScene | null = null
+let butterflyClipPath: Path2D | null = null
 let markParticles: MarkParticle[] = []
 let gridIndexByCell = new Int32Array()
 let horizontalOffsets = new Float32Array()
@@ -239,9 +240,10 @@ function drawButterflySilhouette(context: CanvasRenderingContext2D) {
 function clipButterflyDots(context: CanvasRenderingContext2D) {
   if (!scene) return
   const bounds = scene.butterflyBounds
+  butterflyClipPath ??= new Path2D(HOME_HERO_BUTTERFLY_CLIP_PATHS.join(' '))
   context.translate(bounds.x, bounds.y)
   context.scale(bounds.width / 100, bounds.height / 100)
-  context.clip(new Path2D(HOME_HERO_BUTTERFLY_CLIP_PATHS.join(' ')))
+  context.clip(butterflyClipPath)
   context.setTransform(pixelRatio.value, 0, 0, pixelRatio.value, 0, 0)
 }
 
@@ -1093,27 +1095,36 @@ onBeforeUnmount(cleanupCanvas)
           <g :transform="butterflyTransform()">
             <path v-for="(path, index) in HOME_HERO_BUTTERFLY_PATHS" :key="index" :d="path" fill="black" />
           </g>
+          <path data-y-mark-mask="true" :d="HOME_HERO_Y_PATH" :transform="markTransform()" fill="black" />
         </mask>
         <mask id="home-hero-butterfly-dot-mask" maskUnits="userSpaceOnUse" :x="0" :y="0" :width="sceneWidth" :height="sceneHeight">
           <rect :width="sceneWidth" :height="sceneHeight" fill="black" />
           <g :transform="butterflyTransform()">
             <path v-for="(path, index) in HOME_HERO_BUTTERFLY_PATHS" :key="index" :d="path" fill="white" />
           </g>
+          <path data-y-mark-mask="true" :d="HOME_HERO_Y_PATH" :transform="markTransform()" fill="black" />
         </mask>
+        <clipPath id="home-hero-butterfly-clip" clipPathUnits="userSpaceOnUse">
+          <g :transform="butterflyTransform()">
+            <path v-for="(path, index) in HOME_HERO_BUTTERFLY_CLIP_PATHS" :key="index" :d="path" />
+          </g>
+        </clipPath>
       </defs>
       <g :transform="butterflyTransform()">
         <path v-for="(path, index) in HOME_HERO_BUTTERFLY_PATHS" :key="index" :d="path" class="home-hero-particles-butterfly-fill" />
       </g>
       <rect :width="sceneWidth" :height="sceneHeight" fill="url(#home-hero-fixed-grid)" mask="url(#home-hero-butterfly-field-mask)" />
       <rect :width="sceneWidth" :height="sceneHeight" fill="url(#home-hero-butterfly-grid)" mask="url(#home-hero-butterfly-dot-mask)" />
-      <circle
-        v-for="point in butterflyVeinPoints"
-        :key="`${point.row}:${point.column}`"
-        class="home-hero-particles-fallback-butterfly-vein-dot"
-        :cx="point.x"
-        :cy="point.y"
-        :r="gridStep * HOME_HERO_GRID_DOT_RADIUS_RATIO"
-      />
+      <g data-butterfly-vein-clip="true" clip-path="url(#home-hero-butterfly-clip)">
+        <circle
+          v-for="point in butterflyVeinPoints"
+          :key="`${point.row}:${point.column}`"
+          class="home-hero-particles-fallback-butterfly-vein-dot"
+          :cx="point.x"
+          :cy="point.y"
+          :r="gridStep * HOME_HERO_GRID_DOT_RADIUS_RATIO"
+        />
+      </g>
       <path :d="HOME_HERO_Y_PATH" :transform="markTransform()" class="home-hero-particles-fallback-mark-halo-path" fill="url(#home-hero-mark-halo-grid)" />
       <path data-y-mark="true" :d="HOME_HERO_Y_PATH" :transform="markTransform()" fill="url(#home-hero-mark-grid)" />
     </svg>

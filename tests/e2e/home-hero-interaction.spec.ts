@@ -1,5 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
 import {
+  HOME_HERO_BUTTERFLY_CLIP_PATHS,
   HOME_HERO_BUTTERFLY_PATHS,
   HOME_HERO_GRID_DOT_RADIUS_RATIO,
   HOME_HERO_MARK_DOT_HALO_RADIUS_RATIO,
@@ -1085,6 +1086,28 @@ test('keeps a complete patterned vector scene when Canvas is unavailable', async
   const expectedVeinDots = Number(await particles.getAttribute('data-butterfly-vein-point-count'))
   expect(expectedVeinDots).toBeGreaterThan(0)
   await expect(veinDots).toHaveCount(expectedVeinDots)
+  const mark = particles.locator('.home-hero-particles-mark')
+  const yMark = mark.locator('[data-y-mark]')
+  const yMaskPaths = [
+    mark.locator('#home-hero-butterfly-field-mask [data-y-mark-mask]'),
+    mark.locator('#home-hero-butterfly-dot-mask [data-y-mark-mask]')
+  ]
+  for (const yMaskPath of yMaskPaths) {
+    await expect(yMaskPath).toHaveCount(1)
+    expect(await yMaskPath.getAttribute('d')).toBe(await yMark.getAttribute('d'))
+    expect(await yMaskPath.getAttribute('transform')).toBe(await yMark.getAttribute('transform'))
+    expect(await yMaskPath.getAttribute('fill')).toBe('black')
+  }
+
+  const veinClip = mark.locator('#home-hero-butterfly-clip')
+  const clippedVeinDots = mark.locator('[data-butterfly-vein-clip]')
+  await expect(clippedVeinDots).toHaveAttribute('clip-path', 'url(#home-hero-butterfly-clip)')
+  await expect(veinClip).toHaveAttribute('clipPathUnits', 'userSpaceOnUse')
+  const clippedButterflyPaths = await veinClip.locator('path').evaluateAll((paths) => paths.map((path) => path.getAttribute('d')))
+  expect(clippedButterflyPaths.sort()).toEqual([...HOME_HERO_BUTTERFLY_CLIP_PATHS].sort())
+  const clippedButterflyTransform = await veinClip.locator('g').getAttribute('transform')
+  expect(clippedButterflyTransform).toBe(await mark.locator('.home-hero-particles-butterfly-fill').first().evaluate((path) => path.parentElement?.getAttribute('transform') ?? null))
+
   const grid = await particles.evaluate((element) => ({
     step: Number(element.getAttribute('data-grid-step')),
     originX: Number(element.getAttribute('data-grid-origin-x')),
