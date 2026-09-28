@@ -719,10 +719,9 @@ test('lets Y dots respond to a central pointer and settle after it leaves', asyn
   const disturbedDistance = pixelDistance(baseline, disturbed)
 
   await page.mouse.move(bounds!.x + bounds!.width + 24, bounds!.y + bounds!.height + 24)
-  await expect.poll(
-    async () => pixelDistance(baseline, await readCanvasGrid()),
-    { timeout: 4000 }
-  ).toBeLessThan(disturbedDistance * 0.2)
+  await expect(canvas).toHaveAttribute('data-particle-state', 'settled')
+  const settledDistance = pixelDistance(baseline, await readCanvasGrid())
+  expect(settledDistance).toBeLessThan(disturbedDistance * 0.2)
 })
 
 test('lets field dots respond near the edge of the butterfly opening', async ({ page }) => {
