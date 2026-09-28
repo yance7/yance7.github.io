@@ -1,13 +1,18 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {
+  HOME_HERO_BUTTERFLY_CLIP_PATHS,
   HOME_HERO_BUTTERFLY_PATHS,
+  HOME_HERO_GRID_DOT_RADIUS_RATIO,
+  HOME_HERO_MARK_DOT_HALO_RADIUS_RATIO,
+  HOME_HERO_MARK_DOT_RADIUS_RATIO,
   HOME_HERO_PARTICLE_GATHER_DURATION_MS,
   HOME_HERO_Y_PATH,
   createHomeHeroParticleScene,
   getHomeHeroMotionEasing,
   getHomeHeroParticlePixelRatio,
   getHomeHeroParticleState,
+  type HomeHeroGridPoint,
   type HomeHeroParticleScene,
   type HomeHeroParticleTarget
 } from '../utils/homeHeroParticles'
@@ -34,9 +39,7 @@ interface Rect {
   height: number
 }
 
-const FRAME_INTERVAL_MS = 1000 / 60
-const GRID_DOT_RADIUS_RATIO = 0.22
-const MARK_DOT_RADIUS_RATIO = 0.25
+const INITIAL_FRAME_DELTA_MS = 1000 / 60
 const CACHE_DOT_ERASE_OVERDRAW = 1
 const PARTICLE_SEED = 0x59a7ce
 
@@ -57,6 +60,7 @@ const pixelRatio = ref(1)
 const svgViewBox = ref('0 0 100 100')
 const sceneWidth = ref(100)
 const sceneHeight = ref(100)
+const butterflyVeinPoints = ref<HomeHeroGridPoint[]>([])
 
 let gridContext: CanvasRenderingContext2D | null = null
 let markContext: CanvasRenderingContext2D | null = null
@@ -65,6 +69,7 @@ let backgroundCacheContext: CanvasRenderingContext2D | null = null
 let markCache: HTMLCanvasElement | null = null
 let markCacheContext: CanvasRenderingContext2D | null = null
 let scene: HomeHeroParticleScene | null = null
+let butterflyClipPath: Path2D | null = null
 let markParticles: MarkParticle[] = []
 let gridIndexByCell = new Int32Array()
 let horizontalOffsets = new Float32Array()
@@ -85,7 +90,14 @@ let pageVisible = true
 let windowFocused = true
 let disposed = false
 let markIsSettled = false
-let colors = { dot: '#78917a', mark: '#294c3d' }
+let colors = {
+  dot: '#e9efe0',
+  butterfly: '#f2f2e9',
+  butterflyDot: '#87977b',
+  butterflyVein: '#607456',
+  mark: '#31513e',
+  markHalo: 'transparent'
+}
 let resizeObserver: ResizeObserver | null = null
 let intersectionObserver: IntersectionObserver | null = null
 let themeObserver: MutationObserver | null = null
@@ -94,12 +106,17 @@ function readThemeColors() {
   const style = getComputedStyle(stage.value ?? document.documentElement)
   colors = {
     dot: style.getPropertyValue('--hero-dot').trim() || colors.dot,
-    mark: style.getPropertyValue('--hero-mark').trim() || colors.mark
+    butterfly: style.getPropertyValue('--hero-butterfly').trim() || colors.butterfly,
+    butterflyDot: style.getPropertyValue('--hero-butterfly-dot').trim() || colors.butterflyDot,
+    butterflyVein: style.getPropertyValue('--hero-butterfly-vein').trim() || colors.butterflyVein,
+    mark: style.getPropertyValue('--hero-mark').trim() || colors.mark,
+    markHalo: style.getPropertyValue('--hero-mark-halo').trim() || colors.markHalo
   }
 }
 
 function publishSceneGeometry(nextScene: HomeHeroParticleScene) {
   scene = nextScene
+  butterflyVeinPoints.value = nextScene.backgroundPoints.filter((point) => point.surface === 'butterfly-vein')
   gridStep.value = nextScene.gridStep
   gridOriginX.value = nextScene.gridOriginX
   gridOriginY.value = nextScene.gridOriginY
@@ -209,12 +226,48 @@ function createCanvasSurface(canvas: HTMLCanvasElement, context: CanvasRendering
   context.setTransform(pixelRatio.value, 0, 0, pixelRatio.value, 0, 0)
 }
 
-function drawDotField(context: CanvasRenderingContext2D, points: readonly HomeHeroParticleTarget[], color: string) {
+function drawButterflySilhouette(context: CanvasRenderingContext2D) {
+  if (!scene) return
+  const bounds = scene.butterflyBounds
+  context.save()
+  context.translate(bounds.x, bounds.y)
+  context.scale(bounds.width / 100, bounds.height / 100)
+  context.fillStyle = colors.butterfly
+  for (const path of HOME_HERO_BUTTERFLY_PATHS) context.fill(new Path2D(path))
+  context.restore()
+}
+
+function clipButterflyDots(context: CanvasRenderingContext2D) {
+  if (!scene) return
+  const bounds = scene.butterflyBounds
+  butterflyClipPath ??= new Path2D(HOME_HERO_BUTTERFLY_CLIP_PATHS.join(' '))
+  context.translate(bounds.x, bounds.y)
+  context.scale(bounds.width / 100, bounds.height / 100)
+  context.clip(butterflyClipPath)
+  context.setTransform(pixelRatio.value, 0, 0, pixelRatio.value, 0, 0)
+}
+
+function drawButterflyDotField(context: CanvasRenderingContext2D) {
+  if (!scene) return
+  context.save()
+  clipButterflyDots(context)
+  drawDotField(context, scene.backgroundPoints, colors.butterflyDot, 'butterfly')
+  drawDotField(context, scene.backgroundPoints, colors.butterflyVein, 'butterfly-vein')
+  context.restore()
+}
+
+function drawDotField(
+  context: CanvasRenderingContext2D,
+  points: readonly HomeHeroGridPoint[],
+  color: string,
+  surface: HomeHeroGridPoint['surface']
+) {
   if (!scene) return
   context.fillStyle = color
   context.beginPath()
-  const radius = scene.gridStep * GRID_DOT_RADIUS_RATIO
+  const radius = scene.gridStep * HOME_HERO_GRID_DOT_RADIUS_RATIO
   for (const point of points) {
+    if (point.surface !== surface) continue
     context.moveTo(point.x + radius, point.y)
     context.arc(point.x, point.y, radius, 0, Math.PI * 2)
   }
@@ -228,7 +281,9 @@ function drawBackgroundCache() {
   backgroundCache.height = gridCanvas.value.height
   backgroundCacheContext.setTransform(pixelRatio.value, 0, 0, pixelRatio.value, 0, 0)
   backgroundCacheContext.clearRect(0, 0, logicalWidth, logicalHeight)
-  drawDotField(backgroundCacheContext, scene.backgroundPoints, colors.dot)
+  drawButterflySilhouette(backgroundCacheContext)
+  drawDotField(backgroundCacheContext, scene.backgroundPoints, colors.dot, 'field')
+  drawButterflyDotField(backgroundCacheContext)
 
   gridContext.clearRect(0, 0, logicalWidth, logicalHeight)
   gridContext.drawImage(
@@ -253,6 +308,22 @@ function cacheSettledMark() {
   markCacheContext.setTransform(1, 0, 0, 1, 0, 0)
   markCacheContext.clearRect(0, 0, markCache.width, markCache.height)
   markCacheContext.drawImage(markCanvas.value, 0, 0)
+}
+
+function fillMarkDots<T>(
+  context: CanvasRenderingContext2D,
+  points: Iterable<T>,
+  radius: number,
+  getPosition: (point: T) => { x: number; y: number } | undefined
+) {
+  context.beginPath()
+  for (const point of points) {
+    const position = getPosition(point)
+    if (!position) continue
+    context.moveTo(position.x + radius, position.y)
+    context.arc(position.x, position.y, radius, 0, Math.PI * 2)
+  }
+  context.fill()
 }
 
 function drawMarkFrame(now: number, forceSettled = false) {
@@ -284,16 +355,14 @@ function drawMarkFrame(now: number, forceSettled = false) {
     colorGroups.set(groupOpacity, group)
   }
 
-  markContext.fillStyle = colors.mark
+  const dotRadius = scene.gridStep * HOME_HERO_MARK_DOT_RADIUS_RATIO
+  const haloRadius = scene.gridStep * HOME_HERO_MARK_DOT_HALO_RADIUS_RATIO
   for (const [opacity, particles] of colorGroups) {
     markContext.globalAlpha = opacity
-    markContext.beginPath()
-    for (const particle of particles) {
-      const radius = scene.gridStep * MARK_DOT_RADIUS_RATIO
-      markContext.moveTo(particle.target.x + radius, particle.target.y)
-      markContext.arc(particle.target.x, particle.target.y, radius, 0, Math.PI * 2)
-    }
-    markContext.fill()
+    markContext.fillStyle = colors.markHalo
+    fillMarkDots(markContext, particles, haloRadius, (particle) => particle.target)
+    markContext.fillStyle = colors.mark
+    fillMarkDots(markContext, particles, dotRadius, (particle) => particle.target)
   }
   markContext.globalAlpha = 1
   if (markIsSettled) {
@@ -335,7 +404,7 @@ function getDirtyBounds(indices: Iterable<number>, offsetX: Float32Array, offset
   let top = Infinity
   let right = -Infinity
   let bottom = -Infinity
-  const margin = scene.gridStep * GRID_DOT_RADIUS_RATIO + 2
+  const margin = scene.gridStep * HOME_HERO_GRID_DOT_RADIUS_RATIO + 2
 
   for (const index of indices) {
     const point = scene.backgroundPoints[index]
@@ -410,20 +479,27 @@ function renderGridRegion(bounds: Rect, indices: Iterable<number>) {
     width,
     height
   )
-  const radius = scene.gridStep * GRID_DOT_RADIUS_RATIO
+  const radius = scene.gridStep * HOME_HERO_GRID_DOT_RADIUS_RATIO
   eraseCachedDots(gridContext, indices, radius, (index) => scene?.backgroundPoints[index])
-  gridContext.fillStyle = colors.dot
-  gridContext.beginPath()
-  for (const index of indices) {
-    const point = scene.backgroundPoints[index]
-    if (!point) continue
-    const drawX = point.x + horizontalOffsets[index]!
-    const drawY = point.y + verticalOffsets[index]!
-    if (drawX < x - radius || drawX > x + width + radius || drawY < y - radius || drawY > y + height + radius) continue
-    gridContext.moveTo(drawX + radius, drawY)
-    gridContext.arc(drawX, drawY, radius, 0, Math.PI * 2)
+  for (const surface of ['field', 'butterfly', 'butterfly-vein'] as const) {
+    gridContext.save()
+    if (surface !== 'field') clipButterflyDots(gridContext)
+    gridContext.fillStyle = surface === 'field'
+      ? colors.dot
+      : surface === 'butterfly' ? colors.butterflyDot : colors.butterflyVein
+    gridContext.beginPath()
+    for (const index of indices) {
+      const point = scene.backgroundPoints[index]
+      if (!point || point.surface !== surface) continue
+      const drawX = point.x + horizontalOffsets[index]!
+      const drawY = point.y + verticalOffsets[index]!
+      if (drawX < x - radius || drawX > x + width + radius || drawY < y - radius || drawY > y + height + radius) continue
+      gridContext.moveTo(drawX + radius, drawY)
+      gridContext.arc(drawX, drawY, radius, 0, Math.PI * 2)
+    }
+    gridContext.fill()
+    gridContext.restore()
   }
-  gridContext.fill()
   gridContext.restore()
 }
 
@@ -495,7 +571,7 @@ function getMarkDirtyBounds(indices: Iterable<number>): Rect | null {
   let top = Infinity
   let right = -Infinity
   let bottom = -Infinity
-  const margin = scene.gridStep * MARK_DOT_RADIUS_RATIO + 2
+  const margin = scene.gridStep * HOME_HERO_MARK_DOT_HALO_RADIUS_RATIO + 2
 
   for (const index of indices) {
     const point = markParticles[index]?.target
@@ -541,20 +617,22 @@ function renderMarkRegion(bounds: Rect, indices: Iterable<number>) {
     width,
     height
   )
-  const radius = scene.gridStep * MARK_DOT_RADIUS_RATIO
-  eraseCachedDots(markContext, indices, radius, (index) => markParticles[index]?.target)
-  markContext.fillStyle = colors.mark
-  markContext.beginPath()
-  for (const index of indices) {
+  const particleIndices = Array.from(indices)
+  const dotRadius = scene.gridStep * HOME_HERO_MARK_DOT_RADIUS_RATIO
+  const haloRadius = scene.gridStep * HOME_HERO_MARK_DOT_HALO_RADIUS_RATIO
+  eraseCachedDots(markContext, particleIndices, haloRadius, (index) => markParticles[index]?.target)
+  const getPosition = (index: number, radius: number) => {
     const point = markParticles[index]?.target
-    if (!point) continue
+    if (!point) return undefined
     const drawX = point.x + markHorizontalOffsets[index]!
     const drawY = point.y + markVerticalOffsets[index]!
-    if (drawX < x - radius || drawX > x + width + radius || drawY < y - radius || drawY > y + height + radius) continue
-    markContext.moveTo(drawX + radius, drawY)
-    markContext.arc(drawX, drawY, radius, 0, Math.PI * 2)
+    if (drawX < x - radius || drawX > x + width + radius || drawY < y - radius || drawY > y + height + radius) return undefined
+    return { x: drawX, y: drawY }
   }
-  markContext.fill()
+  markContext.fillStyle = colors.markHalo
+  fillMarkDots(markContext, particleIndices, haloRadius, (index) => getPosition(index, haloRadius))
+  markContext.fillStyle = colors.mark
+  fillMarkDots(markContext, particleIndices, dotRadius, (index) => getPosition(index, dotRadius))
   markContext.restore()
 }
 
@@ -637,12 +715,7 @@ function renderFrame(now: number) {
     setPaused()
     return
   }
-  if (now - lastFrameAt < FRAME_INTERVAL_MS) {
-    frameId = requestAnimationFrame(renderFrame)
-    return
-  }
-
-  const deltaMs = Number.isFinite(lastFrameAt) ? Math.min(now - lastFrameAt, 120) : FRAME_INTERVAL_MS
+  const deltaMs = Number.isFinite(lastFrameAt) ? Math.min(now - lastFrameAt, 120) : INITIAL_FRAME_DELTA_MS
   lastFrameAt = now
   const gathering = hasIntroMotion(now)
   if (gathering) drawMarkFrame(now)
@@ -946,6 +1019,7 @@ onBeforeUnmount(cleanupCanvas)
     :data-grid-origin-y="gridOriginY"
     :data-grid-columns="gridColumns"
     :data-grid-rows="gridRows"
+    :data-butterfly-vein-point-count="butterflyVeinPoints.length"
     aria-hidden="true"
   >
     <canvas
@@ -984,7 +1058,27 @@ onBeforeUnmount(cleanupCanvas)
           :width="gridStep || 8"
           :height="gridStep || 8"
         >
-          <circle :cx="(gridStep || 8) / 2" :cy="(gridStep || 8) / 2" :r="(gridStep || 8) * GRID_DOT_RADIUS_RATIO" class="home-hero-particles-fallback-dot" />
+          <circle :cx="(gridStep || 8) / 2" :cy="(gridStep || 8) / 2" :r="(gridStep || 8) * HOME_HERO_GRID_DOT_RADIUS_RATIO" class="home-hero-particles-fallback-dot" />
+        </pattern>
+        <pattern
+          id="home-hero-butterfly-grid"
+          patternUnits="userSpaceOnUse"
+          :x="gridOriginX - gridStep / 2"
+          :y="gridOriginY - gridStep / 2"
+          :width="gridStep || 8"
+          :height="gridStep || 8"
+        >
+          <circle :cx="(gridStep || 8) / 2" :cy="(gridStep || 8) / 2" :r="(gridStep || 8) * HOME_HERO_GRID_DOT_RADIUS_RATIO" class="home-hero-particles-fallback-butterfly-dot" />
+        </pattern>
+        <pattern
+          id="home-hero-mark-halo-grid"
+          patternUnits="userSpaceOnUse"
+          :x="gridOriginX - gridStep / 2"
+          :y="gridOriginY - gridStep / 2"
+          :width="gridStep || 8"
+          :height="gridStep || 8"
+        >
+          <circle :cx="(gridStep || 8) / 2" :cy="(gridStep || 8) / 2" :r="(gridStep || 8) * HOME_HERO_MARK_DOT_HALO_RADIUS_RATIO" class="home-hero-particles-fallback-mark-halo" />
         </pattern>
         <pattern
           id="home-hero-mark-grid"
@@ -994,20 +1088,44 @@ onBeforeUnmount(cleanupCanvas)
           :width="gridStep || 8"
           :height="gridStep || 8"
         >
-          <circle :cx="(gridStep || 8) / 2" :cy="(gridStep || 8) / 2" :r="(gridStep || 8) * MARK_DOT_RADIUS_RATIO" class="home-hero-particles-fallback-mark-dot" />
+          <circle :cx="(gridStep || 8) / 2" :cy="(gridStep || 8) / 2" :r="(gridStep || 8) * HOME_HERO_MARK_DOT_RADIUS_RATIO" class="home-hero-particles-fallback-mark-dot" />
         </pattern>
-        <mask id="home-hero-butterfly-opening" maskUnits="userSpaceOnUse" :x="0" :y="0" :width="sceneWidth" :height="sceneHeight">
+        <mask id="home-hero-butterfly-field-mask" maskUnits="userSpaceOnUse" :x="0" :y="0" :width="sceneWidth" :height="sceneHeight">
           <rect :width="sceneWidth" :height="sceneHeight" fill="white" />
-          <path
-            v-for="(path, index) in HOME_HERO_BUTTERFLY_PATHS"
-            :key="index"
-            :d="path"
-            :transform="butterflyTransform()"
-            fill="black"
-          />
+          <g :transform="butterflyTransform()">
+            <path v-for="(path, index) in HOME_HERO_BUTTERFLY_PATHS" :key="index" :d="path" fill="black" />
+          </g>
+          <path data-y-mark-mask="true" :d="HOME_HERO_Y_PATH" :transform="markTransform()" fill="black" />
         </mask>
+        <mask id="home-hero-butterfly-dot-mask" maskUnits="userSpaceOnUse" :x="0" :y="0" :width="sceneWidth" :height="sceneHeight">
+          <rect :width="sceneWidth" :height="sceneHeight" fill="black" />
+          <g :transform="butterflyTransform()">
+            <path v-for="(path, index) in HOME_HERO_BUTTERFLY_PATHS" :key="index" :d="path" fill="white" />
+          </g>
+          <path data-y-mark-mask="true" :d="HOME_HERO_Y_PATH" :transform="markTransform()" fill="black" />
+        </mask>
+        <clipPath id="home-hero-butterfly-clip" clipPathUnits="userSpaceOnUse">
+          <g :transform="butterflyTransform()">
+            <path v-for="(path, index) in HOME_HERO_BUTTERFLY_CLIP_PATHS" :key="index" :d="path" />
+          </g>
+        </clipPath>
       </defs>
-      <rect :width="sceneWidth" :height="sceneHeight" fill="url(#home-hero-fixed-grid)" mask="url(#home-hero-butterfly-opening)" />
+      <g :transform="butterflyTransform()">
+        <path v-for="(path, index) in HOME_HERO_BUTTERFLY_PATHS" :key="index" :d="path" class="home-hero-particles-butterfly-fill" />
+      </g>
+      <rect :width="sceneWidth" :height="sceneHeight" fill="url(#home-hero-fixed-grid)" mask="url(#home-hero-butterfly-field-mask)" />
+      <rect :width="sceneWidth" :height="sceneHeight" fill="url(#home-hero-butterfly-grid)" mask="url(#home-hero-butterfly-dot-mask)" />
+      <g data-butterfly-vein-clip="true" clip-path="url(#home-hero-butterfly-clip)">
+        <circle
+          v-for="point in butterflyVeinPoints"
+          :key="`${point.row}:${point.column}`"
+          class="home-hero-particles-fallback-butterfly-vein-dot"
+          :cx="point.x"
+          :cy="point.y"
+          :r="gridStep * HOME_HERO_GRID_DOT_RADIUS_RATIO"
+        />
+      </g>
+      <path :d="HOME_HERO_Y_PATH" :transform="markTransform()" class="home-hero-particles-fallback-mark-halo-path" fill="url(#home-hero-mark-halo-grid)" />
       <path data-y-mark="true" :d="HOME_HERO_Y_PATH" :transform="markTransform()" fill="url(#home-hero-mark-grid)" />
     </svg>
     <div class="home-hero-particles-labels">

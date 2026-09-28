@@ -1,32 +1,110 @@
 import { describe, expect, it } from 'vitest'
 import {
   HOME_HERO_PARTICLE_GATHER_DURATION_MS,
+  HOME_HERO_GRID_DOT_RADIUS_RATIO,
+  HOME_HERO_MARK_DOT_RADIUS_RATIO,
+  HOME_HERO_BUTTERFLY_PATHS,
   createHomeHeroParticleScene,
   getHomeHeroMotionEasing,
   getHomeHeroParticlePixelRatio,
   getHomeHeroParticleState,
   isHomeHeroButterflyPoint,
+  isHomeHeroButterflyVeinPoint,
   isHomeHeroYPoint
 } from '../src/utils/homeHeroParticles'
 
 describe('HomeHero particle geometry', () => {
+  it('keeps four symmetrical wings around the open center from the supplied reference', () => {
+    expect(HOME_HERO_BUTTERFLY_PATHS).toHaveLength(4)
+    expect(isHomeHeroButterflyPoint(0.3, 0.18)).toBe(true)
+    expect(isHomeHeroButterflyPoint(0.5, 0.25)).toBe(false)
+    expect(isHomeHeroButterflyPoint(0.5, 0.76)).toBe(false)
+    expect(isHomeHeroButterflyPoint(0.2, 0.54)).toBe(false)
+    expect(isHomeHeroButterflyPoint(0.8, 0.54)).toBe(false)
+  })
+
+  it('adds fine, lattice-aligned wing veins while keeping the butterfly center open', () => {
+    expect(isHomeHeroButterflyVeinPoint(0.318, 0.31)).toBe(true)
+    expect(isHomeHeroButterflyVeinPoint(0.33, 0.4075)).toBe(true)
+    expect(isHomeHeroButterflyVeinPoint(0.369, 0.72)).toBe(true)
+    expect(isHomeHeroButterflyVeinPoint(0.5, 0.52)).toBe(false)
+
+    const scene = createHomeHeroParticleScene(1080, 430)
+    const veinPoints = scene.backgroundPoints.filter((point) => point.surface === 'butterfly-vein')
+
+    expect(veinPoints.length).toBeGreaterThan(380)
+    expect(veinPoints.every((point) => {
+      const x = (point.x - scene.butterflyBounds.x) / scene.butterflyBounds.width
+      const y = (point.y - scene.butterflyBounds.y) / scene.butterflyBounds.height
+      return isHomeHeroButterflyVeinPoint(x, y)
+    })).toBe(true)
+  })
+
+  it('keeps the Y dot face dense enough to read as a solid mark against the shared lattice', () => {
+    expect(HOME_HERO_MARK_DOT_RADIUS_RATIO).toBeGreaterThan(HOME_HERO_GRID_DOT_RADIUS_RATIO * 1.7)
+  })
+
+  it('gives the Y focal weight while keeping butterfly wings clear of the lower labels', () => {
+    const sizes = [[360, 300], [390, 300], [844, 340], [390, 220]] as const
+
+    for (const [width, height] of sizes) {
+      const scene = createHomeHeroParticleScene(width, height)
+      const markBottom = scene.markBounds.y + scene.markBounds.height
+      const butterflyBottom = scene.butterflyBounds.y + scene.butterflyBounds.height
+
+      expect(scene.markBounds.height / height, `${width}×${height} Y scale`).toBeGreaterThanOrEqual(0.7)
+      expect(scene.markBounds.x, `${width}×${height} Y left edge`).toBeGreaterThanOrEqual(0)
+      expect(scene.markBounds.x + scene.markBounds.width, `${width}×${height} Y right edge`).toBeLessThanOrEqual(width)
+      expect(scene.markBounds.y, `${width}×${height} Y top edge`).toBeGreaterThanOrEqual(0)
+      expect(markBottom, `${width}×${height} Y bottom edge`).toBeLessThanOrEqual(height * 0.88)
+      expect(scene.markBounds.height, `${width}×${height} focal scale`).toBeGreaterThan(scene.butterflyBounds.height * 0.8)
+      expect(butterflyBottom, `${width}×${height} butterfly-label clearance`).toBeLessThanOrEqual(height * 0.92)
+    }
+  })
+
+  it('keeps the lower wings narrower than the upper wings like the supplied butterfly', () => {
+    expect(isHomeHeroButterflyPoint(0.08, 0.8)).toBe(false)
+    expect(isHomeHeroButterflyPoint(0.18, 0.8)).toBe(true)
+  })
+
+  it('keeps a dense, four-wing butterfly surface on the same lattice as the Y', () => {
+    const mobileScene = createHomeHeroParticleScene(390, 320)
+    const desktopScene = createHomeHeroParticleScene(1080, 430)
+    const mobileButterflyPoints = mobileScene.backgroundPoints.filter((point) => point.surface !== 'field')
+    const desktopButterflyPoints = desktopScene.backgroundPoints.filter((point) => point.surface !== 'field')
+    const centerX = desktopScene.butterflyBounds.x + desktopScene.butterflyBounds.width / 2
+    const upperLeftWing = desktopButterflyPoints.filter((point) => point.x < centerX && point.y < 180)
+    const upperRightWing = desktopButterflyPoints.filter((point) => point.x > centerX && point.y < 180)
+    const lowerLeftWing = desktopButterflyPoints.filter((point) => point.x < centerX && point.y > 240)
+    const lowerRightWing = desktopButterflyPoints.filter((point) => point.x > centerX && point.y > 240)
+
+    expect(mobileButterflyPoints.length).toBeGreaterThan(900)
+    expect(upperLeftWing.length).toBeGreaterThan(100)
+    expect(upperRightWing.length).toBeGreaterThan(100)
+    expect(lowerLeftWing.length).toBeGreaterThan(100)
+    expect(lowerRightWing.length).toBeGreaterThan(100)
+    expect(mobileScene.yPoints.length).toBeGreaterThan(300)
+    expect(desktopScene.yPoints.length).toBeGreaterThan(580)
+  })
+
   it('renders a denser shared lattice and a proportioned four-wing opening', () => {
     const mobileScene = createHomeHeroParticleScene(390, 320)
     const desktopScene = createHomeHeroParticleScene(1080, 430)
 
-    expect(mobileScene.gridStep).toBe(6)
-    expect(desktopScene.gridStep).toBe(6)
+    expect(mobileScene.gridStep).toBe(5)
+    expect(desktopScene.gridStep).toBe(5)
     expect(mobileScene.yPoints.length).toBeGreaterThan(200)
     expect(desktopScene.yPoints.length).toBeGreaterThan(400)
 
     for (const scene of [mobileScene, desktopScene]) {
-      expect(scene.butterflyBounds.width / scene.butterflyBounds.height).toBeCloseTo(1.28, 1)
+      expect(scene.butterflyBounds.width / scene.butterflyBounds.height).toBeCloseTo(1.39, 2)
       expect(scene.butterflyBounds.x + scene.butterflyBounds.width / 2)
         .toBeCloseTo(scene.gridOriginX + (scene.columns - 1) * scene.gridStep / 2, 1)
       expect(scene.backgroundPoints.every((point) => {
         const x = (point.x - scene.butterflyBounds.x) / scene.butterflyBounds.width
         const y = (point.y - scene.butterflyBounds.y) / scene.butterflyBounds.height
-        return x < 0 || x > 1 || y < 0 || y > 1 || !isHomeHeroButterflyPoint(x, y)
+        const insideButterfly = x >= 0 && x <= 1 && y >= 0 && y <= 1 && isHomeHeroButterflyPoint(x, y)
+        return (point.surface !== 'field') === insideButterfly
       })).toBe(true)
     }
   })
@@ -57,7 +135,8 @@ describe('HomeHero particle geometry', () => {
       expect(scene.backgroundPoints.every((point) => {
         const x = (point.x - scene.butterflyBounds.x) / scene.butterflyBounds.width
         const y = (point.y - scene.butterflyBounds.y) / scene.butterflyBounds.height
-        return x < 0 || x > 1 || y < 0 || y > 1 || !isHomeHeroButterflyPoint(x, y)
+        const insideButterfly = x >= 0 && x <= 1 && y >= 0 && y <= 1 && isHomeHeroButterflyPoint(x, y)
+        return (point.surface !== 'field') === insideButterfly
       })).toBe(true)
     }
   })

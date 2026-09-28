@@ -285,10 +285,9 @@ for (const locale of homeHeroLocales) {
 
         const hero = page.locator('.home-hero')
         await expect(hero).toBeVisible()
-        await page.screenshot({
-          ...pageScreenshotOptions,
-          path: testInfo.outputPath(`home-hero-${locale.name}-${theme}-${viewport.name}-review.png`),
-          fullPage: false
+        await hero.screenshot({
+          ...sharedScreenshotOptions,
+          path: testInfo.outputPath(`home-hero-${locale.name}-${theme}-${viewport.name}-review.png`)
         })
         await expect(hero).toHaveScreenshot(
           `home-hero-${locale.name}-${theme}-${viewport.name}.png`,

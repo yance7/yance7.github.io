@@ -1,6 +1,12 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
 import {
+  HOME_HERO_BUTTERFLY_CLIP_PATHS,
+  HOME_HERO_BUTTERFLY_PATHS,
+  HOME_HERO_GRID_DOT_RADIUS_RATIO,
+  HOME_HERO_MARK_DOT_HALO_RADIUS_RATIO,
+  HOME_HERO_MARK_DOT_RADIUS_RATIO,
   createHomeHeroParticleScene,
+  isHomeHeroButterflyPoint,
   type HomeHeroParticleTarget
 } from '../../src/utils/homeHeroParticles'
 
@@ -128,6 +134,19 @@ function findParticleSource(
   )) ?? null
 }
 
+function findButterflyGridGap(scene: ReturnType<typeof createHomeHeroParticleScene>) {
+  for (let row = 0; row < scene.rows - 1; row += 1) {
+    for (let column = 0; column < scene.columns - 1; column += 1) {
+      const x = scene.gridOriginX + column * scene.gridStep + scene.gridStep / 2
+      const y = scene.gridOriginY + row * scene.gridStep + scene.gridStep / 2
+      const localX = (x - scene.butterflyBounds.x) / scene.butterflyBounds.width
+      const localY = (y - scene.butterflyBounds.y) / scene.butterflyBounds.height
+      if (isHomeHeroButterflyPoint(localX, localY)) return { x, y }
+    }
+  }
+  return null
+}
+
 const activeTypingFrame: Partial<HomeHeroIntroFrame> = {
   introState: 'typing',
   finalState: 'false',
@@ -165,6 +184,272 @@ for (const locale of locales) {
     await expect(typewriter).toHaveAttribute('data-final-state', 'true')
   })
 }
+
+test('fills the butterfly wings beneath the shared background lattice', async ({ page }) => {
+  await page.goto('/')
+  const stage = page.locator('.home-hero-particles')
+  const grid = page.locator('.home-hero-particles-grid')
+  await stage.scrollIntoViewIfNeeded()
+  await expect(grid).toHaveAttribute('data-particle-state', 'settled', { timeout: 4000 })
+
+  const geometry = await stage.evaluate((element) => {
+    const bounds = element.getBoundingClientRect()
+    return { width: Math.floor(bounds.width), height: Math.floor(bounds.height) }
+  })
+  const scene = createHomeHeroParticleScene(geometry.width, geometry.height)
+  const sample = findButterflyGridGap(scene)
+  expect(sample).not.toBeNull()
+
+  const alpha = await grid.evaluate((element, point) => {
+    const canvas = element as HTMLCanvasElement
+    const bounds = canvas.getBoundingClientRect()
+    const ratio = canvas.width / bounds.width
+    return canvas.getContext('2d')!.getImageData(
+      Math.floor(point.x * ratio),
+      Math.floor(point.y * ratio),
+      1,
+      1
+    ).data[3]
+  }, sample!)
+  expect(alpha).toBeGreaterThan(220)
+})
+
+test('keeps the Y particle mark distinguishable in the dark theme', async ({ page }) => {
+  await page.goto('/')
+  const darkThemeButton = page.getByRole('button', { name: /切换到暗色主题/ })
+  if (await darkThemeButton.count()) await darkThemeButton.click()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+
+  const stage = page.locator('.home-hero-particles')
+  const contrast = await stage.evaluate((element) => {
+    const styles = getComputedStyle(element)
+    const luminance = (value: string) => {
+      const hex = value.trim().match(/^#([\da-f]{3}|[\da-f]{6})$/i)?.[1]
+      const channels = hex
+        ? (hex.length === 3
+            ? [...hex].map((channel) => Number.parseInt(channel + channel, 16))
+            : hex.match(/../g)?.map((channel) => Number.parseInt(channel, 16)) ?? [])
+        : value.match(/[\d.]+/g)?.map(Number) ?? []
+      const [red = 0, green = 0, blue = 0] = channels.map((channel) => {
+        const normalized = channel / 255
+        return normalized <= 0.04045
+          ? normalized / 12.92
+          : ((normalized + 0.055) / 1.055) ** 2.4
+      })
+      return red * 0.2126 + green * 0.7152 + blue * 0.0722
+    }
+    const ratio = (first: string, second: string) => {
+      const values = [luminance(first), luminance(second)].sort((a, b) => b - a)
+      return ((values[0] ?? 0) + 0.05) / ((values[1] ?? 0) + 0.05)
+    }
+    const mark = styles.getPropertyValue('--hero-mark')
+    const halo = styles.getPropertyValue('--hero-mark-halo')
+    return {
+      markOnButterfly: ratio(mark, styles.getPropertyValue('--hero-butterfly')),
+      haloOnCenter: ratio(halo, styles.getPropertyValue('--hero-stage-center')),
+      haloOnEdge: ratio(halo, styles.getPropertyValue('--hero-stage-edge'))
+    }
+  })
+
+  expect(contrast.markOnButterfly).toBeGreaterThanOrEqual(4.5)
+  expect(contrast.haloOnCenter).toBeGreaterThanOrEqual(3)
+  expect(contrast.haloOnEdge).toBeGreaterThanOrEqual(3)
+
+  await stage.scrollIntoViewIfNeeded()
+  await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'complete')
+  const canvas = page.locator('.home-hero-particles-canvas')
+  await expect(canvas).toHaveAttribute('data-particle-state', 'settled', { timeout: 4000 })
+
+  const bounds = await stage.boundingBox()
+  expect(bounds).not.toBeNull()
+  const scene = createHomeHeroParticleScene(Math.floor(bounds!.width), Math.floor(bounds!.height))
+  const haloSampleOffset = scene.gridStep * (
+    HOME_HERO_MARK_DOT_RADIUS_RATIO + HOME_HERO_MARK_DOT_HALO_RADIUS_RATIO
+  ) / 2
+  const isInsideButterfly = (point: HomeHeroParticleTarget) => isHomeHeroButterflyPoint(
+    (point.x - scene.butterflyBounds.x) / scene.butterflyBounds.width,
+    (point.y - scene.butterflyBounds.y) / scene.butterflyBounds.height
+  )
+  const wingTarget = scene.yPoints.find(isInsideButterfly)
+  const fieldTarget = scene.yPoints.find((point) => (
+    !isInsideButterfly(point)
+      && !isInsideButterfly({ ...point, x: point.x + haloSampleOffset })
+  ))
+  expect(wingTarget).toBeDefined()
+  expect(fieldTarget).toBeDefined()
+
+  const pixels = await canvas.evaluate((element, targets) => {
+    const mark = element as HTMLCanvasElement
+    const context = mark.getContext('2d')!
+    const ratio = Number(mark.dataset.pixelRatio ?? '1')
+    const read = (x: number, y: number) => {
+      const pixelX = Math.max(0, Math.min(mark.width - 1, Math.floor(x * ratio)))
+      const pixelY = Math.max(0, Math.min(mark.height - 1, Math.floor(y * ratio)))
+      return Array.from(context.getImageData(pixelX, pixelY, 1, 1).data.slice(0, 3))
+    }
+    const haloBounds = {
+      left: Math.max(0, Math.floor((targets.field.x - targets.haloRadius) * ratio)),
+      top: Math.max(0, Math.floor((targets.field.y - targets.haloRadius) * ratio)),
+      right: Math.min(mark.width, Math.ceil((targets.field.x + targets.haloRadius) * ratio)),
+      bottom: Math.min(mark.height, Math.ceil((targets.field.y + targets.haloRadius) * ratio))
+    }
+    const haloPixels = context.getImageData(
+      haloBounds.left,
+      haloBounds.top,
+      haloBounds.right - haloBounds.left,
+      haloBounds.bottom - haloBounds.top
+    )
+    let haloSample = [0, 0, 0]
+    let haloAlpha = 0
+    for (let y = 0; y < haloPixels.height; y += 1) {
+      for (let x = 0; x < haloPixels.width; x += 1) {
+        const logicalX = (haloBounds.left + x + 0.5) / ratio
+        const logicalY = (haloBounds.top + y + 0.5) / ratio
+        const distance = Math.hypot(logicalX - targets.field.x, logicalY - targets.field.y)
+        if (distance <= targets.dotRadius || distance >= targets.haloRadius) continue
+        const offset = (y * haloPixels.width + x) * 4
+        const alpha = haloPixels.data[offset + 3]!
+        if (alpha <= haloAlpha) continue
+        haloAlpha = alpha
+        haloSample = Array.from(haloPixels.data.slice(offset, offset + 3))
+      }
+    }
+    const stage = document.querySelector('.home-hero-particles')!
+    const styles = getComputedStyle(stage)
+    return {
+      core: read(targets.wing.x, targets.wing.y),
+      halo: haloSample,
+      haloAlpha,
+      markColor: styles.getPropertyValue('--hero-mark').trim(),
+      haloColor: styles.getPropertyValue('--hero-mark-halo').trim()
+    }
+  }, {
+    wing: wingTarget!,
+    field: fieldTarget!,
+    dotRadius: scene.gridStep * HOME_HERO_MARK_DOT_RADIUS_RATIO,
+    haloRadius: scene.gridStep * HOME_HERO_MARK_DOT_HALO_RADIUS_RATIO
+  })
+  const channels = (color: string) => color.match(/^#([\da-f]{6})$/i)?.[1]
+    ?.match(/../g)
+    ?.map((channel) => Number.parseInt(channel, 16)) ?? []
+  const colorDistance = (pixel: number[], color: string) => pixel.reduce(
+    (distance, channel, index) => distance + Math.abs(channel - (channels(color)[index] ?? 0)),
+    0
+  )
+
+  expect(colorDistance(pixels.core, pixels.markColor), JSON.stringify(pixels)).toBeLessThan(24)
+  expect(pixels.haloAlpha).toBeGreaterThanOrEqual(240)
+  expect(colorDistance(pixels.halo, pixels.haloColor), JSON.stringify(pixels))
+    .toBeLessThan(colorDistance(pixels.halo, pixels.markColor) / 2)
+})
+
+test('clips halftone dots to the butterfly silhouette edge', async ({ page }) => {
+  await page.goto('/')
+  const stage = page.locator('.home-hero-particles')
+  const grid = page.locator('.home-hero-particles-grid')
+  await stage.scrollIntoViewIfNeeded()
+  await expect(grid).toHaveAttribute('data-particle-state', 'settled', { timeout: 4000 })
+
+  const geometry = await stage.evaluate((element) => {
+    const bounds = element.getBoundingClientRect()
+    return {
+      width: Math.floor(bounds.width),
+      height: Math.floor(bounds.height)
+    }
+  })
+  const scene = createHomeHeroParticleScene(geometry.width, geometry.height)
+  const comparisons = await grid.evaluate((element, input) => {
+    const canvas = element as HTMLCanvasElement
+    const stage = canvas.closest('.home-hero-particles') as HTMLElement
+    const stageBounds = stage.getBoundingClientRect()
+    const ratio = canvas.width / stageBounds.width
+    const reference = document.createElement('canvas')
+    reference.width = canvas.width
+    reference.height = canvas.height
+    const context = reference.getContext('2d')!
+    const geometryContext = document.createElement('canvas').getContext('2d')!
+    const butterfly = input.bounds
+    const paths = input.paths.map((path) => new Path2D(path))
+    context.setTransform(ratio, 0, 0, ratio, 0, 0)
+    context.translate(butterfly.x, butterfly.y)
+    context.scale(butterfly.width / 100, butterfly.height / 100)
+    context.fillStyle = getComputedStyle(stage).getPropertyValue('--hero-butterfly').trim()
+    paths.forEach((path) => context.fill(path))
+
+    const radius = input.gridStep * input.dotRadiusRatio
+    const antialiasClearance = 0.75 / ratio
+    const edgeOffsets = Array.from({ length: 8 }, (_, index) => {
+      const angle = (index * Math.PI) / 4
+      return { x: Math.cos(angle) * antialiasClearance, y: Math.sin(angle) * antialiasClearance }
+    })
+    const isInsideSilhouette = (x: number, y: number) => paths.some((path) => (
+      geometryContext.isPointInPath(path, x, y)
+    ))
+    const samples: Record<string, {
+      x: number
+      y: number
+      distance: number
+    }> = {}
+    for (const point of input.points) {
+      if (point.surface !== 'butterfly') continue
+      const quadrant = `${point.x < butterfly.x + butterfly.width / 2 ? 'left' : 'right'}-${point.y < butterfly.y + butterfly.height / 2 ? 'upper' : 'lower'}`
+      const minX = Math.floor((point.x - radius) * ratio)
+      const maxX = Math.ceil((point.x + radius) * ratio)
+      const minY = Math.floor((point.y - radius) * ratio)
+      const maxY = Math.ceil((point.y + radius) * ratio)
+      for (let y = minY; y <= maxY; y += 1) {
+        for (let x = minX; x <= maxX; x += 1) {
+          const sampleX = (x + 0.5) / ratio
+          const sampleY = (y + 0.5) / ratio
+          const distance = Math.hypot(sampleX - point.x, sampleY - point.y)
+          if (distance > radius || (samples[quadrant] && distance >= samples[quadrant].distance)) continue
+          const localX = (sampleX - butterfly.x) / butterfly.width * 100
+          const localY = (sampleY - butterfly.y) / butterfly.height * 100
+          if (isInsideSilhouette(localX, localY)
+            || edgeOffsets.some((offset) => isInsideSilhouette(
+              localX + offset.x / butterfly.width * 100,
+              localY + offset.y / butterfly.height * 100
+            ))) continue
+          samples[quadrant] = { x, y, distance }
+        }
+      }
+    }
+
+    context.setTransform(ratio, 0, 0, ratio, 0, 0)
+    context.fillStyle = getComputedStyle(stage).getPropertyValue('--hero-dot').trim()
+    context.beginPath()
+    for (const point of input.points) {
+      if (point.surface !== 'field') continue
+      context.moveTo(point.x + radius, point.y)
+      context.arc(point.x, point.y, radius, 0, Math.PI * 2)
+    }
+    context.fill()
+
+    const actualContext = canvas.getContext('2d')!
+    return Object.entries(samples).map(([quadrant, point]) => {
+      const actual = actualContext.getImageData(point.x, point.y, 1, 1).data
+      const expected = context.getImageData(point.x, point.y, 1, 1).data
+      return {
+        quadrant,
+        difference: Math.max(...Array.from(actual, (channel, index) => Math.abs(channel - expected[index]!)))
+      }
+    })
+  }, {
+    bounds: scene.butterflyBounds,
+    gridStep: scene.gridStep,
+    dotRadiusRatio: HOME_HERO_GRID_DOT_RADIUS_RATIO,
+    points: scene.backgroundPoints.map(({ x, y, surface }) => ({ x, y, surface })),
+    paths: HOME_HERO_BUTTERFLY_PATHS,
+  })
+  test.skip(comparisons.length < 4, 'requires enough backing pixels beyond the anti-aliased contour')
+  expect(comparisons.map(({ quadrant }) => quadrant).sort()).toEqual([
+    'left-lower',
+    'left-upper',
+    'right-lower',
+    'right-upper'
+  ])
+  expect(comparisons.every(({ difference }) => difference <= 2), JSON.stringify(comparisons)).toBe(true)
+})
 
 for (const locale of locales) {
   test(`${locale.route} replays the intro after reload and same-tab return`, async ({ page }) => {
@@ -217,7 +502,7 @@ test('rebuilds the reduced-motion SVG geometry after the viewport resizes', asyn
       viewBoxMatchesStage: viewBox[2] === Math.floor(bounds.width)
         && viewBox[3] === Math.floor(bounds.height)
     }
-  })).toEqual(expect.objectContaining({ gridStep: 6, viewBoxMatchesStage: true }))
+  })).toEqual(expect.objectContaining({ gridStep: 5, viewBoxMatchesStage: true }))
   await expect(mark.locator('[data-y-mark]')).toBeVisible()
 })
 
@@ -240,7 +525,7 @@ test('rebuilds the static fallback SVG geometry after the viewport resizes', asy
     const viewBox = element.querySelector('svg')!.getAttribute('viewBox')!.split(' ').map(Number)
     return viewBox[2] === Math.floor(bounds.width) && viewBox[3] === Math.floor(bounds.height)
   })).toBe(true)
-  await expect(stage).toHaveAttribute('data-grid-step', '6')
+  await expect(stage).toHaveAttribute('data-grid-step', '5')
   await expect(mark.locator('[data-y-mark]')).toBeVisible()
 })
 
@@ -295,6 +580,71 @@ test('keeps a sharp but bounded Canvas backing store on high-DPI displays', asyn
   ))
   expect(pixelRatio).toBeGreaterThanOrEqual(1)
   expect(pixelRatio).toBeLessThanOrEqual(2.02)
+})
+
+test('updates the Y ripple on each high-refresh animation frame', async ({ page }) => {
+  await page.goto('/')
+
+  const stage = page.locator('.home-hero-particles')
+  const canvas = page.locator('.home-hero-particles-canvas')
+  await stage.scrollIntoViewIfNeeded()
+  await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'complete')
+  await expect(canvas).toHaveAttribute('data-particle-state', 'settled', { timeout: 4000 })
+
+  await page.evaluate(() => {
+    const target = window as Window & {
+      __homeHeroFrameTimestamp?: number
+      __homeHeroFlushFrames?: (timestamp: number) => void
+      __homeHeroRenderTimes?: number[]
+    }
+    const callbacks = new Map<number, FrameRequestCallback>()
+    let nextId = 0
+    target.__homeHeroRenderTimes = []
+
+    Object.defineProperty(window, 'requestAnimationFrame', {
+      configurable: true,
+      value: (callback: FrameRequestCallback) => {
+        const id = ++nextId
+        callbacks.set(id, callback)
+        return id
+      }
+    })
+    Object.defineProperty(window, 'cancelAnimationFrame', {
+      configurable: true,
+      value: (id: number) => callbacks.delete(id)
+    })
+    target.__homeHeroFlushFrames = (timestamp) => {
+      const pending = [...callbacks.values()]
+      callbacks.clear()
+      target.__homeHeroFrameTimestamp = timestamp
+      pending.forEach((callback) => callback(timestamp))
+    }
+
+    const clearRect = CanvasRenderingContext2D.prototype.clearRect
+    CanvasRenderingContext2D.prototype.clearRect = function (x, y, width, height) {
+      if (this.canvas.classList.contains('home-hero-particles-canvas')) {
+        target.__homeHeroRenderTimes?.push(target.__homeHeroFrameTimestamp ?? -1)
+      }
+      clearRect.call(this, x, y, width, height)
+    }
+  })
+
+  const bounds = await stage.boundingBox()
+  expect(bounds).not.toBeNull()
+  await page.mouse.move(bounds!.x + bounds!.width / 2, bounds!.y + bounds!.height / 2)
+  const renderTimes = await page.evaluate(() => {
+    const target = window as Window & {
+      __homeHeroFlushFrames?: (timestamp: number) => void
+      __homeHeroRenderTimes?: number[]
+    }
+    const firstFrame = performance.now() + 50
+    for (let frame = 0; frame < 5; frame += 1) {
+      target.__homeHeroFlushFrames?.(firstFrame + frame * (1000 / 120))
+    }
+    return target.__homeHeroRenderTimes ?? []
+  })
+
+  expect(renderTimes).toHaveLength(5)
 })
 
 test('lets Y dots respond to a central pointer and settle after it leaves', async ({ page }) => {
@@ -369,10 +719,9 @@ test('lets Y dots respond to a central pointer and settle after it leaves', asyn
   const disturbedDistance = pixelDistance(baseline, disturbed)
 
   await page.mouse.move(bounds!.x + bounds!.width + 24, bounds!.y + bounds!.height + 24)
-  await expect.poll(
-    async () => pixelDistance(baseline, await readCanvasGrid()),
-    { timeout: 4000 }
-  ).toBeLessThan(disturbedDistance * 0.2)
+  await expect(canvas).toHaveAttribute('data-particle-state', 'settled')
+  const settledDistance = pixelDistance(baseline, await readCanvasGrid())
+  expect(settledDistance).toBeLessThan(disturbedDistance * 0.2)
 })
 
 test('lets field dots respond near the edge of the butterfly opening', async ({ page }) => {
@@ -510,7 +859,7 @@ test('erases cached source Y dots on a throttled first pointer frame', async ({ 
   const sourceRegion = {
     x: source!.x,
     y: source!.y,
-    radius: scene.gridStep * 0.12
+    radius: scene.gridStep * 0.04
   }
   await expect.poll(() => countCanvasPixels(mark, sourceRegion)).toBeGreaterThan(0)
 
@@ -518,7 +867,7 @@ test('erases cached source Y dots on a throttled first pointer frame', async ({ 
     const target = window as Window & { __homeHeroFrameOffsetMs?: number }
     target.__homeHeroFrameOffsetMs = 120
   })
-  await page.mouse.move(bounds!.x + source!.x - scene.gridStep * 0.5, bounds!.y + source!.y)
+  await page.mouse.move(bounds!.x + source!.x - scene.gridStep * 0.1, bounds!.y + source!.y)
   await expect.poll(() => countCanvasPixels(mark, sourceRegion), { timeout: 2000 }).toBe(0)
 })
 
@@ -638,7 +987,7 @@ test('returns to a settled particle scene after real back-forward navigation', a
   await expect(grid).toHaveAttribute('data-particle-state', 'settled')
 })
 
-test('renders one aligned dot grid with a butterfly opening and keeps labels as DOM text', async ({ page }) => {
+test('renders one aligned dot grid beneath the filled butterfly and keeps labels as DOM text', async ({ page }) => {
   await page.goto('/')
   const stage = page.locator('.home-hero-particles')
   const mark = stage.locator('.home-hero-particles-mark')
@@ -678,24 +1027,18 @@ test('renders one aligned dot grid with a butterfly opening and keeps labels as 
       y: originY + Math.round((y - originY) / step) * step
     })
     const butterfly = alignedPoint(
-      geometry.x + geometry.width * 0.2,
-      geometry.y + geometry.height * 0.25
-    )
-    const centerChannel = alignedPoint(
-      geometry.x + geometry.width * 0.5,
-      geometry.y + geometry.height * 0.25
+      geometry.butterflyBounds.x + geometry.butterflyBounds.width * 0.2,
+      geometry.butterflyBounds.y + geometry.butterflyBounds.height * 0.25
     )
     const openField = alignedPoint(bounds.width * 0.08, bounds.height * 0.5)
     return {
       step,
       butterfly: sample(butterfly.x, butterfly.y),
-      centerChannel: sample(centerChannel.x, centerChannel.y),
       openField: sample(openField.x, openField.y)
     }
-  }, scene.butterflyBounds)
-  expect(samples.step).toBe(6)
-  expect(samples.butterfly).toBe(0)
-  expect(samples.centerChannel).toBeGreaterThan(0)
+  }, { butterflyBounds: scene.butterflyBounds })
+  expect(samples.step).toBe(5)
+  expect(samples.butterfly).toBeGreaterThan(0)
   expect(samples.openField).toBeGreaterThan(0)
 
   const layout = await labels.evaluate((element) => {
@@ -737,7 +1080,47 @@ test('keeps a complete patterned vector scene when Canvas is unavailable', async
   const particles = page.locator('.home-hero-particles')
   await expect(particles).toHaveAttribute('data-render-mode', 'static-fallback')
   await expect(page.locator('.home-hero-particles-mark')).toBeVisible()
-  await expect(page.locator('.home-hero-particles-mark pattern')).toHaveCount(2)
+  await expect(page.locator('.home-hero-particles-mark pattern')).toHaveCount(4)
+  const veinDots = page.locator('.home-hero-particles-fallback-butterfly-vein-dot')
+  const expectedVeinDots = Number(await particles.getAttribute('data-butterfly-vein-point-count'))
+  expect(expectedVeinDots).toBeGreaterThan(0)
+  await expect(veinDots).toHaveCount(expectedVeinDots)
+  const mark = particles.locator('.home-hero-particles-mark')
+  const yMark = mark.locator('[data-y-mark]')
+  const yMaskPaths = [
+    mark.locator('#home-hero-butterfly-field-mask [data-y-mark-mask]'),
+    mark.locator('#home-hero-butterfly-dot-mask [data-y-mark-mask]')
+  ]
+  for (const yMaskPath of yMaskPaths) {
+    await expect(yMaskPath).toHaveCount(1)
+    expect(await yMaskPath.getAttribute('d')).toBe(await yMark.getAttribute('d'))
+    expect(await yMaskPath.getAttribute('transform')).toBe(await yMark.getAttribute('transform'))
+    expect(await yMaskPath.getAttribute('fill')).toBe('black')
+  }
+
+  const veinClip = mark.locator('#home-hero-butterfly-clip')
+  const clippedVeinDots = mark.locator('[data-butterfly-vein-clip]')
+  await expect(clippedVeinDots).toHaveAttribute('clip-path', 'url(#home-hero-butterfly-clip)')
+  await expect(veinClip).toHaveAttribute('clipPathUnits', 'userSpaceOnUse')
+  const clippedButterflyPaths = await veinClip.locator('path').evaluateAll((paths) => paths.map((path) => path.getAttribute('d')))
+  expect(clippedButterflyPaths.sort()).toEqual([...HOME_HERO_BUTTERFLY_CLIP_PATHS].sort())
+  const clippedButterflyTransform = await veinClip.locator('g').getAttribute('transform')
+  expect(clippedButterflyTransform).toBe(await mark.locator('.home-hero-particles-butterfly-fill').first().evaluate((path) => path.parentElement?.getAttribute('transform') ?? null))
+
+  const grid = await particles.evaluate((element) => ({
+    step: Number(element.getAttribute('data-grid-step')),
+    originX: Number(element.getAttribute('data-grid-origin-x')),
+    originY: Number(element.getAttribute('data-grid-origin-y'))
+  }))
+  const veinDotCenters = await veinDots.evaluateAll((circles) => circles.map((circle) => ({
+    x: Number(circle.getAttribute('cx')),
+    y: Number(circle.getAttribute('cy'))
+  })))
+  expect(veinDotCenters.every(({ x, y }) => (
+    Math.abs((x - grid.originX) / grid.step - Math.round((x - grid.originX) / grid.step)) < 1e-6
+    && Math.abs((y - grid.originY) / grid.step - Math.round((y - grid.originY) / grid.step)) < 1e-6
+  ))).toBe(true)
+  await expect(particles.locator('.home-hero-particles-butterfly-vein, .home-hero-particles-butterfly-antenna')).toHaveCount(0)
   await expect(page.locator('.home-hero-particles-mark [data-y-mark]')).toBeVisible()
   await expect(page.locator('.home-hero-particles-labels')).toBeVisible()
   await expect(page.locator('.home-hero-particles-labels span')).toHaveText(['RESEARCH', 'BUILD', 'LIVE'])
