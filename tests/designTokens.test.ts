@@ -6,6 +6,7 @@ const read = (file: string) => readFileSync(resolve(process.cwd(), file), 'utf8'
 
 describe('archive design tokens', () => {
   const theme = read('src/theme.css')
+  const fonts = read('src/fonts.css')
   const base = read('src/styles/base.css')
   const components = read('src/styles/components.css')
   const home = read('src/styles/home.css')
@@ -27,10 +28,10 @@ describe('archive design tokens', () => {
     expect(theme).toContain('--font-latin-sans: "Inter Variable"')
     expect(theme).toContain('--font-latin-serif: Georgia, "Times New Roman"')
     expect(theme).toContain('--font-cjk-sans: "PingFang SC", -apple-system, "MiSans", "Noto Sans SC Variable"')
-    expect(theme).toContain('--font-cjk-serif: "Noto Serif SC Variable"')
+    expect(theme).not.toContain('--font-cjk-serif')
     expect(theme).toContain('--font-prose: var(--font-latin-sans), var(--font-cjk-sans), sans-serif')
-    expect(theme).toContain('--font-editorial: var(--font-latin-serif), var(--font-cjk-serif), serif')
-    expect(theme).toContain('--font-home-title: var(--font-latin-serif), "LXGW WenKai Hero SC", var(--font-cjk-serif), serif')
+    expect(theme).toContain('--font-editorial: var(--font-latin-serif), var(--font-cjk-sans), sans-serif')
+    expect(theme).toContain('--font-home-title: var(--font-latin-serif), var(--font-cjk-sans), sans-serif')
     expect(theme).toContain('--font-technical: "IBM Plex Mono", var(--font-cjk-sans), monospace')
     expect(theme).toContain('--tracking-latin-meta: .14em')
     expect(theme).toContain('--tracking-latin-wide: .18em')
@@ -54,8 +55,18 @@ describe('archive design tokens', () => {
     expect(theme).toContain('--radius-pill: 999px')
   })
 
+  it('keeps Chinese editorial roles sans-serif and reserves serif prose for English', () => {
+    expect(theme).toContain('--font-editorial: var(--font-latin-serif), var(--font-cjk-sans), sans-serif')
+    expect(theme).toContain('--font-home-title: var(--font-latin-serif), var(--font-cjk-sans), sans-serif')
+    expect(theme).toContain('--font-editorial: var(--font-latin-sans), var(--font-cjk-sans), sans-serif')
+    expect(theme).toContain('--font-prose: var(--font-latin-serif), var(--font-cjk-sans), sans-serif')
+    expect(theme).toContain('--font-interface: var(--font-latin-sans), sans-serif')
+    expect(fonts).not.toContain('LXGW WenKai Hero')
+    expect(fonts).not.toContain('@fontsource-variable/noto-serif')
+  })
+
   it('keeps the public aliases and motion tokens on the semantic layer', () => {
-    expect(theme).toContain('--sans: var(--font-prose)')
+    expect(theme).toContain('--sans: var(--font-interface)')
     expect(theme).toContain('--display: var(--font-editorial)')
     expect(theme).toContain('--mono: var(--font-technical)')
     expect(theme).toContain('--text-xs: var(--type-meta-size)')

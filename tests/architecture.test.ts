@@ -38,28 +38,29 @@ describe('critical rendering contracts', () => {
       .toBeLessThan(main.indexOf("app.mount('#app')"))
   })
 
-  it('loads the bundled font stylesheet after the initial app mount', () => {
+  it('starts locale-matched font loading alongside the app and exposes its state', () => {
     const main = readFileSync(resolve(process.cwd(), 'src/main.ts'), 'utf8').replace(/\r\n/g, '\n')
 
     expect(main).not.toContain("import './fonts.css'")
+    expect(main).toContain("const locale = resolveLocaleFromPath(window.location.pathname)")
+    expect(main).toContain("'zh-CN': () => import('./fonts-zh-cn.css')")
+    expect(main).toContain("'zh-HK': () => import('./fonts-zh-hk.css')")
+    expect(main).toContain("en: () => import('./fonts-en.css')")
     expect(main).toContain("document.documentElement.dataset.fontsReady = 'loading'")
     expect(main).toContain("await document.fonts.ready")
     expect(main).toContain("document.documentElement.dataset.fontsReady = 'ready'")
-    expect(main).toContain("app.mount('#app')\nscheduleFonts()")
+    expect(main).toContain("app.mount('#app')")
+    expect(main).toContain("document.documentElement.dataset.fontsReady = 'fallback'")
+    expect(main.lastIndexOf('loadFonts()')).toBeLessThan(main.indexOf("app.mount('#app')"))
     expect(main).not.toContain('requestAnimationFrame')
   })
 
-  it('loads concert fonts immediately while keeping other pages idle-first', () => {
+  it('avoids a multi-second idle delay before loading first-view fonts', () => {
     const main = readFileSync(resolve(process.cwd(), 'src/main.ts'), 'utf8')
 
-    expect(main).toContain("const fontLoadTimeout = document.body.dataset.page === 'concerts' ? 0 : 2400")
-    expect(main).toContain('if (fontLoadTimeout === 0)')
     expect(main).toContain('loadFonts()')
-    expect(main).toContain('requestIdleCallback')
-    expect(main).toContain('idleWindow.requestIdleCallback(loadFonts, { timeout: fontLoadTimeout })')
-    expect(main).toContain('window.setTimeout(loadFonts, fontLoadTimeout)')
-    expect(main).not.toContain('const scheduledAt')
-    expect(main).not.toContain('const remaining')
+    expect(main).not.toContain('fontLoadTimeout')
+    expect(main).not.toContain('requestIdleCallback')
   })
 
   it('contains the album grid before it enters the viewport', () => {

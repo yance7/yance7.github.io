@@ -1,0 +1,5 @@
+Third-party font notices
+
+Inter, Noto Sans SC, Noto Sans HK, and IBM Plex Mono are bundled by this website under the SIL Open Font License 1.1. Their corresponding license texts are in the licenses directory. Each notice applies only to its named font software.
+
+The site's CSS also names MiSans as an optional system-font fallback for CJK text. MiSans is used only when already installed on a visitor's device; this site does not bundle, serve, modify, or separately redistribute MiSans font files. MiSans is copyright Xiaomi Inc. See the official license at https://hyperos.mi.com/font/en/download/ and FAQ at https://hyperos.mi.com/font/en/faq/.

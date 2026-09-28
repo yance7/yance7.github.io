@@ -7,9 +7,7 @@ const locales = [
     homeRoute: '/',
     archiveRoute: '/academics/',
     cjkSans: 'Noto Sans SC Variable',
-    cjkSerif: 'Noto Serif SC Variable',
     editorialLatin: 'Inter Variable',
-    homeCjk: 'LXGW WenKai Hero SC',
     glyphs: '你好我是研究'
   },
   {
@@ -18,9 +16,7 @@ const locales = [
     homeRoute: '/zh-hk/',
     archiveRoute: '/zh-hk/academics/',
     cjkSans: 'Noto Sans HK Variable',
-    cjkSerif: 'Noto Serif HK Variable',
     editorialLatin: 'Inter Variable',
-    homeCjk: 'LXGW WenKai Hero TC',
     glyphs: '你好我是研究'
   },
   {
@@ -29,9 +25,7 @@ const locales = [
     homeRoute: '/en/',
     archiveRoute: '/en/academics/',
     cjkSans: 'Noto Sans SC Variable',
-    cjkSerif: 'Noto Serif SC Variable',
     editorialLatin: 'Georgia',
-    homeCjk: '',
     glyphs: ''
   }
 ] as const
@@ -54,6 +48,22 @@ async function readFontRoles(page: Page) {
   })
 }
 
+async function readRenderedFontNames(page: Page, selector: string) {
+  const session = await page.context().newCDPSession(page)
+
+  try {
+    await session.send('DOM.enable')
+    await session.send('CSS.enable')
+    const { root } = await session.send('DOM.getDocument')
+    const { nodeId } = await session.send('DOM.querySelector', { nodeId: root.nodeId, selector })
+    if (!nodeId) throw new Error(`Missing rendered typography sample: ${selector}`)
+    const { fonts } = await session.send('CSS.getPlatformFontsForNode', { nodeId })
+    return fonts.map(({ familyName }) => familyName)
+  } finally {
+    await session.detach()
+  }
+}
+
 for (const locale of locales) {
   test(`${locale.name} typography uses the correct script and stable theme roles`, async ({ page }) => {
     await page.goto(locale.homeRoute)
@@ -63,21 +73,36 @@ for (const locale of locales) {
     await page.evaluate(() => document.fonts.ready)
 
     const lightHome = await readFontRoles(page)
-    expect(lightHome.body).toContain('Inter Variable')
-    expect(lightHome.body).toContain('PingFang')
-    expect(lightHome.body).toContain('MiSans')
-    expect(lightHome.body).toContain(locale.cjkSans)
+    const isChromium = page.context().browser()?.browserType().name() === 'chromium'
+    const renderedHomeFonts = isChromium
+      ? await readRenderedFontNames(page, '.home-hero-typewriter')
+      : []
+
+    if (isChromium) {
+      const homeText = await page.locator('.home-hero-typewriter').innerText()
+
+      if (locale.name === 'English') {
+        expect(renderedHomeFonts.some((font) => /Georgia|Times|Liberation Serif/i.test(font))).toBe(true)
+      } else {
+        expect(homeText).toMatch(/\p{Script=Han}/u)
+        expect(renderedHomeFonts.some((font) => /Noto Sans|PingFang|MiSans/i.test(font))).toBe(true)
+        expect(renderedHomeFonts.some((font) => /Noto Serif/i.test(font))).toBe(false)
+      }
+    }
+
+    if (locale.name === 'English') {
+      expect(lightHome.body).toContain(locale.editorialLatin)
+    } else {
+      expect(lightHome.body).toContain('Inter Variable')
+      expect(lightHome.body).toContain('PingFang')
+      expect(lightHome.body).toContain('MiSans')
+      expect(lightHome.body).toContain(locale.cjkSans)
+    }
     expect(lightHome.homeTitle).toContain('Georgia')
-    expect(lightHome.homeTitle).toContain(locale.homeCjk || 'Georgia')
+    expect(lightHome.homeTitle).toContain(locale.name === 'English' ? 'Noto Sans SC Variable' : locale.cjkSans)
     expect(lightHome.action).toContain('Inter Variable')
     expect(lightHome.navigation).toContain('Inter Variable')
     expect(lightHome.technical).toContain('IBM Plex Mono')
-
-    if (locale.homeCjk) {
-      await expect.poll(() => page.evaluate(({ font, glyphs }) =>
-        document.fonts.check(`400 16px "${font}"`, glyphs),
-      { font: locale.homeCjk, glyphs: locale.glyphs })).toBe(true)
-    }
 
     await page.evaluate(() => localStorage.setItem('yance-theme', 'dark'))
     await page.reload()
@@ -91,8 +116,31 @@ for (const locale of locales) {
     await expect.poll(() => page.locator('html').getAttribute('data-fonts-ready')).toBe('ready')
     await page.evaluate(() => document.fonts.ready)
     const darkArchiveTitle = await page.locator('.hero-title').first().evaluate((element) => getComputedStyle(element).fontFamily)
+    const darkArchiveCopy = await page.locator('.hero-copy').first().evaluate((element) => getComputedStyle(element).fontFamily)
     expect(darkArchiveTitle).toContain(locale.editorialLatin)
-    expect(darkArchiveTitle).toContain(locale.cjkSerif)
+    expect(darkArchiveTitle).toContain(locale.cjkSans)
+    expect(darkArchiveCopy).toContain(locale.name === 'English' ? locale.editorialLatin : 'Inter Variable')
+
+    if (page.context().browser()?.browserType().name() === 'chromium') {
+      const renderedTitleFonts = await readRenderedFontNames(page, '.hero-title')
+      const renderedCopyFonts = await readRenderedFontNames(page, '.hero-copy')
+
+      if (locale.name === 'English') {
+        expect(renderedCopyFonts.some((font) => /Georgia|Times|Liberation Serif/i.test(font))).toBe(true)
+      } else {
+        const loadedCjkFaces = await page.evaluate(async ({ sans, glyphs }) => {
+          const sansFaces = await document.fonts.load(`400 16px "${sans}"`, glyphs)
+
+          return sansFaces.some((face) => face.status === 'loaded')
+            && document.fonts.check(`400 16px "${sans}"`, glyphs)
+        }, { sans: locale.cjkSans, glyphs: locale.glyphs })
+
+        expect(loadedCjkFaces).toBe(true)
+        expect(renderedTitleFonts.some((font) => /Noto Sans|PingFang|MiSans/i.test(font))).toBe(true)
+        expect(renderedTitleFonts.some((font) => /Noto Serif/i.test(font))).toBe(false)
+        expect(renderedCopyFonts.some((font) => /PingFang|MiSans|Noto Sans/i.test(font))).toBe(true)
+      }
+    }
 
     await page.evaluate(() => localStorage.setItem('yance-theme', 'light'))
     await page.reload()

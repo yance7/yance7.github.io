@@ -56,6 +56,7 @@ function reloadPage() {
   border-radius: var(--radius-full);
   color: var(--accent-contrast);
   background: var(--action-fill);
+  font-family: var(--font-interface);
   cursor: pointer;
 }
 </style>
