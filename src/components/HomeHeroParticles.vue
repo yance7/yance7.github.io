@@ -60,6 +60,7 @@ const pixelRatio = ref(1)
 const svgViewBox = ref('0 0 100 100')
 const sceneWidth = ref(100)
 const sceneHeight = ref(100)
+const butterflyVeinPoints = ref<HomeHeroGridPoint[]>([])
 
 let gridContext: CanvasRenderingContext2D | null = null
 let markContext: CanvasRenderingContext2D | null = null
@@ -92,6 +93,7 @@ let colors = {
   dot: '#e9efe0',
   butterfly: '#f2f2e9',
   butterflyDot: '#87977b',
+  butterflyVein: '#607456',
   mark: '#31513e',
   markHalo: 'transparent'
 }
@@ -105,6 +107,7 @@ function readThemeColors() {
     dot: style.getPropertyValue('--hero-dot').trim() || colors.dot,
     butterfly: style.getPropertyValue('--hero-butterfly').trim() || colors.butterfly,
     butterflyDot: style.getPropertyValue('--hero-butterfly-dot').trim() || colors.butterflyDot,
+    butterflyVein: style.getPropertyValue('--hero-butterfly-vein').trim() || colors.butterflyVein,
     mark: style.getPropertyValue('--hero-mark').trim() || colors.mark,
     markHalo: style.getPropertyValue('--hero-mark-halo').trim() || colors.markHalo
   }
@@ -112,6 +115,7 @@ function readThemeColors() {
 
 function publishSceneGeometry(nextScene: HomeHeroParticleScene) {
   scene = nextScene
+  butterflyVeinPoints.value = nextScene.backgroundPoints.filter((point) => point.surface === 'butterfly-vein')
   gridStep.value = nextScene.gridStep
   gridOriginX.value = nextScene.gridOriginX
   gridOriginY.value = nextScene.gridOriginY
@@ -246,6 +250,7 @@ function drawButterflyDotField(context: CanvasRenderingContext2D) {
   context.save()
   clipButterflyDots(context)
   drawDotField(context, scene.backgroundPoints, colors.butterflyDot, 'butterfly')
+  drawDotField(context, scene.backgroundPoints, colors.butterflyVein, 'butterfly-vein')
   context.restore()
 }
 
@@ -474,10 +479,12 @@ function renderGridRegion(bounds: Rect, indices: Iterable<number>) {
   )
   const radius = scene.gridStep * HOME_HERO_GRID_DOT_RADIUS_RATIO
   eraseCachedDots(gridContext, indices, radius, (index) => scene?.backgroundPoints[index])
-  for (const surface of ['field', 'butterfly'] as const) {
+  for (const surface of ['field', 'butterfly', 'butterfly-vein'] as const) {
     gridContext.save()
-    if (surface === 'butterfly') clipButterflyDots(gridContext)
-    gridContext.fillStyle = surface === 'field' ? colors.dot : colors.butterflyDot
+    if (surface !== 'field') clipButterflyDots(gridContext)
+    gridContext.fillStyle = surface === 'field'
+      ? colors.dot
+      : surface === 'butterfly' ? colors.butterflyDot : colors.butterflyVein
     gridContext.beginPath()
     for (const index of indices) {
       const point = scene.backgroundPoints[index]
@@ -1010,6 +1017,7 @@ onBeforeUnmount(cleanupCanvas)
     :data-grid-origin-y="gridOriginY"
     :data-grid-columns="gridColumns"
     :data-grid-rows="gridRows"
+    :data-butterfly-vein-point-count="butterflyVeinPoints.length"
     aria-hidden="true"
   >
     <canvas
@@ -1098,6 +1106,14 @@ onBeforeUnmount(cleanupCanvas)
       </g>
       <rect :width="sceneWidth" :height="sceneHeight" fill="url(#home-hero-fixed-grid)" mask="url(#home-hero-butterfly-field-mask)" />
       <rect :width="sceneWidth" :height="sceneHeight" fill="url(#home-hero-butterfly-grid)" mask="url(#home-hero-butterfly-dot-mask)" />
+      <circle
+        v-for="point in butterflyVeinPoints"
+        :key="`${point.row}:${point.column}`"
+        class="home-hero-particles-fallback-butterfly-vein-dot"
+        :cx="point.x"
+        :cy="point.y"
+        :r="gridStep * HOME_HERO_GRID_DOT_RADIUS_RATIO"
+      />
       <path :d="HOME_HERO_Y_PATH" :transform="markTransform()" class="home-hero-particles-fallback-mark-halo-path" fill="url(#home-hero-mark-halo-grid)" />
       <path data-y-mark="true" :d="HOME_HERO_Y_PATH" :transform="markTransform()" fill="url(#home-hero-mark-grid)" />
     </svg>

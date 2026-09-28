@@ -1081,6 +1081,23 @@ test('keeps a complete patterned vector scene when Canvas is unavailable', async
   await expect(particles).toHaveAttribute('data-render-mode', 'static-fallback')
   await expect(page.locator('.home-hero-particles-mark')).toBeVisible()
   await expect(page.locator('.home-hero-particles-mark pattern')).toHaveCount(4)
+  const veinDots = page.locator('.home-hero-particles-fallback-butterfly-vein-dot')
+  const expectedVeinDots = Number(await particles.getAttribute('data-butterfly-vein-point-count'))
+  expect(expectedVeinDots).toBeGreaterThan(0)
+  await expect(veinDots).toHaveCount(expectedVeinDots)
+  const grid = await particles.evaluate((element) => ({
+    step: Number(element.getAttribute('data-grid-step')),
+    originX: Number(element.getAttribute('data-grid-origin-x')),
+    originY: Number(element.getAttribute('data-grid-origin-y'))
+  }))
+  const veinDotCenters = await veinDots.evaluateAll((circles) => circles.map((circle) => ({
+    x: Number(circle.getAttribute('cx')),
+    y: Number(circle.getAttribute('cy'))
+  })))
+  expect(veinDotCenters.every(({ x, y }) => (
+    Math.abs((x - grid.originX) / grid.step - Math.round((x - grid.originX) / grid.step)) < 1e-6
+    && Math.abs((y - grid.originY) / grid.step - Math.round((y - grid.originY) / grid.step)) < 1e-6
+  ))).toBe(true)
   await expect(particles.locator('.home-hero-particles-butterfly-vein, .home-hero-particles-butterfly-antenna')).toHaveCount(0)
   await expect(page.locator('.home-hero-particles-mark [data-y-mark]')).toBeVisible()
   await expect(page.locator('.home-hero-particles-labels')).toBeVisible()

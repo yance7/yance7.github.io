@@ -259,6 +259,7 @@ html[data-locale='en'] .home-hero-typewriter-line-accent {
   --hero-dot: rgba(246, 246, 234, .52);
   --hero-butterfly: #f2f1e9;
   --hero-butterfly-dot: rgba(109, 132, 101, .3);
+  --hero-butterfly-vein: rgba(81, 102, 72, .76);
   --hero-mark: #31513e;
   --hero-mark-halo: transparent;
   --hero-label: rgba(38, 63, 48, .8);
@@ -285,6 +286,7 @@ html[data-theme='dark'] .home-hero-particles {
   --hero-dot: rgba(207, 223, 202, .38);
   --hero-butterfly: #c8d5c4;
   --hero-butterfly-dot: rgba(62, 91, 70, .36);
+  --hero-butterfly-vein: rgba(45, 70, 53, .76);
   --hero-mark: #31513e;
   --hero-mark-halo: #c8d5c4;
   --hero-label: rgba(209, 222, 202, .74);
@@ -318,6 +320,10 @@ html[data-theme='dark'] .home-hero-particles {
 
 .home-hero-particles-fallback-butterfly-dot {
   fill: var(--hero-butterfly-dot);
+}
+
+.home-hero-particles-fallback-butterfly-vein-dot {
+  fill: var(--hero-butterfly-vein);
 }
 
 .home-hero-particles-butterfly-fill {
