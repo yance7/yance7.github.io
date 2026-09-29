@@ -18,14 +18,23 @@ if (initialHash && window.location.hash && document.documentElement.dataset.home
   )
 }
 
-initializeLocale(resolveLocaleFromPath(window.location.pathname))
+const locale = resolveLocaleFromPath(window.location.pathname)
+initializeLocale(locale)
+
+const fontStylesheets = {
+  'zh-CN': () => import('./fonts-zh-cn.css'),
+  'zh-HK': () => import('./fonts-zh-hk.css'),
+  en: () => import('./fonts-en.css')
+} as const
 
 const fontLoadTimeout = document.body.dataset.page === 'concerts' ? 0 : 2400
 
 function loadFonts() {
-  void import('./fonts.css').then(async () => {
+  void fontStylesheets[locale]().then(async () => {
     await document.fonts.ready
     document.documentElement.dataset.fontsReady = 'ready'
+  }).catch(() => {
+    document.documentElement.dataset.fontsReady = 'fallback'
   })
 }
 

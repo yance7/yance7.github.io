@@ -86,59 +86,22 @@ describe('media release contracts', () => {
     expect(processor).not.toContain("output_mode='RGB'")
   })
 
-  it('preserves required Chinese punctuation in Hero WOFF2 subsets', () => {
-    const fixtureRoot = mkdtempSync(join(tmpdir(), 'yance-home-hero-fonts-'))
-    const outputDir = join(fixtureRoot, 'fonts')
-    const scriptPath = resolve(root, 'scripts/subset-home-hero-fonts.py')
-    const scSource = resolve(root, 'public/assets/fonts/lxgw-wenkai-hero-sc.woff2')
-    const tcSource = resolve(root, 'public/assets/fonts/lxgw-wenkai-hero-tc.woff2')
+  it('publishes notices for bundled fonts and the optional system MiSans fallback', () => {
+    const rights = readFileSync(resolve(root, 'ASSET_RIGHTS.md'), 'utf8')
+    const notices = readFileSync(resolve(root, 'public/assets/fonts/THIRD-PARTY-NOTICES.txt'), 'utf8')
 
-    try {
-      const result = spawnSync('python', [
-        scriptPath,
-        '--sc-source', scSource,
-        '--tc-source', tcSource,
-        '--output-dir', outputDir
-      ], { cwd: root, encoding: 'utf8' })
-      const output = `${result.stdout}${result.stderr}`
+    expect(rights).toContain('Inter, Noto Sans SC/HK, and IBM Plex Mono')
+    expect(rights).toContain('MiSans system fallback')
+    expect(notices).toContain('MiSans is used only when already installed on a visitor')
+    expect(notices).toContain('does not bundle, serve, modify, or separately redistribute MiSans')
 
-      expect(result.status).toBe(0)
-      expect(output).not.toContain('timestamp seems very low')
-
-      const scSignature = readFileSync(join(outputDir, 'lxgw-wenkai-hero-sc.woff2')).subarray(0, 4).toString('ascii')
-      const tcSignature = readFileSync(join(outputDir, 'lxgw-wenkai-hero-tc.woff2')).subarray(0, 4).toString('ascii')
-
-      expect(scSignature).toBe('wOF2')
-      expect(tcSignature).toBe('wOF2')
-
-      const coverageCheck = spawnSync('python', [
-        '-c',
-        `from pathlib import Path
-from fontTools.ttLib import TTFont
-from runpy import run_path
-import sys
-
-fonts = Path(sys.argv[1])
-script = Path(sys.argv[2])
-comma = '，'
-required_glyphs = run_path(script)['REQUIRED_GLYPHS']
-missing_manifest = [locale for locale, text in required_glyphs.items() if comma not in text]
-missing = [
-    name for name in ('lxgw-wenkai-hero-sc.woff2', 'lxgw-wenkai-hero-tc.woff2')
-    if ord(comma) not in set(TTFont(fonts / name).getBestCmap())
-]
-if missing_manifest:
-    raise SystemExit(f'Full-width comma missing from required glyphs: {", ".join(missing_manifest)}')
-if missing:
-    raise SystemExit(f'Full-width comma missing from: {", ".join(missing)}')
-`,
-        outputDir,
-        scriptPath
-      ], { cwd: root, encoding: 'utf8' })
-
-      expect(coverageCheck.status, `${coverageCheck.stdout}${coverageCheck.stderr}`).toBe(0)
-    } finally {
-      rmSync(fixtureRoot, { recursive: true, force: true })
+    for (const license of [
+      'public/assets/fonts/licenses/OFL-Inter.txt',
+      'public/assets/fonts/licenses/OFL-Noto-Sans-SC.txt',
+      'public/assets/fonts/licenses/OFL-Noto-Sans-HK.txt',
+      'public/assets/fonts/licenses/OFL-IBM-Plex-Mono.txt'
+    ]) {
+      expect(readFileSync(resolve(root, license), 'utf8')).toContain('SIL OPEN FONT LICENSE Version 1.1')
     }
   })
 

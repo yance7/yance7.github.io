@@ -1,38 +1,5 @@
-/*
- * Device-native CJK faces lead where available; bundled Noto SC/HK subsets
- * provide cross-platform fallbacks and request only the page's used glyphs.
- */
-@import '@fontsource-variable/noto-sans-sc/index.css';
-@import '@fontsource-variable/noto-serif-sc/index.css';
-@import '@fontsource-variable/noto-sans-hk/index.css';
-@import '@fontsource-variable/noto-serif-hk/index.css';
+/* Shared Latin interface fonts; locale CSS loads only the matching CJK fallback. */
 @import '@fontsource-variable/inter/index.css';
-
-@font-face {
-  font-family: 'LXGW WenKai Hero SC';
-  font-style: normal;
-  font-display: swap;
-  font-weight: 400;
-  src: url('/assets/fonts/lxgw-wenkai-hero-sc.woff2') format('woff2');
-}
-
-@font-face {
-  font-family: 'LXGW WenKai Hero TC';
-  font-style: normal;
-  font-display: swap;
-  font-weight: 400;
-  src: url('/assets/fonts/lxgw-wenkai-hero-tc.woff2') format('woff2');
-}
-
-:lang(en) {
-  --font-home-title: var(--font-editorial);
-}
-
-:lang(zh-HK) {
-  --font-cjk-sans: "PingFang TC", "PingFang HK", "PingFang SC", -apple-system, "MiSans", "Noto Sans HK Variable";
-  --font-cjk-serif: "Noto Serif HK Variable";
-  --font-home-title: var(--font-latin-serif), "LXGW WenKai Hero TC", var(--font-cjk-serif), serif;
-}
 
 @font-face {
   font-family: 'IBM Plex Mono';

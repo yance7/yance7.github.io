@@ -182,7 +182,7 @@ html[data-locale='en'] .home-hero-typewriter-line-accent {
   background: var(--control-bg);
   color: var(--ink);
   box-shadow: var(--control-shadow);
-  font-family: var(--font-prose);
+  font-family: var(--font-interface);
   font-size: var(--text-xs);
   font-weight: 560;
   letter-spacing: .08em;

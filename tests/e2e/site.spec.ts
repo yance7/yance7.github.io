@@ -476,16 +476,21 @@ test('slow page chunks still settle deep links', async ({ page }) => {
   await expect.poll(() => page.locator('#project-fresheye').evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBeGreaterThanOrEqual(12)
 })
 
-test('failed page chunks render a controlled error without a reload loop', async ({ page }) => {
+test('failed English page chunks keep retry typography and avoid a reload loop', async ({ page }) => {
   let requestCount = 0
   await page.route(/\/(?:assets\/vue\/WorksPage-[^/]+\.js|src\/pages\/WorksPage\.vue)(?:\?.*)?$/, async (route) => {
     requestCount += 1
     await route.abort('failed')
   })
 
-  await page.goto('/works/')
+  await page.goto('/en/works/')
   await expect(page.locator('[data-page-load-state="error"]')).toBeVisible({ timeout: 15000 })
   await expect(page.locator('.page-load-error')).toBeVisible()
+  const retryFont = await page.locator('.page-load-error button').evaluate((button) => ({
+    family: getComputedStyle(button).fontFamily,
+    interface: getComputedStyle(document.documentElement).getPropertyValue('--font-interface').trim()
+  }))
+  expect(retryFont.family).toBe(retryFont.interface)
   expect(requestCount).toBeLessThanOrEqual(3)
   await page.waitForLoadState('networkidle')
   expect(requestCount).toBeLessThanOrEqual(3)

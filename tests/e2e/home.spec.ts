@@ -127,7 +127,7 @@ test('home assigns distinct font roles to prose, display and technical metadata'
   })
   expect(fonts.body).toContain('Inter')
   expect(fonts.display).toContain('Inter')
-  expect(fonts.hero).toContain('LXGW WenKai Hero SC')
+  expect(fonts.hero).toContain('Noto Sans SC Variable')
   expect(fonts.technical).toContain('IBM Plex Mono')
   expect(fonts.action).toContain('Inter')
 
@@ -193,7 +193,7 @@ test('bundled typography and reading progress stay explicit', async ({ page }) =
   const bodyFont = await page.locator('body').evaluate((element) => getComputedStyle(element).fontFamily)
   const displayFont = await page.locator('.hero-title').evaluate((element) => getComputedStyle(element).fontFamily)
   expect(bodyFont).toContain('Inter')
-  expect(displayFont).toContain('Noto Serif SC Variable')
+  expect(displayFont).toContain('Noto Sans SC Variable')
   await expect(page.locator('.scroll-progress')).toHaveAttribute('role', 'progressbar')
   await expect(page.locator('.scroll-progress')).toHaveAttribute('aria-valuenow', '0')
   await page.evaluate(() => window.scrollTo({ top: 600, behavior: 'auto' }))

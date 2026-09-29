@@ -7,7 +7,7 @@
   min-height: 46px; position: relative; padding: 9px 18px; border: 1px solid var(--control-border);
   background: var(--control-bg); color: var(--dim); box-shadow: var(--control-shadow);
   border-radius: var(--radius-pill);
-  font-family: var(--font-prose); font-size: var(--text-xs); font-weight: 560; letter-spacing: .1em;
+  font-family: var(--font-interface); font-size: var(--text-xs); font-weight: 560; letter-spacing: .1em;
   line-height: 1;
   transition: color var(--dur-base), border-color var(--dur-base), background-color var(--dur-base), box-shadow var(--dur-base), transform var(--dur-base) var(--ease-apple);
 }
