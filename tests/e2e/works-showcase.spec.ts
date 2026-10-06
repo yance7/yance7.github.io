@@ -82,30 +82,34 @@ test('home selected work keeps FreshEye only while the Works world reports two p
 
 for (const locale of locales) {
   for (const width of [360, 390]) {
-    test(`FreshEye project links stay fully visible: ${locale.name} ${width}px`, async ({ page }) => {
-      await page.setViewportSize({ width, height: 844 })
-      await page.goto(locale.path)
-      await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+    for (const theme of ['light', 'dark'] as const) {
+      test(`FreshEye project links stay fully visible: ${locale.name} ${width}px ${theme} theme`, async ({ page }) => {
+        await page.addInitScript((selectedTheme) => localStorage.setItem('yance-theme', selectedTheme), theme)
+        await page.setViewportSize({ width, height: 844 })
+        await page.goto(locale.path)
+        await expect(page.locator('html')).toHaveAttribute('data-theme', theme)
+        await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
 
-      const project = page.locator('#project-fresheye')
-      const evidenceDomain = project.locator('.sc-proof-links .y-archive-link strong').filter({ hasText: 'fresheye.yance777.com' })
-      const visibleLinks = [
-        { label: 'dossier domain', locator: project.locator('.sc-head-status > a') },
-        { label: 'evidence domain', locator: evidenceDomain }
-      ]
+        const project = page.locator('#project-fresheye')
+        const evidenceDomain = project.locator('.sc-proof-links .y-archive-link strong').filter({ hasText: 'fresheye.yance777.com' })
+        const visibleLinks = [
+          { label: 'dossier domain', locator: project.locator('.sc-head-status > a') },
+          { label: 'evidence domain', locator: evidenceDomain }
+        ]
 
-      for (const { label, locator } of visibleLinks) {
-        await expect(locator).toBeVisible()
-        const clipped = await locator.evaluate((element) => element.scrollWidth > element.clientWidth)
-        expect(clipped, `FreshEye ${label} text must remain readable at ${width}px`).toBe(false)
-      }
+        for (const { label, locator } of visibleLinks) {
+          await expect(locator).toBeVisible()
+          const clipped = await locator.evaluate((element) => element.scrollWidth > element.clientWidth)
+          expect(clipped, `FreshEye ${label} text must remain readable at ${width}px in ${theme} theme`).toBe(false)
+        }
 
-      const evidenceDomainLines = await evidenceDomain.evaluate((element) => {
-        const range = document.createRange()
-        range.selectNodeContents(element)
-        return range.getClientRects().length
+        const evidenceDomainLines = await evidenceDomain.evaluate((element) => {
+          const range = document.createRange()
+          range.selectNodeContents(element)
+          return range.getClientRects().length
+        })
+        expect(evidenceDomainLines, `FreshEye evidence domain must stay on one line at ${width}px in ${theme} theme`).toBe(1)
       })
-      expect(evidenceDomainLines, `FreshEye evidence domain must stay on one line at ${width}px`).toBe(1)
-    })
+    }
   }
 }
