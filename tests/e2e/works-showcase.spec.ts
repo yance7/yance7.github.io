@@ -79,3 +79,17 @@ test('home selected work keeps FreshEye only while the Works world reports two p
   await expect(page.locator('#selected-work')).not.toContainText('AP Microeconomics')
   await expect(page.locator('#home-worlds .world-card[href="/works/"]')).toContainText('2 个持续构建的小世界')
 })
+
+for (const width of [360, 390]) {
+  test(`FreshEye project domain stays fully visible at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 })
+    await page.goto('/works/')
+    await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+
+    const domainLink = page.locator('#project-fresheye .sc-head-status > a')
+    await expect(domainLink).toBeVisible()
+
+    const clipped = await domainLink.evaluate((link) => link.scrollWidth > link.clientWidth)
+    expect(clipped, `FreshEye domain must remain readable at ${width}px`).toBe(false)
+  })
+}
