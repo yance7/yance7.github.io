@@ -67,6 +67,7 @@ function assertHtmlContract(path: string, locale: Locale, pageKey?: (typeof page
   assert(!html.includes('fonts.gstatic.com'), `${path} 仍依赖 Google Fonts 字体文件`)
   assert(html.includes(`data-locale="${locale}"`), `${path} 缺少 data-locale=${locale}`)
   assert(html.includes(`<html lang="${localeRegistry[locale].htmlLang}"`), `${path} lang 属性不正确`)
+  assert(!html.includes('data-locale-font-preload'), `${path} 不应在主脚本前预加载字体样式表`)
   assert(html.includes('href="/assets/brand/favicon-32.png" sizes="32x32" type="image/png"'), `${path} 缺少 32px favicon`)
   assert(html.includes('href="/assets/brand/favicon-16.png" sizes="16x16" type="image/png"'), `${path} 缺少 16px favicon`)
   assert(html.includes('rel="apple-touch-icon" href="/assets/brand/yance-icon-180.png" sizes="180x180"'), `${path} 缺少 Apple Touch Icon`)

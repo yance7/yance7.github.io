@@ -27,33 +27,30 @@ const fontStylesheets = {
   en: () => import('./fonts-en.css')
 } as const
 
-const fontLoadTimeout = document.body.dataset.page === 'concerts' ? 0 : 2400
-
-function loadFonts() {
-  void fontStylesheets[locale]().then(async () => {
+async function loadFonts() {
+  try {
+    await fontStylesheets[locale]()
     await document.fonts.ready
     document.documentElement.dataset.fontsReady = 'ready'
-  }).catch(() => {
+  } catch {
     document.documentElement.dataset.fontsReady = 'fallback'
-  })
+  }
 }
+
+const fontLoadTimeout = 2400
 
 function scheduleFonts() {
   const idleWindow = window as Window & {
     requestIdleCallback?: (callback: () => void, options?: { timeout?: number }) => number
   }
-
-  if (fontLoadTimeout === 0) {
-    loadFonts()
-    return
-  }
+  const startLoadingFonts = () => { void loadFonts() }
 
   if (idleWindow.requestIdleCallback) {
-    idleWindow.requestIdleCallback(loadFonts, { timeout: fontLoadTimeout })
+    idleWindow.requestIdleCallback(startLoadingFonts, { timeout: fontLoadTimeout })
     return
   }
 
-  window.setTimeout(loadFonts, fontLoadTimeout)
+  window.setTimeout(startLoadingFonts, fontLoadTimeout)
 }
 
 const app = createApp(App)
@@ -62,5 +59,13 @@ app.directive('magnetic', magnetic)
 app.directive('pointer-sheen', pointerSheen)
 document.documentElement.dataset.fontsReady = 'loading'
 preloadPage(document.body.dataset.page)
-app.mount('#app')
+
+let appMounted = false
+function mountApp() {
+  if (appMounted) return
+  appMounted = true
+  app.mount('#app')
+}
+
+mountApp()
 scheduleFonts()
