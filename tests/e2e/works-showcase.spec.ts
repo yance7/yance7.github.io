@@ -80,16 +80,32 @@ test('home selected work keeps FreshEye only while the Works world reports two p
   await expect(page.locator('#home-worlds .world-card[href="/works/"]')).toContainText('2 个持续构建的小世界')
 })
 
-for (const width of [360, 390]) {
-  test(`FreshEye project domain stays fully visible at ${width}px`, async ({ page }) => {
-    await page.setViewportSize({ width, height: 844 })
-    await page.goto('/works/')
-    await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+for (const locale of locales) {
+  for (const width of [360, 390]) {
+    test(`FreshEye project links stay fully visible: ${locale.name} ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 844 })
+      await page.goto(locale.path)
+      await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
 
-    const domainLink = page.locator('#project-fresheye .sc-head-status > a')
-    await expect(domainLink).toBeVisible()
+      const project = page.locator('#project-fresheye')
+      const evidenceDomain = project.locator('.sc-proof-links .y-archive-link strong').filter({ hasText: 'fresheye.yance777.com' })
+      const visibleLinks = [
+        { label: 'dossier domain', locator: project.locator('.sc-head-status > a') },
+        { label: 'evidence domain', locator: evidenceDomain }
+      ]
 
-    const clipped = await domainLink.evaluate((link) => link.scrollWidth > link.clientWidth)
-    expect(clipped, `FreshEye domain must remain readable at ${width}px`).toBe(false)
-  })
+      for (const { label, locator } of visibleLinks) {
+        await expect(locator).toBeVisible()
+        const clipped = await locator.evaluate((element) => element.scrollWidth > element.clientWidth)
+        expect(clipped, `FreshEye ${label} text must remain readable at ${width}px`).toBe(false)
+      }
+
+      const evidenceDomainLines = await evidenceDomain.evaluate((element) => {
+        const range = document.createRange()
+        range.selectNodeContents(element)
+        return range.getClientRects().length
+      })
+      expect(evidenceDomainLines, `FreshEye evidence domain must stay on one line at ${width}px`).toBe(1)
+    })
+  }
 }
