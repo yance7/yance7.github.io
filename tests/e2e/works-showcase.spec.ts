@@ -91,9 +91,11 @@ for (const locale of locales) {
         await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
 
         const project = page.locator('#project-fresheye')
+        const dossierDomain = project.locator('.sc-head-status > a')
         const evidenceDomain = project.locator('.sc-proof-links .y-archive-link strong').filter({ hasText: 'fresheye.yance777.com' })
+        await expect(dossierDomain).toContainText('fresheye.yance777.com')
         const visibleLinks = [
-          { label: 'dossier domain', locator: project.locator('.sc-head-status > a') },
+          { label: 'dossier domain', locator: dossierDomain },
           { label: 'evidence domain', locator: evidenceDomain }
         ]
 
