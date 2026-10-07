@@ -1,4 +1,4 @@
-import { readFileSync, statSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { getLocalizedHomeCopy } from '../src/data/locales'
@@ -31,29 +31,25 @@ describe('HomeHero static contract', () => {
     expect(typewriter).toContain('class="home-hero-cursor" aria-hidden="true"')
   })
 
-  it('ships only local, bounded font subsets for the Hero', () => {
-    const fontCss = readFileSync(resolve(root, 'src/fonts.css'), 'utf8')
-    const fontFiles = [
-      resolve(root, 'public/assets/fonts/lxgw-wenkai-hero-sc.woff2'),
-      resolve(root, 'public/assets/fonts/lxgw-wenkai-hero-tc.woff2')
+  it('loads local script-specific sans faces without the former brush subsets', () => {
+    const theme = readFileSync(resolve(root, 'src/theme.css'), 'utf8')
+    const stylesheets = [
+      readFileSync(resolve(root, 'src/fonts-en.css'), 'utf8'),
+      readFileSync(resolve(root, 'src/fonts-zh-cn.css'), 'utf8'),
+      readFileSync(resolve(root, 'src/fonts-zh-hk.css'), 'utf8')
     ]
 
-    for (const file of fontFiles) {
-      expect(statSync(file).size, file).toBeLessThanOrEqual(100 * 1024)
+    expect(theme).toContain('--font-home-title: var(--font-latin-serif), var(--font-cjk-sans), sans-serif')
+    expect(stylesheets[0]).toContain("@import '@fontsource-variable/noto-sans-sc/index.css'")
+    expect(stylesheets[1]).toContain("@import '@fontsource-variable/noto-sans-sc/index.css'")
+    expect(stylesheets[2]).toContain("@import '@fontsource-variable/noto-sans-hk/index.css'")
+
+    for (const stylesheet of stylesheets) {
+      expect(stylesheet).toContain("@import './fonts.css'")
+      expect(stylesheet).not.toMatch(/url\(['"]?https?:/)
+      expect(stylesheet).not.toContain('noto-serif')
     }
 
-    expect(fontCss).toContain('/assets/fonts/lxgw-wenkai-hero-sc.woff2')
-    expect(fontCss).toContain('/assets/fonts/lxgw-wenkai-hero-tc.woff2')
-    expect(fontCss).not.toMatch(/url\(['"]?https?:/)
-  })
-
-  it('pins the reproducible font subset toolchain', () => {
-    const requirements = readFileSync(resolve(root, 'requirements-tools.txt'), 'utf8')
-    const script = readFileSync(resolve(root, 'scripts/subset-home-hero-fonts.py'), 'utf8')
-
-    expect(requirements).toContain('fonttools==4.65.0')
-    expect(script).toContain('fontTools')
-    expect(script).toContain('lxgw-wenkai-hero-sc.woff2')
-    expect(script).toContain('lxgw-wenkai-hero-tc.woff2')
+    expect(theme).not.toContain('LXGW WenKai')
   })
 })

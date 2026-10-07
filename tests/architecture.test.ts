@@ -28,6 +28,14 @@ describe('page registry', () => {
 })
 
 describe('critical rendering contracts', () => {
+  it('does not preload locale font styles ahead of the app entry', () => {
+    const viteConfig = readFileSync(resolve(process.cwd(), 'vite.config.ts'), 'utf8')
+    const localizedPages = readFileSync(resolve(process.cwd(), 'scripts/generate-localized-pages.ts'), 'utf8')
+
+    expect(viteConfig).not.toContain('localeFontPreloadPlugin')
+    expect(localizedPages).not.toContain('__LOCALE_FONT_STYLESHEET__')
+  })
+
   it('starts the current page chunk before mounting the Vue shell', () => {
     const main = readFileSync(resolve(process.cwd(), 'src/main.ts'), 'utf8')
     const loaders = readFileSync(resolve(process.cwd(), 'src/pageLoaders.ts'), 'utf8')
@@ -38,28 +46,29 @@ describe('critical rendering contracts', () => {
       .toBeLessThan(main.indexOf("app.mount('#app')"))
   })
 
-  it('loads the bundled font stylesheet after the initial app mount', () => {
+  it('mounts before scheduling locale font loading in the background', () => {
     const main = readFileSync(resolve(process.cwd(), 'src/main.ts'), 'utf8').replace(/\r\n/g, '\n')
 
     expect(main).not.toContain("import './fonts.css'")
+    expect(main).toContain("const locale = resolveLocaleFromPath(window.location.pathname)")
+    expect(main).toContain("'zh-CN': () => import('./fonts-zh-cn.css')")
+    expect(main).toContain("'zh-HK': () => import('./fonts-zh-hk.css')")
+    expect(main).toContain("en: () => import('./fonts-en.css')")
+    expect(main).not.toContain('loadLocaleFontStylesheet')
+    expect(main).not.toContain('data-locale-font-preload')
     expect(main).toContain("document.documentElement.dataset.fontsReady = 'loading'")
     expect(main).toContain("await document.fonts.ready")
     expect(main).toContain("document.documentElement.dataset.fontsReady = 'ready'")
-    expect(main).toContain("app.mount('#app')\nscheduleFonts()")
-    expect(main).not.toContain('requestAnimationFrame')
-  })
-
-  it('loads concert fonts immediately while keeping other pages idle-first', () => {
-    const main = readFileSync(resolve(process.cwd(), 'src/main.ts'), 'utf8')
-
-    expect(main).toContain("const fontLoadTimeout = document.body.dataset.page === 'concerts' ? 0 : 2400")
-    expect(main).toContain('if (fontLoadTimeout === 0)')
-    expect(main).toContain('loadFonts()')
-    expect(main).toContain('requestIdleCallback')
-    expect(main).toContain('idleWindow.requestIdleCallback(loadFonts, { timeout: fontLoadTimeout })')
-    expect(main).toContain('window.setTimeout(loadFonts, fontLoadTimeout)')
-    expect(main).not.toContain('const scheduledAt')
-    expect(main).not.toContain('const remaining')
+    expect(main).toContain("document.documentElement.dataset.fontsReady = 'fallback'")
+    const loadFonts = main.slice(main.indexOf('async function loadFonts'), main.indexOf('const app = createApp'))
+    expect(loadFonts).not.toContain('mountApp()')
+    expect(loadFonts).not.toContain('document.fonts.load(')
+    expect(main).toContain('function scheduleFonts()')
+    expect(main).toContain('const fontLoadTimeout = 2400')
+    expect(main).toContain('idleWindow.requestIdleCallback(startLoadingFonts, { timeout: fontLoadTimeout })')
+    expect(main).toContain('window.setTimeout(startLoadingFonts, fontLoadTimeout)')
+    const startup = main.slice(main.indexOf('let appMounted'))
+    expect(startup).toContain('mountApp()\nscheduleFonts()')
   })
 
   it('contains the album grid before it enters the viewport', () => {

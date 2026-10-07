@@ -4,12 +4,12 @@ const locales = [
   {
     route: '/',
     semanticTitle: '你好，我是 Yance 研究、构建，与现场相遇',
-    displayFont: 'LXGW WenKai Hero SC'
+    displayFont: 'Noto Sans SC Variable'
   },
   {
     route: '/zh-hk/',
     semanticTitle: '你好，我是 Yance 研究、建構，與現場相遇',
-    displayFont: 'LXGW WenKai Hero TC'
+    displayFont: 'Noto Sans HK Variable'
   },
   {
     route: '/en/',

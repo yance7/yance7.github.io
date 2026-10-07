@@ -8,13 +8,13 @@
   /* Bilingual type roles: Latin faces lead, device-native CJK faces precede bundled fallbacks. */
   --font-latin-sans: "Inter Variable";
   --font-latin-serif: Georgia, "Times New Roman";
-  --font-cjk-sans: "PingFang SC", -apple-system, "MiSans", "Noto Sans SC Variable";
-  --font-cjk-serif: "Noto Serif SC Variable";
+  --font-cjk-sans: "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", -apple-system, "MiSans", "Noto Sans CJK SC", "Noto Sans CJK TC", "Noto Sans SC Variable";
   --font-prose: var(--font-latin-sans), var(--font-cjk-sans), sans-serif;
-  --font-editorial: var(--font-latin-serif), var(--font-cjk-serif), serif;
-  --font-home-title: var(--font-latin-serif), "LXGW WenKai Hero SC", var(--font-cjk-serif), serif;
+  --font-interface: var(--font-latin-sans), var(--font-cjk-sans), sans-serif;
+  --font-editorial: var(--font-latin-serif), var(--font-cjk-sans), sans-serif;
+  --font-home-title: var(--font-latin-serif), var(--font-cjk-sans), sans-serif;
   --font-technical: "IBM Plex Mono", var(--font-cjk-sans), monospace;
-  --sans: var(--font-prose);
+  --sans: var(--font-interface);
   --serif: var(--font-editorial);
   --display: var(--font-editorial);
   --mono: var(--font-technical);
@@ -150,7 +150,11 @@
 
 html:lang(zh-CN),
 html:lang(zh-HK) {
-  --font-editorial: var(--font-latin-sans), var(--font-cjk-serif), serif;
+  --font-editorial: var(--font-latin-sans), var(--font-cjk-sans), sans-serif;
+}
+
+html:lang(zh-HK) {
+  --font-cjk-sans: "PingFang TC", "PingFang HK", "PingFang SC", "Microsoft JhengHei UI", "Microsoft JhengHei", "Microsoft YaHei UI", "Microsoft YaHei", -apple-system, "MiSans", "Noto Sans CJK TC", "Noto Sans CJK SC", "Noto Sans HK Variable";
 }
 
 /* ---------- 亮色 · 暖白纸（默认） ---------- */
@@ -467,4 +471,9 @@ html[data-theme-changing] *::after {
   .orbit-knob {
     transition-duration: .01ms;
   }
+}
+
+html[data-locale='en'] {
+  --font-prose: var(--font-latin-serif), var(--font-cjk-sans), sans-serif;
+  --font-interface: var(--font-latin-sans), sans-serif;
 }

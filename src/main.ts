@@ -18,33 +18,39 @@ if (initialHash && window.location.hash && document.documentElement.dataset.home
   )
 }
 
-initializeLocale(resolveLocaleFromPath(window.location.pathname))
+const locale = resolveLocaleFromPath(window.location.pathname)
+initializeLocale(locale)
 
-const fontLoadTimeout = document.body.dataset.page === 'concerts' ? 0 : 2400
+const fontStylesheets = {
+  'zh-CN': () => import('./fonts-zh-cn.css'),
+  'zh-HK': () => import('./fonts-zh-hk.css'),
+  en: () => import('./fonts-en.css')
+} as const
 
-function loadFonts() {
-  void import('./fonts.css').then(async () => {
+async function loadFonts() {
+  try {
+    await fontStylesheets[locale]()
     await document.fonts.ready
     document.documentElement.dataset.fontsReady = 'ready'
-  })
+  } catch {
+    document.documentElement.dataset.fontsReady = 'fallback'
+  }
 }
+
+const fontLoadTimeout = 2400
 
 function scheduleFonts() {
   const idleWindow = window as Window & {
     requestIdleCallback?: (callback: () => void, options?: { timeout?: number }) => number
   }
-
-  if (fontLoadTimeout === 0) {
-    loadFonts()
-    return
-  }
+  const startLoadingFonts = () => { void loadFonts() }
 
   if (idleWindow.requestIdleCallback) {
-    idleWindow.requestIdleCallback(loadFonts, { timeout: fontLoadTimeout })
+    idleWindow.requestIdleCallback(startLoadingFonts, { timeout: fontLoadTimeout })
     return
   }
 
-  window.setTimeout(loadFonts, fontLoadTimeout)
+  window.setTimeout(startLoadingFonts, fontLoadTimeout)
 }
 
 const app = createApp(App)
@@ -53,5 +59,13 @@ app.directive('magnetic', magnetic)
 app.directive('pointer-sheen', pointerSheen)
 document.documentElement.dataset.fontsReady = 'loading'
 preloadPage(document.body.dataset.page)
-app.mount('#app')
+
+let appMounted = false
+function mountApp() {
+  if (appMounted) return
+  appMounted = true
+  app.mount('#app')
+}
+
+mountApp()
 scheduleFonts()

@@ -4,8 +4,6 @@
     "@fontsource-variable/inter",
     "@fontsource-variable/noto-sans-hk",
     "@fontsource-variable/noto-sans-sc",
-    "@fontsource-variable/noto-serif-hk",
-    "@fontsource-variable/noto-serif-sc",
     "@fontsource/ibm-plex-mono"
   ],
   "ignoreFiles": [
