@@ -8,7 +8,7 @@
 
 - Node.js >= 22.12.0
 - npm >= 10.9.0
-- Python 工具依赖来自 `requirements-tools.txt`
+- Python 工具依赖来自 `scripts/requirements.txt`
 
 常用命令：
 

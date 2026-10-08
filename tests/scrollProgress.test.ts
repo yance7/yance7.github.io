@@ -58,7 +58,7 @@ describe('legacy navigator removal contract', () => {
       resolve(root, 'tests'),
       resolve(root, 'scripts'),
       resolve(root, '.github'),
-      resolve(root, 'playwright.config.ts')
+      resolve(root, 'config/playwright.config.ts')
     ]
     const source = sourcePaths
       .filter((path) => existsSync(path))

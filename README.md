@@ -35,8 +35,9 @@
 | 修改 HTML 入口源 | [`html-src/`](html-src/) |
 | 查找静态图片与媒体 | [`public/assets/`](public/assets/) |
 | 运行构建与审计工具 | [`scripts/`](scripts/) |
+| 调整构建、测试与质量检查配置 | [`config/`](config/) |
 | 查阅项目文档 | [`docs/README.md`](docs/README.md) |
-| 参与贡献 | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
+| 参与贡献 | [贡献指南](.github/CONTRIBUTING.md) |
 | 报告安全或隐私问题 | [`SECURITY.md`](SECURITY.md) |
 
 ## 项目简介
@@ -81,6 +82,8 @@ src/
 html-src/              HTML 源文件
 public/assets/         静态媒体与品牌资源
 tests/                 单元、浏览器与视觉测试
+config/                构建、类型、测试与质量检查配置
+scripts/               构建、媒体与审计工具
 docs/                  交互、媒体、隐私与发布文档
 .github/workflows/     GitHub Actions 工作流
 ```
@@ -89,6 +92,7 @@ docs/                  交互、媒体、隐私与发布文档
 - 页面共享内容位于 `src/data/`。
 - `dist/` 是生成产物，不提交到 Git。
 - 视觉基线位于 `tests/e2e/visual-snapshots/`。
+- 工具配置集中在 `config/`；根目录保留项目入口、依赖清单、通用说明及编辑器自动识别所需的配置入口。
 
 ## 本地开发
 
@@ -96,7 +100,7 @@ docs/                  交互、媒体、隐私与发布文档
 
 - Node.js >= 22.12.0
 - npm >= 10.9.0
-- Python 工具依赖来自 `requirements-tools.txt`
+- Python 工具依赖来自 `scripts/requirements.txt`
 
 安装依赖并启动开发环境：
 
@@ -145,7 +149,7 @@ npx playwright install --with-deps chromium webkit firefox
 
 ## 资源、隐私与使用边界
 
-- [ASSET_RIGHTS.md](ASSET_RIGHTS.md)
+- [资源权利说明](docs/asset-rights.md)
 - [docs/album-cover-sources.md](docs/album-cover-sources.md)
 - [docs/privacy-release-checklist.md](docs/privacy-release-checklist.md)
 - [docs/security-privacy-decisions.md](docs/security-privacy-decisions.md)

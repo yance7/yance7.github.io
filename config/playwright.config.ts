@@ -1,15 +1,18 @@
 import { defineConfig, devices } from '@playwright/test'
+import { resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
+const repositoryRoot = fileURLToPath(new URL('..', import.meta.url))
 const previewPort = process.env.PLAYWRIGHT_PORT ?? '4173'
 const previewOrigin = `http://127.0.0.1:${previewPort}`
 const usePreview = process.env.PLAYWRIGHT_USE_PREVIEW === '1'
-const outputDir = process.env.PLAYWRIGHT_OUTPUT_DIR ?? 'test-results/local'
+const outputDir = resolve(repositoryRoot, process.env.PLAYWRIGHT_OUTPUT_DIR ?? 'test-results/local')
 const webServerCommand = usePreview
   ? `npm run preview -- --host 127.0.0.1 --port ${previewPort}`
   : `npm run dev -- --host 127.0.0.1 --port ${previewPort}`
 
 export default defineConfig({
-  testDir: './tests/e2e',
+  testDir: '../tests/e2e',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -48,6 +51,7 @@ export default defineConfig({
     { name: 'chromium-android-smoke', use: { ...devices['Pixel 5'] }, testMatch: /(?:compatibility|home-hero-interaction|sitewide-cursor|page-urls|site-typography)\.spec\.ts/ }
   ],
   webServer: {
+    cwd: repositoryRoot,
     command: webServerCommand,
     url: `${previewOrigin}/`,
     reuseExistingServer: !process.env.CI && !usePreview,

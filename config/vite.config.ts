@@ -2,11 +2,11 @@ import { defineConfig, normalizePath, type Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
-import { THEME_COLORS } from './src/themeColors.ts'
-import { htmlPageEntries, isPageKey, pageEntries } from './src/data/pageRegistry.ts'
-import { getLocalizedSeo } from './src/data/seo.ts'
+import { THEME_COLORS } from '../src/themeColors.ts'
+import { htmlPageEntries, isPageKey, pageEntries } from '../src/data/pageRegistry.ts'
+import { getLocalizedSeo } from '../src/data/seo.ts'
 
-const rootDir = dirname(fileURLToPath(import.meta.url))
+const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const htmlRoot = resolve(rootDir, 'html-src')
 const THEME_BOOTSTRAP_HASH = 'sha256-qitwqlI10vu96/QuP/2uODumC43vvFpscxk/zXDGK2o='
 const localePrefixes = ['/en', '/zh-hk']

@@ -4,7 +4,7 @@
 
 ## 开发与协作
 
-- [贡献指南](../CONTRIBUTING.md)：本地开发、分支命名、提交和 Pull Request 约定。
+- [贡献指南](../.github/CONTRIBUTING.md)：本地开发、分支命名、提交和 Pull Request 约定。
 - [安全与隐私报告](../SECURITY.md)：安全、隐私和媒体问题的报告方式。
 
 ## 设计与交互
@@ -13,7 +13,7 @@
 
 ## 媒体与发布
 
-- [资源权利说明](../ASSET_RIGHTS.md)：仓库媒体资源的使用边界与核验说明。
+- [资源权利说明](asset-rights.md)：仓库媒体资源的使用边界与核验说明。
 - [专辑封面来源](album-cover-sources.md)：专辑封面来源与记录。
 - [隐私发布检查清单](privacy-release-checklist.md)：发布前的隐私检查项目。
 - [安全与隐私决策](security-privacy-decisions.md)：安全和隐私相关的工程决策记录。
@@ -27,4 +27,5 @@
 - [页面多语言内容](../src/data/locales/)
 - [界面翻译与语言状态](../src/i18n/)
 - [测试套件](../tests/)
+- [工具配置](../config/)
 - [构建与审计脚本](../scripts/)

@@ -29,7 +29,7 @@ describe('page registry', () => {
 
 describe('critical rendering contracts', () => {
   it('does not preload locale font styles ahead of the app entry', () => {
-    const viteConfig = readFileSync(resolve(process.cwd(), 'vite.config.ts'), 'utf8')
+    const viteConfig = readFileSync(resolve(process.cwd(), 'config/vite.config.ts'), 'utf8')
     const localizedPages = readFileSync(resolve(process.cwd(), 'scripts/generate-localized-pages.ts'), 'utf8')
 
     expect(viteConfig).not.toContain('localeFontPreloadPlugin')
@@ -361,9 +361,9 @@ describe('page stylesheet boundaries', () => {
   })
 
   it('contracts the built manifest and the dedicated visual project', () => {
-    const viteConfig = readFileSync(resolve(process.cwd(), 'vite.config.ts'), 'utf8')
+    const viteConfig = readFileSync(resolve(process.cwd(), 'config/vite.config.ts'), 'utf8')
     const smoke = readFileSync(resolve(process.cwd(), 'scripts/smoke-test.ts'), 'utf8')
-    const playwrightConfig = readFileSync(resolve(process.cwd(), 'playwright.config.ts'), 'utf8')
+    const playwrightConfig = readFileSync(resolve(process.cwd(), 'config/playwright.config.ts'), 'utf8')
     const visualSpec = readFileSync(resolve(process.cwd(), 'tests/e2e/visual-matrix.spec.ts'), 'utf8')
 
     expect(viteConfig).toMatch(/manifest:\s*true/)

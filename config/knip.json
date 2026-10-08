@@ -1,5 +1,9 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
+  "eslint": { "config": ["eslint.config.js", "config/eslint.config.js"] },
+  "vite": { "config": "config/vite.config.ts" },
+  "vitest": { "config": "config/vitest.config.ts" },
+  "playwright": { "config": "config/playwright.config.ts" },
   "ignoreDependencies": [
     "@fontsource-variable/inter",
     "@fontsource-variable/noto-sans-hk",

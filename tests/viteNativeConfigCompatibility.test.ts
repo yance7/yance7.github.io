@@ -85,7 +85,7 @@ function resolveTypeScriptImport(file: string, specifier: string): ImportResolut
 }
 
 function findConfigDependencyViolations(): ImportViolation[] {
-  const entry = resolve(root, 'vite.config.ts')
+  const entry = resolve(root, 'config/vite.config.ts')
   const queue = [entry]
   const visited = new Set<string>()
   const violations: ImportViolation[] = []
@@ -106,7 +106,7 @@ function findConfigDependencyViolations(): ImportViolation[] {
 }
 
 describe('Vite native config compatibility', () => {
-  it('recursively requires explicit TypeScript import paths from vite.config.ts', () => {
+  it('recursively requires explicit TypeScript import paths from the Vite config', () => {
     const violations = findConfigDependencyViolations()
     const details = violations.map(({ file, reason, specifier }) => `${file}: ${specifier} (${reason})`).join('\n')
 
@@ -126,7 +126,7 @@ describe('Vite native config compatibility', () => {
   it('loads the Vite config through Node native TypeScript support', () => {
     expect(() => execFileSync(
       process.execPath,
-      ['--experimental-strip-types', '--input-type=module', '-e', "await import('./vite.config.ts')"],
+      ['--experimental-strip-types', '--input-type=module', '-e', "await import('./config/vite.config.ts')"],
       { cwd: root, stdio: 'pipe' }
     )).not.toThrow()
   })
