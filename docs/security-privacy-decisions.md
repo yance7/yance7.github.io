@@ -35,4 +35,4 @@ default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; scri
 npm run audit:assets
 ```
 
-命令只读扫描 `public/assets` 的格式、尺寸、EXIF GPS 和可解码性；出现 GPS 元数据或不可读文件时，命令返回非零并阻断发布。版权、肖像、演出海报和第三方封面授权仍以 `ASSET_RIGHTS.md` 中的人工确认状态为准。
+命令只读扫描 `public/assets` 的格式、尺寸、EXIF GPS 和可解码性；出现 GPS 元数据或不可读文件时，命令返回非零并阻断发布。版权、肖像、演出海报和第三方封面授权仍以[资源权利说明](asset-rights.md)中的人工确认状态为准。

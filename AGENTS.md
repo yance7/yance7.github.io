@@ -10,10 +10,13 @@
   - `data/` — page-scoped content modules, `index.ts` public exports, and `types.ts` contracts
   - `styles/` — base, content, responsive, shell, and works stylesheets
   - `utils/` — navigation, media, and preload helpers
-- `html-src/` — source HTML entry points consumed by `vite.config.ts`; edit here, never root `*.html`.
+- `config/` — Vite, TypeScript, lint, test, and Lighthouse configuration; npm scripts select these files explicitly.
+- `html-src/` — source HTML entry points consumed by `config/vite.config.ts`; edit here, never root `*.html`.
 - `public/assets/` — static media (concert posters in `public/assets/concerts/`, case-study visuals in `public/assets/case/`).
 - `html-src/` is the HTML source; `dist/` is the generated GitHub Pages artifact and is ignored by Git.
 - `public/` — Vite-native static assets and deployment metadata (`CNAME`, `robots.txt`, `sitemap.xml`).
+- `scripts/requirements.txt` — pinned Python dependencies for media and audit tools.
+- `docs/asset-rights.md` and `.github/CONTRIBUTING.md` — media rights and contribution guidance.
 
 ## Build, Test, and Development Commands
 

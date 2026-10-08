@@ -27,7 +27,7 @@ function getThreshold(assertions: LighthouseConfig['ci']['assert']['assertions']
 
 describe('Lighthouse quality matrix', () => {
   it('covers the required desktop routes and first-stage thresholds', () => {
-    const config = readConfig('.lighthouserc.json')
+    const config = readConfig('config/lighthouse.desktop.json')
     const assertions = config.ci.assert.assertions
 
     expect(config.ci.collect.url).toEqual([
@@ -49,7 +49,7 @@ describe('Lighthouse quality matrix', () => {
   })
 
   it('covers the required mobile routes and mobile emulation', () => {
-    const config = readConfig('.lighthouserc.mobile.json')
+    const config = readConfig('config/lighthouse.mobile.json')
     const assertions = config.ci.assert.assertions
 
     expect(config.ci.collect.url).toEqual([

@@ -87,7 +87,7 @@ describe('media release contracts', () => {
   })
 
   it('publishes notices for bundled fonts and the optional system MiSans fallback', () => {
-    const rights = readFileSync(resolve(root, 'ASSET_RIGHTS.md'), 'utf8')
+    const rights = readFileSync(resolve(root, 'docs/asset-rights.md'), 'utf8')
     const notices = readFileSync(resolve(root, 'public/assets/fonts/THIRD-PARTY-NOTICES.txt'), 'utf8')
 
     expect(rights).toContain('Inter, Noto Sans SC/HK, and IBM Plex Mono')
