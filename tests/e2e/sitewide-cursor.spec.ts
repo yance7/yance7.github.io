@@ -6,12 +6,10 @@ async function supportsCustomCursor(page: Page) {
   return page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)
 }
 
-test('shares pointer feedback across Home, Research, Works, and Concerts', async ({ page }) => {
-  test.skip(!(await supportsCustomCursor(page)), 'custom pointer is only enabled for a fine, hovering pointer')
-
-  const cursor = page.locator('.sitewide-cursor')
-
-  for (const route of routes) {
+for (const route of routes) {
+  test(`${route} shares pointer feedback between page surfaces and navigation`, async ({ page }) => {
+    test.skip(!(await supportsCustomCursor(page)), 'custom pointer is only enabled for a fine, hovering pointer')
+    const cursor = page.locator('.sitewide-cursor')
     await page.goto(route)
     await expect(cursor).toBeAttached()
 
@@ -22,8 +20,8 @@ test('shares pointer feedback across Home, Research, Works, and Concerts', async
 
     await page.locator('.site-nav .nav-rail a').first().hover()
     await expect(cursor).toHaveAttribute('data-context', 'interactive')
-  }
-})
+  })
+}
 
 test('prioritizes an actionable descendant inside the particle field', async ({ page }) => {
   test.skip(!(await supportsCustomCursor(page)), 'custom pointer is only enabled for a fine, hovering pointer')
