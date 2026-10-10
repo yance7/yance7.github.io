@@ -22,8 +22,6 @@ const viewports = [
 const criticalTouchTargetSelector = [
   '.menu-trigger',
   '.theme-orbit',
-  '.album-nav button',
-  '.album-tile',
   '.poster-open',
   '.lb-close'
 ].join(', ')
@@ -171,22 +169,21 @@ test('representative light and dark layouts remain axe-clean', async ({ page }) 
   }
 })
 
-test('forced colors preserve selected and keyboard-focus boundaries', async ({ page, browserName }) => {
+test('forced colors preserve concert poster keyboard-focus boundaries', async ({ page, browserName }) => {
   test.skip(browserName !== 'chromium', 'Forced-colors emulation is provided by Chromium in this matrix')
   await page.emulateMedia({ forcedColors: 'active' })
   await page.goto('/concerts/')
 
-  const selected = page.locator('.album-tile.selected')
-  const focusTarget = page.locator('.album-nav button').first()
+  const focusTarget = page.locator('.concert-rail-card .poster-open').first()
   await focusTarget.focus()
-  const boundaries = await Promise.all([selected, focusTarget].map((locator) => locator.evaluate((element) => {
+  const boundary = await focusTarget.evaluate((element) => {
     const style = getComputedStyle(element)
     return {
       borderWidth: Number.parseFloat(style.borderWidth),
       outlineWidth: Number.parseFloat(style.outlineWidth)
     }
-  })))
-  expect(boundaries.every(({ borderWidth, outlineWidth }) => borderWidth > 0 || outlineWidth > 0)).toBe(true)
+  })
+  expect(boundary.borderWidth > 0 || boundary.outlineWidth > 0).toBe(true)
 })
 
 function documentTheme(theme: string | null): 'light' | 'dark' | null {

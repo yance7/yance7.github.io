@@ -59,14 +59,6 @@ async function stabilizeVisualContext(page: Page) {
   })
 }
 
-async function forceAlbumGridVisible(page: Page) {
-  await page.locator('.album-grid').evaluateAll((elements) => {
-    elements.forEach((element) => {
-      (element as HTMLElement).style.contentVisibility = 'visible'
-    })
-  })
-}
-
 async function settlePage(page: Page) {
   await page.waitForLoadState('domcontentloaded')
   await expect.poll(() => page.locator('html').getAttribute('data-fonts-ready')).toBe('ready')
@@ -154,7 +146,7 @@ async function settleStableConcertLayout(page: Page) {
   await page.locator('main#main').scrollIntoViewIfNeeded()
   await movePointerAway(page)
   await expect.poll(() => page.evaluate(() => new Promise<boolean>((resolve) => {
-    const selectors = ['#concert-archive', '#album-frequencies', '.album-wall']
+    const selectors = ['#concert-archive']
     const round = (value: number) => Math.round(value * 100) / 100
     const snapshot = () => JSON.stringify({
       documentHeight: document.documentElement.scrollHeight,
@@ -190,12 +182,6 @@ async function settleConcertVisualState(page: Page) {
   })
   await expect.poll(() => page.locator('#concert-archive-rail').evaluate((rail) => rail.scrollLeft)).toBe(0)
   await settleImages(page, '#concert-archive-rail .concert-poster img')
-  await page.locator('#album-frequencies').scrollIntoViewIfNeeded()
-  await forceAlbumGridVisible(page)
-  await expect(page.locator('.album-wall')).toHaveClass(/revealed/)
-  await expect(page.locator('.album-visual-slot')).toHaveAttribute('data-spotlight-state', 'ready')
-  await settleImages(page, '.album-tile img')
-  await settleImages(page, '.album-spotlight img')
   await settleStableConcertLayout(page)
 }
 

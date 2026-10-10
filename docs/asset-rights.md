@@ -8,7 +8,6 @@ Run `npm run audit:assets` before every release. The audit is read-only and chec
 
 | Asset type | Repository evidence | Source documentation | Ownership | License / permission | Release status | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| Album covers | Files under `public/assets/albums/` and `public/assets/albums/thumbs/` | `docs/album-cover-sources.md` says source documentation points to Apple Music CDN and matching Apple Music pages, retrieved 2026-08-10 | 待确认 | 待确认 | 待确认 | Do not infer reuse rights from CDN access alone. |
 | Concert posters | Files under `public/assets/concerts/` and `public/assets/concerts/thumbs/` | `docs/concert-poster-sources.md` records the normalized files and supplied source basis | 待确认 | 待确认 | 待确认 | The site owner supplied and approved these 15 public promotional posters for this site; that approval does not establish copyright ownership or reuse permission. |
 | Concert photographs | Files under `public/assets/concerts/` may include photographs; repository does not separate them by rights record | No repository source ledger found | 待确认 | 待确认 | 待确认 | Confirm photographer, venue rules, and identifiable-person consent before release. |
 | OG images | Files under `public/assets/og-*.png`, `public/assets/og-card.png`, and `public/assets/og-card.svg` | Generated assets exist; no rights statement in repo | 待确认 | 待确认 | 待确认 | Verify whether all component imagery and typography are original or appropriately licensed. |

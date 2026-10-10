@@ -6,7 +6,6 @@ import { useLocale } from '../i18n'
 import type { LightboxPayload } from '../data/types'
 import SectionHeading from '../components/SectionHeading.vue'
 import MetricStrip from '../components/MetricStrip.vue'
-import AlbumWall from '../components/AlbumWall.vue'
 import ConcertArchiveRail from '../components/ConcertArchiveRail.vue'
 
 const emit = defineEmits<{
@@ -57,7 +56,5 @@ function forwardLightbox(payload: LightboxPayload) {
       </div>
       <ConcertArchiveRail :concerts="archiveConcerts" :now="concertState.now" :section="section" @open-lightbox="forwardLightbox" />
     </section>
-
-    <AlbumWall />
   </div>
 </template>

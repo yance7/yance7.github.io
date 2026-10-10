@@ -74,10 +74,6 @@ jobs:
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/chromium
         run: npm run test:e2e -- --project=chromium --workers=4 --retries=0
-      - name: WebKit desktop AlbumWall quality
-        env:
-          PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-album-wall
-        run: npm run test:e2e -- tests/e2e/album-wall.spec.ts --project=webkit-desktop --workers=4 --retries=0
       - name: WebKit desktop ScrollProgress quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-scroll-progress
@@ -118,6 +114,10 @@ jobs:
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-sitewide-cursor
         run: npm run test:e2e -- tests/e2e/sitewide-cursor.spec.ts --project=webkit-desktop --workers=4 --retries=0
+      - name: WebKit desktop concert archive preservation
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-concert-archive
+        run: npm run test:e2e -- tests/e2e/concert-archive-preservation.spec.ts --project=webkit-desktop --workers=4 --retries=0
       - name: WebKit mobile ScrollProgress quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-scroll-progress
@@ -126,10 +126,6 @@ jobs:
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-header
         run: npm run test:e2e -- tests/e2e/adaptive-header.spec.ts --project=webkit-mobile --workers=4 --retries=0
-      - name: WebKit mobile AlbumWall quality
-        env:
-          PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-album-wall
-        run: npm run test:e2e -- tests/e2e/album-wall.spec.ts --project=webkit-mobile --workers=4 --retries=0
       - name: WebKit mobile motion system quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-motion
@@ -162,6 +158,10 @@ jobs:
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-sitewide-cursor
         run: npm run test:e2e -- tests/e2e/sitewide-cursor.spec.ts --project=webkit-mobile --workers=4 --retries=0
+      - name: WebKit mobile concert archive preservation
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-concert-archive
+        run: npm run test:e2e -- tests/e2e/concert-archive-preservation.spec.ts --project=webkit-mobile --workers=4 --retries=0
       - name: Chromium visual quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/visual

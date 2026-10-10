@@ -126,17 +126,6 @@ export interface UiMessages {
     posterAlt: string
     openArchive: string
   }
-  albums: {
-    collection: string
-    navigation: string
-    previous: string
-    next: string
-    select: string
-    selected: string
-    nowSpinning: string
-    album: string
-    ep: string
-  }
   footer: {
     homeLabel: string
     contactsLabel: string
