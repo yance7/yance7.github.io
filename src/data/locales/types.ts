@@ -1,4 +1,4 @@
-import type { PageKey, PageMeta, SiteNavItem, Status, World, AcademicStat, ApScore, Education, Activity, Leadership, Honor, Concert, Album, ResearchItem, Project } from '../types.ts'
+import type { PageKey, PageMeta, SiteNavItem, Status, World, AcademicStat, ApScore, Education, Activity, Leadership, Honor, Concert, ResearchItem, Project } from '../types.ts'
 import type { HonorLevel } from '../types.ts'
 
 type LocalizedNav = Omit<SiteNavItem, 'href' | 'key'>
@@ -73,11 +73,6 @@ export interface ConcertLocaleCopy {
   section: { label: string; title: string; accent: string; copy: string; archive: string; posterArchive: string; attended: string; upcoming: string; venues: string; artists: string; posters: string; total: string; recorded: string; showUnit: string }
 }
 
-export interface AlbumLocaleCopy {
-  entities: Record<string, Partial<Pick<Album, 'artist' | 'title'>>>
-  section: { label: string; title: string; accent: string; copy: string }
-}
-
 export interface CommunityLocaleCopy {
   leadership: Leadership[]
   activities: Activity[]
@@ -90,7 +85,6 @@ export interface LocaleContent {
   research: ResearchLocaleCopy
   projects: ProjectLocaleCopy
   concerts: ConcertLocaleCopy
-  albums: AlbumLocaleCopy
   community: CommunityLocaleCopy
   status: Record<Status, string>
 }

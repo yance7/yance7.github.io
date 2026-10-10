@@ -39,12 +39,12 @@ export default defineConfig({
         isMobile: false,
         hasTouch: false
       },
-      testMatch: /(?:site|locale|scroll-progress|footer|ui-primitives|english-layout|adaptive-header|works-showcase|concert-archive-rail|research-layout|motion-system|album-wall|home-hero-layout|home-hero-interaction|sitewide-cursor|page-urls|site-typography)\.spec\.ts/
+      testMatch: /(?:site|locale|scroll-progress|footer|ui-primitives|english-layout|adaptive-header|works-showcase|concert-archive-rail|concert-archive-preservation|research-layout|motion-system|home-hero-layout|home-hero-interaction|sitewide-cursor|page-urls|site-typography)\.spec\.ts/
     },
     {
       name: 'webkit-mobile',
       use: { ...devices['iPhone 13'], browserName: 'webkit' },
-      testMatch: /(?:site|locale|scroll-progress|footer|ui-primitives|english-layout|adaptive-header|works-showcase|concert-archive-rail|research-layout|motion-system|album-wall|home-hero-layout|home-hero-interaction|sitewide-cursor|page-urls|site-typography)\.spec\.ts/
+      testMatch: /(?:site|locale|scroll-progress|footer|ui-primitives|english-layout|adaptive-header|works-showcase|concert-archive-rail|concert-archive-preservation|research-layout|motion-system|home-hero-layout|home-hero-interaction|sitewide-cursor|page-urls|site-typography)\.spec\.ts/
     },
     { name: 'chromium-visual', use: { ...devices['Desktop Chrome'] }, testMatch: /visual-matrix\.spec\.ts/ },
     { name: 'firefox-desktop-smoke', use: { ...devices['Desktop Firefox'] }, testMatch: /(?:compatibility|home-hero-layout|home-hero-interaction|sitewide-cursor|page-urls|site-typography)\.spec\.ts/ },

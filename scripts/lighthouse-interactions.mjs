@@ -42,11 +42,6 @@ const scenarios = [
         page: '/concerts/',
         interactions: [
           {
-            name: 'album-selection',
-            selector: '.album-tile:nth-of-type(2)',
-            run: (page) => page.click('.album-tile:nth-of-type(2)')
-          },
-          {
             name: 'lightbox-open',
             selector: '.concert-rail-card .poster-open',
             prepare: warmLightbox,
@@ -104,11 +99,6 @@ const scenarios = [
       {
         page: '/concerts/',
         interactions: [
-          {
-            name: 'album-selection',
-            selector: '.album-tile:nth-of-type(2)',
-            run: (page) => page.click('.album-tile:nth-of-type(2)')
-          },
           {
             name: 'lightbox-open',
             selector: '.concert-rail-card .poster-open',

@@ -252,10 +252,11 @@ test('Android touch workflows survive portrait and landscape changes', async ({ 
   await expect(page.locator('.mobile-menu-overlay')).toBeVisible()
   await page.keyboard.press('Escape')
 
-  await page.goto('/concerts/#album-frequencies')
-  const targetAlbum = page.locator('[data-album-id="jay-ye-hui-mei"]')
-  await targetAlbum.tap()
-  await expect(targetAlbum).toHaveAttribute('aria-selected', 'true')
+  await page.goto('/concerts/')
+  await page.locator('.concert-rail-card .poster-open').first().tap()
+  await expect(page.locator('.lightbox')).toBeVisible()
+  await page.locator('.lb-close').tap()
+  await expect(page.locator('.lightbox')).toHaveCount(0)
   await page.setViewportSize({ width: 844, height: 390 })
   const geometry = await page.evaluate(() => ({
     bodyWidth: document.body.scrollWidth,

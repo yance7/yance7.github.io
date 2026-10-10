@@ -37,7 +37,7 @@ test('concert archive renders every show in one reverse-chronological horizontal
   const archive = page.locator('#concert-archive')
   const rail = archive.locator('.concert-archive-rail')
   await expect(rail).toBeVisible()
-  await expect(page.locator('.page-concerts > #concerts-overview + #concert-archive + #album-frequencies')).toHaveCount(1)
+  await expect(page.locator('.page-concerts > section')).toHaveCount(2)
 
   const ids = await rail.locator('.concert-rail-card').evaluateAll((cards) => (
     cards.map((card) => card.getAttribute('data-concert-id'))
