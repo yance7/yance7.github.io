@@ -92,8 +92,12 @@ async function settleHomeHero(page: Page) {
   const hero = page.locator('.home-hero')
   if (!await hero.count()) return
   await expect(hero).toHaveAttribute('data-intro-state', /static|complete/)
+  const stage = page.locator('.home-hero-particles')
   const canvas = page.locator('.home-hero-particles-canvas')
-  if (await canvas.count()) await expect(canvas).toHaveAttribute('data-particle-state', /settled|paused/)
+  if (await canvas.count()) {
+    await expect(stage).toHaveAttribute('data-particle-state', /settled|paused/)
+    await expect(stage).toHaveAttribute('data-ambient-count', '0')
+  }
 }
 
 async function settleImages(page: Page, imageSelector: string) {
