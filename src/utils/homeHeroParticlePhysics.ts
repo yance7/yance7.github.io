@@ -28,22 +28,25 @@ export class HomeHeroPointerTimeline {
   private consumed: TimedPoint | null = null
   private consumedUntil = -Infinity
   private releasedAt = Infinity
+  private unconsumedInput = false
   velocity = { x: 0, y: 0 }
   get released() { return Number.isFinite(this.releasedAt) }
   get connected() { return this.latest !== null && !this.released }
   get hasPending() { return this.segments.length > 0 }
-  hasInputAfter(at: number) { return this.latest !== null && this.latest.at > at }
+  get hasUnconsumedInput() { return this.unconsumedInput }
 
   move(point: TimedPoint) {
     if (!Number.isFinite(point.at + point.x + point.y)) return
     if (this.released) this.reset()
     if (this.latest && this.latest.pointerId !== point.pointerId) return
     if (!this.latest) {
+      this.unconsumedInput = true
       this.latest = { ...point }
       this.consumed = { ...point, at: Math.max(point.at, this.consumedUntil) }
       return
     }
     if (point.at < this.latest.at) return
+    this.unconsumedInput = true
     if (point.at === this.latest.at) {
       // Coalesced events can share a timestamp; retain their final location.
       this.latest = { ...point }
@@ -81,6 +84,7 @@ export class HomeHeroPointerTimeline {
     this.consumed = null
     this.consumedUntil = at
     this.releasedAt = Infinity
+    this.unconsumedInput = false
     this.velocity = { x: 0, y: 0 }
   }
 
@@ -126,9 +130,11 @@ export class HomeHeroPointerTimeline {
     }
     for (const path of paths) add(path.fromX, path.fromY, path.x, path.y, path.duration * scale, path.duration)
     if (cursor < finish) add(this.consumed.x, this.consumed.y, this.consumed.x, this.consumed.y, finish - cursor)
+    if (!this.segments.length && this.latest && this.latest.at <= end) this.unconsumedInput = false
     if (end >= this.releasedAt) {
       this.latest = null
       this.consumed = null
+      this.unconsumedInput = false
       this.velocity = { x: 0, y: 0 }
     }
     return pieces
@@ -247,7 +253,7 @@ export class HomeHeroParticleEngine {
   advanceTo(at: number) {
     let elapsed = at - this.previousAt
     const step = HOME_HERO_PARTICLE_FIXED_STEP_SECONDS
-    if (!Number.isFinite(elapsed) || elapsed < 0 || elapsed > 0.75 && !this.pointer.hasInputAfter(this.previousAt)) {
+    if (!Number.isFinite(elapsed) || elapsed < 0 || elapsed > 0.75 && !this.pointer.hasUnconsumedInput) {
       this.reset(at)
       return
     }

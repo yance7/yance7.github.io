@@ -176,7 +176,8 @@ describe('HomeHero pointer time and recovery', () => {
   it('clears a held input with no new samples across a suspended clock', () => {
     const target = engine()
     target.pointer.move({ pointerId: 1, pointerType: 'mouse', x: 200, y: 120, at: 0 })
-    target.advanceTo(0.8)
+    target.advanceTo(1 / 60)
+    target.advanceTo(0.8 + 1 / 60)
     expect(target.pointer.connected).toBe(false)
     expect(target.active.size).toBe(0)
   })
@@ -189,6 +190,15 @@ describe('HomeHero pointer time and recovery', () => {
     expect(target.pointer.connected).toBe(true)
     expect(target.stats.peakCandidates).toBe(0)
     target.advanceTo(1 + 1 / 60)
+    expect(target.stats.peakCandidates).toBeGreaterThan(0)
+  })
+
+  it('preserves newly delivered input timestamped before the previous clock', () => {
+    const target = engine()
+    target.advanceTo(0.02)
+    target.pointer.move({ pointerId: 1, pointerType: 'mouse', x: 200, y: 120, at: 0.019 })
+    target.advanceTo(1)
+    expect(target.pointer.connected).toBe(true)
     expect(target.stats.peakCandidates).toBeGreaterThan(0)
   })
 
