@@ -149,6 +149,49 @@ describe('HomeHero pointer time and recovery', () => {
     expect(target.scene.particles.every(p => Number.isFinite(p.x))).toBe(true)
   })
 
+  it('preserves fresh held input received during a long foreground render gap', () => {
+    const target = engine()
+    target.gather()
+    target.pointer.move({ pointerId: 1, pointerType: 'mouse', x: 200, y: 120, at: 0.95 })
+    target.advanceTo(1)
+    expect(target.pointer.connected).toBe(true)
+    expect(target.active.size).toBeGreaterThan(0)
+    expect(target.stats.peakCandidates).toBeGreaterThan(0)
+    expect(target.scene.particles.every(p => Number.isFinite(p.x + p.y + p.vx + p.vy))).toBe(true)
+  })
+
+  it('consumes a fresh sweep and release during a long foreground render gap', () => {
+    const target = engine()
+    target.pointer.move({ pointerId: 1, pointerType: 'mouse', x: 100, y: 120, at: 0.8 })
+    target.pointer.move({ pointerId: 1, pointerType: 'mouse', x: 300, y: 120, at: 0.95 })
+    target.pointer.release(0.95)
+    target.advanceTo(1)
+    const middle = target.scene.particles.find(p => p.homeX === 202.5 && p.homeY === 122.5)!
+    expect(middle.x).toBeGreaterThan(middle.homeX)
+    expect(target.pointer.hasPending).toBe(false)
+    for (let frame = 1; frame <= 90; frame += 1) target.advanceTo(1 + frame / 60)
+    expect(target.active.size).toBe(0)
+  })
+
+  it('clears a held input with no new samples across a suspended clock', () => {
+    const target = engine()
+    target.pointer.move({ pointerId: 1, pointerType: 'mouse', x: 200, y: 120, at: 0 })
+    target.advanceTo(0.8)
+    expect(target.pointer.connected).toBe(false)
+    expect(target.active.size).toBe(0)
+  })
+
+  it('defers fresh input newer than a stalled RAF timestamp to the next step', () => {
+    const target = engine()
+    target.gather()
+    target.pointer.move({ pointerId: 1, pointerType: 'mouse', x: 200, y: 120, at: 1.002 })
+    target.advanceTo(1)
+    expect(target.pointer.connected).toBe(true)
+    expect(target.stats.peakCandidates).toBe(0)
+    target.advanceTo(1 + 1 / 60)
+    expect(target.stats.peakCandidates).toBeGreaterThan(0)
+  })
+
   it('preserves a held pointer across a 300ms render gap using bounded fixed substeps', () => {
     const target = engine()
     target.gather()

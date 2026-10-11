@@ -32,6 +32,7 @@ export class HomeHeroPointerTimeline {
   get released() { return Number.isFinite(this.releasedAt) }
   get connected() { return this.latest !== null && !this.released }
   get hasPending() { return this.segments.length > 0 }
+  hasInputAfter(at: number) { return this.latest !== null && this.latest.at > at }
 
   move(point: TimedPoint) {
     if (!Number.isFinite(point.at + point.x + point.y)) return
@@ -244,16 +245,21 @@ export class HomeHeroParticleEngine {
     this.moving = false
   }
   advanceTo(at: number) {
-    const elapsed = at - this.previousAt
-    // Preserve valid input through occasional rendering stalls. A genuinely
-    // suspended clock (including the 800ms case) restores the complete scene.
-    if (!Number.isFinite(elapsed) || elapsed < 0 || elapsed > 0.75) {
+    let elapsed = at - this.previousAt
+    const step = HOME_HERO_PARTICLE_FIXED_STEP_SECONDS
+    if (!Number.isFinite(elapsed) || elapsed < 0 || elapsed > 0.75 && !this.pointer.hasInputAfter(this.previousAt)) {
       this.reset(at)
       return
     }
+    if (elapsed > 0.75) {
+      // Fresh input proves this is a foreground render stall. Keep its path
+      // and advance one bounded step rather than clearing it or replaying the gap.
+      this.clock = at - step
+      this.remainder = 0
+      elapsed = step
+    }
     this.previousAt = at
     this.remainder += elapsed
-    const step = HOME_HERO_PARTICLE_FIXED_STEP_SECONDS
     let substeps = 0
     this.moving = false
     while (this.remainder + 1e-9 >= step && substeps < 90) {
