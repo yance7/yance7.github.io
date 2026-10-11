@@ -484,6 +484,40 @@ test('@particle-v2 consumes live input when RAF timestamps lag behind the event 
   await expect(stage).toHaveAttribute('data-moving-particle-count', '0', { timeout: 1500 })
 })
 
+test('@particle-v2 preserves fresh input measured after a queued scroll', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1100 })
+  await page.goto('/')
+  await waitForSettledHero(page)
+  const stage = page.locator('.home-hero-particles')
+  await stage.evaluate(element => {
+    const bounds = element.getBoundingClientRect()
+    element.dispatchEvent(new PointerEvent('pointermove', { pointerId: 1, pointerType: 'mouse',
+      clientX: bounds.left + bounds.width * 0.5, clientY: bounds.top + bounds.height * 0.46 }))
+    // WebKit may deliver scroll after the input has measured the final bounds.
+    document.dispatchEvent(new Event('scroll'))
+  })
+  await expect(stage).toHaveAttribute('data-particle-state', 'disturbed')
+  expect(Number(await stage.getAttribute('data-peak-candidates'))).toBeGreaterThan(0)
+})
+
+test('@particle-v2 cancels stale input when scrolling changes the stage geometry', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1100 })
+  await page.goto('/')
+  await waitForSettledHero(page)
+  const stage = page.locator('.home-hero-particles')
+  const top = await stage.evaluate(element => {
+    const bounds = element.getBoundingClientRect()
+    element.dispatchEvent(new PointerEvent('pointermove', { pointerId: 1, pointerType: 'mouse',
+      clientX: bounds.left + bounds.width * 0.5, clientY: bounds.top + bounds.height * 0.46 }))
+    return bounds.top
+  })
+  await expect(stage).toHaveAttribute('data-particle-state', 'disturbed')
+  await page.evaluate(() => scrollBy(0, 80))
+  await expect.poll(() => stage.evaluate(element => element.getBoundingClientRect().top)).not.toBe(top)
+  await expect(stage).toHaveAttribute('data-particle-state', /recovering|settled/)
+  await expect(stage).toHaveAttribute('data-moving-particle-count', '0', { timeout: 1500 })
+})
+
 test('@particle-v2 finishes visible recovery when animation frame callbacks stop arriving', async ({ page }) => {
   await page.addInitScript(() => {
     const requestFrame = window.requestAnimationFrame.bind(window)

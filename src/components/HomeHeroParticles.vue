@@ -40,6 +40,7 @@ let ambientUntil = 0
 let inputDownAt = 0
 let dimensionsKey = ''
 let pointerBounds: DOMRect | null = null
+let inputBounds: DOMRect | null = null
 let motionMedia: MediaQueryList | null = null
 let forcedMedia: MediaQueryList | null = null
 let connection: (EventTarget & { saveData?: boolean }) | undefined
@@ -84,6 +85,7 @@ function clearScene() {
   dimensionsKey = ''
   touches.clear()
   pointerBounds = null
+  inputBounds = null
 }
 function staticMode(mode = 'static') {
   generation += 1
@@ -199,6 +201,7 @@ function updatePausedState() {
     introUntil = 0
     touches.clear()
     pointerBounds = null
+    inputBounds = null
     renderer.drawStatic()
     movingParticleCount.value = 0
     ambientCount.value = 0
@@ -217,6 +220,7 @@ function move(event: PointerEvent) {
   if (!running() || !engine || event.pointerType === 'touch' && (touches.size !== 1 || !touches.has(event.pointerId))) return
   if (!frameId) engine.advanceTo(performance.now() / 1000)
   pointerBounds ??= stage.value!.getBoundingClientRect()
+  inputBounds = pointerBounds
   const samples = event.getCoalescedEvents?.() ?? []
   for (const sample of samples.length ? samples : [event]) {
     engine.pointer.move({ pointerId: event.pointerId, pointerType: event.pointerType,
@@ -270,8 +274,14 @@ function pageShow(event: PageTransitionEvent) {
 function scroll() {
   const bounds = stage.value?.getBoundingClientRect()
   if (!bounds) return
+  // A queued scroll can arrive after input sampled the final stage geometry.
+  // Only cancel that stream if its coordinate frame actually changed.
+  if (!inputBounds || inputBounds.left !== bounds.left || inputBounds.top !== bounds.top ||
+    inputBounds.width !== bounds.width || inputBounds.height !== bounds.height) {
+    engine?.pointer.reset()
+    inputBounds = null
+  }
   pointerBounds = null
-  engine?.pointer.reset()
   visible = bounds.bottom > 0 && bounds.top < innerHeight
   updatePausedState()
 }

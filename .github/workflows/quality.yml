@@ -197,7 +197,9 @@ jobs:
       - name: WebKit desktop HomeHero interaction quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-home-hero-interaction
-        run: npm run test:e2e -- tests/e2e/home-hero-interaction.spec.ts --project=webkit-desktop --workers=4 --retries=0
+        # Recovery deadlines measure one foreground browser's real clock, as
+        # in the ten-round stress lane. Parallel pages compete for RAF delivery.
+        run: npm run test:e2e -- tests/e2e/home-hero-interaction.spec.ts --project=webkit-desktop --workers=1 --retries=0
       - name: WebKit desktop sitewide cursor quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-sitewide-cursor
@@ -241,7 +243,7 @@ jobs:
       - name: WebKit mobile HomeHero interaction quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-home-hero-interaction
-        run: npm run test:e2e -- tests/e2e/home-hero-interaction.spec.ts --project=webkit-mobile --workers=4 --retries=0
+        run: npm run test:e2e -- tests/e2e/home-hero-interaction.spec.ts --project=webkit-mobile --workers=1 --retries=0
       - name: WebKit mobile sitewide cursor quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-sitewide-cursor
