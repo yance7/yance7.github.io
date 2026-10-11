@@ -351,6 +351,22 @@ describe('release workflow contracts', () => {
     expect(qualityWorkflow).toContain('npm run test:e2e -- tests/e2e/home-hero-layout.spec.ts --project=webkit-mobile --workers=4 --retries=0')
   })
 
+  it('keeps Linux particle stress manual, isolated and free of retries', () => {
+    const quality = readFileSync(resolve(process.cwd(), '.github/workflows/quality.yml'), 'utf8')
+    const workflow = quality.slice(quality.indexOf('  particle-stress:'), quality.indexOf('  visual-snapshot-review:'))
+
+    expect(workflow).toContain("github.event_name == 'workflow_dispatch' && inputs.run_particle_stress == true")
+    expect(workflow).not.toContain('pull_request:')
+    expect(workflow).not.toContain('deploy-pages')
+    expect(workflow).toContain("PLAYWRIGHT_USE_PREVIEW: '1'")
+    expect(workflow).toContain('PLAYWRIGHT_OUTPUT_DIR: test-results/particle-stress-${{ matrix.project }}')
+    for (const project of ['chromium', 'webkit-desktop', 'webkit-mobile']) {
+      expect(workflow).toContain(`project: ${project}`)
+    }
+    expect(workflow).toContain("--grep '@particle-v2' --repeat-each=10 --retries=0")
+    expect(workflow).toContain('if: always()')
+  })
+
 })
 
 describe('shared UI correction contracts', () => {

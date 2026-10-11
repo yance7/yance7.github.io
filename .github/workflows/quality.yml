@@ -12,6 +12,11 @@ on:
         required: false
         default: false
         type: boolean
+      run_particle_stress:
+        description: 'Run ten rounds of particle interactions on Linux'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -21,6 +26,89 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  particle-stress:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_particle_stress == true }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: chromium
+            browser: chromium
+          - project: webkit-desktop
+            browser: webkit
+          - project: webkit-mobile
+            browser: webkit
+    env:
+      PLAYWRIGHT_USE_PREVIEW: '1'
+      PLAYWRIGHT_OUTPUT_DIR: test-results/particle-stress-${{ matrix.project }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install system CJK fallback fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends --yes fonts-noto-cjk
+      - name: Build stress target
+        run: npm run build
+      - name: Smoke test stress target
+        run: npm run smoke
+      - name: Install browser
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Run ten rounds of particle interaction tests
+        run: npm run test:e2e -- tests/e2e/home-hero-interaction.spec.ts --project=${{ matrix.project }} --workers=1 --grep '@particle-v2' --repeat-each=10 --retries=0
+      - name: Upload stress evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: particle-stress-${{ matrix.project }}
+          path: test-results/particle-stress-${{ matrix.project }}
+          if-no-files-found: ignore
+          include-hidden-files: true
+  visual-snapshot-review:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.update_visual_snapshots == true }}
+    runs-on: ubuntu-latest
+    env:
+      PLAYWRIGHT_USE_PREVIEW: '1'
+      PLAYWRIGHT_OUTPUT_DIR: test-results/snapshot-review
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install system CJK fallback fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends --yes fonts-noto-cjk
+          fc-match --format='%{family}\n' "Noto Sans CJK SC" | grep -F "Noto Sans CJK SC"
+          fc-match --format='%{family}\n' "Noto Sans CJK TC" | grep -F "Noto Sans CJK TC"
+      - name: Build screenshot target
+        run: npm run build
+      - name: Smoke test screenshot target
+        run: npm run smoke
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Generate Linux visual baselines for review
+        run: npm run test:e2e -- --project=chromium-visual --workers=2 --retries=0 --update-snapshots
+      - name: Upload independently generated visual baselines
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: linux-visual-snapshots-review
+          path: tests/e2e/visual-snapshots/chromium-visual/linux
+          if-no-files-found: error
   audit:
     runs-on: ubuntu-latest
     env:
@@ -109,7 +197,9 @@ jobs:
       - name: WebKit desktop HomeHero interaction quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-home-hero-interaction
-        run: npm run test:e2e -- tests/e2e/home-hero-interaction.spec.ts --project=webkit-desktop --workers=4 --retries=0
+        # Recovery deadlines measure one foreground browser's real clock, as
+        # in the ten-round stress lane. Parallel pages compete for RAF delivery.
+        run: npm run test:e2e -- tests/e2e/home-hero-interaction.spec.ts --project=webkit-desktop --workers=1 --retries=0
       - name: WebKit desktop sitewide cursor quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-sitewide-cursor
@@ -153,7 +243,7 @@ jobs:
       - name: WebKit mobile HomeHero interaction quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-home-hero-interaction
-        run: npm run test:e2e -- tests/e2e/home-hero-interaction.spec.ts --project=webkit-mobile --workers=4 --retries=0
+        run: npm run test:e2e -- tests/e2e/home-hero-interaction.spec.ts --project=webkit-mobile --workers=1 --retries=0
       - name: WebKit mobile sitewide cursor quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-sitewide-cursor

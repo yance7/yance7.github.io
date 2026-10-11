@@ -1,1012 +1,352 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import {
-  HOME_HERO_BUTTERFLY_CLIP_PATHS,
-  HOME_HERO_BUTTERFLY_PATHS,
-  HOME_HERO_GRID_DOT_RADIUS_RATIO,
-  HOME_HERO_MARK_DOT_HALO_RADIUS_RATIO,
-  HOME_HERO_MARK_DOT_RADIUS_RATIO,
-  HOME_HERO_PARTICLE_GATHER_DURATION_MS,
-  HOME_HERO_Y_PATH,
-  createHomeHeroParticleScene,
-  getHomeHeroMotionEasing,
-  getHomeHeroParticlePixelRatio,
-  getHomeHeroParticleState,
-  type HomeHeroGridPoint,
-  type HomeHeroParticleScene,
-  type HomeHeroParticleTarget
-} from '../utils/homeHeroParticles'
+import { HomeHeroParticleEngine, type HomeHeroParticle } from '../utils/homeHeroParticlePhysics'
+import { createHomeHeroParticleScene, createHomeHeroTextMask, getHomeHeroParticleGridStep, getHomeHeroParticlePixelRatio } from '../utils/homeHeroParticleScene'
+import { HomeHeroParticleRenderer, type HomeHeroParticleColors } from '../utils/homeHeroParticleRenderer'
 
 const props = defineProps<{ animateIntro: boolean; introStartedAt: number | null }>()
-
-interface MarkParticle {
-  target: HomeHeroParticleTarget
-  startX: number
-  startY: number
-}
-
-interface ParticlePointer {
-  clientX: number
-  clientY: number
-  radius: number
-  maxDisplacement: number
-}
-
-interface Rect {
-  x: number
-  y: number
-  width: number
-  height: number
-}
-
-const INITIAL_FRAME_DELTA_MS = 1000 / 60
-const CACHE_DOT_ERASE_OVERDRAW = 1
-const PARTICLE_SEED = 0x59a7ce
-
 const stage = ref<HTMLElement | null>(null)
-const gridCanvas = ref<HTMLCanvasElement | null>(null)
-const markCanvas = ref<HTMLCanvasElement | null>(null)
-const renderMode = ref(props.animateIntro ? 'initializing' : 'static')
-const gridState = ref('static')
-const markState = ref(props.animateIntro ? 'gathering' : 'static')
+const canvas = ref<HTMLCanvasElement | null>(null)
+const renderMode = ref('initializing')
+const particleState = ref('initializing')
 const particleCount = ref(0)
-const lastInput = ref('none')
-const gridStep = ref(0)
-const gridOriginX = ref(0)
-const gridOriginY = ref(0)
-const gridColumns = ref(0)
-const gridRows = ref(0)
+const fieldCount = ref(0)
+const movingParticleCount = ref(0)
+const ambientCount = ref(0)
 const pixelRatio = ref(1)
-const svgViewBox = ref('0 0 100 100')
-const sceneWidth = ref(100)
-const sceneHeight = ref(100)
-const butterflyVeinPoints = ref<HomeHeroGridPoint[]>([])
+const gridStep = ref(5)
+const lastInput = ref('none')
+const frameCount = ref(0)
+const physicsMs = ref(0)
+const renderMs = ref(0)
+const peakActive = ref(0)
+const peakCandidates = ref(0)
+const fallbackSize = ref({ width: 1080, height: 430 })
+const fallbackFontSize = ref(220)
 
-let gridContext: CanvasRenderingContext2D | null = null
-let markContext: CanvasRenderingContext2D | null = null
-let backgroundCache: HTMLCanvasElement | null = null
-let backgroundCacheContext: CanvasRenderingContext2D | null = null
-let markCache: HTMLCanvasElement | null = null
-let markCacheContext: CanvasRenderingContext2D | null = null
-let scene: HomeHeroParticleScene | null = null
-let butterflyClipPath: Path2D | null = null
-let markParticles: MarkParticle[] = []
-let gridIndexByCell = new Int32Array()
-let horizontalOffsets = new Float32Array()
-let verticalOffsets = new Float32Array()
-let markHorizontalOffsets = new Float32Array()
-let markVerticalOffsets = new Float32Array()
-let activeGridIndices = new Set<number>()
-let activeMarkIndices = new Set<number>()
-let pointer: ParticlePointer | null = null
+let engine: HomeHeroParticleEngine | null = null
+let renderer: HomeHeroParticleRenderer | null = null
+let ambient: HomeHeroParticle[] = []
 let frameId = 0
-let lastFrameAt = -Infinity
-let startedAt = 0
-let logicalWidth = 0
-let logicalHeight = 0
-let stageBounds: DOMRect | null = null
-let visibleInViewport = true
-let pageVisible = true
-let windowFocused = true
+let frameFallback = 0
+let generation = 0
 let disposed = false
-let markIsSettled = false
-let colors = {
-  dot: '#e9efe0',
-  butterfly: '#f2f2e9',
-  butterflyDot: '#87977b',
-  butterflyVein: '#607456',
-  mark: '#31513e',
-  markHalo: 'transparent'
-}
+let firstScene = true
+let visible = true
+let focused = true
+let pageVisible = true
+let introUntil = 0
+let ambientUntil = 0
+let inputDownAt = 0
+let dimensionsKey = ''
+let pointerBounds: DOMRect | null = null
+let inputBounds: DOMRect | null = null
+let motionMedia: MediaQueryList | null = null
+let forcedMedia: MediaQueryList | null = null
+let connection: (EventTarget & { saveData?: boolean }) | undefined
 let resizeObserver: ResizeObserver | null = null
 let intersectionObserver: IntersectionObserver | null = null
 let themeObserver: MutationObserver | null = null
+const touches = new Set<number>()
 
-function readThemeColors() {
+function lowResource() {
+  const device = navigator as Navigator & { deviceMemory?: number }
+  return device.deviceMemory !== undefined && device.deviceMemory <= 2 || navigator.hardwareConcurrency > 0 && navigator.hardwareConcurrency <= 2
+}
+function allowed() { return !motionMedia?.matches && !forcedMedia?.matches && !connection?.saveData }
+function running() { return !disposed && allowed() && visible && focused && pageVisible && renderMode.value === 'canvas' }
+function colors(): HomeHeroParticleColors {
   const style = getComputedStyle(stage.value ?? document.documentElement)
-  colors = {
-    dot: style.getPropertyValue('--hero-dot').trim() || colors.dot,
-    butterfly: style.getPropertyValue('--hero-butterfly').trim() || colors.butterfly,
-    butterflyDot: style.getPropertyValue('--hero-butterfly-dot').trim() || colors.butterflyDot,
-    butterflyVein: style.getPropertyValue('--hero-butterfly-vein').trim() || colors.butterflyVein,
-    mark: style.getPropertyValue('--hero-mark').trim() || colors.mark,
-    markHalo: style.getPropertyValue('--hero-mark-halo').trim() || colors.markHalo
-  }
+  return { word: style.getPropertyValue('--hero-particle').trim(), field: style.getPropertyValue('--hero-field').trim(),
+    trail: style.getPropertyValue('--hero-particle-trail').trim(), ambient: style.getPropertyValue('--hero-ambient').trim() }
 }
-
-function publishSceneGeometry(nextScene: HomeHeroParticleScene) {
-  scene = nextScene
-  butterflyVeinPoints.value = nextScene.backgroundPoints.filter((point) => point.surface === 'butterfly-vein')
-  gridStep.value = nextScene.gridStep
-  gridOriginX.value = nextScene.gridOriginX
-  gridOriginY.value = nextScene.gridOriginY
-  gridColumns.value = nextScene.columns
-  gridRows.value = nextScene.rows
-  sceneWidth.value = Math.max(1, logicalWidth)
-  sceneHeight.value = Math.max(1, logicalHeight)
-  svgViewBox.value = `0 0 ${Math.max(1, logicalWidth)} ${Math.max(1, logicalHeight)}`
-}
-
-function markTransform() {
-  if (!scene) return ''
-  return `translate(${scene.markBounds.x} ${scene.markBounds.y}) scale(${scene.markBounds.width / 100} ${scene.markBounds.height / 120})`
-}
-
-function butterflyTransform() {
-  if (!scene) return ''
-  const bounds = scene.butterflyBounds
-  return `translate(${bounds.x} ${bounds.y}) scale(${bounds.width / 100} ${bounds.height / 100})`
-}
-
-function stopFrame() {
-  if (!frameId) return
-  cancelAnimationFrame(frameId)
+function clearFrame() {
+  if (frameId) cancelAnimationFrame(frameId)
+  if (frameFallback) clearTimeout(frameFallback)
   frameId = 0
+  frameFallback = 0
+}
+function schedule() {
+  if (frameId || frameFallback || !running()) return
+  frameId = requestAnimationFrame(animate)
+  // Some foreground WebKit loads stop delivering RAF callbacks temporarily.
+  // Share one pending frame with a bounded fallback, cancelled by normal RAF
+  // delivery and every lifecycle pause. Settled scenes schedule neither.
+  frameFallback = window.setTimeout(animate, 250)
+}
+function clearScene() {
+  clearFrame()
+  renderer?.destroy()
+  renderer = null
+  engine = null
+  ambient = []
+  ambientCount.value = 0
+  movingParticleCount.value = 0
+  dimensionsKey = ''
+  touches.clear()
+  pointerBounds = null
+  inputBounds = null
+}
+function staticMode(mode = 'static') {
+  generation += 1
+  clearScene()
+  renderMode.value = mode
+  particleState.value = mode
+}
+function dynamicParticles(at: number) {
+  const particles = [...(engine?.active ?? [])].map(id => engine!.scene.particles[id]!)
+  const remaining = ambientUntil - at
+  ambientCount.value = remaining > 0 ? ambient.length : 0
+  for (const p of ambient) {
+    const envelope = Math.min(1, Math.max(0, remaining / 0.5))
+    const phase = p.id * 2.3999632297
+    p.x = p.homeX + Math.sin(at * 1.4 + phase) * 4 * envelope
+    p.y = p.homeY + Math.cos(at * 1.6 + phase) * 3 * envelope
+    if (envelope > 0) particles.push(p)
+  }
+  return particles
+}
+function updateState(at: number) {
+  movingParticleCount.value = engine?.active.size ?? 0
+  peakActive.value = engine?.stats.peakActive ?? 0
+  peakCandidates.value = engine?.stats.peakCandidates ?? 0
+  particleState.value = at < introUntil ? 'gathering' : !engine?.active.size ? 'settled' : engine.pointer.connected ? 'disturbed' : 'recovering'
+}
+function animate() {
+  clearFrame()
+  // A browser can update the query without delivering its change event (for
+  // example during native pinch emulation). Never leave a stale dynamic canvas.
+  if (!disposed && !allowed()) {
+    staticMode()
+    return
+  }
+  if (!running() || !engine || !renderer) return
+  const start = performance.now()
+  // WebKit can deliver an RAF timestamp older than live input. Use the same
+  // monotonic clock as input and lifecycle updates, avoiding rewind or lag.
+  const at = start / 1000
+  engine.advanceTo(at)
+  physicsMs.value = performance.now() - start
+  const renderStart = performance.now()
+  renderer.drawActive(dynamicParticles(at))
+  renderMs.value = performance.now() - renderStart
+  frameCount.value += 1
+  updateState(at)
+  if (engine.needsFrame || at < introUntil || at < ambientUntil) schedule()
 }
 
-function canDraw() {
-  return !disposed && Boolean(gridContext && markContext && scene)
-    && pageVisible && windowFocused && visibleInViewport
-}
-
-function setPaused() {
-  gridState.value = 'paused'
-  markState.value = 'paused'
-  stopFrame()
-}
-
-function hasIntroMotion(now: number) {
-  return getHomeHeroParticleState(startedAt, now) === 'gathering'
-}
-
-function hasGridMotion() {
-  return activeGridIndices.size > 0 || activeMarkIndices.size > 0
+async function rebuild(force = false) {
+  const bounds = stage.value?.getBoundingClientRect()
+  if (!bounds || disposed) return
+  const width = Math.floor(bounds.width - stage.value!.clientLeft * 2)
+  const height = Math.floor(bounds.height - stage.value!.clientTop * 2)
+  if (width < 1 || height < 1) return
+  fallbackSize.value = { width, height }
+  // The independent SVG fallback uses the same serif stack and width/height fit.
+  fallbackFontSize.value = Math.min(width * (width <= 760 ? 0.82 : 0.74) / 3.3, height * 0.48 / 0.72)
+  if (!allowed()) {
+    staticMode()
+    return
+  }
+  const step = getHomeHeroParticleGridStep(lowResource())
+  const ratio = getHomeHeroParticlePixelRatio(devicePixelRatio, lowResource())
+  const key = `${width}:${height}:${step}:${ratio}`
+  if (!force && dimensionsKey === key && renderer) return
+  const revision = ++generation
+  clearScene()
+  renderMode.value = 'initializing'
+  await nextTick()
+  if (disposed || revision !== generation || !allowed() || !canvas.value) return
+  try {
+    const title = stage.value?.closest('.home-hero')?.querySelector<HTMLElement>('.home-hero-typewriter')
+    const style = getComputedStyle(title ?? stage.value!)
+    // YANCE uses the installed Latin serif stack; do not wait for CJK fonts.
+    const mask = createHomeHeroTextMask(width, height, style.fontFamily, style.fontWeight)
+    const scene = createHomeHeroParticleScene({ width, height, rgba: mask, gridStep: step, alphaThreshold: 72 })
+    if (scene.wordCount < 40) throw new Error('HomeHero text mask is incomplete')
+    const at = performance.now() / 1000
+    engine = new HomeHeroParticleEngine(scene, { startedAt: at, mobile: width <= 760 })
+    const count = lowResource() ? 8 : width <= 760 ? 12 : 20
+    ambient = Array.from({ length: count }, (_, i) => {
+      const homeX = width * (0.08 + ((i * 73 % 101) / 101) * 0.84)
+      const homeY = height * (0.1 + ((i * 47 % 103) / 103) * 0.76)
+      return { id: -i - 1, kind: 'field', homeX, homeY, x: homeX, y: homeY, vx: 0, vy: 0, row: 0, column: 0, settledForMs: 40 }
+    })
+    renderer = new HomeHeroParticleRenderer(canvas.value, { scene, pixelRatio: ratio, colors: colors(), ambient })
+    dimensionsKey = key
+    gridStep.value = step
+    pixelRatio.value = ratio
+    particleCount.value = scene.wordCount
+    fieldCount.value = scene.fieldCount
+    const startedAt = (props.introStartedAt ?? 0) / 1000
+    introUntil = firstScene && props.animateIntro && startedAt > 0 ? startedAt + 1.6 : 0
+    if (at < introUntil) {
+      engine.gather()
+      ambientUntil = introUntil
+    } else ambientUntil = 0
+    firstScene = false
+    renderMode.value = 'canvas'
+    renderer.drawActive(dynamicParticles(at))
+    updateState(at)
+    updatePausedState()
+  } catch { staticMode('static-fallback') }
 }
 
 function updatePausedState() {
-  if (!canDraw()) {
-    setPaused()
-    return
-  }
-
-  const now = performance.now()
-  if (hasIntroMotion(now) || hasGridMotion()) {
-    scheduleFrame()
+  if (!engine || !renderer) return
+  if (!running()) {
+    clearFrame()
+    engine.reset(performance.now() / 1000)
+    ambientUntil = 0
+    introUntil = 0
+    touches.clear()
+    pointerBounds = null
+    inputBounds = null
+    renderer.drawStatic()
+    movingParticleCount.value = 0
+    ambientCount.value = 0
+    particleState.value = 'paused'
   } else {
-    if (!markIsSettled) drawMarkFrame(now, true)
-    gridState.value = 'settled'
-    markState.value = 'settled'
+    engine.advanceTo(performance.now() / 1000)
+    updateState(performance.now() / 1000)
+    if (engine.moving || performance.now() / 1000 < introUntil || performance.now() / 1000 < ambientUntil) schedule()
   }
 }
-
-function deterministicUnit(index: number, salt: number): number {
-  let value = Math.imul(index + 1, 0x45d9f3b) ^ Math.imul(salt + 17, 0x27d4eb2d) ^ PARTICLE_SEED
-  value = Math.imul(value ^ (value >>> 16), 0x45d9f3b)
-  value = Math.imul(value ^ (value >>> 16), 0x45d9f3b)
-  return ((value ^ (value >>> 16)) >>> 0) / 4294967296
+function eventTime(event: PointerEvent) {
+  const now = performance.now()
+  return (Math.abs(event.timeStamp - now) < 10000 ? event.timeStamp : now) / 1000
 }
-
-function createMarkParticles(targets: HomeHeroParticleTarget[]) {
-  const centerX = scene!.markBounds.x + scene!.markBounds.width / 2
-  const centerY = scene!.markBounds.y + scene!.markBounds.height * 0.49
-  return targets.map((target, index) => {
-    let directionX = target.x - centerX
-    let directionY = target.y - centerY
-    const length = Math.hypot(directionX, directionY) || 1
-    directionX /= length
-    directionY /= length
-    const travel = scene!.gridStep * (0.85 + deterministicUnit(index, 1) * 1.4)
-    return {
-      target,
-      startX: target.x + directionX * travel,
-      startY: target.y + directionY * travel
-    }
-  })
-}
-
-function createGridIndex() {
-  if (!scene) return
-  gridIndexByCell = new Int32Array(scene.columns * scene.rows).fill(-1)
-  scene.backgroundPoints.forEach((point, index) => {
-    gridIndexByCell[point.row * scene!.columns + point.column] = index
-  })
-  horizontalOffsets = new Float32Array(scene.backgroundPoints.length)
-  verticalOffsets = new Float32Array(scene.backgroundPoints.length)
-  activeGridIndices = new Set()
-  markHorizontalOffsets = new Float32Array(markParticles.length)
-  markVerticalOffsets = new Float32Array(markParticles.length)
-  activeMarkIndices = new Set()
-}
-
-function createCanvasSurface(canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) {
-  const backingWidth = Math.ceil(logicalWidth * pixelRatio.value)
-  const backingHeight = Math.ceil(logicalHeight * pixelRatio.value)
-  if (canvas.width !== backingWidth) canvas.width = backingWidth
-  if (canvas.height !== backingHeight) canvas.height = backingHeight
-  context.setTransform(pixelRatio.value, 0, 0, pixelRatio.value, 0, 0)
-}
-
-function drawButterflySilhouette(context: CanvasRenderingContext2D) {
-  if (!scene) return
-  const bounds = scene.butterflyBounds
-  context.save()
-  context.translate(bounds.x, bounds.y)
-  context.scale(bounds.width / 100, bounds.height / 100)
-  context.fillStyle = colors.butterfly
-  for (const path of HOME_HERO_BUTTERFLY_PATHS) context.fill(new Path2D(path))
-  context.restore()
-}
-
-function clipButterflyDots(context: CanvasRenderingContext2D) {
-  if (!scene) return
-  const bounds = scene.butterflyBounds
-  butterflyClipPath ??= new Path2D(HOME_HERO_BUTTERFLY_CLIP_PATHS.join(' '))
-  context.translate(bounds.x, bounds.y)
-  context.scale(bounds.width / 100, bounds.height / 100)
-  context.clip(butterflyClipPath)
-  context.setTransform(pixelRatio.value, 0, 0, pixelRatio.value, 0, 0)
-}
-
-function drawButterflyDotField(context: CanvasRenderingContext2D) {
-  if (!scene) return
-  context.save()
-  clipButterflyDots(context)
-  drawDotField(context, scene.backgroundPoints, colors.butterflyDot, 'butterfly')
-  drawDotField(context, scene.backgroundPoints, colors.butterflyVein, 'butterfly-vein')
-  context.restore()
-}
-
-function drawDotField(
-  context: CanvasRenderingContext2D,
-  points: readonly HomeHeroGridPoint[],
-  color: string,
-  surface: HomeHeroGridPoint['surface']
-) {
-  if (!scene) return
-  context.fillStyle = color
-  context.beginPath()
-  const radius = scene.gridStep * HOME_HERO_GRID_DOT_RADIUS_RATIO
-  for (const point of points) {
-    if (point.surface !== surface) continue
-    context.moveTo(point.x + radius, point.y)
-    context.arc(point.x, point.y, radius, 0, Math.PI * 2)
+function move(event: PointerEvent) {
+  if (!running() || !engine || event.pointerType === 'touch' && (touches.size !== 1 || !touches.has(event.pointerId))) return
+  if (!frameId) engine.advanceTo(performance.now() / 1000)
+  pointerBounds ??= stage.value!.getBoundingClientRect()
+  inputBounds = pointerBounds
+  const samples = event.getCoalescedEvents?.() ?? []
+  for (const sample of samples.length ? samples : [event]) {
+    engine.pointer.move({ pointerId: event.pointerId, pointerType: event.pointerType,
+      x: sample.clientX - pointerBounds.left - stage.value!.clientLeft,
+      y: sample.clientY - pointerBounds.top - stage.value!.clientTop, at: eventTime(sample) })
   }
-  context.fill()
+  lastInput.value = event.pointerType || 'pointer'
+  ambientUntil = performance.now() / 1000 + 3
+  schedule()
 }
-
-function drawBackgroundCache() {
-  if (!scene || !gridContext || !gridCanvas.value || !backgroundCache || !backgroundCacheContext) return
-  createCanvasSurface(gridCanvas.value, gridContext)
-  backgroundCache.width = gridCanvas.value.width
-  backgroundCache.height = gridCanvas.value.height
-  backgroundCacheContext.setTransform(pixelRatio.value, 0, 0, pixelRatio.value, 0, 0)
-  backgroundCacheContext.clearRect(0, 0, logicalWidth, logicalHeight)
-  drawButterflySilhouette(backgroundCacheContext)
-  drawDotField(backgroundCacheContext, scene.backgroundPoints, colors.dot, 'field')
-  drawButterflyDotField(backgroundCacheContext)
-
-  gridContext.clearRect(0, 0, logicalWidth, logicalHeight)
-  gridContext.drawImage(
-    backgroundCache,
-    0,
-    0,
-    backgroundCache.width,
-    backgroundCache.height,
-    0,
-    0,
-    logicalWidth,
-    logicalHeight
-  )
-}
-
-function cacheSettledMark() {
-  if (!markCanvas.value || !markCache) return
-  if (markCache.width !== markCanvas.value.width) markCache.width = markCanvas.value.width
-  if (markCache.height !== markCanvas.value.height) markCache.height = markCanvas.value.height
-  markCacheContext = markCache.getContext('2d', { alpha: true })
-  if (!markCacheContext) throw new Error('HomeHero mark cache is unavailable')
-  markCacheContext.setTransform(1, 0, 0, 1, 0, 0)
-  markCacheContext.clearRect(0, 0, markCache.width, markCache.height)
-  markCacheContext.drawImage(markCanvas.value, 0, 0)
-}
-
-function fillMarkDots<T>(
-  context: CanvasRenderingContext2D,
-  points: Iterable<T>,
-  radius: number,
-  getPosition: (point: T) => { x: number; y: number } | undefined
-) {
-  context.beginPath()
-  for (const point of points) {
-    const position = getPosition(point)
-    if (!position) continue
-    context.moveTo(position.x + radius, position.y)
-    context.arc(position.x, position.y, radius, 0, Math.PI * 2)
-  }
-  context.fill()
-}
-
-function drawMarkFrame(now: number, forceSettled = false) {
-  if (!scene || !markContext || !markCanvas.value) return
-  createCanvasSurface(markCanvas.value, markContext)
-  markIsSettled = forceSettled || getHomeHeroParticleState(startedAt, now) === 'settled'
-  const bounds = scene.markBounds
-  markContext.clearRect(bounds.x - scene.gridStep, bounds.y - scene.gridStep, bounds.width + scene.gridStep * 2, bounds.height + scene.gridStep * 2)
-
-  const elapsed = markIsSettled ? HOME_HERO_PARTICLE_GATHER_DURATION_MS : Math.max(0, now - startedAt)
-  const colorGroups = new Map<number, MarkParticle[]>()
-  for (const particle of markParticles) {
-    const remainingDuration = HOME_HERO_PARTICLE_GATHER_DURATION_MS - particle.target.delayMs
-    const progress = markIsSettled
-      ? 1
-      : Math.max(0, Math.min(1, (elapsed - particle.target.delayMs) / remainingDuration))
-    const eased = progress * progress * (3 - 2 * progress)
-    const groupOpacity = markIsSettled ? 1 : Math.round(progress * 8) / 8
-    if (groupOpacity <= 0) continue
-    const group = colorGroups.get(groupOpacity) ?? []
-    group.push({
-      ...particle,
-      target: {
-        ...particle.target,
-        x: particle.startX + (particle.target.x - particle.startX) * eased,
-        y: particle.startY + (particle.target.y - particle.startY) * eased
-      }
-    })
-    colorGroups.set(groupOpacity, group)
-  }
-
-  const dotRadius = scene.gridStep * HOME_HERO_MARK_DOT_RADIUS_RATIO
-  const haloRadius = scene.gridStep * HOME_HERO_MARK_DOT_HALO_RADIUS_RATIO
-  for (const [opacity, particles] of colorGroups) {
-    markContext.globalAlpha = opacity
-    markContext.fillStyle = colors.markHalo
-    fillMarkDots(markContext, particles, haloRadius, (particle) => particle.target)
-    markContext.fillStyle = colors.mark
-    fillMarkDots(markContext, particles, dotRadius, (particle) => particle.target)
-  }
-  markContext.globalAlpha = 1
-  if (markIsSettled) {
-    markHorizontalOffsets.fill(0)
-    markVerticalOffsets.fill(0)
-    activeMarkIndices.clear()
-    cacheSettledMark()
-  }
-}
-
-function nearbyGridIndices(x: number, y: number, radius: number): number[] {
-  if (!scene) return []
-  const minColumn = Math.max(0, Math.floor((x - radius - scene.gridOriginX) / scene.gridStep))
-  const maxColumn = Math.min(scene.columns - 1, Math.ceil((x + radius - scene.gridOriginX) / scene.gridStep))
-  const minRow = Math.max(0, Math.floor((y - radius - scene.gridOriginY) / scene.gridStep))
-  const maxRow = Math.min(scene.rows - 1, Math.ceil((y + radius - scene.gridOriginY) / scene.gridStep))
-  const indices: number[] = []
-
-  for (let row = minRow; row <= maxRow; row += 1) {
-    for (let column = minColumn; column <= maxColumn; column += 1) {
-      const index = gridIndexByCell[row * scene.columns + column] ?? -1
-      if (index >= 0) indices.push(index)
-    }
-  }
-  return indices
-}
-
-function getPointerPosition() {
-  if (!pointer || !stageBounds) return null
-  return {
-    x: pointer.clientX - stageBounds.left,
-    y: pointer.clientY - stageBounds.top
-  }
-}
-
-function getDirtyBounds(indices: Iterable<number>, offsetX: Float32Array, offsetY: Float32Array): Rect | null {
-  if (!scene) return null
-  let left = Infinity
-  let top = Infinity
-  let right = -Infinity
-  let bottom = -Infinity
-  const margin = scene.gridStep * HOME_HERO_GRID_DOT_RADIUS_RATIO + 2
-
-  for (const index of indices) {
-    const point = scene.backgroundPoints[index]
-    if (!point) continue
-    const x = point.x + offsetX[index]!
-    const y = point.y + offsetY[index]!
-    left = Math.min(left, point.x - margin, x - margin)
-    top = Math.min(top, point.y - margin, y - margin)
-    right = Math.max(right, point.x + margin, x + margin)
-    bottom = Math.max(bottom, point.y + margin, y + margin)
-  }
-
-  if (!Number.isFinite(left)) return null
-  const x = Math.max(0, left)
-  const y = Math.max(0, top)
-  const rectRight = Math.min(logicalWidth, right)
-  const rectBottom = Math.min(logicalHeight, bottom)
-  return { x, y, width: Math.max(0, rectRight - x), height: Math.max(0, rectBottom - y) }
-}
-
-function unionRects(first: Rect, second: Rect): Rect {
-  const x = Math.min(first.x, second.x)
-  const y = Math.min(first.y, second.y)
-  const right = Math.max(first.x + first.width, second.x + second.width)
-  const bottom = Math.max(first.y + first.height, second.y + second.height)
-  return { x, y, width: right - x, height: bottom - y }
-}
-
-function eraseCachedDots(
-  context: CanvasRenderingContext2D,
-  indices: Iterable<number>,
-  radius: number,
-  getPoint: (index: number) => HomeHeroParticleTarget | undefined
-) {
-  const eraseRadius = radius + CACHE_DOT_ERASE_OVERDRAW
-  context.save()
-  context.globalCompositeOperation = 'destination-out'
-  context.fillStyle = '#000'
-  context.beginPath()
-  for (const index of indices) {
-    const point = getPoint(index)
-    if (!point) continue
-    context.moveTo(point.x + eraseRadius, point.y)
-    context.arc(point.x, point.y, eraseRadius, 0, Math.PI * 2)
-  }
-  context.fill()
-  context.restore()
-}
-
-function renderGridRegion(bounds: Rect, indices: Iterable<number>) {
-  if (!scene || !gridContext || !backgroundCache) return
-  const x = Math.max(0, bounds.x)
-  const y = Math.max(0, bounds.y)
-  const width = Math.min(logicalWidth - x, bounds.width)
-  const height = Math.min(logicalHeight - y, bounds.height)
-  if (width <= 0 || height <= 0) return
-
-  gridContext.save()
-  gridContext.setTransform(pixelRatio.value, 0, 0, pixelRatio.value, 0, 0)
-  gridContext.beginPath()
-  gridContext.rect(x, y, width, height)
-  gridContext.clip()
-  gridContext.clearRect(x, y, width, height)
-  gridContext.drawImage(
-    backgroundCache,
-    x * pixelRatio.value,
-    y * pixelRatio.value,
-    width * pixelRatio.value,
-    height * pixelRatio.value,
-    x,
-    y,
-    width,
-    height
-  )
-  const radius = scene.gridStep * HOME_HERO_GRID_DOT_RADIUS_RATIO
-  eraseCachedDots(gridContext, indices, radius, (index) => scene?.backgroundPoints[index])
-  for (const surface of ['field', 'butterfly', 'butterfly-vein'] as const) {
-    gridContext.save()
-    if (surface !== 'field') clipButterflyDots(gridContext)
-    gridContext.fillStyle = surface === 'field'
-      ? colors.dot
-      : surface === 'butterfly' ? colors.butterflyDot : colors.butterflyVein
-    gridContext.beginPath()
-    for (const index of indices) {
-      const point = scene.backgroundPoints[index]
-      if (!point || point.surface !== surface) continue
-      const drawX = point.x + horizontalOffsets[index]!
-      const drawY = point.y + verticalOffsets[index]!
-      if (drawX < x - radius || drawX > x + width + radius || drawY < y - radius || drawY > y + height + radius) continue
-      gridContext.moveTo(drawX + radius, drawY)
-      gridContext.arc(drawX, drawY, radius, 0, Math.PI * 2)
-    }
-    gridContext.fill()
-    gridContext.restore()
-  }
-  gridContext.restore()
-}
-
-function updateGridRipple(deltaMs: number) {
-  if (!scene || !gridContext) return false
-  const priorIndices = Array.from(activeGridIndices)
-  const oldBounds = getDirtyBounds(priorIndices, horizontalOffsets, verticalOffsets)
-  const position = getPointerPosition()
-  const radius = pointer?.radius ?? scene.gridStep * 6
-  const candidates = position ? nearbyGridIndices(position.x, position.y, radius) : []
-  const nextIndices = new Set([...priorIndices, ...candidates])
-  const easing = getHomeHeroMotionEasing(deltaMs)
-  const nextActive = new Set<number>()
-  let motionInProgress = false
-
-  for (const index of nextIndices) {
-    const point = scene.backgroundPoints[index]!
-    let targetX = 0
-    let targetY = 0
-    if (position && pointer) {
-      let deltaX = point.x - position.x
-      let deltaY = point.y - position.y
-      let distance = Math.hypot(deltaX, deltaY)
-      if (distance < 0.1) {
-        deltaX = point.x - logicalWidth / 2 || 1
-        deltaY = point.y - logicalHeight / 2 || 1
-        distance = Math.hypot(deltaX, deltaY)
-      }
-      if (distance < pointer.radius) {
-        const force = (1 - distance / pointer.radius) ** 2
-        targetX = deltaX / distance * pointer.maxDisplacement * force
-        targetY = deltaY / distance * pointer.maxDisplacement * force
-      }
-    }
-
-    horizontalOffsets[index] = horizontalOffsets[index]! + (targetX - horizontalOffsets[index]!) * easing
-    verticalOffsets[index] = verticalOffsets[index]! + (targetY - verticalOffsets[index]!) * easing
-    const moving = Math.abs(targetX - horizontalOffsets[index]!) > 0.12
-      || Math.abs(targetY - verticalOffsets[index]!) > 0.12
-    if (moving) motionInProgress = true
-    const displaced = Math.abs(horizontalOffsets[index]!) > 0.12 || Math.abs(verticalOffsets[index]!) > 0.12
-    if (moving || displaced) nextActive.add(index)
-  }
-
-  activeGridIndices = nextActive
-  const newBounds = getDirtyBounds(nextActive, horizontalOffsets, verticalOffsets)
-  if (oldBounds && newBounds) {
-    const combined = unionRects(oldBounds, newBounds)
-    const combinedArea = combined.width * combined.height
-    const stageArea = logicalWidth * logicalHeight
-    if (combinedArea <= stageArea * 0.24) {
-      renderGridRegion(combined, nextActive)
-    } else {
-      renderGridRegion(oldBounds, nextActive)
-      renderGridRegion(newBounds, nextActive)
-    }
-  } else if (oldBounds) {
-    renderGridRegion(oldBounds, nextActive)
-  } else if (newBounds) {
-    renderGridRegion(newBounds, nextActive)
-  }
-
-  return motionInProgress
-}
-
-function getMarkDirtyBounds(indices: Iterable<number>): Rect | null {
-  if (!scene) return null
-  let left = Infinity
-  let top = Infinity
-  let right = -Infinity
-  let bottom = -Infinity
-  const margin = scene.gridStep * HOME_HERO_MARK_DOT_HALO_RADIUS_RATIO + 2
-
-  for (const index of indices) {
-    const point = markParticles[index]?.target
-    if (!point) continue
-    const x = point.x + markHorizontalOffsets[index]!
-    const y = point.y + markVerticalOffsets[index]!
-    left = Math.min(left, point.x - margin, x - margin)
-    top = Math.min(top, point.y - margin, y - margin)
-    right = Math.max(right, point.x + margin, x + margin)
-    bottom = Math.max(bottom, point.y + margin, y + margin)
-  }
-
-  if (!Number.isFinite(left)) return null
-  const x = Math.max(0, left)
-  const y = Math.max(0, top)
-  const rectRight = Math.min(logicalWidth, right)
-  const rectBottom = Math.min(logicalHeight, bottom)
-  return { x, y, width: Math.max(0, rectRight - x), height: Math.max(0, rectBottom - y) }
-}
-
-function renderMarkRegion(bounds: Rect, indices: Iterable<number>) {
-  if (!scene || !markContext || !markCache) return
-  const x = Math.max(0, bounds.x)
-  const y = Math.max(0, bounds.y)
-  const width = Math.min(logicalWidth - x, bounds.width)
-  const height = Math.min(logicalHeight - y, bounds.height)
-  if (width <= 0 || height <= 0) return
-
-  markContext.save()
-  markContext.setTransform(pixelRatio.value, 0, 0, pixelRatio.value, 0, 0)
-  markContext.beginPath()
-  markContext.rect(x, y, width, height)
-  markContext.clip()
-  markContext.clearRect(x, y, width, height)
-  markContext.drawImage(
-    markCache,
-    x * pixelRatio.value,
-    y * pixelRatio.value,
-    width * pixelRatio.value,
-    height * pixelRatio.value,
-    x,
-    y,
-    width,
-    height
-  )
-  const particleIndices = Array.from(indices)
-  const dotRadius = scene.gridStep * HOME_HERO_MARK_DOT_RADIUS_RATIO
-  const haloRadius = scene.gridStep * HOME_HERO_MARK_DOT_HALO_RADIUS_RATIO
-  eraseCachedDots(markContext, particleIndices, haloRadius, (index) => markParticles[index]?.target)
-  const getPosition = (index: number, radius: number) => {
-    const point = markParticles[index]?.target
-    if (!point) return undefined
-    const drawX = point.x + markHorizontalOffsets[index]!
-    const drawY = point.y + markVerticalOffsets[index]!
-    if (drawX < x - radius || drawX > x + width + radius || drawY < y - radius || drawY > y + height + radius) return undefined
-    return { x: drawX, y: drawY }
-  }
-  markContext.fillStyle = colors.markHalo
-  fillMarkDots(markContext, particleIndices, haloRadius, (index) => getPosition(index, haloRadius))
-  markContext.fillStyle = colors.mark
-  fillMarkDots(markContext, particleIndices, dotRadius, (index) => getPosition(index, dotRadius))
-  markContext.restore()
-}
-
-function updateMarkRipple(deltaMs: number) {
-  if (!scene || !markContext || !markCache || !markIsSettled) return false
-  const priorIndices = Array.from(activeMarkIndices)
-  const oldBounds = getMarkDirtyBounds(priorIndices)
-  const position = getPointerPosition()
-  const radius = pointer?.radius ?? scene.gridStep * 6
-  const candidates: number[] = []
-  if (position && pointer) {
-    markParticles.forEach(({ target }, index) => {
-      if (Math.hypot(target.x - position.x, target.y - position.y) < radius) candidates.push(index)
-    })
-  }
-  const nextIndices = new Set([...priorIndices, ...candidates])
-  const easing = getHomeHeroMotionEasing(deltaMs)
-  const nextActive = new Set<number>()
-  let motionInProgress = false
-
-  for (const index of nextIndices) {
-    const point = markParticles[index]!.target
-    let targetX = 0
-    let targetY = 0
-    if (position && pointer) {
-      let deltaX = point.x - position.x
-      let deltaY = point.y - position.y
-      let distance = Math.hypot(deltaX, deltaY)
-      if (distance < 0.1) {
-        deltaX = point.x - logicalWidth / 2 || 1
-        deltaY = point.y - logicalHeight / 2 || 1
-        distance = Math.hypot(deltaX, deltaY)
-      }
-      if (distance < pointer.radius) {
-        const force = (1 - distance / pointer.radius) ** 2
-        targetX = deltaX / distance * pointer.maxDisplacement * force
-        targetY = deltaY / distance * pointer.maxDisplacement * force
-      }
-    }
-
-    markHorizontalOffsets[index] = markHorizontalOffsets[index]! + (targetX - markHorizontalOffsets[index]!) * easing
-    markVerticalOffsets[index] = markVerticalOffsets[index]! + (targetY - markVerticalOffsets[index]!) * easing
-    const moving = Math.abs(targetX - markHorizontalOffsets[index]!) > 0.12
-      || Math.abs(targetY - markVerticalOffsets[index]!) > 0.12
-    if (moving) motionInProgress = true
-    const displaced = Math.abs(markHorizontalOffsets[index]!) > 0.12 || Math.abs(markVerticalOffsets[index]!) > 0.12
-    if (moving || displaced) nextActive.add(index)
-  }
-
-  activeMarkIndices = nextActive
-  const newBounds = getMarkDirtyBounds(nextActive)
-  if (oldBounds && newBounds) {
-    const combined = unionRects(oldBounds, newBounds)
-    if (combined.width * combined.height <= logicalWidth * logicalHeight * 0.24) {
-      renderMarkRegion(combined, nextActive)
-    } else {
-      renderMarkRegion(oldBounds, nextActive)
-      renderMarkRegion(newBounds, nextActive)
-    }
-  } else if (oldBounds) {
-    renderMarkRegion(oldBounds, nextActive)
-  } else if (newBounds) {
-    renderMarkRegion(newBounds, nextActive)
-  }
-
-  return motionInProgress
-}
-
-function drawStaticScene() {
-  if (!scene || !gridContext || !markContext) return
-  drawBackgroundCache()
-  drawMarkFrame(performance.now(), true)
-  gridState.value = 'settled'
-  markState.value = 'settled'
-}
-
-function renderFrame(now: number) {
-  frameId = 0
-  if (!canDraw()) {
-    setPaused()
+function down(event: PointerEvent) {
+  if (event.pointerType !== 'touch') return
+  touches.add(event.pointerId)
+  if (touches.size > 1) {
+    engine?.pointer.reset()
     return
   }
-  const deltaMs = Number.isFinite(lastFrameAt) ? Math.min(now - lastFrameAt, 120) : INITIAL_FRAME_DELTA_MS
-  lastFrameAt = now
-  const gathering = hasIntroMotion(now)
-  if (gathering) drawMarkFrame(now)
-  else if (!markIsSettled) drawMarkFrame(now, true)
-  const gridMoving = updateGridRipple(deltaMs)
-  const markMoving = gathering ? false : updateMarkRipple(deltaMs)
-  markState.value = gathering || markMoving ? 'gathering' : 'settled'
-  gridState.value = gridMoving ? 'gathering' : 'settled'
-  if (gathering || gridMoving || markMoving) frameId = requestAnimationFrame(renderFrame)
+  inputDownAt = eventTime(event)
+  move(event)
 }
-
-function scheduleFrame() {
-  if (!canDraw() || frameId) return
-  frameId = requestAnimationFrame(renderFrame)
+function release(input: Event) {
+  const event = input as PointerEvent
+  if (event.pointerType === 'touch') touches.delete(event.pointerId)
+  engine?.pointer.release(event.pointerType === 'touch' && event.type === 'pointerup' ? Math.max(eventTime(event), inputDownAt + 1 / 60) : eventTime(event))
+  if (event.type === 'pointercancel') engine?.pointer.reset()
+  pointerBounds = null
+  schedule()
 }
-
-function updateStageBounds() {
-  if (stage.value) stageBounds = stage.value.getBoundingClientRect()
+function intersection(entries: IntersectionObserverEntry[]) {
+  visible = Boolean(entries[0]?.isIntersecting)
+  updatePausedState()
 }
-
-function handlePointerMove(event: PointerEvent) {
-  if (!stageBounds) updateStageBounds()
-  const touch = event.pointerType === 'touch'
-  pointer = {
-    clientX: event.clientX,
-    clientY: event.clientY,
-    radius: (touch ? 5.5 : 6.5) * (scene?.gridStep ?? 12),
-    maxDisplacement: (touch ? 0.68 : 0.8) * (scene?.gridStep ?? 12)
+function visibility() {
+  pageVisible = document.visibilityState === 'visible'
+  updatePausedState()
+}
+function blur() {
+  focused = false
+  updatePausedState()
+}
+function focus() {
+  focused = true
+  updatePausedState()
+}
+function pageShow(event: PageTransitionEvent) {
+  pageVisible = document.visibilityState === 'visible'
+  focused = true
+  if (event.persisted) void rebuild(true)
+  else updatePausedState()
+}
+function scroll() {
+  const bounds = stage.value?.getBoundingClientRect()
+  if (!bounds) return
+  // A queued scroll can arrive after input sampled the final stage geometry.
+  // Only cancel that stream if its coordinate frame actually changed.
+  if (!inputBounds || inputBounds.left !== bounds.left || inputBounds.top !== bounds.top ||
+    inputBounds.width !== bounds.width || inputBounds.height !== bounds.height) {
+    engine?.pointer.reset()
+    inputBounds = null
   }
-  scheduleFrame()
+  pointerBounds = null
+  visible = bounds.bottom > 0 && bounds.top < innerHeight
+  updatePausedState()
+}
+function resize() { void rebuild() }
+function preference() {
+  if (!allowed()) staticMode()
+  else void rebuild(true)
+}
+function theme() {
+  if (!renderer || !engine) return
+  renderer.setColors(colors())
+  renderer.drawActive(dynamicParticles(performance.now() / 1000))
 }
 
-function handlePointerDown(event: PointerEvent) {
-  lastInput.value = event.pointerType === 'touch' ? 'touch' : 'mouse'
-  handlePointerMove(event)
-}
-
-function clearPointer() {
-  pointer = null
-  scheduleFrame()
-}
-
-function handleVisibilityChange() {
+watch(() => props.introStartedAt, () => { if (!engine && allowed()) void rebuild() })
+onMounted(() => {
+  motionMedia = matchMedia('(prefers-reduced-motion: reduce)')
+  forcedMedia = matchMedia('(forced-colors: active)')
+  connection = (navigator as Navigator & { connection?: EventTarget & { saveData?: boolean } }).connection
+  motionMedia.addEventListener('change', preference)
+  forcedMedia.addEventListener('change', preference)
+  connection?.addEventListener('change', preference)
   pageVisible = document.visibilityState === 'visible'
-  if (!pageVisible) pointer = null
-  updatePausedState()
-}
-
-function handleWindowBlur() {
-  windowFocused = false
-  pointer = null
-  updatePausedState()
-}
-
-function handleWindowFocus() {
-  windowFocused = true
-  updatePausedState()
-}
-
-function handleIntersection(entries: IntersectionObserverEntry[]) {
-  visibleInViewport = entries.some((entry) => entry.isIntersecting)
-  if (!visibleInViewport) pointer = null
-  updatePausedState()
-}
-
-function handlePageShow(event: PageTransitionEvent) {
-  if (!event.persisted || !scene || !gridContext || !markContext) return
-  pageVisible = document.visibilityState === 'visible'
-  windowFocused = document.hasFocus()
-  pointer = null
-  activeGridIndices.clear()
-  horizontalOffsets.fill(0)
-  verticalOffsets.fill(0)
-  startedAt = performance.now() - HOME_HERO_PARTICLE_GATHER_DURATION_MS
-  drawStaticScene()
-  if (!pageVisible || !windowFocused || !visibleInViewport) setPaused()
-}
-
-function removeCanvasListeners() {
-  const element = stage.value
-  if (!element) return
-  element.removeEventListener('pointermove', handlePointerMove)
-  element.removeEventListener('pointerdown', handlePointerDown)
-  element.removeEventListener('pointerup', clearPointer)
-  element.removeEventListener('pointercancel', clearPointer)
-  element.removeEventListener('pointerleave', clearPointer)
-}
-
-function cleanupCanvas() {
+  focused = document.hasFocus()
+  stage.value!.addEventListener('pointermove', move, { passive: true })
+  stage.value!.addEventListener('pointerdown', down, { passive: true })
+  for (const type of ['pointerup', 'pointercancel', 'pointerleave']) stage.value!.addEventListener(type, release, { passive: true })
+  document.addEventListener('visibilitychange', visibility)
+  document.addEventListener('scroll', scroll, { capture: true, passive: true })
+  window.addEventListener('resize', resize, { passive: true })
+  window.addEventListener('blur', blur)
+  window.addEventListener('focus', focus)
+  window.addEventListener('pageshow', pageShow)
+  if ('ResizeObserver' in window) {
+    resizeObserver = new ResizeObserver(resize)
+    resizeObserver.observe(stage.value!)
+  }
+  if ('IntersectionObserver' in window) {
+    intersectionObserver = new IntersectionObserver(intersection)
+    intersectionObserver.observe(stage.value!)
+  }
+  themeObserver = new MutationObserver(theme)
+  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+  void rebuild()
+})
+onBeforeUnmount(() => {
   disposed = true
-  stopFrame()
-  removeCanvasListeners()
+  generation += 1
+  clearScene()
   resizeObserver?.disconnect()
   intersectionObserver?.disconnect()
   themeObserver?.disconnect()
-  document.removeEventListener('visibilitychange', handleVisibilityChange)
-  window.removeEventListener('blur', handleWindowBlur)
-  window.removeEventListener('focus', handleWindowFocus)
-  window.removeEventListener('pageshow', handlePageShow)
-  window.removeEventListener('resize', handleGeometryChange)
-  document.removeEventListener('scroll', handleScroll, true)
-  resizeObserver = null
-  intersectionObserver = null
-  themeObserver = null
-  gridContext = null
-  markContext = null
-  backgroundCache = null
-  backgroundCacheContext = null
-  markCache = null
-  markCacheContext = null
-  markParticles = []
-  markHorizontalOffsets = new Float32Array()
-  markVerticalOffsets = new Float32Array()
-  pointer = null
-  activeGridIndices.clear()
-  activeMarkIndices.clear()
-  markIsSettled = false
-}
-
-function setStaticGeometry() {
-  const element = stage.value
-  if (!element) return
-  updateStageBounds()
-  const bounds = stageBounds
-  if (!bounds || bounds.width <= 0 || bounds.height <= 0) return
-  logicalWidth = Math.floor(bounds.width)
-  logicalHeight = Math.floor(bounds.height)
-  publishSceneGeometry(createHomeHeroParticleScene(logicalWidth, logicalHeight))
-}
-
-function useStaticFallback() {
-  cleanupCanvas()
-  setStaticGeometry()
-  renderMode.value = 'static-fallback'
-  gridState.value = 'fallback'
-  markState.value = 'fallback'
-  particleCount.value = 0
-  observeStaticGeometry()
-}
-
-function createSceneForCanvas(now: number) {
-  const element = stage.value
-  const gridElement = gridCanvas.value
-  const markElement = markCanvas.value
-  if (!element || !gridElement || !markElement || !gridContext || !markContext) return false
-
-  updateStageBounds()
-  const bounds = stageBounds
-  if (!bounds || bounds.width <= 0 || bounds.height <= 0) return false
-  logicalWidth = Math.floor(bounds.width)
-  logicalHeight = Math.floor(bounds.height)
-  const device = navigator as Navigator & { deviceMemory?: number }
-  pixelRatio.value = getHomeHeroParticlePixelRatio(
-    window.devicePixelRatio || 1,
-    device.deviceMemory ?? 4,
-    navigator.hardwareConcurrency || 4
-  )
-  publishSceneGeometry(createHomeHeroParticleScene(logicalWidth, logicalHeight))
-  if (!scene || scene.yPoints.length < 80 || scene.backgroundPoints.length < 300) {
-    throw new Error('HomeHero fixed grid scene is incomplete')
-  }
-
-  createCanvasSurface(gridElement, gridContext)
-  createCanvasSurface(markElement, markContext)
-  if (!backgroundCache) backgroundCache = document.createElement('canvas')
-  backgroundCacheContext = backgroundCache.getContext('2d', { alpha: true })
-  if (!backgroundCacheContext) throw new Error('HomeHero background cache is unavailable')
-
-  markParticles = createMarkParticles(scene.yPoints)
-  createGridIndex()
-  if (!markCache) markCache = document.createElement('canvas')
-  particleCount.value = markParticles.length
-  drawBackgroundCache()
-  drawMarkFrame(now)
-  return true
-}
-
-function handleGeometryChange() {
-  if (!props.animateIntro || !gridContext || !markContext) {
-    setStaticGeometry()
-    return
-  }
-  try {
-    readThemeColors()
-    const updated = createSceneForCanvas(performance.now())
-    if (!updated) return
-    updatePausedState()
-  } catch {
-    useStaticFallback()
-  }
-}
-
-function handleScroll() {
-  updateStageBounds()
-}
-
-function observeStaticGeometry() {
-  const element = stage.value
-  if (!element) return
-  window.addEventListener('resize', handleGeometryChange, { passive: true })
-  if ('ResizeObserver' in window) {
-    resizeObserver = new ResizeObserver(handleGeometryChange)
-    resizeObserver.observe(element)
-  }
-}
-
-function handleThemeChange() {
-  if (!props.animateIntro || !gridContext || !markContext) {
-    readThemeColors()
-    return
-  }
-  readThemeColors()
-  pointer = null
-  activeGridIndices.clear()
-  horizontalOffsets.fill(0)
-  verticalOffsets.fill(0)
-  drawBackgroundCache()
-  drawMarkFrame(performance.now())
-}
-
-function initializeCanvas() {
-  if (!props.animateIntro || props.introStartedAt === null || !gridCanvas.value || !markCanvas.value || !stage.value) return
-  cleanupCanvas()
-  disposed = false
-  pageVisible = document.visibilityState === 'visible'
-  windowFocused = document.hasFocus()
-  visibleInViewport = true
-  startedAt = props.introStartedAt
-  lastFrameAt = -Infinity
-  readThemeColors()
-
-  try {
-    gridContext = gridCanvas.value.getContext('2d', { alpha: true })
-    markContext = markCanvas.value.getContext('2d', { alpha: true })
-    if (!gridContext || !markContext) throw new Error('HomeHero Canvas 2D is unavailable')
-    if (!createSceneForCanvas(performance.now())) return
-    renderMode.value = 'canvas'
-    gridState.value = pageVisible ? 'settled' : 'paused'
-    markState.value = pageVisible ? getHomeHeroParticleState(startedAt, performance.now()) : 'paused'
-
-    stage.value.addEventListener('pointermove', handlePointerMove, { passive: true })
-    stage.value.addEventListener('pointerdown', handlePointerDown, { passive: true })
-    stage.value.addEventListener('pointerup', clearPointer, { passive: true })
-    stage.value.addEventListener('pointercancel', clearPointer, { passive: true })
-    stage.value.addEventListener('pointerleave', clearPointer, { passive: true })
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    document.addEventListener('scroll', handleScroll, { capture: true, passive: true })
-    window.addEventListener('resize', handleGeometryChange, { passive: true })
-    window.addEventListener('blur', handleWindowBlur)
-    window.addEventListener('focus', handleWindowFocus)
-    window.addEventListener('pageshow', handlePageShow)
-
-    if ('ResizeObserver' in window) {
-      resizeObserver = new ResizeObserver(handleGeometryChange)
-      resizeObserver.observe(stage.value)
-    }
-    if ('IntersectionObserver' in window) {
-      intersectionObserver = new IntersectionObserver(handleIntersection, { threshold: 0 })
-      intersectionObserver.observe(stage.value)
-    }
-    themeObserver = new MutationObserver(handleThemeChange)
-    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
-    updatePausedState()
-  } catch {
-    useStaticFallback()
-  }
-}
-
-function initializeStaticScene() {
-  cleanupCanvas()
-  readThemeColors()
-  setStaticGeometry()
-  renderMode.value = 'static'
-  gridState.value = 'static'
-  markState.value = 'static'
-  particleCount.value = 0
-  observeStaticGeometry()
-}
-
-watch([() => props.animateIntro, () => props.introStartedAt], async ([shouldAnimate]) => {
-  await nextTick()
-  if (shouldAnimate && props.introStartedAt !== null) initializeCanvas()
-  else initializeStaticScene()
-}, { flush: 'post' })
-
-onMounted(() => {
-  if (props.animateIntro && props.introStartedAt !== null) initializeCanvas()
-  else initializeStaticScene()
+  motionMedia?.removeEventListener('change', preference)
+  forcedMedia?.removeEventListener('change', preference)
+  connection?.removeEventListener('change', preference)
+  stage.value?.removeEventListener('pointermove', move)
+  stage.value?.removeEventListener('pointerdown', down)
+  for (const type of ['pointerup', 'pointercancel', 'pointerleave']) stage.value?.removeEventListener(type, release)
+  document.removeEventListener('visibilitychange', visibility)
+  document.removeEventListener('scroll', scroll, true)
+  window.removeEventListener('resize', resize)
+  window.removeEventListener('blur', blur)
+  window.removeEventListener('focus', focus)
+  window.removeEventListener('pageshow', pageShow)
 })
-
-onBeforeUnmount(cleanupCanvas)
 </script>
 
 <template>
@@ -1014,124 +354,28 @@ onBeforeUnmount(cleanupCanvas)
     ref="stage"
     class="home-hero-particles"
     :data-render-mode="renderMode"
+    data-word="YANCE"
     :data-grid-step="gridStep"
-    :data-grid-origin-x="gridOriginX"
-    :data-grid-origin-y="gridOriginY"
-    :data-grid-columns="gridColumns"
-    :data-grid-rows="gridRows"
-    :data-butterfly-vein-point-count="butterflyVeinPoints.length"
+    :data-particle-count="particleCount"
+    :data-field-count="fieldCount"
+    :data-moving-particle-count="movingParticleCount"
+    :data-ambient-count="ambientCount"
+    :data-particle-state="particleState"
+    :data-pixel-ratio="pixelRatio"
+    :data-last-input="lastInput"
+    :data-frame-count="frameCount"
+    :data-physics-ms="physicsMs"
+    :data-render-ms="renderMs"
+    :data-peak-active="peakActive"
+    :data-peak-candidates="peakCandidates"
+    :data-cache-count="renderer ? 1 : 0"
     aria-hidden="true"
   >
-    <canvas
-      v-if="props.animateIntro && renderMode !== 'static-fallback'"
-      ref="gridCanvas"
-      class="home-hero-particles-grid"
-      data-grid-source="fixed-logical-pixels"
-      :data-grid-step="gridStep"
-      :data-particle-state="gridState"
-      :data-pixel-ratio="pixelRatio"
-    ></canvas>
-    <canvas
-      v-if="props.animateIntro && renderMode !== 'static-fallback'"
-      ref="markCanvas"
-      class="home-hero-particles-canvas"
-      data-target-source="fixed-grid"
-      :data-particle-state="markState"
-      :data-particle-count="particleCount"
-      :data-pixel-ratio="pixelRatio"
-      :data-last-input="lastInput"
-    ></canvas>
-    <svg
-      class="home-hero-particles-mark"
-      data-mark-source="vector"
-      :viewBox="svgViewBox"
-      preserveAspectRatio="none"
-      focusable="false"
-      aria-hidden="true"
-    >
-      <defs>
-        <pattern
-          id="home-hero-fixed-grid"
-          patternUnits="userSpaceOnUse"
-          :x="gridOriginX - gridStep / 2"
-          :y="gridOriginY - gridStep / 2"
-          :width="gridStep || 8"
-          :height="gridStep || 8"
-        >
-          <circle :cx="(gridStep || 8) / 2" :cy="(gridStep || 8) / 2" :r="(gridStep || 8) * HOME_HERO_GRID_DOT_RADIUS_RATIO" class="home-hero-particles-fallback-dot" />
-        </pattern>
-        <pattern
-          id="home-hero-butterfly-grid"
-          patternUnits="userSpaceOnUse"
-          :x="gridOriginX - gridStep / 2"
-          :y="gridOriginY - gridStep / 2"
-          :width="gridStep || 8"
-          :height="gridStep || 8"
-        >
-          <circle :cx="(gridStep || 8) / 2" :cy="(gridStep || 8) / 2" :r="(gridStep || 8) * HOME_HERO_GRID_DOT_RADIUS_RATIO" class="home-hero-particles-fallback-butterfly-dot" />
-        </pattern>
-        <pattern
-          id="home-hero-mark-halo-grid"
-          patternUnits="userSpaceOnUse"
-          :x="gridOriginX - gridStep / 2"
-          :y="gridOriginY - gridStep / 2"
-          :width="gridStep || 8"
-          :height="gridStep || 8"
-        >
-          <circle :cx="(gridStep || 8) / 2" :cy="(gridStep || 8) / 2" :r="(gridStep || 8) * HOME_HERO_MARK_DOT_HALO_RADIUS_RATIO" class="home-hero-particles-fallback-mark-halo" />
-        </pattern>
-        <pattern
-          id="home-hero-mark-grid"
-          patternUnits="userSpaceOnUse"
-          :x="gridOriginX - gridStep / 2"
-          :y="gridOriginY - gridStep / 2"
-          :width="gridStep || 8"
-          :height="gridStep || 8"
-        >
-          <circle :cx="(gridStep || 8) / 2" :cy="(gridStep || 8) / 2" :r="(gridStep || 8) * HOME_HERO_MARK_DOT_RADIUS_RATIO" class="home-hero-particles-fallback-mark-dot" />
-        </pattern>
-        <mask id="home-hero-butterfly-field-mask" maskUnits="userSpaceOnUse" :x="0" :y="0" :width="sceneWidth" :height="sceneHeight">
-          <rect :width="sceneWidth" :height="sceneHeight" fill="white" />
-          <g :transform="butterflyTransform()">
-            <path v-for="(path, index) in HOME_HERO_BUTTERFLY_PATHS" :key="index" :d="path" fill="black" />
-          </g>
-          <path data-y-mark-mask="true" :d="HOME_HERO_Y_PATH" :transform="markTransform()" fill="black" />
-        </mask>
-        <mask id="home-hero-butterfly-dot-mask" maskUnits="userSpaceOnUse" :x="0" :y="0" :width="sceneWidth" :height="sceneHeight">
-          <rect :width="sceneWidth" :height="sceneHeight" fill="black" />
-          <g :transform="butterflyTransform()">
-            <path v-for="(path, index) in HOME_HERO_BUTTERFLY_PATHS" :key="index" :d="path" fill="white" />
-          </g>
-          <path data-y-mark-mask="true" :d="HOME_HERO_Y_PATH" :transform="markTransform()" fill="black" />
-        </mask>
-        <clipPath id="home-hero-butterfly-clip" clipPathUnits="userSpaceOnUse">
-          <g :transform="butterflyTransform()">
-            <path v-for="(path, index) in HOME_HERO_BUTTERFLY_CLIP_PATHS" :key="index" :d="path" />
-          </g>
-        </clipPath>
-      </defs>
-      <g :transform="butterflyTransform()">
-        <path v-for="(path, index) in HOME_HERO_BUTTERFLY_PATHS" :key="index" :d="path" class="home-hero-particles-butterfly-fill" />
-      </g>
-      <rect :width="sceneWidth" :height="sceneHeight" fill="url(#home-hero-fixed-grid)" mask="url(#home-hero-butterfly-field-mask)" />
-      <rect :width="sceneWidth" :height="sceneHeight" fill="url(#home-hero-butterfly-grid)" mask="url(#home-hero-butterfly-dot-mask)" />
-      <g data-butterfly-vein-clip="true" clip-path="url(#home-hero-butterfly-clip)">
-        <circle
-          v-for="point in butterflyVeinPoints"
-          :key="`${point.row}:${point.column}`"
-          class="home-hero-particles-fallback-butterfly-vein-dot"
-          :cx="point.x"
-          :cy="point.y"
-          :r="gridStep * HOME_HERO_GRID_DOT_RADIUS_RATIO"
-        />
-      </g>
-      <path :d="HOME_HERO_Y_PATH" :transform="markTransform()" class="home-hero-particles-fallback-mark-halo-path" fill="url(#home-hero-mark-halo-grid)" />
-      <path data-y-mark="true" :d="HOME_HERO_Y_PATH" :transform="markTransform()" fill="url(#home-hero-mark-grid)" />
+    <canvas v-if="renderMode === 'canvas' || renderMode === 'initializing'" ref="canvas" class="home-hero-particles-canvas" aria-hidden="true"></canvas>
+    <svg class="home-hero-particles-word" :viewBox="`0 0 ${fallbackSize.width} ${fallbackSize.height}`" aria-hidden="true">
+      <defs><pattern id="home-hero-static-dots" width="5" height="5" patternUnits="userSpaceOnUse"><circle cx="2.5" cy="2.5" r="1.7" fill="currentColor" /></pattern></defs>
+      <text :x="fallbackSize.width / 2" :y="fallbackSize.height * 0.46 + fallbackFontSize * 0.34" text-anchor="middle" :font-size="fallbackFontSize" fill="url(#home-hero-static-dots)">YANCE</text>
     </svg>
-    <div class="home-hero-particles-labels">
-      <span>RESEARCH</span>
-      <span>BUILD</span>
-      <span>LIVE</span>
-    </div>
+    <div class="home-hero-particles-labels"><span>RESEARCH</span><span>BUILD</span><span>LIVE</span></div>
   </div>
 </template>
