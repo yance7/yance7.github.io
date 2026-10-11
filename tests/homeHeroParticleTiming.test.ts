@@ -2,9 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createHomeHeroParticleScene } from '../src/utils/homeHeroParticleScene'
 import { HomeHeroParticleEngine, HomeHeroPointerTimeline } from '../src/utils/homeHeroParticlePhysics'
 
-function engine() {
-  const width = 400
-  const height = 240
+function engine(width = 400, height = 240) {
   const rgba = new Uint8ClampedArray(width * height * 4).fill(255)
   return new HomeHeroParticleEngine(createHomeHeroParticleScene({ width, height, rgba, gridStep: 5 }), { startedAt: 0 })
 }
@@ -26,6 +24,71 @@ function sweep(eventHz: number, renderHz: number) {
 }
 
 describe('HomeHero pointer time and recovery', () => {
+  it('keeps free spring recovery independent of frame subdivision', () => {
+    const whole = engine()
+    const split = engine()
+    for (const target of [whole, split]) {
+      const p = target.scene.particles[0]!
+      p.x += 40
+      p.vx = 80
+      p.settledForMs = 0
+      target.active.add(p.id)
+    }
+    whole.advanceTo(0.4)
+    split.advanceTo(0.2)
+    split.advanceTo(0.4)
+    expect(whole.scene.particles[0]!.x).toBeCloseTo(split.scene.particles[0]!.x, 9)
+    expect(whole.scene.particles[0]!.vx).toBeCloseTo(split.scene.particles[0]!.vx, 9)
+  })
+
+  it('does not snap free recovery at a close crossing without a continuous settle window', () => {
+    const target = engine()
+    const p = target.scene.particles[0]!
+    const frequency = Math.sqrt(42 - 5.25 ** 2)
+    p.x += 1
+    p.vx = -5.25 - frequency / Math.tan(frequency * 0.2)
+    p.settledForMs = 0
+    target.active.add(p.id)
+    target.advanceTo(0.2)
+    expect(Math.abs(p.x - p.homeX)).toBeLessThan(0.25)
+    expect(Math.abs(p.vx)).toBeLessThan(2.5)
+    expect(p.settledForMs).toBe(0)
+    expect(target.active.has(p.id)).toBe(true)
+  })
+
+  it.each([3, 4, 5])('restores a desktop sweep at %s rendering frames per second within 1.5s of release', renderHz => {
+    const target = engine(1080, 430)
+    const releasedAt = 1 / renderHz
+    target.pointer.move({ pointerId: 1, pointerType: 'mouse', x: 216, y: 198, at: 0 })
+    target.advanceTo(releasedAt - 0.005)
+    target.pointer.move({ pointerId: 1, pointerType: 'mouse', x: 864, y: 198, at: releasedAt })
+    target.pointer.release(releasedAt)
+    for (let frame = 1; frame / renderHz <= 1.5; frame += 1) target.advanceTo(releasedAt + frame / renderHz)
+    expect(target.active.size).toBe(0)
+    expect(target.scene.particles.every(p => p.x === p.homeX && p.y === p.homeY)).toBe(true)
+  })
+
+  it('keeps a live stationary pointer across sparse foreground frames', () => {
+    const target = engine()
+    target.pointer.move({ pointerId: 1, pointerType: 'mouse', x: 200, y: 120, at: 0 })
+    target.advanceTo(1 / 60)
+    target.advanceTo(1)
+    expect(target.pointer.connected).toBe(true)
+    expect(target.active.size).toBeGreaterThan(0)
+  })
+
+  it('counts recovery from the event release when the first rendered sweep is late', () => {
+    const target = engine(1080, 430)
+    target.pointer.move({ pointerId: 1, pointerType: 'mouse', x: 216, y: 198, at: 0 })
+    target.pointer.move({ pointerId: 1, pointerType: 'mouse', x: 864, y: 198, at: 0.15 })
+    target.pointer.release(0.15)
+    target.advanceTo(1.4)
+    expect(target.stats.peakCandidates).toBeGreaterThan(0)
+    target.advanceTo(1.65)
+    expect(target.active.size).toBe(0)
+    expect(target.scene.particles.every(p => p.x === p.homeX && p.y === p.homeY)).toBe(true)
+  })
+
   it('drains an overdue sweep in one fixed step without delaying release', () => {
     const input = new HomeHeroPointerTimeline()
     input.move({ pointerId: 1, pointerType: 'mouse', x: 100, y: 120, at: 0 })
@@ -173,10 +236,11 @@ describe('HomeHero pointer time and recovery', () => {
     expect(target.active.size).toBe(0)
   })
 
-  it('clears a held input with no new samples across a suspended clock', () => {
+  it('clears a held input when lifecycle suspension explicitly resets the clock', () => {
     const target = engine()
     target.pointer.move({ pointerId: 1, pointerType: 'mouse', x: 200, y: 120, at: 0 })
     target.advanceTo(1 / 60)
+    target.reset(0.8 + 1 / 60)
     target.advanceTo(0.8 + 1 / 60)
     expect(target.pointer.connected).toBe(false)
     expect(target.active.size).toBe(0)
@@ -212,11 +276,11 @@ describe('HomeHero pointer time and recovery', () => {
     expect(target.scene.particles.every(p => Number.isFinite(p.x + p.y + p.vx + p.vy))).toBe(true)
   })
 
-  it('keeps a frame pending when a high-refresh callback has not reached a fixed step', () => {
+  it('keeps free recovery moving across a high-refresh fractional step', () => {
     const target = engine()
     target.gather()
     target.advanceTo(1 / 144)
-    expect(target.moving).toBe(false)
+    expect(target.moving).toBe(true)
     expect(target.active.size).toBeGreaterThan(0)
     expect(target.needsFrame).toBe(true)
 

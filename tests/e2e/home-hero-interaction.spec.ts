@@ -293,6 +293,24 @@ test('@particle-v2 restores real pixels within the standard 1.5s recovery budget
   expect(await changedPixels(page)).toBe(0)
 })
 
+test('@particle-v2 preserves the standard recovery budget with sparse foreground frames', async ({ page }) => {
+  await page.addInitScript(() => {
+    const requestFrame = window.requestAnimationFrame.bind(window)
+    window.requestAnimationFrame = callback => requestFrame(() => {
+      setTimeout(() => callback(performance.now()), 250)
+    })
+  })
+  await page.goto('/')
+  await waitForSettledHero(page)
+  await page.locator('.home-hero-particles').scrollIntoViewIfNeeded()
+  await savePixels(page)
+  await pointerSweep(page)
+  expect(await changedPixels(page)).toBeGreaterThan(100)
+  await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-moving-particle-count', '0', { timeout: 1500 })
+  await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-ambient-count', '0')
+  expect(await changedPixels(page)).toBe(0)
+})
+
 test('@particle-v2 consumes repeated stirring and returns without residual trails', async ({ page }) => {
   await page.goto('/')
   await waitForSettledHero(page)
@@ -447,7 +465,8 @@ test('@particle-v2 consumes live input when RAF timestamps lag behind the event 
 
 test('@particle-v2 preserves a disturbance across the intro deadline', async ({ page, isMobile }) => {
   await page.setViewportSize({ width: isMobile ? 390 : 1440, height: 1100 })
-  await page.goto('/')
+  // Observe the intro before waiting for unrelated page assets to finish.
+  await page.goto('/', { waitUntil: 'domcontentloaded' })
   const stage = page.locator('.home-hero-particles')
   await expect(stage).toHaveAttribute('data-render-mode', 'canvas')
   await expect(stage).toHaveAttribute('data-particle-state', 'gathering')

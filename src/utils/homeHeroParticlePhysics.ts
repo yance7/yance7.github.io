@@ -34,6 +34,7 @@ export class HomeHeroPointerTimeline {
   get connected() { return this.latest !== null && !this.released }
   get hasPending() { return this.segments.length > 0 }
   get hasUnconsumedInput() { return this.unconsumedInput }
+  get endsAt() { return this.latest || this.released ? this.releasedAt : -Infinity }
 
   move(point: TimedPoint) {
     if (!Number.isFinite(point.at + point.x + point.y)) return
@@ -209,6 +210,56 @@ export function advanceHomeHeroParticles(particles: HomeHeroParticle[], pointer:
   return moving
 }
 
+function recover(p: HomeHeroParticle, seconds: number, radius: number, mobile: boolean) {
+  const limit = mobile ? 390 : 520
+  const safeEnergy = Math.min((radius * 1.1) ** 2, limit * limit / 42)
+  // Keep the existing speed and displacement constraints until the spring's
+  // energy guarantees that neither bound can be crossed during free recovery.
+  while (seconds > 0 && (p.x - p.homeX) ** 2 + (p.y - p.homeY) ** 2 + (p.vx ** 2 + p.vy ** 2) / 42 > safeEnergy) {
+    const step = Math.min(seconds, HOME_HERO_PARTICLE_FIXED_STEP_SECONDS)
+    integrate(p, [], step, radius, mobile)
+    seconds -= step
+  }
+  if (seconds <= 0 || p.settledForMs >= 40) return
+  const decayRate = 10.5 / 2
+  const frequency = Math.sqrt(42 - decayRate ** 2)
+  const x = p.x - p.homeX
+  const y = p.y - p.homeY
+  const bx = (p.vx + decayRate * x) / frequency
+  const by = (p.vy + decayRate * y) / frequency
+  const velocityX = frequency * bx - decayRate * x
+  const velocityY = frequency * by - decayRate * y
+  const velocityBx = -frequency * x - decayRate * bx
+  const velocityBy = -frequency * y - decayRate * by
+  const decay = Math.exp(-decayRate * seconds)
+  const cosine = Math.cos(frequency * seconds)
+  const sine = Math.sin(frequency * seconds)
+  p.x = p.homeX + decay * (x * cosine + bx * sine)
+  p.y = p.homeY + decay * (y * cosine + by * sine)
+  p.vx = decay * (velocityX * cosine + velocityBx * sine)
+  p.vy = decay * (velocityY * cosine + velocityBy * sine)
+  // The envelope bounds every point of the last 40ms, avoiding snapping at a
+  // fast zero crossing while making recovery independent of rendered frames.
+  const envelope = Math.exp(-2 * decayRate * Math.max(0, seconds - 0.04))
+  if (seconds >= 0.04 && envelope * (x * x + bx * bx + y * y + by * by) < 0.25 ** 2 &&
+    envelope * (velocityX ** 2 + velocityBx ** 2 + velocityY ** 2 + velocityBy ** 2) < 2.5 ** 2) {
+    p.x = p.homeX
+    p.y = p.homeY
+    p.vx = 0
+    p.vy = 0
+    p.settledForMs = 40
+  } else if (x * x + bx * bx + y * y + by * by < 0.25 ** 2 &&
+    velocityX ** 2 + velocityBx ** 2 + velocityY ** 2 + velocityBy ** 2 < 2.5 ** 2) {
+    p.settledForMs += seconds * 1000
+    if (p.settledForMs >= 40) {
+      p.x = p.homeX
+      p.y = p.homeY
+      p.vx = 0
+      p.vy = 0
+    }
+  } else p.settledForMs = 0
+}
+
 export class HomeHeroParticleEngine {
   readonly pointer = new HomeHeroPointerTimeline()
   readonly active = new Set<number>()
@@ -256,26 +307,40 @@ export class HomeHeroParticleEngine {
     this.moving = false
   }
   advanceTo(at: number) {
-    let elapsed = at - this.previousAt
+    const elapsed = at - this.previousAt
     const step = HOME_HERO_PARTICLE_FIXED_STEP_SECONDS
-    if (!Number.isFinite(elapsed) || elapsed < 0 || elapsed > 0.75 && !this.pointer.hasUnconsumedInput) {
+    if (!Number.isFinite(elapsed) || elapsed < 0) {
       this.reset(at)
       return
     }
-    if (elapsed > 0.75) {
-      // Fresh input proves this is a foreground render stall. Keep its path
-      // and advance one bounded step rather than clearing it or replaying the gap.
-      this.clock = at - step
-      this.remainder = 0
-      elapsed = step
-    }
     this.previousAt = at
-    this.remainder += elapsed
+    const recoverTo = (finish: number) => {
+      const seconds = finish - this.clock
+      if (seconds <= 0) return
+      for (const id of this.active) {
+        const p = this.scene.particles[id]!
+        recover(p, seconds, this.radius, Boolean(this.options.mobile))
+        if (p.settledForMs >= 40) this.active.delete(id)
+      }
+      this.clock = finish
+    }
+    // Bound historical forcing around its event release, never around the
+    // current render time. The remaining interval is genuine free recovery.
+    if (elapsed > 0.75) recoverTo(Math.max(this.clock, Math.min(at, this.pointer.endsAt) - 0.75))
+    this.remainder = at - this.clock
     let substeps = 0
     this.moving = false
     while (this.remainder + 1e-9 >= step && substeps < 90) {
+      if (!this.pointer.connected && !this.pointer.hasPending && !this.pointer.hasUnconsumedInput) {
+        recoverTo(at)
+        this.remainder = 0
+        this.moving = this.active.size > 0
+        break
+      }
       substeps += 1
-      const inputs = this.pointer.consume(this.clock, this.clock + step)
+      const next = this.clock + step
+      const finish = Math.abs(next - this.pointer.endsAt) < 1e-9 ? this.pointer.endsAt : next
+      const inputs = this.pointer.consume(this.clock, finish)
       const candidates = new Set<number>()
       for (const input of inputs) {
         for (const id of getHomeHeroParticleCandidates(this.scene, input, this.radius)) candidates.add(id)
@@ -291,8 +356,13 @@ export class HomeHeroParticleEngine {
       }
       this.stats.peakActive = Math.max(this.stats.peakActive, this.active.size)
       this.moving = moving || Math.hypot(this.pointer.velocity.x, this.pointer.velocity.y) > 1
-      this.clock += step
-      this.remainder -= step
+      this.clock = finish
+      this.remainder = at - this.clock
+    }
+    if (!this.pointer.connected && !this.pointer.hasPending && !this.pointer.hasUnconsumedInput) {
+      recoverTo(at)
+      this.remainder = 0
+      this.moving = this.active.size > 0
     }
   }
 }
