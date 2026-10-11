@@ -102,6 +102,12 @@ function updateState(at: number) {
 }
 function animate() {
   frameId = 0
+  // A browser can update the query without delivering its change event (for
+  // example during native pinch emulation). Never leave a stale dynamic canvas.
+  if (!disposed && !allowed()) {
+    staticMode()
+    return
+  }
   if (!running() || !engine || !renderer) return
   const start = performance.now()
   // WebKit can deliver an RAF timestamp older than live input. Use the same

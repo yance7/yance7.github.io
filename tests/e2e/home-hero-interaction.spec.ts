@@ -311,6 +311,27 @@ test('@particle-v2 preserves the standard recovery budget with sparse foreground
   expect(await changedPixels(page)).toBe(0)
 })
 
+test('@particle-v2 enters the static fallback if a motion preference notification is missed', async ({ page }) => {
+  await page.addInitScript(() => {
+    const match = window.matchMedia.bind(window)
+    window.matchMedia = query => {
+      const target = match(query)
+      if (query === '(prefers-reduced-motion: reduce)') {
+        target.addEventListener = () => {}
+      }
+      return target
+    }
+  })
+  await page.goto('/')
+  await waitForSettledHero(page)
+  await page.locator('.home-hero-particles').scrollIntoViewIfNeeded()
+  await pointerSweep(page)
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true)
+  await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-render-mode', 'static')
+  await expect(page.locator('.home-hero-particles svg')).toBeVisible()
+})
+
 test('@particle-v2 consumes repeated stirring and returns without residual trails', async ({ page }) => {
   await page.goto('/')
   await waitForSettledHero(page)
