@@ -26,6 +26,53 @@ function sweep(eventHz: number, renderHz: number) {
 }
 
 describe('HomeHero pointer time and recovery', () => {
+  it.each([0.02, 0.8])('keeps the first coalesced sweep after an empty clock advances to %ss', at => {
+    const target = engine()
+    target.advanceTo(at)
+    target.pointer.move({ pointerId: 1, pointerType: 'mouse', x: 100, y: 100, at: at - 0.02 })
+    target.pointer.move({ pointerId: 1, pointerType: 'mouse', x: 300, y: 100, at: at - 0.01 })
+    target.pointer.release(at - 0.01)
+    target.advanceTo(at + 0.03)
+    const middle = target.scene.particles.find(p => p.homeX === 202.5 && p.homeY === 102.5)!
+    expect(middle.x).toBeGreaterThan(middle.homeX)
+    expect(target.pointer.connected).toBe(false)
+  })
+
+  it('consumes a late delivered path once and holds its latest position', () => {
+    const input = new HomeHeroPointerTimeline()
+    input.move({ pointerId: 1, pointerType: 'mouse', x: 100, y: 120, at: 0 })
+    input.consume(0, 0.02)
+    input.move({ pointerId: 1, pointerType: 'mouse', x: 300, y: 120, at: 0.01 })
+    const delayed = input.consume(0.02, 0.03)
+    expect(delayed[0]).toMatchObject({ fromX: 100, x: 300 })
+    expect(delayed[0]!.vx).toBeGreaterThan(0)
+    const stopped = input.consume(0.03, 0.04)
+    expect(stopped.every(piece => piece.fromX === 300 && piece.x === 300)).toBe(true)
+    expect(input.hasPending).toBe(false)
+  })
+
+  it('preserves a complete path when rendering runs between sparse input events', () => {
+    const input = new HomeHeroPointerTimeline()
+    input.move({ pointerId: 1, pointerType: 'mouse', x: 100, y: 120, at: 0 })
+    input.consume(0, 1 / 120)
+    input.move({ pointerId: 1, pointerType: 'mouse', x: 300, y: 120, at: 1 / 60 })
+    const pieces = [...input.consume(1 / 120, 2 / 120), ...input.consume(2 / 120, 3 / 120)]
+    expect(pieces.reduce((distance, piece) => distance + piece.x - piece.fromX, 0)).toBeCloseTo(200)
+    expect(pieces.at(-1)!.x).toBe(300)
+  })
+
+  it('applies a delayed sweep before release and moves particles in its middle', () => {
+    const target = engine()
+    target.pointer.move({ pointerId: 1, pointerType: 'mouse', x: 100, y: 100, at: 0 })
+    target.advanceTo(0.02)
+    target.pointer.move({ pointerId: 1, pointerType: 'mouse', x: 300, y: 100, at: 0.01 })
+    target.pointer.release(0.01)
+    target.advanceTo(0.04)
+    const middle = target.scene.particles.find(p => p.homeX === 202.5 && p.homeY === 102.5)!
+    expect(middle.x).toBeGreaterThan(middle.homeX)
+    expect(target.pointer.connected).toBe(false)
+  })
+
   it('consumes intermediate paths once, ignores another pointer, and decays stopped velocity', () => {
     const input = new HomeHeroPointerTimeline()
     input.move({ pointerId: 1, pointerType: 'touch', x: 100, y: 100, at: 0 })

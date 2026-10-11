@@ -26,6 +26,7 @@ export class HomeHeroPointerTimeline {
   private segments: TimedSegment[] = []
   private latest: TimedPoint | null = null
   private consumed: TimedPoint | null = null
+  private consumedUntil = -Infinity
   private releasedAt = Infinity
   velocity = { x: 0, y: 0 }
   get released() { return Number.isFinite(this.releasedAt) }
@@ -38,7 +39,7 @@ export class HomeHeroPointerTimeline {
     if (this.latest && this.latest.pointerId !== point.pointerId) return
     if (!this.latest) {
       this.latest = { ...point }
-      this.consumed = { ...point }
+      this.consumed = { ...point, at: Math.max(point.at, this.consumedUntil) }
       return
     }
     if (point.at < this.latest.at) return
@@ -47,7 +48,11 @@ export class HomeHeroPointerTimeline {
       this.latest = { ...point }
       return
     }
-    this.segments.push({ from: this.latest, to: { ...point } })
+    // Rendering may already have consumed stationary time beyond the previous
+    // event. Shift the unseen path forward, preserving its full duration and
+    // geometry instead of trimming it against the simulation clock.
+    const fromAt = Math.max(this.latest.at, this.consumed?.at ?? this.latest.at, this.segments.at(-1)?.to.at ?? this.latest.at)
+    this.segments.push({ from: { ...this.latest, at: fromAt }, to: { ...point, at: fromAt + point.at - this.latest.at } })
     this.latest = { ...point }
     if (this.segments.length > 128) {
       // Merge the least curved adjacent pair rather than dropping a turn.
@@ -67,16 +72,18 @@ export class HomeHeroPointerTimeline {
     }
   }
 
-  release(at: number) { this.releasedAt = Math.min(this.releasedAt, at) }
-  reset() {
+  release(at: number) { this.releasedAt = Math.min(this.releasedAt, Math.max(at, this.segments.at(-1)?.to.at ?? at)) }
+  reset(at = this.consumedUntil) {
     this.segments = []
     this.latest = null
     this.consumed = null
+    this.consumedUntil = at
     this.releasedAt = Infinity
     this.velocity = { x: 0, y: 0 }
   }
 
   consume(start: number, end: number): HomeHeroPointerPiece[] {
+    if (end > start) this.consumedUntil = Math.max(this.consumedUntil, end)
     if (!this.consumed || end <= start) return []
     const finish = Math.min(end, this.releasedAt)
     const pieces: HomeHeroPointerPiece[] = []
@@ -193,6 +200,7 @@ export class HomeHeroParticleEngine {
   constructor(readonly scene: HomeHeroParticleScene, private options: HomeHeroParticlePhysicsOptions & { startedAt: number }) {
     this.clock = options.startedAt
     this.previousAt = options.startedAt
+    this.pointer.reset(options.startedAt)
     this.radius = clamp(scene.width * 0.075, 72, 112) * (options.mobile ? 0.75 : 1)
   }
   get needsFrame() {
@@ -220,7 +228,7 @@ export class HomeHeroParticleEngine {
       p.settledForMs = 40
     }
     this.active.clear()
-    this.pointer.reset()
+    this.pointer.reset(at)
     this.clock = at
     this.previousAt = at
     this.remainder = 0
