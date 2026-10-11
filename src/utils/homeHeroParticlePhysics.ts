@@ -18,7 +18,7 @@ export function createHomeHeroPointerInput(previous: HomeHeroPointerSample | nul
 }
 
 interface TimedPoint { pointerId: number; pointerType: string; x: number; y: number; at: number }
-interface TimedSegment { from: TimedPoint; to: TimedPoint }
+interface TimedSegment { from: TimedPoint; to: TimedPoint; progress: number }
 export interface HomeHeroPointerPiece extends HomeHeroPointerInput { duration: number }
 
 // Input remains timestamped until the fixed simulation step consumes it.
@@ -48,11 +48,7 @@ export class HomeHeroPointerTimeline {
       this.latest = { ...point }
       return
     }
-    // Rendering may already have consumed stationary time beyond the previous
-    // event. Shift the unseen path forward, preserving its full duration and
-    // geometry instead of trimming it against the simulation clock.
-    const fromAt = Math.max(this.latest.at, this.consumed?.at ?? this.latest.at, this.segments.at(-1)?.to.at ?? this.latest.at)
-    this.segments.push({ from: { ...this.latest, at: fromAt }, to: { ...point, at: fromAt + point.at - this.latest.at } })
+    this.segments.push({ from: this.latest, to: { ...point }, progress: 0 })
     this.latest = { ...point }
     if (this.segments.length > 128) {
       // Merge the least curved adjacent pair rather than dropping a turn.
@@ -68,11 +64,16 @@ export class HomeHeroPointerTimeline {
           index = i
         }
       }
-      this.segments.splice(index, 2, { from: this.segments[index]!.from, to: this.segments[index + 1]!.to })
+      const first = this.segments[index]!
+      const from = { ...first.from,
+        x: first.from.x + (first.to.x - first.from.x) * first.progress,
+        y: first.from.y + (first.to.y - first.from.y) * first.progress,
+        at: first.from.at + (first.to.at - first.from.at) * first.progress }
+      this.segments.splice(index, 2, { from, to: this.segments[index + 1]!.to, progress: 0 })
     }
   }
 
-  release(at: number) { this.releasedAt = Math.min(this.releasedAt, Math.max(at, this.segments.at(-1)?.to.at ?? at)) }
+  release(at: number) { this.releasedAt = Math.min(this.releasedAt, at) }
   reset(at = this.consumedUntil) {
     this.segments = []
     this.latest = null
@@ -88,10 +89,30 @@ export class HomeHeroPointerTimeline {
     const finish = Math.min(end, this.releasedAt)
     const pieces: HomeHeroPointerPiece[] = []
     let cursor = Math.max(start, this.consumed.at)
-    const add = (fromX: number, fromY: number, x: number, y: number, duration: number) => {
+    if (cursor >= end) return pieces
+    const paths: { fromX: number; fromY: number; x: number; y: number; duration: number }[] = []
+    for (const segment of this.segments) {
+      const length = segment.to.at - segment.from.at
+      const progress = clamp((finish - segment.from.at) / length, 0, 1)
+      if (progress <= segment.progress) continue
+      paths.push({
+        fromX: segment.from.x + (segment.to.x - segment.from.x) * segment.progress,
+        fromY: segment.from.y + (segment.to.y - segment.from.y) * segment.progress,
+        x: segment.from.x + (segment.to.x - segment.from.x) * progress,
+        y: segment.from.y + (segment.to.y - segment.from.y) * progress,
+        duration: (progress - segment.progress) * length
+      })
+      segment.progress = progress
+    }
+    this.segments = this.segments.filter(segment => segment.progress < 1)
+    // Keep raw event time for velocity, but consume all overdue geometry in
+    // this step. Replaying its original duration would postpone real release.
+    const pathDuration = paths.reduce((total, path) => total + path.duration, 0)
+    const scale = Math.min(1, (end - cursor) / (pathDuration || 1))
+    const add = (fromX: number, fromY: number, x: number, y: number, duration: number, sourceDuration = duration) => {
       if (duration <= 0) return
-      const rawX = clamp((x - fromX) / duration, -2600, 2600)
-      const rawY = clamp((y - fromY) / duration, -2600, 2600)
+      const rawX = clamp((x - fromX) / sourceDuration, -2600, 2600)
+      const rawY = clamp((y - fromY) / sourceDuration, -2600, 2600)
       const decay = Math.exp(-duration / VELOCITY_TAU)
       const average = VELOCITY_TAU * (1 - decay) / duration
       const vx = rawX + (this.velocity.x - rawX) * average
@@ -102,20 +123,8 @@ export class HomeHeroPointerTimeline {
       this.consumed = { ...this.consumed!, x, y, at: cursor + duration }
       cursor += duration
     }
-    for (const segment of this.segments) {
-      if (segment.to.at <= cursor || segment.from.at >= finish) continue
-      if (segment.from.at > cursor) add(this.consumed.x, this.consumed.y, this.consumed.x, this.consumed.y, Math.min(finish, segment.from.at) - cursor)
-      const left = Math.max(cursor, segment.from.at)
-      const right = Math.min(finish, segment.to.at)
-      const length = segment.to.at - segment.from.at
-      const point = (at: number) => ({ x: segment.from.x + (segment.to.x - segment.from.x) * (at - segment.from.at) / length,
-        y: segment.from.y + (segment.to.y - segment.from.y) * (at - segment.from.at) / length })
-      const from = point(left)
-      const to = point(right)
-      add(from.x, from.y, to.x, to.y, right - left)
-    }
+    for (const path of paths) add(path.fromX, path.fromY, path.x, path.y, path.duration * scale, path.duration)
     if (cursor < finish) add(this.consumed.x, this.consumed.y, this.consumed.x, this.consumed.y, finish - cursor)
-    this.segments = this.segments.filter(segment => segment.to.at > finish)
     if (end >= this.releasedAt) {
       this.latest = null
       this.consumed = null

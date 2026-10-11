@@ -26,6 +26,34 @@ function sweep(eventHz: number, renderHz: number) {
 }
 
 describe('HomeHero pointer time and recovery', () => {
+  it('drains an overdue sweep in one fixed step without delaying release', () => {
+    const input = new HomeHeroPointerTimeline()
+    input.move({ pointerId: 1, pointerType: 'mouse', x: 100, y: 120, at: 0 })
+    input.consume(0, 0.2)
+    input.move({ pointerId: 1, pointerType: 'mouse', x: 300, y: 120, at: 0.2 })
+    input.release(0.2)
+    const pieces = input.consume(0.2, 0.2 + 1 / 120)
+    expect(pieces.at(-1)!.x).toBe(300)
+    expect(pieces.reduce((total, piece) => total + piece.duration, 0)).toBeLessThanOrEqual(1 / 120 + 1e-9)
+    expect(input.connected).toBe(false)
+    expect(input.hasPending).toBe(false)
+  })
+
+  it('drains every overdue turn within a single fixed step', () => {
+    const input = new HomeHeroPointerTimeline()
+    input.move({ pointerId: 1, pointerType: 'mouse', x: 100, y: 120, at: 0 })
+    input.consume(0, 0.2)
+    input.move({ pointerId: 1, pointerType: 'mouse', x: 200, y: 80, at: 0.1 })
+    input.move({ pointerId: 1, pointerType: 'mouse', x: 300, y: 120, at: 0.2 })
+    input.release(0.2)
+    const pieces = input.consume(0.2, 0.2 + 1 / 120)
+    expect(pieces.map(piece => ({ fromX: piece.fromX, fromY: piece.fromY, x: piece.x, y: piece.y }))).toEqual([
+      { fromX: 100, fromY: 120, x: 200, y: 80 },
+      { fromX: 200, fromY: 80, x: 300, y: 120 }
+    ])
+    expect(input.hasPending).toBe(false)
+  })
+
   it.each([0.02, 0.8])('keeps the first coalesced sweep after an empty clock advances to %ss', at => {
     const target = engine()
     target.advanceTo(at)
