@@ -150,7 +150,6 @@ npx playwright install --with-deps chromium webkit firefox
 ## 资源、隐私与使用边界
 
 - [资源权利说明](docs/asset-rights.md)
-- [docs/album-cover-sources.md](docs/album-cover-sources.md)
 - [docs/privacy-release-checklist.md](docs/privacy-release-checklist.md)
 - [docs/security-privacy-decisions.md](docs/security-privacy-decisions.md)
 

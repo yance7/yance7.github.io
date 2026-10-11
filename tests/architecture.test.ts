@@ -3,7 +3,6 @@ import { resolve } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
 import { htmlPageEntries, isPageKey, pageEntries, pageRegistry } from '../src/data/pageRegistry'
 import { getConcertState } from '../src/data/concerts'
-import { useAlbumSpotlight } from '../src/composables/useAlbumSpotlight'
 import { createImagePreloader, loadImage, type PreloadImage } from '../src/utils/imagePreload'
 import { decodeHashTarget, retryAsync } from '../src/utils/navigation'
 import type { YanceButtonSize, YanceButtonVariant } from '../src/components/yanceButtonTypes'
@@ -16,7 +15,6 @@ describe('page registry', () => {
     expect(htmlPageEntries.map((entry) => entry.htmlName)).toEqual([
       'index', 'academics', 'honors', 'research', 'works', 'concerts', '404'
     ])
-    expect(pageRegistry.concerts.sectionIds).toContain('album-frequencies')
     expect('nav' in pageRegistry.research).toBe(false)
     expect('sections' in pageRegistry.academics).toBe(false)
     expect(pageRegistry.academics.sectionIds).toEqual(['sec-education', 'sec-scoreboard', 'sec-ap-archive'])
@@ -71,23 +69,7 @@ describe('critical rendering contracts', () => {
     expect(startup).toContain('mountApp()\nscheduleFonts()')
   })
 
-  it('contains the album grid before it enters the viewport', () => {
-    const albumWall = readFileSync(resolve(process.cwd(), 'src/components/AlbumWall.vue'), 'utf8')
 
-    expect(albumWall).toContain('content-visibility: auto')
-    expect(albumWall).toContain('contain-intrinsic-size: auto 1400px')
-    expect(albumWall).toContain('contain-intrinsic-size: auto 680px')
-  })
-
-  it('preloads the first concert album cover before the async page chunk mounts', () => {
-    const concertsHtml = readFileSync(resolve(process.cwd(), 'html-src/concerts.html'), 'utf8').replace(/\r\n/g, '\n')
-
-    expect(concertsHtml).toContain('<link\n    rel="preload"\n    as="image"')
-    expect(concertsHtml).toContain('/assets/albums/thumbs/jay-fantasy-640.webp')
-    expect(concertsHtml).toContain('imagesrcset="/assets/albums/thumbs/jay-fantasy-640.webp 640w, /assets/albums/thumbs/jay-fantasy-1200.webp 1200w"')
-    expect(concertsHtml).toContain('imagesizes="(min-width: 1180px) 36vw, (min-width: 768px) 42vw, 82vw"')
-    expect(concertsHtml).toContain('fetchpriority="high"')
-  })
 
   it('keeps archive hero copy on its deterministic entrance animation', () => {
     const hero = readFileSync(resolve(process.cwd(), 'src/components/ArchiveHero.vue'), 'utf8')
@@ -150,50 +132,6 @@ describe('concert state snapshots', () => {
   })
 })
 
-describe('album spotlight state machine', () => {
-  it('commits the latest request and exposes loading/error transitions', async () => {
-    const resolvers: Array<(loaded: boolean) => void> = []
-    const signals: AbortSignal[] = []
-    const load = vi.fn((_index: number, signal: AbortSignal) => {
-      signals.push(signal)
-      return new Promise<boolean>((resolve) => resolvers.push(resolve))
-    })
-    const spotlight = useAlbumSpotlight(3, load)
-
-    const first = spotlight.select(1)
-    expect(spotlight.state.value).toMatchObject({ selected: 1, displayed: 0, status: 'loading' })
-    const second = spotlight.select(2)
-    expect(spotlight.state.value.selected).toBe(2)
-    expect(signals[0]?.aborted).toBe(true)
-
-    resolvers[0]?.(true)
-    await first
-    expect(spotlight.state.value).toMatchObject({ selected: 2, displayed: 0, status: 'loading' })
-
-    resolvers[1]?.(false)
-    await second
-    expect(spotlight.state.value).toMatchObject({ selected: 2, displayed: 0, status: 'error' })
-  })
-
-  it('retries failed selections and caches successful selections', async () => {
-    const results = [false, true, true]
-    const load = vi.fn(async () => results.shift() ?? false)
-    const spotlight = useAlbumSpotlight(3, load)
-
-    await spotlight.select(1)
-    expect(spotlight.state.value).toMatchObject({ selected: 1, displayed: 0, status: 'error' })
-
-    await spotlight.select(1)
-    expect(spotlight.state.value).toMatchObject({ selected: 1, displayed: 1, status: 'ready' })
-
-    await spotlight.select(0)
-    expect(spotlight.state.value).toMatchObject({ selected: 0, displayed: 0, status: 'ready' })
-
-    await spotlight.select(1)
-    expect(spotlight.state.value).toMatchObject({ selected: 1, displayed: 1, status: 'ready' })
-    expect(load).toHaveBeenCalledTimes(3)
-  })
-})
 
 describe('decoded image loading', () => {
   it('waits for decode and treats decode failures as load failures', async () => {
@@ -446,7 +384,6 @@ describe('shared UI correction contracts', () => {
     const header = readFileSync(resolve(process.cwd(), 'src/components/SiteHeader.vue'), 'utf8')
     const footer = readFileSync(resolve(process.cwd(), 'src/components/SiteFooter.vue'), 'utf8')
     const theme = readFileSync(resolve(process.cwd(), 'src/components/ThemeOrbit.vue'), 'utf8')
-    const album = readFileSync(resolve(process.cwd(), 'src/components/AlbumWall.vue'), 'utf8')
     const project = readFileSync(resolve(process.cwd(), 'src/components/ProjectShowcase.vue'), 'utf8')
     const shell = readFileSync(resolve(process.cwd(), 'src/styles/shell.css'), 'utf8')
 
@@ -457,7 +394,6 @@ describe('shared UI correction contracts', () => {
     expect(footer).toContain('<FooterContactIcon :name="contact.key" />')
     expect(footer).not.toContain('Yance.')
     expect(theme).toContain(':aria-label="`${theme === \'light\' ? messages.theme.switchToDark : messages.theme.switchToLight}: ${theme === \'light\' ? messages.theme.light : messages.theme.dark}`"')
-    expect(album).toContain(':aria-label="`${album.title} ${album.artist} · ${album.year}, ${formatLabel(album)}`"')
     expect(project).toContain(':aria-label="`${messages.actions.enterProject}: ${project.domain}`"')
     expect(shell).toMatch(/\.locale-switcher-desktop\s*\{[\s\S]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/)
     expect(shell).toMatch(/\.locale-switcher-desktop a\s*\{[\s\S]*min-height: 28px;/)
