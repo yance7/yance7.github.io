@@ -28,6 +28,7 @@ let engine: HomeHeroParticleEngine | null = null
 let renderer: HomeHeroParticleRenderer | null = null
 let ambient: HomeHeroParticle[] = []
 let frameId = 0
+let frameFallback = 0
 let generation = 0
 let disposed = false
 let firstScene = true
@@ -60,9 +61,18 @@ function colors(): HomeHeroParticleColors {
 }
 function clearFrame() {
   if (frameId) cancelAnimationFrame(frameId)
+  if (frameFallback) clearTimeout(frameFallback)
   frameId = 0
+  frameFallback = 0
 }
-function schedule() { if (!frameId && running()) frameId = requestAnimationFrame(animate) }
+function schedule() {
+  if (frameId || frameFallback || !running()) return
+  frameId = requestAnimationFrame(animate)
+  // Some foreground WebKit loads stop delivering RAF callbacks temporarily.
+  // Share one pending frame with a bounded fallback, cancelled by normal RAF
+  // delivery and every lifecycle pause. Settled scenes schedule neither.
+  frameFallback = window.setTimeout(animate, 250)
+}
 function clearScene() {
   clearFrame()
   renderer?.destroy()
@@ -101,7 +111,7 @@ function updateState(at: number) {
   particleState.value = at < introUntil ? 'gathering' : !engine?.active.size ? 'settled' : engine.pointer.connected ? 'disturbed' : 'recovering'
 }
 function animate() {
-  frameId = 0
+  clearFrame()
   // A browser can update the query without delivering its change event (for
   // example during native pinch emulation). Never leave a stale dynamic canvas.
   if (!disposed && !allowed()) {

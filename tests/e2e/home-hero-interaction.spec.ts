@@ -484,6 +484,35 @@ test('@particle-v2 consumes live input when RAF timestamps lag behind the event 
   await expect(stage).toHaveAttribute('data-moving-particle-count', '0', { timeout: 1500 })
 })
 
+test('@particle-v2 finishes visible recovery when animation frame callbacks stop arriving', async ({ page }) => {
+  await page.addInitScript(() => {
+    const requestFrame = window.requestAnimationFrame.bind(window)
+    window.requestAnimationFrame = callback => requestFrame(time => {
+      if (!(window as Window & { stopHeroFrames?: boolean }).stopHeroFrames) callback(time)
+    })
+  })
+  await page.goto('/')
+  await waitForSettledHero(page)
+  const stage = page.locator('.home-hero-particles')
+  await stage.scrollIntoViewIfNeeded()
+  await savePixels(page)
+  await stage.evaluate(element => {
+    const bounds = element.getBoundingClientRect()
+    element.dispatchEvent(new PointerEvent('pointermove', { pointerId: 1, pointerType: 'mouse',
+      clientX: bounds.left + bounds.width * 0.5, clientY: bounds.top + bounds.height * 0.46 }))
+  })
+  await expect(stage).toHaveAttribute('data-particle-state', 'disturbed')
+  expect(await changedPixels(page)).toBeGreaterThan(100)
+  await stage.evaluate(element => {
+    const target = window as Window & { stopHeroFrames?: boolean }
+    target.stopHeroFrames = true
+    element.dispatchEvent(new PointerEvent('pointerleave', { pointerId: 1, pointerType: 'mouse' }))
+  })
+  await expect(stage).toHaveAttribute('data-moving-particle-count', '0', { timeout: 1500 })
+  await expect(stage).toHaveAttribute('data-ambient-count', '0', { timeout: 3500 })
+  expect(await changedPixels(page)).toBe(0)
+})
+
 test('@particle-v2 preserves a disturbance across the intro deadline', async ({ page, isMobile }) => {
   await page.setViewportSize({ width: isMobile ? 390 : 1440, height: 1100 })
   // Observe the intro before waiting for unrelated page assets to finish.
