@@ -12,11 +12,12 @@ interface Bounds { left: number; top: number; right: number; bottom: number }
 const TILE_SIZE = 64
 
 function getHomeHeroParticleTrail(p: HomeHeroParticle) {
+  if (p.kind !== 'word') return { x: p.x, y: p.y, length: 0 }
   const dx = p.x - p.homeX
   const dy = p.y - p.homeY
   const displacement = Math.hypot(dx, dy)
   const speed = Math.hypot(p.vx, p.vy)
-  if (p.kind !== 'word' || displacement < 1 || speed < 12) return { x: p.x, y: p.y, length: 0 }
+  if (displacement < 1 || speed < 12) return { x: p.x, y: p.y, length: 0 }
   const x = dx * 0.65 + p.vx * 0.028
   const y = dy * 0.65 + p.vy * 0.028
   const magnitude = Math.hypot(x, y)
@@ -83,7 +84,6 @@ export class HomeHeroParticleRenderer {
       return
     }
     const active = new Set(particles.map(p => p.id))
-    const tiles = new Map<number, HomeHeroParticle[]>()
     const currentTiles = new Set<number>()
     for (const p of particles) {
       const trail = getHomeHeroParticleTrail(p)
@@ -91,9 +91,6 @@ export class HomeHeroParticleRenderer {
         right: Math.max(p.x, p.homeX, trail.x) + 4, bottom: Math.max(p.y, p.homeY, trail.y) + 4 }
       for (const tile of this.tilesFor(bounds)) {
         currentTiles.add(tile)
-        const bucket = tiles.get(tile)
-        if (bucket) bucket.push(p)
-        else tiles.set(tile, [p])
       }
     }
     const dirty = new Set([...this.previousTiles, ...currentTiles])
@@ -106,27 +103,45 @@ export class HomeHeroParticleRenderer {
       this.drawDynamic(this.context, particles)
       this.stats.fullRestores += 1
     } else {
+      const cachedTiles = new Set<number>()
+      const changedHomeTiles = new Set<number>()
+      const settledHomes = new Map<number, HomeHeroParticle>()
       for (const tile of dirty) {
-        const x = tile % this.columns * TILE_SIZE
-        const y = Math.floor(tile / this.columns) * TILE_SIZE
-        const width = Math.min(TILE_SIZE, this.options.scene.width - x)
-        const height = Math.min(TILE_SIZE, this.options.scene.height - y)
         const homes = this.homeTiles.get(tile) ?? []
-        this.context.save()
-        this.context.beginPath()
-        this.context.rect(x, y, width, height)
-        this.context.clip()
-        this.context.clearRect(x, y, width, height)
-        if (homes.some(p => active.has(p.id))) this.drawHomes(this.context, homes.filter(p => !active.has(p.id)))
-        else {
-          const ratio = this.options.pixelRatio
-          this.context.drawImage(this.master, x * ratio, y * ratio, width * ratio, height * ratio, x, y, width, height)
-        }
-        this.drawDynamic(this.context, tiles.get(tile) ?? [])
-        this.context.restore()
+        if (homes.some(p => active.has(p.id))) {
+          changedHomeTiles.add(tile)
+          for (const p of homes) if (!active.has(p.id)) settledHomes.set(p.id, p)
+        } else cachedTiles.add(tile)
       }
+      // Union clips retain local restoration while submitting each dot only
+      // once, even when its home, displacement and trail span several tiles.
+      this.clipTiles(dirty, () => {
+        this.context.clearRect(0, 0, this.options.scene.width, this.options.scene.height)
+        if (cachedTiles.size) this.clipTiles(cachedTiles, () => {
+          this.context.drawImage(this.master, 0, 0, this.master.width, this.master.height, 0, 0,
+            this.master.width / this.options.pixelRatio, this.master.height / this.options.pixelRatio)
+        })
+        if (changedHomeTiles.size) this.clipTiles(changedHomeTiles, () => {
+          this.drawHomes(this.context, [...settledHomes.values()])
+        })
+        this.drawDynamic(this.context, particles)
+      })
     }
     this.previousTiles = currentTiles
+  }
+
+  private clipTiles(tiles: ReadonlySet<number>, draw: () => void) {
+    this.context.save()
+    this.context.beginPath()
+    for (const tile of tiles) {
+      const x = tile % this.columns * TILE_SIZE
+      const y = Math.floor(tile / this.columns) * TILE_SIZE
+      this.context.rect(x, y, Math.min(TILE_SIZE, this.options.scene.width - x), Math.min(TILE_SIZE, this.options.scene.height - y))
+    }
+    this.context.clip()
+    try { draw() } finally {
+      this.context.restore()
+    }
   }
 
   destroy() {

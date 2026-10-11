@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   advanceHomeHeroParticles,
   createHomeHeroPointerInput,
@@ -70,6 +70,16 @@ describe('HomeHero text particle sampling', () => {
 })
 
 describe('HomeHero particle physics', () => {
+  it('skips speed and acceleration norms already determined by recovery state', () => {
+    const particle = createParticle({ x: 120 })
+    const hypot = vi.spyOn(Math, 'hypot')
+    try {
+      expect(advanceHomeHeroParticles([particle], null, 1 / 120)).toBe(true)
+      expect(hypot).not.toHaveBeenCalled()
+      expect(particle.x).toBeLessThan(120)
+    } finally { hypot.mockRestore() }
+  })
+
   it('low-pass filters pointer velocity while preserving its swept segment', () => {
     const pointer = createHomeHeroPointerInput(
       { x: 10, y: 20, vx: 0, vy: 0 },

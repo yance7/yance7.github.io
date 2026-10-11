@@ -424,6 +424,27 @@ test('@particle-v2 consumes one touch stream and cancels multi-touch without con
   expect(await changedPixels(page)).toBe(0)
 })
 
+test('@particle-v2 consumes live input when RAF timestamps lag behind the event clock', async ({ page, isMobile }) => {
+  await page.setViewportSize({ width: isMobile ? 390 : 1440, height: 1100 })
+  await page.addInitScript(() => {
+    const requestFrame = window.requestAnimationFrame.bind(window)
+    window.requestAnimationFrame = callback => requestFrame(() => callback(performance.now() - 300))
+  })
+  await page.goto('/')
+  await waitForSettledHero(page)
+  const stage = page.locator('.home-hero-particles')
+  await stage.evaluate(element => {
+    const bounds = element.getBoundingClientRect()
+    element.dispatchEvent(new PointerEvent('pointermove', { pointerId: 1, pointerType: 'mouse',
+      clientX: bounds.left + bounds.width * 0.5, clientY: bounds.top + bounds.height * 0.46 }))
+  })
+  await frames(page, 2)
+  expect(Number(await stage.getAttribute('data-peak-candidates'))).toBeGreaterThan(0)
+  await expect(stage).toHaveAttribute('data-particle-state', 'disturbed')
+  await stage.evaluate(element => element.dispatchEvent(new PointerEvent('pointerleave', { pointerId: 1, pointerType: 'mouse' })))
+  await expect(stage).toHaveAttribute('data-moving-particle-count', '0', { timeout: 1500 })
+})
+
 test('@particle-v2 preserves a disturbance across the intro deadline', async ({ page, isMobile }) => {
   await page.setViewportSize({ width: isMobile ? 390 : 1440, height: 1100 })
   await page.goto('/')

@@ -147,8 +147,9 @@ function integrate(p: HomeHeroParticle, inputs: readonly HomeHeroPointerPiece[],
   let underPointer = false
   for (const input of inputs) {
     const offset = distanceToHomeHeroSweep(p.x, p.y, input)
-    const distance = Math.hypot(offset.dx, offset.dy)
-    if (distance >= radius) continue
+    const distanceSquared = offset.dx * offset.dx + offset.dy * offset.dy
+    if (distanceSquared >= radius * radius) continue
+    const distance = Math.sqrt(distanceSquared)
     const falloff = 1 - distance / radius
     const weight = input.duration / seconds * (p.kind === 'field' ? 0.48 : 1)
     const angle = p.id * 2.399963229728653
@@ -160,30 +161,34 @@ function integrate(p: HomeHeroParticle, inputs: readonly HomeHeroPointerPiece[],
   }
   const dx = p.x - p.homeX
   const dy = p.y - p.homeY
-  const displacement = Math.hypot(dx, dy)
-  if (displacement > radius * 1.1) {
+  const displacementSquared = dx * dx + dy * dy
+  if (displacementSquared > (radius * 1.1) ** 2) {
+    const displacement = Math.sqrt(displacementSquared)
     const constraint = 140 * (displacement - radius * 1.1) / displacement
     ax -= dx * constraint
     ay -= dy * constraint
   }
   p.vx += ax * seconds
   p.vy += ay * seconds
-  const speed = Math.hypot(p.vx, p.vy)
   const limit = mobile ? 390 : 520
-  if (speed > limit) {
+  if (p.vx * p.vx + p.vy * p.vy > limit * limit) {
+    const speed = Math.hypot(p.vx, p.vy)
     p.vx *= limit / speed
     p.vy *= limit / speed
   }
   p.x += p.vx * seconds
   p.y += p.vy * seconds
-  const offset = Math.hypot(p.x - p.homeX, p.y - p.homeY)
-  if (offset > radius * 1.65) {
+  const homeDx = p.x - p.homeX
+  const homeDy = p.y - p.homeY
+  const offsetSquared = homeDx * homeDx + homeDy * homeDy
+  if (offsetSquared > (radius * 1.65) ** 2) {
+    const offset = Math.sqrt(offsetSquared)
     p.x = p.homeX + (p.x - p.homeX) * radius * 1.65 / offset
     p.y = p.homeY + (p.y - p.homeY) * radius * 1.65 / offset
     p.vx *= 0.4
     p.vy *= 0.4
   }
-  if (!underPointer && offset < 0.25 && Math.hypot(p.vx, p.vy) < 2.5) {
+  if (!underPointer && offsetSquared < 0.25 ** 2 && p.vx * p.vx + p.vy * p.vy < 2.5 ** 2) {
     p.settledForMs += seconds * 1000
     if (p.settledForMs >= 40) {
       p.x = p.homeX
@@ -192,7 +197,7 @@ function integrate(p: HomeHeroParticle, inputs: readonly HomeHeroPointerPiece[],
       p.vy = 0
     }
   } else p.settledForMs = 0
-  return Math.hypot(p.vx, p.vy) > 0.6 || Math.hypot(ax, ay) > 3 || !underPointer && p.settledForMs < 40
+  return !underPointer && p.settledForMs < 40 || p.vx * p.vx + p.vy * p.vy > 0.6 ** 2 || ax * ax + ay * ay > 3 ** 2
 }
 
 export function advanceHomeHeroParticles(particles: HomeHeroParticle[], pointer: HomeHeroPointerInput | null, deltaSeconds: number, options: HomeHeroParticlePhysicsOptions = {}): boolean {

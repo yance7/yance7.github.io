@@ -100,11 +100,13 @@ function updateState(at: number) {
   peakCandidates.value = engine?.stats.peakCandidates ?? 0
   particleState.value = at < introUntil ? 'gathering' : !engine?.active.size ? 'settled' : engine.pointer.connected ? 'disturbed' : 'recovering'
 }
-function animate(timestamp: number) {
+function animate() {
   frameId = 0
   if (!running() || !engine || !renderer) return
-  const at = timestamp / 1000
   const start = performance.now()
+  // WebKit can deliver an RAF timestamp older than live input. Use the same
+  // monotonic clock as input and lifecycle updates, avoiding rewind or lag.
+  const at = start / 1000
   engine.advanceTo(at)
   physicsMs.value = performance.now() - start
   const renderStart = performance.now()

@@ -9,6 +9,22 @@ function context() {
 }
 afterEach(() => vi.unstubAllGlobals())
 describe('HomeHero local cache restoration', () => {
+  it('draws a moving dot and a settled boundary neighbor once across dirty tiles', () => {
+    const visible = context()
+    const master = context()
+    vi.stubGlobal('document', { createElement: () => ({ width: 0, height: 0, getContext: () => master }) })
+    const scene = createHomeHeroParticleScene({ width: 320, height: 240, gridStep: 5, rgba: new Uint8ClampedArray(320 * 240 * 4).fill(255) })
+    const moving = scene.particles.find(p => p.homeX === 62.5 && p.homeY === 62.5)!
+    const neighbor = scene.particles.find(p => p.homeX === 62.5 && p.homeY === 67.5)!
+    const renderer = new HomeHeroParticleRenderer({ getContext: () => visible } as unknown as HTMLCanvasElement,
+      { scene, pixelRatio: 2, ambient: [], colors: { word: '#123', field: '#456', trail: '#789', ambient: '#abc' } })
+    moving.x += 16
+    visible.arc.mockClear()
+    renderer.drawActive([moving])
+    expect(visible.arc.mock.calls.filter(call => call[0] === moving.x && call[1] === moving.y)).toHaveLength(1)
+    expect(visible.arc.mock.calls.filter(call => call[0] === neighbor.homeX && call[1] === neighbor.homeY)).toHaveLength(1)
+  })
+
   it('excludes every active home while retaining a neighboring settled dot', () => {
     const visible = context()
     const master = context()
