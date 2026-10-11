@@ -4,7 +4,6 @@ import { pageRegistry, pageEntries, type PageKey } from '../pageRegistry.ts'
 import { honorStats, honors } from '../honors.ts'
 import { research } from '../research.ts'
 import { projects } from '../projects.ts'
-import { albums } from '../albums.ts'
 import { concerts, isConcertUpcoming } from '../concerts.ts'
 import type { Concert, Honor, PageMeta, Project, ResearchItem, SiteNavItem, World } from '../types.ts'
 import type { Locale } from '../../i18n/types.ts'
@@ -15,7 +14,6 @@ import { honorsCopy as zhCNHonors } from './zh-CN/honors.ts'
 import { researchCopy as zhCNResearch } from './zh-CN/research.ts'
 import { projectsCopy as zhCNProjects } from './zh-CN/projects.ts'
 import { concertsCopy as zhCNConcerts } from './zh-CN/concerts.ts'
-import { albumCopy as zhCNAlbums } from './zh-CN/albums.ts'
 import { communityCopy as zhCNCommunity } from './zh-CN/community.ts'
 import { siteCopy as zhHKSite } from './zh-HK/site.ts'
 import { academicsCopy as zhHKAcademics } from './zh-HK/academics.ts'
@@ -23,7 +21,6 @@ import { honorsCopy as zhHKHonors } from './zh-HK/honors.ts'
 import { researchCopy as zhHKResearch } from './zh-HK/research.ts'
 import { projectsCopy as zhHKProjects } from './zh-HK/projects.ts'
 import { concertsCopy as zhHKConcerts } from './zh-HK/concerts.ts'
-import { albumCopy as zhHKAlbums } from './zh-HK/albums.ts'
 import { communityCopy as zhHKCommunity } from './zh-HK/community.ts'
 import { siteCopy as enSite } from './en/site.ts'
 import { academicsCopy as enAcademics } from './en/academics.ts'
@@ -31,13 +28,12 @@ import { honorsCopy as enHonors } from './en/honors.ts'
 import { researchCopy as enResearch } from './en/research.ts'
 import { projectsCopy as enProjects } from './en/projects.ts'
 import { concertsCopy as enConcerts } from './en/concerts.ts'
-import { albumCopy as enAlbums } from './en/albums.ts'
 import { communityCopy as enCommunity } from './en/community.ts'
 
 const localeContent: Record<Locale, LocaleContent> = {
-  'zh-CN': { site: zhCNSite, academics: zhCNAcademics, honors: zhCNHonors, research: zhCNResearch, projects: zhCNProjects, concerts: zhCNConcerts, albums: zhCNAlbums, community: zhCNCommunity, status: uiMessages['zh-CN'].status },
-  'zh-HK': { site: zhHKSite, academics: zhHKAcademics, honors: zhHKHonors, research: zhHKResearch, projects: zhHKProjects, concerts: zhHKConcerts, albums: zhHKAlbums, community: zhHKCommunity, status: uiMessages['zh-HK'].status },
-  en: { site: enSite, academics: enAcademics, honors: enHonors, research: enResearch, projects: enProjects, concerts: enConcerts, albums: enAlbums, community: enCommunity, status: uiMessages.en.status }
+  'zh-CN': { site: zhCNSite, academics: zhCNAcademics, honors: zhCNHonors, research: zhCNResearch, projects: zhCNProjects, concerts: zhCNConcerts, community: zhCNCommunity, status: uiMessages['zh-CN'].status },
+  'zh-HK': { site: zhHKSite, academics: zhHKAcademics, honors: zhHKHonors, research: zhHKResearch, projects: zhHKProjects, concerts: zhHKConcerts, community: zhHKCommunity, status: uiMessages['zh-HK'].status },
+  en: { site: enSite, academics: enAcademics, honors: enHonors, research: enResearch, projects: enProjects, concerts: enConcerts, community: enCommunity, status: uiMessages.en.status }
 } satisfies Record<Locale, LocaleContent>
 
 function content(locale: Locale) {
@@ -142,15 +138,6 @@ export function getLocalizedProjects(locale: Locale): Project[] {
 
 export function getLocalizedProjectSection(locale: Locale) {
   return content(locale).projects.section
-}
-
-export function getLocalizedAlbums(locale: Locale) {
-  const copies = content(locale).albums.entities
-  return albums.map((album) => ({ ...album, ...(copies[album.id] ?? {}) }))
-}
-
-export function getLocalizedAlbumSection(locale: Locale) {
-  return content(locale).albums.section
 }
 
 export function getLocalizedConcerts(locale: Locale): Concert[] {

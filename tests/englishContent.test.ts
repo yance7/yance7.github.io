@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { pageEntries } from '../src/data/pageRegistry'
 import {
-  getLocalizedAlbumSection,
-  getLocalizedAlbums,
   getLocalizedAcademics,
   getLocalizedCommunity,
   getLocalizedConcertSection,
@@ -85,8 +83,6 @@ describe('English content hygiene', () => {
     getLocalizedResearchSections('en'),
     getLocalizedProjects('en'),
     getLocalizedProjectSection('en'),
-    getLocalizedAlbums('en'),
-    getLocalizedAlbumSection('en'),
     getLocalizedConcerts('en'),
     getLocalizedConcertSection('en'),
     getLocalizedCommunity('en')
@@ -127,7 +123,7 @@ describe('English content hygiene', () => {
     for (const oldTitle of oldTitles) expect(titles).not.toContain(oldTitle)
   })
 
-  it('uses natural English labels for archive actions and album collections', () => {
+  it('uses natural English labels for archive actions', () => {
     const strings = englishSources.flatMap(collectStrings)
     for (const legacy of [
       'Personal archive entrance',
@@ -143,7 +139,6 @@ describe('English content hygiene', () => {
 
     expect(getLocalizedNavItems('en')[0]).toMatchObject({ desc: 'Personal archive overview' })
     expect(getLocalizedAcademics('en').sections.apArchive.copy).toContain('Scores of 5 on nine AP exams')
-    expect(getLocalizedAlbumSection('en').accent).toBe('eight albums to revisit')
     expect(uiMessages.en.common.proofLinks).toBe('Evidence & links')
     expect(uiMessages.en.actions.enterProject).toBe('View project')
     expect(uiMessages.en.actions.exploreAcademics).toBe('View academic profile')

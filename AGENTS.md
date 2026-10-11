@@ -5,7 +5,7 @@
 - `src/` — Vue 3 source code:
   - `components/` — reusable PascalCase `.vue` components
   - `pages/` — one component per page (Home, Academics, Honors, Research, Works, Concerts, 404)
-  - `composables/` — `useX.ts` helpers (theme, scroll progress, modal and album state)
+  - `composables/` — `useX.ts` helpers (theme, scroll progress, modal, and page interaction state)
   - `directives/` — custom Vue directives
   - `data/` — page-scoped content modules, `index.ts` public exports, and `types.ts` contracts
   - `styles/` — base, content, responsive, shell, and works stylesheets

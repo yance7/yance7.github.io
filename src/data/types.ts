@@ -10,7 +10,6 @@ export type Status =
 type ProofType = 'paper' | 'source' | 'demo' | 'dataset' | 'experiment' | 'deployment'
 export type HonorLevel = 'peak' | 'excellent' | 'emerging'
 export type NonEmptyArray<T> = [T, ...T[]]
-export type ReadonlyNonEmptyArray<T> = readonly [T, ...T[]]
 export type { PageKey } from './pageRegistry.ts'
 import type { PageKey } from './pageRegistry.ts'
 
@@ -126,17 +125,6 @@ export interface ConcertPoster {
   file: string
   width: number
   height: number
-}
-
-export interface Album {
-  id: string
-  artist: string
-  title: string
-  year: number
-  format: 'album' | 'ep'
-  cover: string
-  appleMusicUrl: string
-  palette: readonly [string, string]
 }
 
 export interface Honor {

@@ -14,7 +14,6 @@
 ## 媒体与发布
 
 - [资源权利说明](asset-rights.md)：仓库媒体资源的使用边界与核验说明。
-- [专辑封面来源](album-cover-sources.md)：专辑封面来源与记录。
 - [隐私发布检查清单](privacy-release-checklist.md)：发布前的隐私检查项目。
 - [安全与隐私决策](security-privacy-decisions.md)：安全和隐私相关的工程决策记录。
 

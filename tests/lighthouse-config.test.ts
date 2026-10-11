@@ -79,7 +79,6 @@ describe('Lighthouse quality matrix', () => {
       'theme-toggle',
       'mobile-menu',
       'honor-filter',
-      'album-selection',
       'lightbox-open',
       'lightbox-close'
     ]) {
