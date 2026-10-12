@@ -9,15 +9,15 @@ describe('HomeHero static contract', () => {
   it('publishes the approved final copy for all locales', () => {
     expect(getLocalizedHomeCopy('zh-CN')).toMatchObject({
       heroGreeting: '你好，我是 Yance',
-      heroStatement: '研究、构建，与现场相遇'
+      heroStatement: '欢迎来到我的世界'
     })
     expect(getLocalizedHomeCopy('zh-HK')).toMatchObject({
       heroGreeting: '你好，我是 Yance',
-      heroStatement: '研究、建構，與現場相遇'
+      heroStatement: '歡迎來到我的世界'
     })
     expect(getLocalizedHomeCopy('en')).toMatchObject({
       heroGreeting: 'Hi, I’m Yance',
-      heroStatement: 'Research, build, and meet the live world'
+      heroStatement: 'Welcome to my world'
     })
   })
 

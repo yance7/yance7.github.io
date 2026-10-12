@@ -3,17 +3,17 @@ import { expect, test } from '@playwright/test'
 const locales = [
   {
     route: '/',
-    semanticTitle: '你好，我是 Yance 研究、构建，与现场相遇',
+    semanticTitle: '你好，我是 Yance 欢迎来到我的世界',
     displayFont: 'Noto Sans SC Variable'
   },
   {
     route: '/zh-hk/',
-    semanticTitle: '你好，我是 Yance 研究、建構，與現場相遇',
+    semanticTitle: '你好，我是 Yance 歡迎來到我的世界',
     displayFont: 'Noto Sans HK Variable'
   },
   {
     route: '/en/',
-    semanticTitle: 'Hi, I’m Yance Research, build, and meet the live world',
+    semanticTitle: 'Hi, I’m Yance Welcome to my world',
     displayFont: 'Georgia'
   }
 ] as const

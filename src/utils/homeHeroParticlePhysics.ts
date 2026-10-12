@@ -142,123 +142,109 @@ export class HomeHeroPointerTimeline {
   }
 }
 
-function integrate(p: HomeHeroParticle, inputs: readonly HomeHeroPointerPiece[], seconds: number, radius: number, mobile: boolean) {
-  let ax = (p.homeX - p.x) * 42 - p.vx * 10.5
-  let ay = (p.homeY - p.y) * 42 - p.vy * 10.5
-  let underPointer = false
+const POINT_TAU_SECONDS = 0.028
+const RECOVERY_TAU_SECONDS = 0.052
+const POINTER_TAU_SECONDS = 0.075
+const SWEEP_LIFETIME_SECONDS = 0.07
+const MAX_OFFSET_CSS_PX = 54
+const SETTLE_DISTANCE_CSS_PX = 0.03
+const GATHER_DURATION_SECONDS = 1.3
+const GATHER_DELAY_SECONDS = 0.28
+
+export function getHomeHeroGlyphInfluence(distance: number, outerRadius: number): number {
+  if (!Number.isFinite(distance) || !Number.isFinite(outerRadius) || outerRadius <= 0) return 0
+  const outer = Math.max(0, 1 - Math.max(0, distance) / outerRadius)
+  const inner = Math.max(0, 1 - Math.max(0, distance) / (outerRadius * 0.28))
+  return 12 * outer * outer + 34 * inner * inner
+}
+
+interface PreparedPointer extends HomeHeroPointerInput { carryX: number; carryY: number }
+function preparePointer(input: HomeHeroPointerInput): PreparedPointer {
+  const speed = Math.sqrt(input.vx * input.vx + input.vy * input.vy)
+  const carry = speed > 0 ? Math.min(10, speed / 160) / speed : 0
+  return { ...input, carryX: input.vx * carry, carryY: input.vy * carry }
+}
+
+function targetOffset(p: HomeHeroParticle, baseX: number, baseY: number, inputs: readonly PreparedPointer[], radius: number) {
+  let x = 0
+  let y = 0
+  let strongest = 0
   for (const input of inputs) {
-    const offset = distanceToHomeHeroSweep(p.x, p.y, input)
-    const distanceSquared = offset.dx * offset.dx + offset.dy * offset.dy
+    let offset = distanceToHomeHeroSweep(baseX, baseY, input)
+    let distanceSquared = offset.dx * offset.dx + offset.dy * offset.dy
+    // A displaced particle remains touchable even when its home lies outside
+    // the influence radius. Inside the radius, the stable base avoids feedback.
+    if (distanceSquared >= radius * radius) {
+      offset = distanceToHomeHeroSweep(p.x, p.y, input)
+      distanceSquared = offset.dx * offset.dx + offset.dy * offset.dy
+    }
     if (distanceSquared >= radius * radius) continue
     const distance = Math.sqrt(distanceSquared)
-    const falloff = 1 - distance / radius
-    const weight = input.duration / seconds * (p.kind === 'field' ? 0.48 : 1)
-    const angle = p.id * 2.399963229728653
+    const strength = getHomeHeroGlyphInfluence(distance, radius)
+    if (!strength) continue
+    const angle = (p.id + 1) * 2.399963229728653
     const nx = distance > 0.001 ? offset.dx / distance : Math.cos(angle)
     const ny = distance > 0.001 ? offset.dy / distance : Math.sin(angle)
-    ax += (nx * 2500 * falloff * falloff + 8 * falloff * (input.vx - p.vx)) * weight
-    ay += (ny * 2500 * falloff * falloff + 8 * falloff * (input.vy - p.vy)) * weight
-    underPointer = true
-  }
-  const dx = p.x - p.homeX
-  const dy = p.y - p.homeY
-  const displacementSquared = dx * dx + dy * dy
-  if (displacementSquared > (radius * 1.1) ** 2) {
-    const displacement = Math.sqrt(displacementSquared)
-    const constraint = 140 * (displacement - radius * 1.1) / displacement
-    ax -= dx * constraint
-    ay -= dy * constraint
-  }
-  p.vx += ax * seconds
-  p.vy += ay * seconds
-  const limit = mobile ? 390 : 520
-  if (p.vx * p.vx + p.vy * p.vy > limit * limit) {
-    const speed = Math.hypot(p.vx, p.vy)
-    p.vx *= limit / speed
-    p.vy *= limit / speed
-  }
-  p.x += p.vx * seconds
-  p.y += p.vy * seconds
-  const homeDx = p.x - p.homeX
-  const homeDy = p.y - p.homeY
-  const offsetSquared = homeDx * homeDx + homeDy * homeDy
-  if (offsetSquared > (radius * 1.65) ** 2) {
-    const offset = Math.sqrt(offsetSquared)
-    p.x = p.homeX + (p.x - p.homeX) * radius * 1.65 / offset
-    p.y = p.homeY + (p.y - p.homeY) * radius * 1.65 / offset
-    p.vx *= 0.4
-    p.vy *= 0.4
-  }
-  if (!underPointer && offsetSquared < 0.25 ** 2 && p.vx * p.vx + p.vy * p.vy < 2.5 ** 2) {
-    p.settledForMs += seconds * 1000
-    if (p.settledForMs >= 40) {
-      p.x = p.homeX
-      p.y = p.homeY
-      p.vx = 0
-      p.vy = 0
+    const falloff = (1 - distance / radius) ** 2
+    let dx = nx * strength + input.carryX * falloff
+    let dy = ny * strength + input.carryY * falloff
+    const magnitudeSquared = dx * dx + dy * dy
+    if (magnitudeSquared > MAX_OFFSET_CSS_PX ** 2) {
+      const magnitude = Math.sqrt(magnitudeSquared)
+      dx *= MAX_OFFSET_CSS_PX / magnitude
+      dy *= MAX_OFFSET_CSS_PX / magnitude
     }
-  } else p.settledForMs = 0
-  return !underPointer && p.settledForMs < 40 || p.vx * p.vx + p.vy * p.vy > 0.6 ** 2 || ax * ax + ay * ay > 3 ** 2
+    const response = dx * dx + dy * dy
+    if (response > strongest) {
+      x = dx
+      y = dy
+      strongest = response
+    }
+  }
+  return { x, y }
+}
+
+function approach(p: HomeHeroParticle, x: number, y: number, seconds: number, tau: number, alpha = -Math.expm1(-seconds / tau)) {
+  const dx = x - p.x
+  const dy = y - p.y
+  p.vx = dx / tau * (1 - alpha)
+  p.vy = dy / tau * (1 - alpha)
+  p.x += dx * alpha
+  p.y += dy * alpha
+  const distanceSquared = dx * dx + dy * dy
+  const settledRadiusSquared = SETTLE_DISTANCE_CSS_PX ** 2
+  if (distanceSquared >= settledRadiusSquared / (1 - alpha) ** 2) p.settledForMs = 0
+  else {
+    const crossing = distanceSquared > settledRadiusSquared ? tau * Math.log(Math.sqrt(distanceSquared) / SETTLE_DISTANCE_CSS_PX) : 0
+    p.settledForMs = Math.max(0, seconds - crossing) * 1000 + (crossing === 0 ? p.settledForMs : 0)
+  }
+  if (p.settledForMs >= 40) {
+    p.x = x
+    p.y = y
+    p.vx = 0
+    p.vy = 0
+    return false
+  }
+  return true
 }
 
 export function advanceHomeHeroParticles(particles: HomeHeroParticle[], pointer: HomeHeroPointerInput | null, deltaSeconds: number, options: HomeHeroParticlePhysicsOptions = {}): boolean {
-  const seconds = clamp(Number.isFinite(deltaSeconds) ? deltaSeconds : 0, 0, 1 / 30)
-  if (seconds === 0) return particles.some(p => p.settledForMs < 40)
-  const inputs = pointer ? [{ ...pointer, duration: seconds }] : []
+  const seconds = Math.max(0, Number.isFinite(deltaSeconds) ? deltaSeconds : 0)
+  if (!seconds) return particles.some(p => p.settledForMs < 40)
   let moving = false
-  for (const p of particles) moving = integrate(p, inputs, seconds, options.mobile ? 90 : 120, Boolean(options.mobile)) || moving
+  const inputs = pointer ? [preparePointer(pointer)] : []
+  for (const p of particles) {
+    const offset = targetOffset(p, p.homeX, p.homeY, inputs, options.mobile ? 100 : 120)
+    moving = approach(p, p.homeX + offset.x, p.homeY + offset.y, seconds,
+      offset.x || offset.y ? POINT_TAU_SECONDS : RECOVERY_TAU_SECONDS) || moving
+  }
   return moving
 }
 
-function recover(p: HomeHeroParticle, seconds: number, radius: number, mobile: boolean) {
-  const limit = mobile ? 390 : 520
-  const safeEnergy = Math.min((radius * 1.1) ** 2, limit * limit / 42)
-  // Keep the existing speed and displacement constraints until the spring's
-  // energy guarantees that neither bound can be crossed during free recovery.
-  while (seconds > 0 && (p.x - p.homeX) ** 2 + (p.y - p.homeY) ** 2 + (p.vx ** 2 + p.vy ** 2) / 42 > safeEnergy) {
-    const step = Math.min(seconds, HOME_HERO_PARTICLE_FIXED_STEP_SECONDS)
-    integrate(p, [], step, radius, mobile)
-    seconds -= step
-  }
-  if (seconds <= 0 || p.settledForMs >= 40) return
-  const decayRate = 10.5 / 2
-  const frequency = Math.sqrt(42 - decayRate ** 2)
-  const x = p.x - p.homeX
-  const y = p.y - p.homeY
-  const bx = (p.vx + decayRate * x) / frequency
-  const by = (p.vy + decayRate * y) / frequency
-  const velocityX = frequency * bx - decayRate * x
-  const velocityY = frequency * by - decayRate * y
-  const velocityBx = -frequency * x - decayRate * bx
-  const velocityBy = -frequency * y - decayRate * by
-  const decay = Math.exp(-decayRate * seconds)
-  const cosine = Math.cos(frequency * seconds)
-  const sine = Math.sin(frequency * seconds)
-  p.x = p.homeX + decay * (x * cosine + bx * sine)
-  p.y = p.homeY + decay * (y * cosine + by * sine)
-  p.vx = decay * (velocityX * cosine + velocityBx * sine)
-  p.vy = decay * (velocityY * cosine + velocityBy * sine)
-  // The envelope bounds every point of the last 40ms, avoiding snapping at a
-  // fast zero crossing while making recovery independent of rendered frames.
-  const envelope = Math.exp(-2 * decayRate * Math.max(0, seconds - 0.04))
-  if (seconds >= 0.04 && envelope * (x * x + bx * bx + y * y + by * by) < 0.25 ** 2 &&
-    envelope * (velocityX ** 2 + velocityBx ** 2 + velocityY ** 2 + velocityBy ** 2) < 2.5 ** 2) {
-    p.x = p.homeX
-    p.y = p.homeY
-    p.vx = 0
-    p.vy = 0
-    p.settledForMs = 40
-  } else if (x * x + bx * bx + y * y + by * by < 0.25 ** 2 &&
-    velocityX ** 2 + velocityBx ** 2 + velocityY ** 2 + velocityBy ** 2 < 2.5 ** 2) {
-    p.settledForMs += seconds * 1000
-    if (p.settledForMs >= 40) {
-      p.x = p.homeX
-      p.y = p.homeY
-      p.vx = 0
-      p.vy = 0
-    }
-  } else p.settledForMs = 0
-}
+interface GlyphStart { x: number; y: number; seed: number; delay: number }
+interface GlyphOffset { id: number; x: number; y: number; strength: number }
+interface RecentSweep { input: HomeHeroPointerInput; expiresAt: number; offsets?: GlyphOffset[] }
+export type HomeHeroGlyphPhase = 'gathering' | 'settled' | 'disturbed' | 'recovering'
 
 export class HomeHeroParticleEngine {
   readonly pointer = new HomeHeroPointerTimeline()
@@ -267,29 +253,57 @@ export class HomeHeroParticleEngine {
   readonly stats = { candidates: 0, peakCandidates: 0, peakActive: 0 }
   private clock: number
   private previousAt: number
-  private remainder = 0
+  private gatheringStartedAt: number | null = null
+  private starts: GlyphStart[] = []
+  private sweeps: RecentSweep[] = []
+  private smoothedPointer: { x: number; y: number } | null = null
+  private readonly responseX: Float64Array
+  private readonly responseY: Float64Array
+  private readonly responseStrength: Float64Array
   moving = false
-  constructor(readonly scene: HomeHeroParticleScene, private options: HomeHeroParticlePhysicsOptions & { startedAt: number }) {
+
+  constructor(readonly scene: HomeHeroParticleScene, options: HomeHeroParticlePhysicsOptions & { startedAt: number }) {
     this.clock = options.startedAt
     this.previousAt = options.startedAt
     this.pointer.reset(options.startedAt)
-    this.radius = clamp(scene.width * 0.075, 72, 112) * (options.mobile ? 0.75 : 1)
+    this.radius = clamp(scene.width * 0.16, 100, 140)
+    this.responseX = new Float64Array(scene.particles.length)
+    this.responseY = new Float64Array(scene.particles.length)
+    this.responseStrength = new Float64Array(scene.particles.length)
+  }
+
+  get gatheringUntil() {
+    return this.gatheringStartedAt === null ? 0 : this.gatheringStartedAt + GATHER_DURATION_SECONDS + GATHER_DELAY_SECONDS
+  }
+  get phase(): HomeHeroGlyphPhase {
+    if (this.gatheringStartedAt !== null && this.previousAt < this.gatheringUntil) return 'gathering'
+    if (!this.active.size) return 'settled'
+    return this.pointer.connected ? 'disturbed' : 'recovering'
   }
   get needsFrame() {
-    return this.moving || this.pointer.hasPending || this.active.size > 0 && this.remainder > 1e-9
+    return this.moving || this.phase === 'gathering' || this.pointer.hasPending || this.pointer.hasUnconsumedInput
   }
+
   gather() {
-    for (const p of this.scene.particles) {
-      if (p.kind !== 'word') continue
-      const angle = p.id * 2.399963229728653
-      const distance = 8 + (p.id * 13 % 15)
-      p.x += Math.cos(angle) * distance
-      p.y += Math.sin(angle) * distance
+    this.gatheringStartedAt = this.previousAt
+    const spread = clamp(Math.min(this.scene.width * 0.2, this.scene.height * 0.35), 40, 140)
+    this.starts = this.scene.particles.map(p => {
+      const seed = ((Math.imul(p.id + 1, 73856093) ^ Math.imul(p.row + 1, 19349663)) >>> 0) / 4294967296
+      const angle = (p.id + 1) * 2.399963229728653
+      const distance = spread * (0.6 + seed * 0.7)
+      const x = clamp(p.homeX + Math.cos(angle) * distance, 1, this.scene.width - 1)
+      const y = clamp(p.homeY + Math.sin(angle) * distance, 1, this.scene.height - 1)
+      p.x = x
+      p.y = y
+      p.vx = 0
+      p.vy = 0
       p.settledForMs = 0
       this.active.add(p.id)
-    }
+      return { x, y, seed, delay: seed * GATHER_DELAY_SECONDS }
+    })
     this.moving = true
   }
+
   reset(at: number) {
     for (const id of this.active) {
       const p = this.scene.particles[id]!
@@ -303,65 +317,155 @@ export class HomeHeroParticleEngine {
     this.pointer.reset(at)
     this.clock = at
     this.previousAt = at
-    this.remainder = 0
+    this.gatheringStartedAt = null
+    this.starts = []
+    this.sweeps = []
+    this.smoothedPointer = null
     this.moving = false
   }
+
+  private recoverTo(at: number) {
+    const seconds = at - this.clock
+    if (seconds <= 0) return
+    const alpha = -Math.expm1(-seconds / RECOVERY_TAU_SECONDS)
+    for (const id of this.active) {
+      const p = this.scene.particles[id]!
+      if (!approach(p, p.homeX, p.homeY, seconds, RECOVERY_TAU_SECONDS, alpha)) this.active.delete(id)
+    }
+    this.clock = at
+  }
+
+  private mergeOffsets(offsets: readonly GlyphOffset[]) {
+    let added = 0
+    for (const offset of offsets) {
+      const previous = this.responseStrength[offset.id]!
+      if (offset.strength <= previous) continue
+      if (!previous) {
+        this.active.add(offset.id)
+        added += 1
+      }
+      this.responseStrength[offset.id] = offset.strength
+      this.responseX[offset.id] = offset.x
+      this.responseY[offset.id] = offset.y
+    }
+    return added
+  }
+
   advanceTo(at: number) {
     const elapsed = at - this.previousAt
-    const step = HOME_HERO_PARTICLE_FIXED_STEP_SECONDS
     if (!Number.isFinite(elapsed) || elapsed < 0) {
       this.reset(at)
       return
     }
     this.previousAt = at
-    const recoverTo = (finish: number) => {
-      const seconds = finish - this.clock
-      if (seconds <= 0) return
-      for (const id of this.active) {
-        const p = this.scene.particles[id]!
-        recover(p, seconds, this.radius, Boolean(this.options.mobile))
-        if (p.settledForMs >= 40) this.active.delete(id)
-      }
-      this.clock = finish
+    const step = HOME_HERO_PARTICLE_FIXED_STEP_SECONDS
+    const pointAlpha = -Math.expm1(-step / POINT_TAU_SECONDS)
+    const recoveryAlpha = -Math.expm1(-step / RECOVERY_TAU_SECONDS)
+    if (elapsed > 0.75) {
+      const boundedStart = Math.max(this.clock, Math.min(at, this.pointer.endsAt) - 0.75)
+      if (this.gatheringStartedAt === null) this.recoverTo(boundedStart)
+      else this.clock = boundedStart
     }
-    // Bound historical forcing around its event release, never around the
-    // current render time. The remaining interval is genuine free recovery.
-    if (elapsed > 0.75) recoverTo(Math.max(this.clock, Math.min(at, this.pointer.endsAt) - 0.75))
-    this.remainder = at - this.clock
+    this.moving = this.phase === 'gathering' || (!this.pointer.connected && this.active.size > 0)
     let substeps = 0
-    this.moving = false
-    while (this.remainder + 1e-9 >= step && substeps < 90) {
-      if (!this.pointer.connected && !this.pointer.hasPending && !this.pointer.hasUnconsumedInput) {
-        recoverTo(at)
-        this.remainder = 0
+    while (at - this.clock + 1e-9 >= step && substeps < 90) {
+      const gathering = this.gatheringStartedAt !== null && this.clock < this.gatheringUntil
+      this.sweeps = this.sweeps.filter(sweep => sweep.expiresAt > this.clock)
+      if (!gathering && !this.pointer.connected && !this.pointer.hasPending && !this.pointer.hasUnconsumedInput && !this.sweeps.length) {
+        this.smoothedPointer = null
+        this.recoverTo(at)
         this.moving = this.active.size > 0
-        break
+        return
       }
-      substeps += 1
+      // Align the release boundary despite floating point accumulation: a
+      // pending release must be consumed by the step that reaches it.
       const next = this.clock + step
       const finish = Math.abs(next - this.pointer.endsAt) < 1e-9 ? this.pointer.endsAt : next
-      const inputs = this.pointer.consume(this.clock, finish)
-      const candidates = new Set<number>()
-      for (const input of inputs) {
-        for (const id of getHomeHeroParticleCandidates(this.scene, input, this.radius)) candidates.add(id)
+      const pieces = this.pointer.consume(this.clock, finish)
+      const inputs: HomeHeroPointerInput[] = []
+      let pointerMoving = false
+      if (pieces.length && this.pointer.connected) {
+        const latest = pieces.at(-1)!
+        this.smoothedPointer ??= { x: latest.fromX, y: latest.fromY }
+        const alpha = -Math.expm1(-step / POINTER_TAU_SECONDS)
+        this.smoothedPointer.x += (latest.x - this.smoothedPointer.x) * alpha
+        this.smoothedPointer.y += (latest.y - this.smoothedPointer.y) * alpha
+        pointerMoving = Math.hypot(latest.x - this.smoothedPointer.x, latest.y - this.smoothedPointer.y) > 0.02
+        if (!pointerMoving) this.smoothedPointer = { x: latest.x, y: latest.y }
+        inputs.push({ fromX: this.smoothedPointer.x, fromY: this.smoothedPointer.y, ...this.smoothedPointer, vx: latest.vx, vy: latest.vy })
+      } else if (!this.pointer.connected) this.smoothedPointer = null
+      for (const piece of pieces) {
+        if (piece.fromX !== piece.x || piece.fromY !== piece.y) this.sweeps.push({ input: piece, expiresAt: finish + SWEEP_LIFETIME_SECONDS })
+        // A released short tap still gets its actual stationary influence.
+        else if (!this.pointer.connected) inputs.push(piece)
       }
-      this.stats.candidates = candidates.size
-      this.stats.peakCandidates = Math.max(this.stats.peakCandidates, candidates.size)
-      for (const id of candidates) this.active.add(id)
-      let moving = false
+      this.responseStrength.fill(0)
+      let candidates = 0
+      const gatheringCandidates = new Set<number>()
+      let gatheringInputs: PreparedPointer[] = []
+      if (gathering) {
+        inputs.push(...this.sweeps.map(sweep => sweep.input))
+        gatheringInputs = inputs.map(preparePointer)
+        for (const input of inputs) {
+          for (const id of getHomeHeroParticleCandidates(this.scene, input, this.radius + MAX_OFFSET_CSS_PX)) {
+            this.active.add(id)
+            gatheringCandidates.add(id)
+          }
+        }
+      } else {
+        const offsetsFor = (input: HomeHeroPointerInput) => {
+          const offsets: GlyphOffset[] = []
+          const prepared = [preparePointer(input)]
+          for (const id of getHomeHeroParticleCandidates(this.scene, input, this.radius + MAX_OFFSET_CSS_PX)) {
+            const p = this.scene.particles[id]!
+            const offset = targetOffset(p, p.homeX, p.homeY, prepared, this.radius)
+            const strength = offset.x * offset.x + offset.y * offset.y
+            if (strength) offsets.push({ id, ...offset, strength })
+          }
+          return offsets
+        }
+        for (const input of inputs) candidates += this.mergeOffsets(offsetsFor(input))
+        // A consumed sweep has stable home geometry. Cache its bounded response
+        // once; retaining it briefly must not repeat capsule/square-root work
+        // for every active glyph on every simulation step.
+        for (const sweep of this.sweeps) {
+          sweep.offsets ??= offsetsFor(sweep.input)
+          candidates += this.mergeOffsets(sweep.offsets)
+        }
+      }
+      this.stats.candidates = gathering ? gatheringCandidates.size : candidates
+      this.stats.peakCandidates = Math.max(this.stats.peakCandidates, this.stats.candidates)
+      let moving = pointerMoving
       for (const id of this.active) {
         const p = this.scene.particles[id]!
-        moving = integrate(p, inputs, step, this.radius, Boolean(this.options.mobile)) || moving
-        if (p.settledForMs >= 40) this.active.delete(id)
+        let baseX = p.homeX
+        let baseY = p.homeY
+        if (gathering) {
+          const start = this.starts[id]!
+          const progress = clamp((finish - this.gatheringStartedAt! - start.delay) / GATHER_DURATION_SECONDS, 0, 1)
+          const eased = 1 - (1 - progress) ** 3
+          baseX = start.x + (p.homeX - start.x) * eased
+          baseY = start.y + (p.homeY - start.y) * eased
+        }
+        const offset = gathering ? targetOffset(p, baseX, baseY, gatheringInputs, this.radius) : null
+        const influenced = gathering || this.responseStrength[id]! > 0
+        const offsetX = offset ? offset.x : influenced ? this.responseX[id]! : 0
+        const offsetY = offset ? offset.y : influenced ? this.responseY[id]! : 0
+        moving = approach(p, baseX + offsetX, baseY + offsetY, step,
+          influenced ? POINT_TAU_SECONDS : RECOVERY_TAU_SECONDS, influenced ? pointAlpha : recoveryAlpha) || moving
+        if (!gathering && p.x === p.homeX && p.y === p.homeY) this.active.delete(id)
       }
       this.stats.peakActive = Math.max(this.stats.peakActive, this.active.size)
-      this.moving = moving || Math.hypot(this.pointer.velocity.x, this.pointer.velocity.y) > 1
       this.clock = finish
-      this.remainder = at - this.clock
+      this.moving = moving
+      substeps += 1
     }
-    if (!this.pointer.connected && !this.pointer.hasPending && !this.pointer.hasUnconsumedInput) {
-      recoverTo(at)
-      this.remainder = 0
+    if (this.gatheringStartedAt !== null && at >= this.gatheringUntil) {
+      this.gatheringStartedAt = null
+      this.starts = []
+    }
+    if (!this.pointer.connected && !this.pointer.hasPending && !this.pointer.hasUnconsumedInput && !this.sweeps.length && this.gatheringStartedAt === null) {
+      this.recoverTo(at)
       this.moving = this.active.size > 0
     }
   }

@@ -10,9 +10,9 @@ const englishHomeViewports = [
   { name: 'desktop', width: 1440, height: 900 }
 ] as const
 const homeHeroLocales = [
-  { name: 'zh-cn', route: '/' },
-  { name: 'zh-hk', route: '/zh-hk/' },
-  { name: 'en', route: '/en/' }
+  { name: 'zh-cn', code: 'zh-CN', route: '/' },
+  { name: 'zh-hk', code: 'zh-HK', route: '/zh-hk/' },
+  { name: 'en', code: 'en', route: '/en/' }
 ] as const
 const englishArchiveHeroRoutes = [
   { name: 'academics', route: '/en/academics/' },
@@ -88,7 +88,6 @@ async function settleHomeHero(page: Page) {
   const canvas = page.locator('.home-hero-particles-canvas')
   if (await canvas.count()) {
     await expect(stage).toHaveAttribute('data-particle-state', /settled|paused/)
-    await expect(stage).toHaveAttribute('data-ambient-count', '0')
   }
 }
 
@@ -252,6 +251,15 @@ for (const viewport of viewports) {
           await expect(page.locator('main#main')).toHaveScreenshot(`${route}-${theme}-desktop-main.png`, componentScreenshotOptions)
         }
         if (route === 'index' && viewport.name === 'desktop') {
+          // Full-page captures must include content after its normal reveal.
+          for (const element of await page.locator('main#main .reveal').all()) {
+            await element.scrollIntoViewIfNeeded()
+            await expect(element).toHaveClass(/revealed/)
+          }
+          await expect(page.locator('main#main .reveal:not(.revealed)')).toHaveCount(0)
+          await page.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }))
+          await resetPointerForVisualCapture(page)
+          await settleHomeHero(page)
           await expect(page).toHaveScreenshot(`index-${theme}-desktop-full.png`, {
             ...fullPageScreenshotOptions,
             fullPage: true
@@ -269,6 +277,7 @@ for (const locale of homeHeroLocales) {
         await page.setViewportSize({ width: viewport.width, height: viewport.height })
         await installTheme(page, theme)
         await page.goto(locale.route)
+        await expect(page.locator('html')).toHaveAttribute('data-locale', locale.code)
         await settlePage(page)
         await resetPointerForVisualCapture(page)
         await settleHomeHero(page)

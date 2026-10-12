@@ -102,7 +102,15 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
       - name: Generate Linux visual baselines for review
-        run: npm run test:e2e -- --project=chromium-visual --workers=2 --retries=0 --update-snapshots
+        run: npm run test:e2e -- --project=chromium-visual --workers=2 --retries=0 --update-snapshots=all
+      - name: Upload actual visual captures for review
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: linux-visual-captures-review
+          path: test-results/snapshot-review
+          if-no-files-found: error
+          include-hidden-files: true
       - name: Upload independently generated visual baselines
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
