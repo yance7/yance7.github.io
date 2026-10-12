@@ -6,6 +6,22 @@ const routes = [
   { name: 'en', path: '/en/research/' }
 ] as const
 
+test('research reading state preserves the revealed timeline geometry', async ({ page }) => {
+  await page.goto('/research/')
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
+  const item = page.locator('#fishfreshnet-v1')
+  await item.evaluate(element => element.scrollIntoView({ block: 'center', behavior: 'instant' }))
+  await expect(item).toHaveAttribute('data-reading-state', 'current')
+  await expect(item).toHaveClass(/reveal/)
+  await expect(item).toHaveClass(/revealed/)
+  await expect(item).toHaveCSS('transform', 'none')
+  await page.locator('#fresheye').evaluate(element => element.scrollIntoView({ block: 'center', behavior: 'instant' }))
+  await expect(item).toHaveAttribute('data-reading-state', 'idle')
+  await expect(item).toHaveClass(/revealed/)
+  await expect(item).toHaveCSS('transform', 'none')
+})
+
 const viewports = [
   { name: 'narrow', width: 320, height: 844 },
   { name: 'mobile', width: 390, height: 844 },
