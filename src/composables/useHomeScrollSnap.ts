@@ -1,4 +1,4 @@
-import { onBeforeUnmount, onMounted, watch, type Ref } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, watch, type Ref } from 'vue'
 
 // Browser navigation, focus, find and keyboard scroll retain control until
 // the next pointer scroll. No wheel movement is consumed or rewritten.
@@ -8,7 +8,6 @@ export function useHomeScrollSnap(isHome: boolean, ready: Ref<boolean>) {
   let bodyObserver: MutationObserver | undefined
   let fontsObserver: MutationObserver | undefined
   let mounted = false
-  let restorationFrame: number | undefined
   let restorationCancelled = false
   const returning = performance.getEntriesByType('navigation')
     .some(entry => (entry as PerformanceNavigationTiming).type === 'back_forward')
@@ -49,8 +48,6 @@ export function useHomeScrollSnap(isHome: boolean, ready: Ref<boolean>) {
     delete root.dataset.homeScrollRestore
     fontsObserver?.disconnect()
     fontsObserver = undefined
-    if (restorationFrame !== undefined) window.cancelAnimationFrame(restorationFrame)
-    restorationFrame = undefined
   }
   function saveReadingPosition() {
     window.history.replaceState({
@@ -67,10 +64,9 @@ export function useHomeScrollSnap(isHome: boolean, ready: Ref<boolean>) {
     savedPosition = undefined
     fontsObserver?.disconnect()
     fontsObserver = undefined
-    // Native restoration can run while the async page still has only Hero's
-    // height. Restore its history-entry position once content/fonts are ready.
-    restorationFrame = window.requestAnimationFrame(() => {
-      restorationFrame = undefined
+    // Wait for Vue's content commit, rather than a foreground animation frame.
+    // History restoration must not depend on foreground RAF delivery.
+    void nextTick(() => {
       if (!mounted || restorationCancelled) return
       window.scrollTo({ top: position.top, left: position.left, behavior: 'instant' })
       delete root.dataset.homeScrollRestore

@@ -156,4 +156,24 @@ describe('home document snap lifecycle', () => {
     state.app.unmount()
     expect(state.listeners.size).toBe(0)
   })
+
+  it('restores after Vue commits content even when animation frames are not delivered', async () => {
+    const state = setup(true, { returning: true, fontsReady: 'loading' })
+    state.root.dataset.fontsReady = 'ready'
+    state.listeners.get('root:fonts')?.()
+    await nextTick()
+    expect(state.scrollTo).toHaveBeenCalledExactlyOnceWith({ top: 700, left: 0, behavior: 'instant' })
+    expect(state.root.dataset.homeScrollRestore).toBeUndefined()
+    state.app.unmount()
+  })
+
+  it('input cancels the restoration queued after the font signal', async () => {
+    const state = setup(true, { returning: true, fontsReady: 'loading' })
+    state.root.dataset.fontsReady = 'ready'
+    state.listeners.get('root:fonts')?.()
+    state.listeners.get('document:pointerdown')?.()
+    await nextTick()
+    expect(state.scrollTo).not.toHaveBeenCalled()
+    state.app.unmount()
+  })
 })

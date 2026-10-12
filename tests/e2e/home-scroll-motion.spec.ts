@@ -198,6 +198,32 @@ for (const cancelWithTouch of [false, true]) {
   })
 }
 
+test('home cold history restores without foreground animation frame delivery', async ({ page }) => {
+  await openHome(page)
+  await page.locator('.theme-orbit').focus()
+  await page.evaluate(() => scrollTo({ top: 700, behavior: 'instant' }))
+  await expect.poll(() => page.evaluate(() => Math.round(scrollY))).toBe(700)
+  await page.goto('/research/')
+  let releaseFonts = () => {}
+  const heldFonts = new Promise<void>(resolve => { releaseFonts = resolve })
+  await page.route('**/assets/vue/fonts-*.css', async route => {
+    await heldFonts
+    await route.continue()
+  })
+  try {
+    await page.goBack({ waitUntil: 'domcontentloaded' })
+    await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+    await expect(page.locator('html')).toHaveAttribute('data-home-scroll-restore', 'true')
+    await page.evaluate(() => { window.requestAnimationFrame = () => 0 })
+    releaseFonts()
+    await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
+    await expect(page.locator('html')).not.toHaveAttribute('data-home-scroll-restore')
+    await expect.poll(() => page.evaluate(() => Math.round(scrollY))).toBe(700)
+  } finally {
+    releaseFonts()
+  }
+})
+
 test('home loading failure keeps native document scrolling available', async ({ page }) => {
   await page.route('**/assets/vue/HomePage-*.js', route => route.abort())
   await page.goto('/')
@@ -241,8 +267,12 @@ for (const path of ['/zh-hk/', '/en/']) {
   test(`home hash content in ${path} avoids replay on reload`, async ({ page }) => {
     await openHome(page, `${path}#home-worlds`)
     await expect(page.locator('#home-worlds .reveal:not(.revealed)')).toHaveCount(0)
+    await expect(page).toHaveURL(/#home-worlds$/)
     await page.reload()
+    await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+    await expect(page.locator('#home-worlds')).toBeAttached()
     await expect(page.locator('#home-worlds .reveal:not(.revealed)')).toHaveCount(0)
+    await expect(page).toHaveURL(/#home-worlds$/)
     await expect(page.locator('html')).toHaveCSS('scroll-snap-type', 'none')
   })
 }
