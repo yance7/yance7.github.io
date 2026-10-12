@@ -221,10 +221,12 @@ html[data-locale='en'] .home-hero-typewriter-line-accent {
   transition: transform var(--dur-fast) var(--ease-out);
 }
 
-.hero-action:hover span,
-.hero-action:focus-visible span { transform: translate(2px, 0); }
-.hero-action.secondary:hover span,
-.hero-action.secondary:focus-visible span { transform: translate(2px, -1px); }
+@media (hover: hover) and (pointer: fine) {
+  .hero-action:hover [aria-hidden='true'],
+  .hero-action:focus-visible [aria-hidden='true'] { transform: translate(2px, 0); }
+  .hero-action.secondary:hover [aria-hidden='true'],
+  .hero-action.secondary:focus-visible [aria-hidden='true'] { transform: translate(2px, -1px); }
+}
 
 @media (hover: none), (pointer: coarse) {
   .hero-action:hover:not(:focus-visible) {
@@ -245,7 +247,7 @@ html[data-locale='en'] .home-hero-typewriter-line-accent {
   .hero-action:hover:not(:focus-visible) span { transform: none; }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce), (forced-colors: active) {
   .hero-action:hover,
   .hero-action:focus-visible { transform: none !important; }
 
