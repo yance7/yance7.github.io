@@ -1,10 +1,43 @@
 import { expect, test } from '@playwright/test'
 
+type HeroPixelWindow = Window & {
+  heroBaseline?: Uint8ClampedArray
+  heroPeak?: number
+  heroReleasedAt?: number
+  heroRecoveryMs?: number
+  heroObservedCanvas?: HTMLCanvasElement
+}
+
 async function savePixels(page: import('@playwright/test').Page) {
   await page.locator('.home-hero-particles-canvas').evaluate(element => {
     const canvas = element as HTMLCanvasElement
-    const target = window as Window & { heroBaseline?: Uint8ClampedArray }
-    target.heroBaseline = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data
+    const target = window as HeroPixelWindow
+    const context = canvas.getContext('2d')!
+    target.heroBaseline = context.getImageData(0, 0, canvas.width, canvas.height).data
+    target.heroPeak = 0
+    target.heroReleasedAt = undefined
+    target.heroRecoveryMs = undefined
+    if (target.heroObservedCanvas === canvas) return
+    target.heroObservedCanvas = canvas
+    // Observe completed production draws, never the cleared intermediate frame.
+    // The runner may not read again until the intended recovery has finished.
+    const observe = () => {
+      const baseline = target.heroBaseline!
+      const data = context.getImageData(0, 0, canvas.width, canvas.height).data
+      if (data.length !== baseline.length) return
+      let changed = 0
+      for (let i = 0; i < data.length; i += 4) {
+        if (data[i] !== baseline[i] || data[i + 1] !== baseline[i + 1] || data[i + 2] !== baseline[i + 2] || data[i + 3] !== baseline[i + 3]) changed += 1
+      }
+      target.heroPeak = Math.max(target.heroPeak ?? 0, changed)
+      if (changed === 0 && target.heroPeak > 100 && target.heroReleasedAt !== undefined && target.heroRecoveryMs === undefined) {
+        target.heroRecoveryMs = performance.now() - target.heroReleasedAt
+      }
+    }
+    const fill = context.fill
+    context.fill = ((...args: unknown[]) => { Reflect.apply(fill, context, args); observe() }) as typeof context.fill
+    const drawImage = context.drawImage
+    context.drawImage = ((...args: unknown[]) => { Reflect.apply(drawImage, context, args); observe() }) as typeof context.drawImage
   })
 }
 
@@ -19,6 +52,15 @@ async function changedPixels(page: import('@playwright/test').Page) {
     }
     return changed
   })
+}
+
+async function peakChangedPixels(page: import('@playwright/test').Page) {
+  return page.evaluate(() => (window as HeroPixelWindow).heroPeak ?? 0)
+}
+
+async function pixelRecoveryMs(page: import('@playwright/test').Page) {
+  await expect.poll(() => page.evaluate(() => (window as HeroPixelWindow).heroRecoveryMs)).toBeDefined()
+  return page.evaluate(() => (window as HeroPixelWindow).heroRecoveryMs!)
 }
 
 async function frames(page: import('@playwright/test').Page, count = 8) {
@@ -43,7 +85,12 @@ async function pointerSweep(page: import('@playwright/test').Page, durationMs = 
         dispatch('pointermove', progress)
         if (progress < 1) requestAnimationFrame(frame)
         else {
-          if (options.release) dispatch(options.pointerType === 'touch' ? 'pointerup' : 'pointerleave', 1)
+          if (options.release) {
+            const target = window as HeroPixelWindow
+            target.heroReleasedAt = performance.now()
+            target.heroRecoveryMs = undefined
+            dispatch(options.pointerType === 'touch' ? 'pointerup' : 'pointerleave', 1)
+          }
           resolve()
         }
       }
@@ -313,9 +360,21 @@ test('@particle-v2 restores real pixels within the standard 1s recovery target',
   await page.locator('.home-hero-particles').scrollIntoViewIfNeeded()
   await savePixels(page)
   await pointerSweep(page)
-  expect(await changedPixels(page)).toBeGreaterThan(100)
+  expect(await peakChangedPixels(page)).toBeGreaterThan(100)
   await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-moving-particle-count', '0', { timeout: 1000 })
   expect(await changedPixels(page)).toBe(0)
+  expect(await pixelRecoveryMs(page)).toBeLessThanOrEqual(1000)
+})
+
+test('@particle-v2 retains real deformation evidence after release has fully recovered', async ({ page }) => {
+  await page.goto('/')
+  await waitForSettledHero(page)
+  await page.locator('.home-hero-particles').scrollIntoViewIfNeeded()
+  await savePixels(page)
+  await pointerSweep(page)
+  await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-moving-particle-count', '0', { timeout: 1000 })
+  expect(await changedPixels(page)).toBe(0)
+  expect(await peakChangedPixels(page)).toBeGreaterThan(100)
 })
 
 test('@particle-v2 preserves the standard recovery budget with sparse foreground frames', async ({ page }) => {
@@ -330,9 +389,10 @@ test('@particle-v2 preserves the standard recovery budget with sparse foreground
   await page.locator('.home-hero-particles').scrollIntoViewIfNeeded()
   await savePixels(page)
   await pointerSweep(page)
-  expect(await changedPixels(page)).toBeGreaterThan(100)
+  expect(await peakChangedPixels(page)).toBeGreaterThan(100)
   await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-moving-particle-count', '0', { timeout: 1500 })
   expect(await changedPixels(page)).toBe(0)
+  expect(await pixelRecoveryMs(page)).toBeLessThanOrEqual(1500)
 })
 
 test('@particle-v2 enters the static fallback if a motion preference notification is missed', async ({ page }) => {
@@ -367,9 +427,10 @@ test('@particle-v2 consumes repeated stirring and returns without residual trail
   await page.locator('.home-hero-particles').scrollIntoViewIfNeeded()
   await savePixels(page)
   for (let i = 0; i < 3; i += 1) await pointerSweep(page, 180)
-  expect(await changedPixels(page)).toBeGreaterThan(100)
+  expect(await peakChangedPixels(page)).toBeGreaterThan(100)
   await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-moving-particle-count', '0', { timeout: 2000 })
   expect(await changedPixels(page)).toBe(0)
+  expect(await pixelRecoveryMs(page)).toBeLessThanOrEqual(2000)
 })
 
 test('@particle-v2 stops component frames after the intro and exact recovery', async ({ page }) => {
