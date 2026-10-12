@@ -1,8 +1,5 @@
-type HomeHeroParticleKind = 'word' | 'field'
-
 export interface HomeHeroParticleTarget {
   id: number
-  kind: HomeHeroParticleKind
   homeX: number
   homeY: number
   x: number
@@ -20,6 +17,7 @@ export interface HomeHeroTextMask {
   rgba: ArrayLike<number>
   gridStep: number
   alphaThreshold?: number
+  maxParticles?: number
 }
 
 export function sampleHomeHeroTextMask({
@@ -29,7 +27,7 @@ export function sampleHomeHeroTextMask({
   gridStep,
   alphaThreshold = 96
 }: HomeHeroTextMask): HomeHeroParticleTarget[] {
-  if (!Number.isFinite(width) || !Number.isFinite(height) || !Number.isFinite(gridStep)) return []
+  if (!Number.isInteger(width) || !Number.isInteger(height) || !Number.isInteger(gridStep)) return []
   if (width < 1 || height < 1 || gridStep < 1 || rgba.length < width * height * 4) return []
 
   const particles: HomeHeroParticleTarget[] = []
@@ -49,6 +47,9 @@ export function sampleHomeHeroTextMask({
       let alphaTotal = 0
       let alphaMax = 0
       let pixelCount = 0
+      let inkX = sampleX
+      let inkY = sampleY
+      let nearestInk = Infinity
 
       for (let y = top; y < bottom; y += 1) {
         for (let x = left; x < right; x += 1) {
@@ -56,16 +57,21 @@ export function sampleHomeHeroTextMask({
           alphaTotal += alpha
           alphaMax = Math.max(alphaMax, alpha)
           pixelCount += 1
+          const distance = (x - sampleX) ** 2 + (y - sampleY) ** 2
+          if (alpha >= alphaThreshold && distance < nearestInk) {
+            inkX = x
+            inkY = y
+            nearestInk = distance
+          }
         }
       }
 
       if (pixelCount === 0 || alphaMax < alphaThreshold || alphaTotal / pixelCount < coverageThreshold) continue
 
-      const homeX = sampleX + 0.5
-      const homeY = sampleY + 0.5
+      const homeX = inkX + 0.5
+      const homeY = inkY + 0.5
       particles.push({
         id: particles.length,
-        kind: 'word',
         homeX,
         homeY,
         x: homeX,
@@ -83,7 +89,7 @@ export function sampleHomeHeroTextMask({
 }
 
 export function getHomeHeroParticleGridStep(lowResource: boolean): number {
-  return lowResource ? 6 : 5
+  return lowResource ? 3 : 2
 }
 
 export function getHomeHeroParticlePixelRatio(devicePixelRatio: number, lowResource: boolean): number {
@@ -96,8 +102,7 @@ export interface HomeHeroParticleScene {
   height: number
   gridStep: number
   particles: HomeHeroParticleTarget[]
-  wordCount: number
-  fieldCount: number
+  sampledCount: number
   cellSize: number
   cells: Map<string, number[]>
 }
@@ -120,29 +125,59 @@ export function distanceToHomeHeroSweep(x: number, y: number, sweep: HomeHeroSwe
 
 export function createHomeHeroParticleScene(mask: HomeHeroTextMask): HomeHeroParticleScene {
   const word = sampleHomeHeroTextMask(mask)
-  const wordCells = new Set(word.map(point => `${point.row}:${point.column}`))
+  const limit = Math.max(0, Math.floor(mask.maxParticles ?? word.length))
+  const selected = limit < word.length ? limitHomeHeroGlyphSamples(word, limit) : word
   const scene: HomeHeroParticleScene = {
     width: mask.width, height: mask.height, gridStep: mask.gridStep,
-    particles: [], wordCount: 0, fieldCount: 0, cellSize: 24, cells: new Map()
+    particles: selected, sampledCount: word.length, cellSize: 24, cells: new Map()
   }
-  if (!Number.isFinite(mask.width) || !Number.isFinite(mask.height) || !Number.isFinite(mask.gridStep)
-    || mask.width < 1 || mask.height < 1 || mask.gridStep < 1) return scene
-  for (let row = 0; row < Math.ceil(mask.height / mask.gridStep); row += 1) {
-    for (let column = 0; column < Math.ceil(mask.width / mask.gridStep); column += 1) {
-      const homeX = Math.min(mask.width - 0.5, column * mask.gridStep + Math.floor(mask.gridStep / 2) + 0.5)
-      const homeY = Math.min(mask.height - 0.5, row * mask.gridStep + Math.floor(mask.gridStep / 2) + 0.5)
-      const kind = wordCells.has(`${row}:${column}`) ? 'word' : 'field'
-      const id = scene.particles.length
-      scene.particles.push({ id, kind, homeX, homeY, x: homeX, y: homeY, vx: 0, vy: 0, row, column, settledForMs: 40 })
-      if (kind === 'word') scene.wordCount += 1
-      else scene.fieldCount += 1
-      const key = `${Math.floor(homeX / scene.cellSize)}:${Math.floor(homeY / scene.cellSize)}`
-      const bucket = scene.cells.get(key)
-      if (bucket) bucket.push(id)
-      else scene.cells.set(key, [id])
-    }
+  for (const [id, p] of scene.particles.entries()) {
+    p.id = id
+    const key = `${Math.floor(p.homeX / scene.cellSize)}:${Math.floor(p.homeY / scene.cellSize)}`
+    const bucket = scene.cells.get(key)
+    if (bucket) bucket.push(id)
+    else scene.cells.set(key, [id])
   }
   return scene
+}
+
+// Allocate the budget spatially; a small isolated serif keeps a representative
+// rather than disappearing when a global row/stride sampler skips its row.
+function limitHomeHeroGlyphSamples(points: HomeHeroParticleTarget[], limit: number) {
+  if (!limit) return []
+  const cells = new Map<string, HomeHeroParticleTarget[]>()
+  for (const p of points) {
+    const key = `${Math.floor(p.homeX / 24)}:${Math.floor(p.homeY / 24)}`
+    const bucket = cells.get(key)
+    if (bucket) bucket.push(p)
+    else cells.set(key, [p])
+  }
+  const minimum = cells.size <= limit ? 1 : 0
+  const remaining = limit - minimum * cells.size
+  const buckets = [...cells.values()].map((items, index) => {
+    const allocation = remaining * items.length / points.length
+    return { items, index, count: Math.floor(allocation) + minimum, remainder: allocation % 1 }
+  })
+  let spare = limit - buckets.reduce((total, bucket) => total + bucket.count, 0)
+  const redistribution = [...buckets].sort((a, b) => b.remainder - a.remainder)
+  while (spare > 0) {
+    for (const bucket of redistribution) {
+      if (spare <= 0) break
+      if (bucket.count >= bucket.items.length) continue
+      bucket.count += 1
+      spare -= 1
+    }
+  }
+  const selected: HomeHeroParticleTarget[] = []
+  for (const bucket of buckets) {
+    for (let i = 0; i < bucket.count; i += 1) {
+      const jitter = ((Math.imul(i + 1, 73856093) ^ Math.imul(bucket.index + 1, 19349663)) >>> 0) / 4294967296
+      const start = Math.floor(i * bucket.items.length / bucket.count)
+      const end = Math.floor((i + 1) * bucket.items.length / bucket.count)
+      selected.push(bucket.items[start + Math.floor(jitter * (end - start))]!)
+    }
+  }
+  return selected.sort((a, b) => a.id - b.id)
 }
 
 // Walk the capsule rather than its potentially huge diagonal bounding box.
@@ -172,7 +207,14 @@ export function getHomeHeroParticleCandidates(scene: HomeHeroParticleScene, swee
   return candidates
 }
 
-export function createHomeHeroTextMask(width: number, height: number, fontFamily: string, fontWeight: string): Uint8ClampedArray {
+export interface HomeHeroGlyphLayout {
+  fontSize: number
+  x: number
+  baseline: number
+  bounds: { left: number; top: number; width: number; height: number }
+}
+
+export function createHomeHeroTextMask(width: number, height: number, fontFamily: string, fontWeight: string): { rgba: Uint8ClampedArray; layout: HomeHeroGlyphLayout; inkArea: number } {
   const scratch = document.createElement('canvas')
   scratch.width = width
   scratch.height = height
@@ -190,7 +232,13 @@ export function createHomeHeroTextMask(width: number, height: number, fontFamily
   const right = metrics.actualBoundingBoxRight || metrics.width
   const ascent = metrics.actualBoundingBoxAscent || fontSize * 0.72
   const descent = metrics.actualBoundingBoxDescent || fontSize * 0.08
+  const x = width / 2 + (left - right) / 2
+  const baseline = height / 2 + (ascent - descent) / 2
   context.fillStyle = '#fff'
-  context.fillText('YANCE', width / 2 + (left - right) / 2, height * 0.46 + (ascent - descent) / 2)
-  return context.getImageData(0, 0, width, height).data
+  context.fillText('YANCE', x, baseline)
+  const rgba = context.getImageData(0, 0, width, height).data
+  let inkArea = 0
+  for (let index = 3; index < rgba.length; index += 4) inkArea += rgba[index]! / 255
+  return { rgba, inkArea,
+    layout: { fontSize, x, baseline, bounds: { left: x - left, top: baseline - ascent, width: left + right, height: ascent + descent } } }
 }

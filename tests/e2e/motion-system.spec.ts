@@ -1,5 +1,132 @@
 import { expect, test } from '@playwright/test'
 
+test('@pointer-refinement runtime pointer capability changes clear magnetic feedback and restore the native cursor', async ({ page }) => {
+  test.skip(!(await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches)), 'fine pointer only')
+  // Playwright cannot change pointer/hover media at runtime. Override only these
+  // capability values on real MediaQueryList objects and emit their change events.
+  await page.addInitScript(() => {
+    const original = window.matchMedia.bind(window)
+    const lists: MediaQueryList[] = []
+    let capable = true
+    window.matchMedia = (query) => {
+      const media = original(query)
+      if (query === '(pointer: fine)' || query === '(hover: hover)') {
+        Object.defineProperty(media, 'matches', { get: () => capable })
+        lists.push(media)
+      }
+      return media
+    }
+    Object.assign(window, {
+      setTestPointerCapability: (value: boolean) => {
+        capable = value
+        for (const media of lists) media.dispatchEvent(new Event('change'))
+      }
+    })
+  })
+  await page.goto('/404.html')
+  const button = page.locator('.y-button').first()
+  const visual = button.locator('.y-button__visual')
+  await button.hover({ position: { x: 8, y: 8 } })
+  await expect.poll(() => visual.evaluate((element) => element.style.translate)).not.toBe('')
+  await page.evaluate(() => (window as Window & { setTestPointerCapability?: (value: boolean) => void }).setTestPointerCapability!(false))
+  await expect(page.locator('.sitewide-cursor')).toHaveCount(0)
+  await expect(page.locator('html')).not.toHaveClass(/sitewide-cursor-active/)
+  await expect.poll(() => visual.evaluate((element) => element.style.translate)).toBe('')
+  await page.evaluate(() => (window as Window & { setTestPointerCapability?: (value: boolean) => void }).setTestPointerCapability!(true))
+  await button.hover({ position: { x: 12, y: 12 } })
+  await expect(page.locator('.sitewide-cursor')).toBeVisible()
+  await expect.poll(() => visual.evaluate((element) => element.style.translate)).not.toBe('')
+})
+
+test('@pointer-refinement Hero CTA uses a stable inner magnetic layer without moving its hit area', async ({ page }) => {
+  await page.goto('/')
+  test.skip(!(await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches)), 'fine pointer only')
+  await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'complete')
+  const action = page.locator('.hero-action').first()
+  const baseline = await action.boundingBox()
+  await action.hover({ position: { x: 8, y: 8 } })
+  await expect(action.locator('[data-magnetic-visual]')).toBeAttached()
+  await expect.poll(() => action.locator('[data-magnetic-visual]').evaluate((element) => element.style.translate)).not.toBe('')
+  const hovered = await action.boundingBox()
+  expect(hovered?.x).toBeCloseTo(baseline!.x, 1)
+  expect(hovered?.y).toBeCloseTo(baseline!.y, 1)
+})
+
+test('@pointer-refinement magnetic buttons keep a stable hit area and bounded visual displacement', async ({ page }) => {
+  await page.goto('/404.html')
+  test.skip(!(await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches)), 'fine pointer only')
+  const button = page.locator('.y-button').first()
+  await expect(button).toBeVisible()
+  const baseline = await button.boundingBox()
+  await button.hover({ position: { x: 8, y: 8 } })
+  const visual = button.locator('.y-button__visual')
+  await expect(visual).toBeAttached()
+  await expect.poll(() => visual.evaluate((element) => element.style.translate)).not.toBe('')
+  const offsets = await visual.evaluate((element) => element.style.translate.split(' ').map(Number.parseFloat))
+  expect(Math.hypot(...offsets)).toBeLessThanOrEqual(4)
+  const hovered = await button.boundingBox()
+  expect(hovered?.x).toBeCloseTo(baseline!.x, 1)
+  expect(hovered?.y).toBeCloseTo(baseline!.y, 1)
+  await page.mouse.move(0, 0)
+  await expect.poll(() => visual.evaluate((element) => element.style.translate)).toBe('')
+})
+
+test('@pointer-refinement motion directives clear immediately when runtime preferences change', async ({ page }) => {
+  await page.goto('/404.html')
+  test.skip(!(await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches)), 'fine pointer only')
+  const button = page.locator('.y-button').first()
+  await button.hover({ position: { x: 8, y: 8 } })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await expect.poll(() => button.evaluate((element) => element.style.translate)).toBe('')
+  await expect.poll(() => button.locator('.y-button__visual').evaluate((element) => element.style.translate)).toBe('')
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  await page.goto('/works/')
+  await page.mouse.move(0, 0)
+  const sheen = page.locator('[data-pointer-sheen]').first()
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
+  await sheen.scrollIntoViewIfNeeded()
+  await expect(sheen).toHaveClass(/revealed/)
+  await expect(sheen).toHaveCSS('transform', 'none')
+  await sheen.hover()
+  await expect.poll(() => sheen.evaluate((element) => element.style.getPropertyValue('--pointer-active'))).toBe('1')
+  await page.emulateMedia({ forcedColors: 'active' })
+  await expect.poll(() => page.evaluate(() => matchMedia('(forced-colors: active)').matches)).toBe(true)
+  await expect.poll(() => sheen.evaluate((element) => element.style.getPropertyValue('--pointer-active'))).toBe('')
+})
+
+test('@pointer-refinement motion directives clear when native media change notifications are missed', async ({ page }) => {
+  await page.addInitScript(() => {
+    const original = window.matchMedia.bind(window)
+    window.matchMedia = query => {
+      const media = original(query)
+      if (query === '(prefers-reduced-motion: reduce)' || query === '(forced-colors: active)') {
+        media.addEventListener = () => undefined
+      }
+      return media
+    }
+  })
+  await page.goto('/works/')
+  test.skip(!(await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches)), 'fine pointer only')
+  const sheen = page.locator('[data-pointer-sheen]').first()
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
+  await sheen.scrollIntoViewIfNeeded()
+  await expect(sheen).toHaveClass(/revealed/)
+  await expect(sheen).toHaveCSS('transform', 'none')
+  await sheen.hover()
+  await expect.poll(() => sheen.evaluate(element => element.style.getPropertyValue('--pointer-active'))).toBe('1')
+  await page.emulateMedia({ forcedColors: 'active' })
+  await expect.poll(() => page.evaluate(() => matchMedia('(forced-colors: active)').matches)).toBe(true)
+  await expect.poll(() => sheen.evaluate(element => element.style.getPropertyValue('--pointer-active'))).toBe('')
+  await page.emulateMedia({ forcedColors: 'none' })
+  await sheen.hover({ position: { x: 100, y: 100 } })
+  await expect.poll(() => sheen.evaluate(element => element.style.getPropertyValue('--pointer-active'))).toBe('1')
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await expect.poll(() => page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true)
+  await expect.poll(() => sheen.evaluate(element => element.style.getPropertyValue('--pointer-active'))).toBe('')
+})
+
 test('Academics passive rows remain inside layout after pointer emphasis', async ({ page }) => {
   await page.goto('/academics/')
   const finePointer = await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)

@@ -17,6 +17,12 @@ on:
         required: false
         default: false
         type: boolean
+      run_pointer_stress:
+        description: 'Run ten rounds of cursor and button interactions on Linux'
+        required: false
+        default: false
+        type: boolean
+
       run_home_motion_stress:
         description: 'Run ten rounds of home reading and focus interactions on Linux'
         required: false
@@ -76,6 +82,53 @@ jobs:
         with:
           name: home-motion-stress-${{ matrix.project }}
           path: test-results/home-motion-stress-${{ matrix.project }}
+          if-no-files-found: ignore
+          include-hidden-files: true
+  pointer-stress:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_pointer_stress == true }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: chromium
+            browser: chromium
+          - project: webkit-desktop
+            browser: webkit
+          - project: webkit-mobile
+            browser: webkit
+    env:
+      PLAYWRIGHT_USE_PREVIEW: '1'
+      PLAYWRIGHT_OUTPUT_DIR: test-results/pointer-stress-${{ matrix.project }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install system CJK fallback fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends --yes fonts-noto-cjk
+      - name: Build stress target
+        run: npm run build
+      - name: Smoke test stress target
+        run: npm run smoke
+      - name: Install browser
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Run ten rounds of cursor and button tests
+        run: npm run test:e2e -- tests/e2e/sitewide-cursor.spec.ts tests/e2e/motion-system.spec.ts tests/e2e/ui-primitives.spec.ts --project=${{ matrix.project }} --workers=1 --grep '@pointer-refinement' --repeat-each=10 --retries=0
+      - name: Upload stress evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: pointer-stress-${{ matrix.project }}
+          path: test-results/pointer-stress-${{ matrix.project }}
           if-no-files-found: ignore
           include-hidden-files: true
   particle-stress:
@@ -154,7 +207,15 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
       - name: Generate Linux visual baselines for review
-        run: npm run test:e2e -- --project=chromium-visual --workers=2 --retries=0 --update-snapshots
+        run: npm run test:e2e -- --project=chromium-visual --workers=2 --retries=0 --update-snapshots=all
+      - name: Upload actual visual captures for review
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: linux-visual-captures-review
+          path: test-results/snapshot-review
+          if-no-files-found: error
+          include-hidden-files: true
       - name: Upload independently generated visual baselines
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
@@ -242,7 +303,7 @@ jobs:
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-primitives
         run: npm run test:e2e -- tests/e2e/ui-primitives.spec.ts --project=webkit-desktop --workers=4 --retries=0
-      - name: WebKit desktop home geometry and reading motion quality
+      - name: WebKit desktop HomeHero geometry quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-home-hero
         run: npm run test:e2e -- tests/e2e/home-hero-layout.spec.ts tests/e2e/home-scroll-motion.spec.ts --project=webkit-desktop --workers=4 --retries=0
@@ -288,7 +349,7 @@ jobs:
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-primitives
         run: npm run test:e2e -- tests/e2e/ui-primitives.spec.ts --project=webkit-mobile --workers=4 --retries=0
-      - name: WebKit mobile home geometry and reading motion quality
+      - name: WebKit mobile HomeHero geometry quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-home-hero
         run: npm run test:e2e -- tests/e2e/home-hero-layout.spec.ts tests/e2e/home-scroll-motion.spec.ts --project=webkit-mobile --workers=4 --retries=0

@@ -54,12 +54,14 @@ function preventDisabledLink(event: MouseEvent) {
     :tabindex="isLink && disabled ? -1 : undefined"
     @click="preventDisabledLink"
   >
-    <span v-if="$slots.leading" class="y-button__leading" aria-hidden="true">
-      <slot name="leading" />
-    </span>
-    <span class="y-button__label"><slot /></span>
-    <span v-if="$slots.trailing" class="y-button__trailing" aria-hidden="true">
-      <slot name="trailing" />
+    <span class="y-button__visual" data-magnetic-visual>
+      <span v-if="$slots.leading" class="y-button__leading" aria-hidden="true">
+        <slot name="leading" />
+      </span>
+      <span class="y-button__label"><slot /></span>
+      <span v-if="$slots.trailing" class="y-button__trailing" aria-hidden="true">
+        <slot name="trailing" />
+      </span>
     </span>
   </component>
 </template>

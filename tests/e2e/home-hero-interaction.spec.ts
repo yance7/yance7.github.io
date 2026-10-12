@@ -1,10 +1,43 @@
 import { expect, test } from '@playwright/test'
 
+type HeroPixelWindow = Window & {
+  heroBaseline?: Uint8ClampedArray
+  heroPeak?: number
+  heroReleasedAt?: number
+  heroRecoveryMs?: number
+  heroObservedCanvas?: HTMLCanvasElement
+}
+
 async function savePixels(page: import('@playwright/test').Page) {
   await page.locator('.home-hero-particles-canvas').evaluate(element => {
     const canvas = element as HTMLCanvasElement
-    const target = window as Window & { heroBaseline?: Uint8ClampedArray }
-    target.heroBaseline = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data
+    const target = window as HeroPixelWindow
+    const context = canvas.getContext('2d')!
+    target.heroBaseline = context.getImageData(0, 0, canvas.width, canvas.height).data
+    target.heroPeak = 0
+    target.heroReleasedAt = undefined
+    target.heroRecoveryMs = undefined
+    if (target.heroObservedCanvas === canvas) return
+    target.heroObservedCanvas = canvas
+    // Observe completed production draws, never the cleared intermediate frame.
+    // The runner may not read again until the intended recovery has finished.
+    const observe = () => {
+      const baseline = target.heroBaseline!
+      const data = context.getImageData(0, 0, canvas.width, canvas.height).data
+      if (data.length !== baseline.length) return
+      let changed = 0
+      for (let i = 0; i < data.length; i += 4) {
+        if (data[i] !== baseline[i] || data[i + 1] !== baseline[i + 1] || data[i + 2] !== baseline[i + 2] || data[i + 3] !== baseline[i + 3]) changed += 1
+      }
+      target.heroPeak = Math.max(target.heroPeak ?? 0, changed)
+      if (changed === 0 && target.heroPeak > 100 && target.heroReleasedAt !== undefined && target.heroRecoveryMs === undefined) {
+        target.heroRecoveryMs = performance.now() - target.heroReleasedAt
+      }
+    }
+    const fill = context.fill
+    context.fill = ((...args: unknown[]) => { Reflect.apply(fill, context, args); observe() }) as typeof context.fill
+    const drawImage = context.drawImage
+    context.drawImage = ((...args: unknown[]) => { Reflect.apply(drawImage, context, args); observe() }) as typeof context.drawImage
   })
 }
 
@@ -21,6 +54,15 @@ async function changedPixels(page: import('@playwright/test').Page) {
   })
 }
 
+async function peakChangedPixels(page: import('@playwright/test').Page) {
+  return page.evaluate(() => (window as HeroPixelWindow).heroPeak ?? 0)
+}
+
+async function pixelRecoveryMs(page: import('@playwright/test').Page) {
+  await expect.poll(() => page.evaluate(() => (window as HeroPixelWindow).heroRecoveryMs)).toBeDefined()
+  return page.evaluate(() => (window as HeroPixelWindow).heroRecoveryMs!)
+}
+
 async function frames(page: import('@playwright/test').Page, count = 8) {
   await page.evaluate(count => new Promise<void>(resolve => {
     const frame = () => { if (--count <= 0) resolve(); else requestAnimationFrame(frame) }
@@ -28,7 +70,7 @@ async function frames(page: import('@playwright/test').Page, count = 8) {
   }), count)
 }
 
-async function pointerSweep(page: import('@playwright/test').Page, durationMs = 150, pointerType = 'mouse') {
+async function pointerSweep(page: import('@playwright/test').Page, durationMs = 150, pointerType = 'mouse', release = true) {
   await page.locator('.home-hero-particles').evaluate(async (element, options) => {
     const bounds = element.getBoundingClientRect()
     const startedAt = performance.now()
@@ -42,17 +84,25 @@ async function pointerSweep(page: import('@playwright/test').Page, durationMs = 
         const progress = Math.min(1, (performance.now() - startedAt) / options.durationMs)
         dispatch('pointermove', progress)
         if (progress < 1) requestAnimationFrame(frame)
-        else { dispatch(options.pointerType === 'touch' ? 'pointerup' : 'pointerleave', 1); resolve() }
+        else {
+          if (options.release) {
+            const target = window as HeroPixelWindow
+            target.heroReleasedAt = performance.now()
+            target.heroRecoveryMs = undefined
+            dispatch(options.pointerType === 'touch' ? 'pointerup' : 'pointerleave', 1)
+          }
+          resolve()
+        }
       }
       requestAnimationFrame(frame)
     })
-  }, { durationMs, pointerType })
+  }, { durationMs, pointerType, release })
 }
 
 const locales = [
-  { route: '/', semanticTitle: '你好，我是 Yance 研究、构建，与现场相遇' },
-  { route: '/zh-hk/', semanticTitle: '你好，我是 Yance 研究、建構，與現場相遇' },
-  { route: '/en/', semanticTitle: 'Hi, I’m Yance Research, build, and meet the live world' }
+  { route: '/', semanticTitle: '你好，我是 Yance 欢迎来到我的世界' },
+  { route: '/zh-hk/', semanticTitle: '你好，我是 Yance 歡迎來到我的世界' },
+  { route: '/en/', semanticTitle: 'Hi, I’m Yance Welcome to my world' }
 ] as const
 
 async function waitForSettledHero(page: import('@playwright/test').Page) {
@@ -61,7 +111,6 @@ async function waitForSettledHero(page: import('@playwright/test').Page) {
   await expect(hero).toHaveAttribute('data-intro-state', 'complete', { timeout: 8000 })
   await expect(stage).toHaveAttribute('data-render-mode', 'canvas')
   await expect(stage).toHaveAttribute('data-particle-state', 'settled', { timeout: 8000 })
-  await expect(stage).toHaveAttribute('data-ambient-count', '0')
 }
 
 for (const locale of locales) {
@@ -72,14 +121,39 @@ for (const locale of locales) {
     const stage = page.locator('.home-hero-particles')
     await expect(page.locator('h1.home-hero-title')).toHaveAccessibleName(locale.semanticTitle)
     await expect(stage).toHaveAttribute('data-word', 'YANCE')
-    await expect(stage).toHaveAttribute('data-grid-step', '5')
+    await expect(stage).toHaveAttribute('data-grid-step', '2')
     await expect(stage.locator('canvas')).toBeVisible()
     await expect(stage.locator('.home-hero-particles-word')).toHaveCSS('opacity', '0')
-    await expect(stage.locator('.home-hero-particles-labels span')).toHaveText(['RESEARCH', 'BUILD', 'LIVE'])
+    await expect(stage.locator('.home-hero-particles-labels span')).toHaveCount(0)
     await expect(stage.locator('[data-y-mark], [data-butterfly]')).toHaveCount(0)
     await expect(stage.locator('svg text')).toHaveText('YANCE')
     expect(Number(await stage.getAttribute('data-particle-count'))).toBeGreaterThan(100)
-    expect(Number(await stage.getAttribute('data-particle-count'))).toBeLessThan(2600)
+    expect(Number(await stage.getAttribute('data-particle-count'))).toBeLessThanOrEqual(9000)
+    expect(await stage.getAttribute('data-field-count')).toBeNull()
+    expect(await stage.getAttribute('data-ambient-count')).toBeNull()
+    const background = await stage.locator('canvas').evaluate(element => {
+      const canvas = element as HTMLCanvasElement
+      const stage = canvas.closest<HTMLElement>('.home-hero-particles')!
+      const bounds = JSON.parse(stage.dataset.inkBounds!) as { left: number; top: number; width: number; height: number }
+      const ratio = Number(stage.dataset.pixelRatio)
+      const pixels = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data
+      let checked = 0
+      let painted = 0
+      for (let y = 0; y < canvas.height; y += 1) {
+        for (let x = 0; x < canvas.width; x += 1) {
+          // Font ink varies with card width; mobile deliberately uses 82%.
+          // Include the dot radius/antialias fringe, then inspect actual pixels
+          // throughout the remaining background rather than an arbitrary inset.
+          if (x / ratio >= bounds.left - 2 && x / ratio <= bounds.left + bounds.width + 2
+            && y / ratio >= bounds.top - 2 && y / ratio <= bounds.top + bounds.height + 2) continue
+          checked += 1
+          if (pixels[(y * canvas.width + x) * 4 + 3]) painted += 1
+        }
+      }
+      return { checked, painted, total: canvas.width * canvas.height }
+    })
+    expect(background.checked).toBeGreaterThan(background.total * .25)
+    expect(background.painted).toBe(0)
     await expect(page.locator('.home-hero-actions a[href="#selected-work"]')).toBeVisible()
     await expect(page.locator('.home-hero-actions a[href="#home-worlds"]')).toBeVisible()
   })
@@ -111,7 +185,7 @@ test('uses a larger particle step and bounded backing store on low-resource devi
   await waitForSettledHero(page)
 
   const stage = page.locator('.home-hero-particles')
-  await expect(stage).toHaveAttribute('data-grid-step', '6')
+  await expect(stage).toHaveAttribute('data-grid-step', '3')
   await expect(stage).toHaveAttribute('data-pixel-ratio', '1.25')
 })
 
@@ -135,7 +209,6 @@ test('@particle-v2 sweeps particles away and restores exact pixels after leaving
   await page.mouse.move(-10, -10)
   await expect(stage).toHaveAttribute('data-particle-state', 'settled', { timeout: 1500 })
   await expect(stage).toHaveAttribute('data-moving-particle-count', '0')
-  await expect(stage).toHaveAttribute('data-ambient-count', '0')
   expect(await changedPixels(page)).toBe(0)
 })
 
@@ -232,7 +305,7 @@ test('keeps the shared sitewide cursor and clear CTA feedback', async ({ page })
   const action = page.locator('.home-hero-actions a').first()
   await action.hover()
   await expect(cursor).toHaveAttribute('data-context', 'interactive')
-  await expect.poll(() => ring.evaluate((element) => element.getBoundingClientRect().width)).toBe(52)
+  await expect.poll(() => ring.evaluate((element) => element.getBoundingClientRect().width)).toBeCloseTo(36, 1)
   await expect(cursor).toHaveCSS('pointer-events', 'none')
   await page.mouse.move(-1, -1)
   await expect(cursor).toBeHidden()
@@ -275,22 +348,36 @@ for (const locale of locales) {
     await page.reload()
     await expect(page.locator('.home-hero-typewriter')).toHaveAttribute('aria-hidden', 'true')
     await waitForSettledHero(page)
-    await page.goto('/works.html')
+    await page.goto(`${locale.route}works/`)
+    await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+    await expect(page.locator('.page-works')).toBeVisible()
     await page.goBack()
+    await expect(page).toHaveURL(new RegExp(`${locale.route}$`))
     await waitForSettledHero(page)
   })
 }
 
-test('@particle-v2 restores real pixels within the standard 1.5s recovery budget', async ({ page }) => {
+test('@particle-v2 restores real pixels within the standard 1s recovery target', async ({ page }) => {
   await page.goto('/')
   await waitForSettledHero(page)
   await page.locator('.home-hero-particles').scrollIntoViewIfNeeded()
   await savePixels(page)
   await pointerSweep(page)
-  expect(await changedPixels(page)).toBeGreaterThan(100)
-  await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-moving-particle-count', '0', { timeout: 1500 })
-  await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-ambient-count', '0')
+  expect(await peakChangedPixels(page)).toBeGreaterThan(100)
+  await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-moving-particle-count', '0', { timeout: 1000 })
   expect(await changedPixels(page)).toBe(0)
+  expect(await pixelRecoveryMs(page)).toBeLessThanOrEqual(1000)
+})
+
+test('@particle-v2 retains real deformation evidence after release has fully recovered', async ({ page }) => {
+  await page.goto('/')
+  await waitForSettledHero(page)
+  await page.locator('.home-hero-particles').scrollIntoViewIfNeeded()
+  await savePixels(page)
+  await pointerSweep(page)
+  await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-moving-particle-count', '0', { timeout: 1000 })
+  expect(await changedPixels(page)).toBe(0)
+  expect(await peakChangedPixels(page)).toBeGreaterThan(100)
 })
 
 test('@particle-v2 preserves the standard recovery budget with sparse foreground frames', async ({ page }) => {
@@ -305,10 +392,10 @@ test('@particle-v2 preserves the standard recovery budget with sparse foreground
   await page.locator('.home-hero-particles').scrollIntoViewIfNeeded()
   await savePixels(page)
   await pointerSweep(page)
-  expect(await changedPixels(page)).toBeGreaterThan(100)
+  expect(await peakChangedPixels(page)).toBeGreaterThan(100)
   await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-moving-particle-count', '0', { timeout: 1500 })
-  await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-ambient-count', '0')
   expect(await changedPixels(page)).toBe(0)
+  expect(await pixelRecoveryMs(page)).toBeLessThanOrEqual(1500)
 })
 
 test('@particle-v2 enters the static fallback if a motion preference notification is missed', async ({ page }) => {
@@ -325,11 +412,16 @@ test('@particle-v2 enters the static fallback if a motion preference notificatio
   await page.goto('/')
   await waitForSettledHero(page)
   await page.locator('.home-hero-particles').scrollIntoViewIfNeeded()
-  await pointerSweep(page)
+  const idleFrames = await page.locator('.home-hero-particles').getAttribute('data-frame-count')
+  await frames(page)
+  await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-frame-count', idleFrames!)
   await page.emulateMedia({ reducedMotion: 'reduce' })
   expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true)
   await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-render-mode', 'static')
   await expect(page.locator('.home-hero-particles svg')).toBeVisible()
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-render-mode', 'canvas')
+  await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-particle-state', 'settled')
 })
 
 test('@particle-v2 consumes repeated stirring and returns without residual trails', async ({ page }) => {
@@ -338,19 +430,43 @@ test('@particle-v2 consumes repeated stirring and returns without residual trail
   await page.locator('.home-hero-particles').scrollIntoViewIfNeeded()
   await savePixels(page)
   for (let i = 0; i < 3; i += 1) await pointerSweep(page, 180)
-  expect(await changedPixels(page)).toBeGreaterThan(100)
+  expect(await peakChangedPixels(page)).toBeGreaterThan(100)
   await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-moving-particle-count', '0', { timeout: 2000 })
-  await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-ambient-count', '0')
   expect(await changedPixels(page)).toBe(0)
+  expect(await pixelRecoveryMs(page)).toBeLessThanOrEqual(2000)
 })
 
-test('@particle-v2 stops component frames after the intro and finite ambient window', async ({ page }) => {
+test('@particle-v2 stops component frames after the intro and exact recovery', async ({ page }) => {
   await page.goto('/')
   await waitForSettledHero(page)
   const stage = page.locator('.home-hero-particles')
   const frameCount = await stage.getAttribute('data-frame-count')
   await frames(page)
   await expect(stage).toHaveAttribute('data-frame-count', frameCount!)
+})
+
+test('@particle-v2 holds a local shape and sleeps until a real pointer change', async ({ page }) => {
+  await page.goto('/')
+  await waitForSettledHero(page)
+  const stage = page.locator('.home-hero-particles')
+  await stage.scrollIntoViewIfNeeded()
+  await savePixels(page)
+  await stage.evaluate(element => {
+    const bounds = element.getBoundingClientRect()
+    element.dispatchEvent(new PointerEvent('pointermove', { pointerId: 1, pointerType: 'mouse',
+      clientX: bounds.left + bounds.width * .5, clientY: bounds.top + bounds.height * .5 }))
+  })
+  await expect(stage).toHaveAttribute('data-particle-state', 'disturbed')
+  await expect(stage).toHaveAttribute('data-animation-running', 'false')
+  const heldFrames = await stage.getAttribute('data-frame-count')
+  const heldPixels = await changedPixels(page)
+  expect(heldPixels).toBeGreaterThan(100)
+  await frames(page)
+  await expect(stage).toHaveAttribute('data-frame-count', heldFrames!)
+  expect(await changedPixels(page)).toBe(heldPixels)
+  await stage.evaluate(element => element.dispatchEvent(new PointerEvent('pointerleave', { pointerId: 1, pointerType: 'mouse' })))
+  await expect(stage).toHaveAttribute('data-particle-state', 'settled', { timeout: 1000 })
+  expect(await changedPixels(page)).toBe(0)
 })
 
 test('@particle-v2 resets stale input on visibility and focus restoration', async ({ page }) => {
@@ -443,7 +559,8 @@ test('@particle-v2 consumes one touch stream and cancels multi-touch without con
   const stage = page.locator('.home-hero-particles')
   await stage.scrollIntoViewIfNeeded()
   await savePixels(page)
-  await pointerSweep(page, 150, 'touch')
+  // Inspect the active stream before release can finish recovering between RPCs.
+  await pointerSweep(page, 150, 'touch', false)
   expect(await changedPixels(page)).toBeGreaterThan(100)
   await stage.evaluate(element => {
     const bounds = element.getBoundingClientRect()
@@ -459,7 +576,6 @@ test('@particle-v2 consumes one touch stream and cancels multi-touch without con
   })
   await expect(stage).toHaveAttribute('data-moving-particle-count', '0', { timeout: 2000 })
   await expect(stage).toHaveCSS('touch-action', 'pan-y pinch-zoom')
-  await expect(stage).toHaveAttribute('data-ambient-count', '0')
   expect(await changedPixels(page)).toBe(0)
 })
 
@@ -547,7 +663,6 @@ test('@particle-v2 finishes visible recovery when animation frame callbacks stop
     element.dispatchEvent(new PointerEvent('pointerleave', { pointerId: 1, pointerType: 'mouse' }))
   })
   await expect(stage).toHaveAttribute('data-moving-particle-count', '0', { timeout: 1500 })
-  await expect(stage).toHaveAttribute('data-ambient-count', '0', { timeout: 3500 })
   expect(await changedPixels(page)).toBe(0)
 })
 
@@ -582,6 +697,76 @@ test('@particle-v2 initializes after a zero-sized stage becomes visible', async 
   await expect(stage).toHaveAttribute('data-render-mode', 'canvas')
   await expect(stage).toHaveAttribute('data-particle-state', 'settled', { timeout: 4000 })
   expect(Number(await stage.getAttribute('data-particle-count'))).toBeGreaterThan(100)
+})
+
+test('@particle-v2 starts a full gathering after delayed display-font readiness', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 1300 })
+  await page.addInitScript(() => {
+    const load = document.fonts.load.bind(document.fonts)
+    let finish: (() => void) | undefined
+    const ready = new Promise<void>(resolve => { finish = resolve })
+    const target = window as Window & { finishHeroFont?: () => void }
+    target.finishHeroFont = finish
+    document.fonts.load = async (...args) => { await ready; return load(...args) }
+  })
+  await page.goto('/')
+  const stage = page.locator('.home-hero-particles')
+  await expect(stage).toHaveAttribute('data-render-mode', 'initializing')
+  await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'complete')
+  expect(await stage.locator('svg text').evaluate(element => {
+    const text = element as SVGTextElement
+    const ink = text.getBBox()
+    const view = text.ownerSVGElement!.viewBox.baseVal
+    return ink.x >= 0 && ink.y >= 0 && ink.x + ink.width <= view.width && ink.y + ink.height <= view.height
+  })).toBe(true)
+  await page.evaluate(() => (window as Window & { finishHeroFont?: () => void }).finishHeroFont!())
+  await expect(stage).toHaveAttribute('data-render-mode', 'canvas')
+  await expect(stage).toHaveAttribute('data-particle-state', 'gathering')
+  expect(Number(await stage.getAttribute('data-moving-particle-count'))).toBeGreaterThan(100)
+  await expect(stage).toHaveAttribute('data-particle-state', 'settled', { timeout: 2500 })
+})
+
+test('@particle-v2 redraws exact pixels when scrolling wakes a sleeping held shape', async ({ page }) => {
+  await page.goto('/')
+  await waitForSettledHero(page)
+  const stage = page.locator('.home-hero-particles')
+  await stage.scrollIntoViewIfNeeded()
+  await savePixels(page)
+  const bounds = await stage.boundingBox()
+  await page.mouse.move(bounds!.x + bounds!.width * .5, bounds!.y + bounds!.height * .5)
+  await expect(stage).toHaveAttribute('data-particle-state', 'disturbed')
+  await expect(stage).toHaveAttribute('data-animation-running', 'false')
+  expect(await changedPixels(page)).toBeGreaterThan(100)
+  // The regression requires a clock gap after sleep: the scroll handler can
+  // analytically finish recovery without a future animation frame.
+  await page.evaluate(() => new Promise<void>(resolve => {
+    const started = performance.now()
+    const tick = () => { if (performance.now() - started >= 650) resolve(); else requestAnimationFrame(tick) }
+    requestAnimationFrame(tick)
+  }))
+  await page.evaluate(() => scrollBy(0, 40))
+  await expect(stage).toHaveAttribute('data-particle-state', 'settled', { timeout: 1000 })
+  expect(await changedPixels(page)).toBe(0)
+})
+
+test('@particle-v2 wakes recovery when a second stationary finger cancels a sleeping touch', async ({ page }) => {
+  await page.goto('/')
+  await waitForSettledHero(page)
+  const stage = page.locator('.home-hero-particles')
+  await stage.scrollIntoViewIfNeeded()
+  await savePixels(page)
+  const touchDown = (id: number) => stage.evaluate((element, id) => {
+    const bounds = element.getBoundingClientRect()
+    element.dispatchEvent(new PointerEvent('pointerdown', { pointerId: id, pointerType: 'touch', isPrimary: id === 1,
+      clientX: bounds.left + bounds.width * .5, clientY: bounds.top + bounds.height * .5 }))
+  }, id)
+  await touchDown(1)
+  await expect(stage).toHaveAttribute('data-particle-state', 'disturbed')
+  await expect(stage).toHaveAttribute('data-animation-running', 'false')
+  expect(await changedPixels(page)).toBeGreaterThan(100)
+  await touchDown(2)
+  await expect(stage).toHaveAttribute('data-particle-state', 'settled', { timeout: 1000 })
+  expect(await changedPixels(page)).toBe(0)
 })
 
 test('@particle-v2 keeps native touch scrolling available on the particle card', async ({ page, context, browserName, isMobile }) => {

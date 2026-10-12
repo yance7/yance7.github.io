@@ -5,6 +5,7 @@ type CursorContext = 'surface' | 'interactive' | 'text' | 'particle'
 
 const INTERACTIVE_SELECTOR = 'a[href], button, [role="button"], [role="link"], summary, select, input[type="button"], input[type="submit"], input[type="reset"], input[type="checkbox"], input[type="radio"]'
 const TEXT_SELECTOR = 'textarea, [contenteditable], [role="textbox"], input:not([type]), input[type="text"], input[type="search"], input[type="email"], input[type="url"], input[type="tel"], input[type="password"], input[type="number"]'
+const BODY_TEXT_SELECTOR = 'p, h1, h2, h3, h4, h5, h6, li, dt, dd, blockquote, figcaption, td, th'
 const DISABLED_SELECTOR = ':disabled, [aria-disabled="true"]'
 const PARTICLE_SELECTOR = '.home-hero-particles, .home-hero-particles-canvas'
 const CURSOR_SELECTOR = '.sitewide-cursor'
@@ -102,12 +103,7 @@ function resetCursor() {
 function classifyTarget(target: Element | null): CursorContext | null {
   if (!target) return 'surface'
 
-  const actionable = target.closest(INTERACTIVE_SELECTOR)
-  if (actionable) {
-    if (actionable.matches(DISABLED_SELECTOR)) return null
-    return 'interactive'
-  }
-
+  if (target.closest(`${DISABLED_SELECTOR}, [inert]`)) return null
   const textTarget = target.closest(TEXT_SELECTOR)
   if (textTarget) {
     if (textTarget.hasAttribute('contenteditable')) {
@@ -117,7 +113,9 @@ function classifyTarget(target: Element | null): CursorContext | null {
     }
   }
 
+  if (target.closest(INTERACTIVE_SELECTOR)) return 'interactive'
   if (target.closest(PARTICLE_SELECTOR)) return 'particle'
+  if (target.closest(BODY_TEXT_SELECTOR)) return 'text'
   return 'surface'
 }
 
@@ -166,6 +164,7 @@ function updateFromPointer(x: number, y: number, target: Element | null) {
 
   const contextChanged = context.value !== nextContext
   if (contextChanged) context.value = nextContext
+  if (nextContext !== 'interactive') isPressed.value = false
 
   if (!isVisible.value) {
     isVisible.value = true
@@ -211,7 +210,7 @@ function handlePointerDown(event: PointerEvent) {
   }
 
   updateFromPointer(event.clientX, event.clientY, event.target instanceof Element ? event.target : null)
-  if (isVisible.value && context.value !== 'text') isPressed.value = true
+  if (isVisible.value && context.value === 'interactive') isPressed.value = true
 }
 
 function clearPressedState() {
