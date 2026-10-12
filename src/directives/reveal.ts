@@ -6,6 +6,7 @@ type RevealValue = number | { delay?: number, profile?: RevealProfile }
 const observers = new Map<RevealProfile, IntersectionObserver>()
 const observedElements = new Map<HTMLElement, RevealProfile>()
 const mountedElements = new Set<HTMLElement>()
+const revealedElements = new WeakSet<HTMLElement>()
 let bottomResizeObserver: ResizeObserver | null = null
 let motionQuery: MediaQueryList | null = null
 let listening = false
@@ -46,6 +47,7 @@ function disconnectIfIdle() {
 }
 
 function revealElement(element: HTMLElement, immediate = false) {
+  revealedElements.add(element)
   if (immediate) {
     element.dataset.revealImmediate = 'true'
     element.style.transitionDelay = '0ms'
@@ -133,6 +135,7 @@ function getObserver(profile: RevealProfile) {
 }
 
 function revealImmediately(element: HTMLElement) {
+  revealedElements.add(element)
   element.classList.add('reveal', 'revealed')
   element.style.removeProperty('transition-delay')
 }
@@ -169,7 +172,11 @@ const reveal: Directive<HTMLElement, RevealValue> = {
   },
   updated(element, binding) {
     const { delay, profile } = resolveOptions(binding.value)
-    if (profile === 'home' && element.classList.contains('revealed')) return
+    // Vue can replace className when a component's unrelated state changes.
+    // The directive owns reveal state independently of those dynamic classes.
+    element.classList.add('reveal')
+    if (revealedElements.has(element)) element.classList.add('revealed')
+    if (profile === 'home' && revealedElements.has(element)) return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       revealElement(element, true)
       return
@@ -178,6 +185,7 @@ const reveal: Directive<HTMLElement, RevealValue> = {
   },
   unmounted(element) {
     mountedElements.delete(element)
+    revealedElements.delete(element)
     const profile = observedElements.get(element)
     if (profile) observers.get(profile)?.unobserve(element)
     observedElements.delete(element)

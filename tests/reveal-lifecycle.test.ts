@@ -122,6 +122,23 @@ describe('reveal observer lifecycle', () => {
     expect(element.style.transitionDelay).toBe('0ms')
   })
 
+  it('preserves a pending reveal when Vue updates unrelated dynamic classes', () => {
+    const element = mount('default', 120)
+    element.tokens.clear()
+    hooks.updated(element as unknown as HTMLElement, { value: 120 })
+    expect(element.tokens.has('reveal')).toBe(true)
+    expect(element.tokens.has('revealed')).toBe(false)
+  })
+
+  it.each(['home', 'default'] as const)('preserves completed %s reveal ownership across Vue class updates', profile => {
+    const element = mount(profile, 120)
+    observers.find(observer => observer.targets.has(element as unknown as HTMLElement))!.intersect(element as unknown as HTMLElement)
+    element.tokens.clear()
+    hooks.updated(element as unknown as HTMLElement, { value: { profile, delay: 120 } })
+    expect(element.tokens.has('reveal')).toBe(true)
+    expect(element.tokens.has('revealed')).toBe(true)
+  })
+
   it('document end reveals every remaining profile and releases scroll listeners', () => {
     const home = mount('home')
     const other = mount('default')
