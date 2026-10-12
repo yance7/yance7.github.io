@@ -3,8 +3,17 @@ import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import revealDirective from '../src/directives/reveal'
 import { getRevealMode, isInInitialViewport, normalizeRevealDelay } from '../src/utils/reveal'
+import * as revealOptions from '../src/utils/reveal'
 
 describe('reveal mode contract', () => {
+  it('keeps the default trigger while home waits until content enters the reading viewport', () => {
+    expect(revealOptions).toHaveProperty('getRevealObserverOptions')
+    const options = (revealOptions as unknown as {
+      getRevealObserverOptions: (profile?: string) => IntersectionObserverInit
+    }).getRevealObserverOptions
+    expect(options()).toEqual({ threshold: 0.08, rootMargin: '0px 0px 120px 0px' })
+    expect(options('home')).toEqual({ threshold: 0.1, rootMargin: '0px 0px -8% 0px' })
+  })
   it('chooses immediate mode when IntersectionObserver is unavailable or motion is reduced', () => {
     expect(getRevealMode({ supportsIntersectionObserver: false, prefersReducedMotion: false })).toBe('immediate')
     expect(getRevealMode({ supportsIntersectionObserver: true, prefersReducedMotion: true })).toBe('immediate')
@@ -47,9 +56,11 @@ describe('reveal mode contract', () => {
     try {
       const revealHooks = revealDirective as unknown as {
         mounted?: (target: HTMLElement, binding: never) => void
+        unmounted?: (target: HTMLElement) => void
       }
       revealHooks.mounted?.(element, { value: undefined } as never)
       expect(classListCalls[0]).toEqual(['reveal', 'revealed'])
+      revealHooks.unmounted?.(element)
     } finally {
       Object.defineProperty(globalThis, 'window', { configurable: true, value: originalWindow })
       Object.defineProperty(globalThis, 'IntersectionObserver', {

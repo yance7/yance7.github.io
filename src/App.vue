@@ -4,6 +4,8 @@ import { getLocalizedPageMeta } from './data/locales'
 import { isPageKey } from './data'
 import { useLocale } from './i18n'
 import { useTheme } from './composables/useTheme'
+import { useHomeScrollSnap } from './composables/useHomeScrollSnap'
+import { revealForNavigation } from './directives/reveal'
 import { decodeHashTarget, retryAsync } from './utils/navigation'
 import { getPageLoader } from './pageLoaders'
 
@@ -162,6 +164,7 @@ function scrollToHashTarget(force = false) {
   }
   pendingHashTarget = target
   target.dataset.hashTarget = 'true'
+  revealForNavigation(target)
 
   const horizontalScroller = findHorizontalScroller(target)
   if (!force && horizontalScroller && !horizontalLayoutIsReady(horizontalScroller)) {
@@ -230,6 +233,7 @@ async function handlePageResolved() {
 }
 
 const isHome = page === 'home'
+useHomeScrollSnap(isHome, computed(() => pageLoadState.value === 'ready'))
 const isError = !page
 const meta = computed(() => page ? getLocalizedPageMeta(locale.value, page) : messages.value.page.home)
 

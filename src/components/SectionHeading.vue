@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useLocale } from '../i18n'
+import type { RevealProfile } from '../utils/reveal'
 
 const props = withDefaults(defineProps<{
   no: string
@@ -9,6 +10,7 @@ const props = withDefaults(defineProps<{
   accent?: string
   copy?: string
   minor?: boolean
+  revealProfile?: RevealProfile
 }>(), {
   accent: '',
   copy: '',
@@ -22,7 +24,7 @@ const titleAccentSeparator = computed(() => (
 </script>
 
 <template>
-  <div class="section-head" :class="{ minor }" v-reveal>
+  <div class="section-head" :class="{ minor }" v-reveal="{ profile: revealProfile }">
     <span class="section-no">{{ no }}</span>
     <p class="section-label">{{ label }}</p>
     <h2>

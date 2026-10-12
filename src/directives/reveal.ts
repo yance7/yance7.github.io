@@ -1,78 +1,135 @@
-import type { Directive, DirectiveBinding } from 'vue'
-import { getRevealMode, isInInitialViewport, normalizeRevealDelay, revealMaxDelay } from '../utils/reveal'
+import type { Directive } from 'vue'
+import { getRevealMode, getRevealObserverOptions, isInInitialViewport, normalizeRevealDelay, revealMaxDelay, type RevealProfile } from '../utils/reveal'
+import { decodeHashTarget } from '../utils/navigation'
 
-type RevealValue = number | { delay?: number }
-
-let observer: IntersectionObserver | null = null
+type RevealValue = number | { delay?: number, profile?: RevealProfile }
+const observers = new Map<RevealProfile, IntersectionObserver>()
+const observedElements = new Map<HTMLElement, RevealProfile>()
+const mountedElements = new Set<HTMLElement>()
 let bottomResizeObserver: ResizeObserver | null = null
-let reachedDocumentEnd = false
-const observedElements = new Set<HTMLElement>()
-const documentEndBuffer = revealMaxDelay
+let motionQuery: MediaQueryList | null = null
+let listening = false
+let restoreFrame: number | undefined
+let immediateFrame: number | undefined
+const immediateElements = new Set<HTMLElement>()
 
-function revealElement(element: HTMLElement, currentObserver: IntersectionObserver) {
+function resolveOptions(value: RevealValue | undefined) {
+  return {
+    delay: normalizeRevealDelay(typeof value === 'number' ? value : value?.delay),
+    profile: typeof value === 'object' ? value.profile ?? 'default' : 'default'
+  }
+}
+
+function disconnectIfIdle() {
+  for (const [profile, observer] of observers) {
+    if ([...observedElements.values()].includes(profile)) continue
+    observer.disconnect()
+    observers.delete(profile)
+  }
+  if (!observedElements.size && listening) {
+    window.removeEventListener('scroll', handleScroll)
+    bottomResizeObserver?.disconnect()
+    bottomResizeObserver = null
+  }
+  // Focus/hash can arrive during a reveal's delay or fade after unobserve.
+  // Keep navigation and preference listeners for this mounted page instance.
+  if (mountedElements.size || !listening) return
+  window.removeEventListener('hashchange', handleHashChange)
+  window.removeEventListener('popstate', handleRestore)
+  window.removeEventListener('pageshow', handleRestore)
+  document.removeEventListener('focusin', handleFocus)
+  motionQuery?.removeEventListener('change', handleMotionChange)
+  motionQuery = null
+  if (restoreFrame !== undefined) window.cancelAnimationFrame(restoreFrame)
+  restoreFrame = undefined
+  listening = false
+}
+
+function revealElement(element: HTMLElement, immediate = false) {
+  if (immediate) {
+    element.dataset.revealImmediate = 'true'
+    element.style.transitionDelay = '0ms'
+    immediateElements.add(element)
+    if (immediateFrame === undefined) {
+      immediateFrame = window.requestAnimationFrame(() => {
+        immediateFrame = undefined
+        immediateElements.forEach(target => { delete target.dataset.revealImmediate })
+        immediateElements.clear()
+      })
+    }
+  }
   element.classList.add('revealed')
-  currentObserver.unobserve(element)
+  if (immediate) element.getBoundingClientRect()
+  const profile = observedElements.get(element)
+  if (profile) observers.get(profile)?.unobserve(element)
   observedElements.delete(element)
-  disconnectObserverIfIdle()
+  disconnectIfIdle()
 }
 
-function isNearDocumentEnd() {
-  return window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - documentEndBuffer
+export function revealForNavigation(target: HTMLElement) {
+  for (const element of mountedElements) {
+    if (element.contains(target) || target.contains(element)) revealElement(element, true)
+  }
 }
 
-function disconnectBottomFallback() {
-  window.removeEventListener('scroll', handleScroll)
-  bottomResizeObserver?.disconnect()
-  bottomResizeObserver = null
+function handleFocus(event: FocusEvent) {
+  if (event.target instanceof HTMLElement) revealForNavigation(event.target)
 }
 
-function disconnectObserverIfIdle() {
-  if (observedElements.size) return
-  observer?.disconnect()
-  observer = null
-  disconnectBottomFallback()
-  reachedDocumentEnd = false
+function handleHashChange() {
+  const id = decodeHashTarget(window.location.hash)
+  const target = id ? document.getElementById(id) : null
+  if (target) revealForNavigation(target)
 }
 
-function revealRemainingAtDocumentEnd() {
-  if (reachedDocumentEnd || !isNearDocumentEnd()) return
-  reachedDocumentEnd = true
-
-  document.querySelectorAll<HTMLElement>('.reveal:not(.revealed)').forEach((element) => {
-    element.classList.add('revealed')
-    observer?.unobserve(element)
-    observedElements.delete(element)
+function handleRestore() {
+  if (restoreFrame !== undefined) window.cancelAnimationFrame(restoreFrame)
+  restoreFrame = window.requestAnimationFrame(() => {
+    restoreFrame = undefined
+    for (const element of [...observedElements.keys()]) {
+      if (isInInitialViewport(element.getBoundingClientRect(), window.innerHeight)) revealElement(element, true)
+    }
+    handleHashChange()
   })
-  disconnectObserverIfIdle()
+}
+
+function handleMotionChange() {
+  if (!motionQuery?.matches) return
+  for (const element of [...document.querySelectorAll<HTMLElement>('.reveal')]) revealElement(element, true)
 }
 
 function handleScroll() {
-  if (reachedDocumentEnd || !isNearDocumentEnd()) return
-  revealRemainingAtDocumentEnd()
+  if (window.scrollY + window.innerHeight < document.documentElement.scrollHeight - revealMaxDelay) return
+  for (const element of [...observedElements.keys()]) revealElement(element)
 }
 
-function getObserver() {
+function startListeners() {
+  if (listening) return
+  listening = true
+  window.addEventListener('scroll', handleScroll, { passive: true })
+  window.addEventListener('hashchange', handleHashChange)
+  window.addEventListener('popstate', handleRestore)
+  window.addEventListener('pageshow', handleRestore)
+  document.addEventListener('focusin', handleFocus)
+  motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+  motionQuery.addEventListener('change', handleMotionChange)
+  if ('ResizeObserver' in window) {
+    bottomResizeObserver = new ResizeObserver(handleScroll)
+    bottomResizeObserver.observe(document.documentElement)
+  }
+}
+
+function getObserver(profile: RevealProfile) {
+  let observer = observers.get(profile)
   if (!observer) {
-    observer = new IntersectionObserver((entries, currentObserver) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) return
-        const element = entry.target as HTMLElement
-        revealElement(element, currentObserver)
+    observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) revealElement(entry.target as HTMLElement)
       })
-    }, { threshold: 0.08, rootMargin: '0px 0px 120px 0px' })
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    if ('ResizeObserver' in window) {
-      bottomResizeObserver = new ResizeObserver(() => {
-        if (!reachedDocumentEnd && isNearDocumentEnd()) revealRemainingAtDocumentEnd()
-      })
-      bottomResizeObserver.observe(document.documentElement)
-    }
+    }, getRevealObserverOptions(profile))
+    observers.set(profile, observer)
   }
   return observer
-}
-
-function resolveDelay(value: RevealValue | undefined) {
-  return normalizeRevealDelay(typeof value === 'number' ? value : value?.delay)
 }
 
 function revealImmediately(element: HTMLElement) {
@@ -82,46 +139,55 @@ function revealImmediately(element: HTMLElement) {
 
 const reveal: Directive<HTMLElement, RevealValue> = {
   mounted(element, binding) {
-    const delay = resolveDelay(binding.value)
+    mountedElements.add(element)
+    const { delay, profile } = resolveOptions(binding.value)
+    if (profile === 'home') element.dataset.revealProfile = profile
     const mode = getRevealMode({
       supportsIntersectionObserver: 'IntersectionObserver' in window,
       prefersReducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches
     })
-    if (mode === 'immediate') {
+    const id = decodeHashTarget(window.location?.hash ?? '')
+    const hashSection = id ? element.closest('[id]')?.id === id : false
+    if (mode === 'immediate' || isInInitialViewport(element.getBoundingClientRect(), window.innerHeight) || hashSection
+      || (profile === 'home' && document.documentElement.dataset.homeScrollRestore === 'true')) {
       revealImmediately(element)
       return
     }
-
-    if (isInInitialViewport(element.getBoundingClientRect(), window.innerHeight)) {
+    // Keep content visible if observation cannot be installed.
+    try {
+      const observer = getObserver(profile)
+      observer.observe(element)
+      observedElements.set(element, profile)
+      startListeners()
+      element.classList.add('reveal')
+      element.style.transitionDelay = delay > 0 ? `${delay}ms` : ''
+      handleScroll()
+    } catch {
+      revealElement(element, true)
       revealImmediately(element)
-      return
     }
-
-    if (reachedDocumentEnd) {
-      revealImmediately(element)
-      return
-    }
-
-    element.classList.add('reveal')
-    element.style.transitionDelay = delay > 0 ? `${delay}ms` : ''
-
-    const currentObserver = getObserver()
-    observedElements.add(element)
-    currentObserver.observe(element)
-    revealRemainingAtDocumentEnd()
   },
-
-  updated(element, binding: DirectiveBinding<RevealValue>) {
-    if (binding.value === binding.oldValue) return
-    const delay = resolveDelay(binding.value)
+  updated(element, binding) {
+    const { delay, profile } = resolveOptions(binding.value)
+    if (profile === 'home' && element.classList.contains('revealed')) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      revealElement(element, true)
+      return
+    }
     element.style.transitionDelay = delay > 0 ? `${delay}ms` : ''
   },
-
   unmounted(element) {
-    observer?.unobserve(element)
+    mountedElements.delete(element)
+    const profile = observedElements.get(element)
+    if (profile) observers.get(profile)?.unobserve(element)
     observedElements.delete(element)
+    immediateElements.delete(element)
+    if (!immediateElements.size && immediateFrame !== undefined) {
+      window.cancelAnimationFrame(immediateFrame)
+      immediateFrame = undefined
+    }
     element.style.removeProperty('transition-delay')
-    disconnectObserverIfIdle()
+    disconnectIfIdle()
   }
 }
 

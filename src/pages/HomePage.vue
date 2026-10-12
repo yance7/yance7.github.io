@@ -26,6 +26,7 @@ const selectedActivities = computed(() => community.value.activities.filter((ite
     <!-- 第一段：精选研究与产品 -->
     <section id="selected-work" class="content home-focus">
       <SectionHeading
+        reveal-profile="home"
         no="01"
         :label="messages.home.selectedWorkLabel"
         :title="homeCopy.selectedTitle"
@@ -38,7 +39,7 @@ const selectedActivities = computed(() => community.value.activities.filter((ite
           :key="item.id"
           class="focus-card focus-research"
           :href="buildLocalizedPageHref('research', locale, { hash: `#${item.id}` })"
-          v-reveal="{ delay: Math.min(i, 4) * 60 }"
+          v-reveal="{ profile: 'home', delay: Math.min(i + 1, 4) * 60 }"
           v-pointer-sheen
         >
           <span class="focus-label">{{ messages.home.researchLabel }} / 0{{ i + 1 }}</span>
@@ -58,7 +59,7 @@ const selectedActivities = computed(() => community.value.activities.filter((ite
           :key="item.id"
           class="focus-card focus-product"
           :class="item.tone"
-          v-reveal="{ delay: Math.min(i + featuredResearch.length, 4) * 60 }"
+          v-reveal="{ profile: 'home', delay: Math.min(i + featuredResearch.length + 1, 4) * 60 }"
           v-pointer-sheen
         >
           <a class="focus-card-main" :href="buildLocalizedPageHref('works', locale, { hash: `#project-${item.id}` })">
@@ -78,6 +79,7 @@ const selectedActivities = computed(() => community.value.activities.filter((ite
     <!-- 第二段：五个小世界 -->
     <section id="home-worlds" class="content home-worlds">
       <SectionHeading
+        reveal-profile="home"
         no="02"
         :label="messages.home.exploreLabel"
         :title="homeCopy.worldsTitle"
@@ -93,7 +95,7 @@ const selectedActivities = computed(() => community.value.activities.filter((ite
           :class="`accent-${w.accent}`"
           :href="w.href"
           :style="{ '--wi': i }"
-          v-reveal="{ delay: Math.min(i, 4) * 60 }"
+          v-reveal="{ profile: 'home', delay: Math.min(i + 1, 4) * 60 }"
         >
           <div class="world-left">
             <span class="world-no">{{ w.no }}</span>
@@ -111,6 +113,7 @@ const selectedActivities = computed(() => community.value.activities.filter((ite
     <!-- 第三段：在实验室之外的组织与行动 -->
     <section id="home-beyond" class="content home-beyond">
       <SectionHeading
+        reveal-profile="home"
         no="03"
         :label="messages.home.beyondLabel"
         :title="homeCopy.beyondTitle"
@@ -118,7 +121,7 @@ const selectedActivities = computed(() => community.value.activities.filter((ite
         :copy="homeCopy.beyondCopy"
       />
       <div class="home-beyond-grid">
-        <div class="beyond-column" v-reveal>
+        <div class="beyond-column" v-reveal="{ profile: 'home', delay: 60 }">
           <span class="beyond-label">{{ messages.home.leadership }}</span>
           <div class="beyond-leadership-list">
             <article v-for="item in leadership" :key="item.role + item.org" class="beyond-leadership">
@@ -128,7 +131,7 @@ const selectedActivities = computed(() => community.value.activities.filter((ite
             </article>
           </div>
         </div>
-        <div class="beyond-column" v-reveal="{ delay: 60 }">
+        <div class="beyond-column" v-reveal="{ profile: 'home', delay: 120 }">
           <span class="beyond-label">{{ messages.home.selectedActivities }}</span>
           <div class="beyond-activity-list">
             <article v-for="item in selectedActivities" :key="item.id" class="beyond-activity">

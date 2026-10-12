@@ -436,5 +436,17 @@ html[data-locale='en'] .section-copy {
     box-shadow var(--dur-base);
 }
 
+.reveal[data-reveal-profile='home'] {
+  --reveal-distance: 20px;
+  --reveal-duration: .55s;
+  transition-duration: .55s, .55s, var(--dur-base), var(--dur-base), var(--dur-base);
+}
+.reveal[data-reveal-immediate='true'],
+.reveal:not(.revealed):focus-within {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
 /* ===== 错误页 ===== */
 .error-actions { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px; }
