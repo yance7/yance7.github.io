@@ -28,7 +28,7 @@ async function frames(page: import('@playwright/test').Page, count = 8) {
   }), count)
 }
 
-async function pointerSweep(page: import('@playwright/test').Page, durationMs = 150, pointerType = 'mouse') {
+async function pointerSweep(page: import('@playwright/test').Page, durationMs = 150, pointerType = 'mouse', release = true) {
   await page.locator('.home-hero-particles').evaluate(async (element, options) => {
     const bounds = element.getBoundingClientRect()
     const startedAt = performance.now()
@@ -42,11 +42,14 @@ async function pointerSweep(page: import('@playwright/test').Page, durationMs = 
         const progress = Math.min(1, (performance.now() - startedAt) / options.durationMs)
         dispatch('pointermove', progress)
         if (progress < 1) requestAnimationFrame(frame)
-        else { dispatch(options.pointerType === 'touch' ? 'pointerup' : 'pointerleave', 1); resolve() }
+        else {
+          if (options.release) dispatch(options.pointerType === 'touch' ? 'pointerup' : 'pointerleave', 1)
+          resolve()
+        }
       }
       requestAnimationFrame(frame)
     })
-  }, { durationMs, pointerType })
+  }, { durationMs, pointerType, release })
 }
 
 const locales = [
@@ -492,7 +495,8 @@ test('@particle-v2 consumes one touch stream and cancels multi-touch without con
   const stage = page.locator('.home-hero-particles')
   await stage.scrollIntoViewIfNeeded()
   await savePixels(page)
-  await pointerSweep(page, 150, 'touch')
+  // Inspect the active stream before release can finish recovering between RPCs.
+  await pointerSweep(page, 150, 'touch', false)
   expect(await changedPixels(page)).toBeGreaterThan(100)
   await stage.evaluate(element => {
     const bounds = element.getBoundingClientRect()
