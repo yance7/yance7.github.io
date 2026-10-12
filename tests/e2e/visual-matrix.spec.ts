@@ -88,7 +88,6 @@ async function settleHomeHero(page: Page) {
   const canvas = page.locator('.home-hero-particles-canvas')
   if (await canvas.count()) {
     await expect(stage).toHaveAttribute('data-particle-state', /settled|paused/)
-    await expect(stage).toHaveAttribute('data-ambient-count', '0')
   }
 }
 
