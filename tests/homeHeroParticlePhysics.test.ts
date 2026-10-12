@@ -1,7 +1,8 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
   advanceHomeHeroParticles,
   createHomeHeroPointerInput,
+  getHomeHeroGlyphInfluence,
   type HomeHeroParticle,
   type HomeHeroPointerInput
 } from '../src/utils/homeHeroParticlePhysics'
@@ -10,7 +11,6 @@ import { sampleHomeHeroTextMask } from '../src/utils/homeHeroParticleScene'
 function createParticle(overrides: Partial<HomeHeroParticle> = {}): HomeHeroParticle {
   return {
     id: 1,
-    kind: 'word',
     homeX: 80,
     homeY: 40,
     x: 80,
@@ -51,12 +51,12 @@ describe('HomeHero text particle sampling', () => {
 
     const particles = sampleHomeHeroTextMask({ width, height, rgba, gridStep: 2, alphaThreshold: 96 })
 
-    expect(particles.map(({ id, row, column, homeX, homeY, kind }) => ({
-      id, row, column, homeX, homeY, kind
+    expect(particles.map(({ id, row, column, homeX, homeY }) => ({
+      id, row, column, homeX, homeY
     }))).toEqual([
-      { id: 0, row: 0, column: 0, homeX: 1.5, homeY: 1.5, kind: 'word' },
-      { id: 1, row: 0, column: 1, homeX: 3.5, homeY: 1.5, kind: 'word' },
-      { id: 2, row: 1, column: 0, homeX: 1.5, homeY: 3.5, kind: 'word' }
+      { id: 0, row: 0, column: 0, homeX: 1.5, homeY: 1.5 },
+      { id: 1, row: 0, column: 1, homeX: 3.5, homeY: 1.5 },
+      { id: 2, row: 1, column: 0, homeX: 1.5, homeY: 3.5 }
     ])
     expect(particles.every(({ x, y, homeX, homeY, vx, vy }) => (
       x === homeX && y === homeY && vx === 0 && vy === 0
@@ -70,14 +70,35 @@ describe('HomeHero text particle sampling', () => {
 })
 
 describe('HomeHero particle physics', () => {
-  it('skips speed and acceleration norms already determined by recovery state', () => {
+  it('uses a bounded continuous spatial influence independent of pointer speed', () => {
+    expect(getHomeHeroGlyphInfluence(120, 120)).toBe(0)
+    expect(getHomeHeroGlyphInfluence(0, 120)).toBeGreaterThan(30)
+    expect(getHomeHeroGlyphInfluence(0, 120)).toBeLessThanOrEqual(55)
+    expect(getHomeHeroGlyphInfluence(60, 120)).toBeGreaterThan(0)
+    expect(getHomeHeroGlyphInfluence(60, 120)).toBeLessThan(getHomeHeroGlyphInfluence(10, 120))
+    expect(Math.abs(getHomeHeroGlyphInfluence(33.6 - 0.001, 120) - getHomeHeroGlyphInfluence(33.6 + 0.001, 120))).toBeLessThan(0.01)
+  })
+
+  it('recovers monotonically without oscillating through the glyph', () => {
+    const particle = createParticle({ x: 125, y: 18, vx: 125, vy: -90 })
+    for (let i = 0; i < 120; i += 1) {
+      const previousX = particle.x
+      const previousY = particle.y
+      advanceHomeHeroParticles([particle], null, 1 / 120)
+      expect(particle.x).toBeGreaterThanOrEqual(particle.homeX)
+      expect(particle.x).toBeLessThanOrEqual(previousX)
+      expect(particle.y).toBeLessThanOrEqual(particle.homeY)
+      expect(particle.y).toBeGreaterThanOrEqual(previousY)
+    }
+    expect(particle.x).toBe(particle.homeX)
+    expect(particle.y).toBe(particle.homeY)
+  })
+
+  it('consumes the full recovery interval when a foreground frame is delayed', () => {
     const particle = createParticle({ x: 120 })
-    const hypot = vi.spyOn(Math, 'hypot')
-    try {
-      expect(advanceHomeHeroParticles([particle], null, 1 / 120)).toBe(true)
-      expect(hypot).not.toHaveBeenCalled()
-      expect(particle.x).toBeLessThan(120)
-    } finally { hypot.mockRestore() }
+    expect(advanceHomeHeroParticles([particle], null, 0.5)).toBe(false)
+    expect(particle.x).toBe(particle.homeX)
+    expect(particle.y).toBe(particle.homeY)
   })
 
   it('low-pass filters pointer velocity while preserving its swept segment', () => {
@@ -130,15 +151,15 @@ describe('HomeHero particle physics', () => {
     expect(particle.vy).toBe(0)
   })
 
-  it('clamps particle speed for mobile and desktop budgets', () => {
-    const desktop = createParticle({ x: 300, y: 40, homeX: 80, homeY: 40, vx: 4000 })
-    const mobile = createParticle({ x: 300, y: 40, homeX: 80, homeY: 40, vx: 4000 })
-
-    advanceHomeHeroParticles([desktop], null, 1 / 120)
-    advanceHomeHeroParticles([mobile], null, 1 / 120, { mobile: true })
-
-    expect(Math.hypot(desktop.vx, desktop.vy)).toBeLessThanOrEqual(520)
-    expect(Math.hypot(mobile.vx, mobile.vy)).toBeLessThanOrEqual(390)
+  it('bounds sustained offsets for extreme pointer input on desktop and mobile', () => {
+    const input = { x: 80, y: 40, fromX: 80, fromY: 40, vx: 1e9, vy: 1e9 }
+    for (const mobile of [false, true]) {
+      const particle = createParticle()
+      for (let frame = 0; frame < 120; frame += 1) {
+        advanceHomeHeroParticles([particle], input, 1 / 120, { mobile })
+        expect(Math.hypot(particle.x - particle.homeX, particle.y - particle.homeY)).toBeLessThanOrEqual(54)
+      }
+    }
   })
 
   it('does not settle a fast crossing or a single close frame', () => {

@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 test('home leads with the quiet editorial stage', async ({ page }) => {
   await page.goto('/')
   await expect(page.locator('.hero-name, .home-statement')).toHaveCount(0)
-  await expect(page.locator('.home-hero-typewriter')).toHaveText(/你好，我是 Yance\s*研究、构建，与现场相遇_/)
+  await expect(page.locator('.home-hero-typewriter')).toHaveText(/你好，我是 Yance\s*欢迎来到我的世界_/)
   await expect(page.locator('h1.home-hero-title')).not.toContainText('_')
   await expect(page.locator('.archive-entry')).toHaveCount(0)
   await expect(page.locator('.home-archive-index, .home-hero-glow')).toHaveCount(0)
@@ -15,10 +15,10 @@ test('home keeps the complete semantic title beside the decorative static Hero l
   await page.goto('/')
 
   const semanticTitle = page.locator('h1.home-hero-title')
-  await expect(semanticTitle).toHaveText(/你好，我是 Yance\s*研究、构建，与现场相遇/)
+  await expect(semanticTitle).toHaveText(/你好，我是 Yance\s*欢迎来到我的世界/)
   await expect(semanticTitle).not.toContainText('_')
   await expect(page.locator('.home-hero-typewriter')).toHaveAttribute('aria-hidden', 'true')
-  await expect(page.locator('.home-hero-typewriter')).toContainText('研究、构建，与现场相遇_')
+  await expect(page.locator('.home-hero-typewriter')).toContainText('欢迎来到我的世界_')
   await expect(page.locator('.home-hero-particles')).toHaveAttribute('aria-hidden', 'true')
 })
 
@@ -26,18 +26,18 @@ test('home hero copy stays exact across all supported locales', async ({ page })
   const locales = [
     {
       route: '/',
-      semantic: '你好，我是 Yance 研究、构建，与现场相遇',
-      visual: '研究、构建，与现场相遇_'
+      semantic: '你好，我是 Yance 欢迎来到我的世界',
+      visual: '欢迎来到我的世界_'
     },
     {
       route: '/zh-hk/',
-      semantic: '你好，我是 Yance 研究、建構，與現場相遇',
-      visual: '研究、建構，與現場相遇_'
+      semantic: '你好，我是 Yance 歡迎來到我的世界',
+      visual: '歡迎來到我的世界_'
     },
     {
       route: '/en/',
-      semantic: 'Hi, I’m Yance Research, build, and meet the live world',
-      visual: 'Research, build, and meet the live world_'
+      semantic: 'Hi, I’m Yance Welcome to my world',
+      visual: 'Welcome to my world_'
     }
   ]
 
