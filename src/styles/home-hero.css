@@ -290,6 +290,23 @@ html[data-theme='dark'] .home-hero-particles {
   pointer-events: none;
 }
 
+.home-hero-particles-preference-sentinel {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  transition: width 50ms linear, height 50ms linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-hero-particles-preference-sentinel { width: 2px; }
+}
+
+@media (forced-colors: active) {
+  .home-hero-particles-preference-sentinel { height: 2px; }
+}
+
 .home-hero-particles-canvas { z-index: 2; }
 
 .home-hero-particles-word {

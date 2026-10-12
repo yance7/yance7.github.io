@@ -291,6 +291,9 @@ function resize() { void rebuild() }
 function preference() {
   void rebuild(true)
 }
+function preferenceSentinel(event: TransitionEvent) {
+  if (event.propertyName === 'width' || event.propertyName === 'height') preference()
+}
 function theme() {
   if (!renderer || !engine) return
   renderer.setColors(colors())
@@ -326,6 +329,7 @@ onMounted(() => {
   }
   themeObserver = new MutationObserver(theme)
   themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+  stage.value!.addEventListener('transitionend', preferenceSentinel)
   void rebuild()
 })
 onBeforeUnmount(() => {
@@ -335,6 +339,7 @@ onBeforeUnmount(() => {
   resizeObserver?.disconnect()
   intersectionObserver?.disconnect()
   themeObserver?.disconnect()
+  stage.value?.removeEventListener('transitionend', preferenceSentinel)
   motionMedia?.removeEventListener('change', preference)
   forcedMedia?.removeEventListener('change', preference)
   connection?.removeEventListener('change', preference)
@@ -374,6 +379,7 @@ onBeforeUnmount(() => {
     :data-ink-bounds="JSON.stringify(glyphLayout.bounds)"
     aria-hidden="true"
   >
+    <span class="home-hero-particles-preference-sentinel" aria-hidden="true"></span>
     <canvas v-if="renderMode === 'canvas' || renderMode === 'initializing'" ref="canvas" class="home-hero-particles-canvas" aria-hidden="true"></canvas>
     <svg class="home-hero-particles-word" :viewBox="`0 0 ${fallbackSize.width} ${fallbackSize.height}`" :style="{ fontFamily: glyphFont.family, fontWeight: glyphFont.weight }" aria-hidden="true">
       <defs><pattern id="home-hero-static-dots" :width="gridStep" :height="gridStep" patternUnits="userSpaceOnUse"><circle :cx="gridStep / 2" :cy="gridStep / 2" r=".8" fill="currentColor" /></pattern></defs>
