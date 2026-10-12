@@ -251,9 +251,10 @@ test('immediate focus reveal restores the normal card interaction transitions', 
 
 test('focus during an observer-triggered home stagger immediately shows its card', async ({ page }) => {
   await openHome(page)
-  await page.keyboard.press('PageDown')
+  await page.locator('.theme-orbit').focus()
   const card = page.locator('.world-card').last()
   await card.evaluate(element => element.scrollIntoView({ block: 'center', behavior: 'instant' }))
+  await expect(card).toBeInViewport()
   await expect(card).toHaveClass(/revealed/)
   const opacity = await card.evaluate(element => {
     element.focus({ preventScroll: true })
