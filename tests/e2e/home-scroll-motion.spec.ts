@@ -75,11 +75,20 @@ test('focus reveals a pending home card synchronously and preserves native keybo
   expect(opacity).toBe('1')
   await expect(card).toHaveClass(/revealed/)
   await expect(page.locator('html')).toHaveCSS('scroll-snap-type', 'none')
+  // Reaching the last pixel precedes Chromium's native scroll completion.
+  // Wait for the End operation itself before issuing the opposite operation.
+  await page.evaluate(() => {
+    document.documentElement.dataset.nativeScrollEnded = 'false'
+    document.addEventListener('scrollend', () => {
+      document.documentElement.dataset.nativeScrollEnded = 'true'
+    }, { once: true })
+  })
   await page.keyboard.press('End')
   await expect(page.locator('.site-footer')).toBeInViewport()
   await expect.poll(() => page.evaluate(() => Math.abs(
     scrollY - (document.documentElement.scrollHeight - innerHeight)
   ))).toBeLessThan(2)
+  await expect(page.locator('html')).toHaveAttribute('data-native-scroll-ended', 'true')
   await page.keyboard.press('Home')
   await expect(page.locator('.home-hero')).toBeInViewport()
 })
@@ -117,6 +126,8 @@ test('home Hero anchors and history navigation preserve their native target', as
   await expect(page).toHaveURL(/#home-worlds$/)
   await expect(page.locator('#home-worlds .reveal:not(.revealed)')).toHaveCount(0)
   await expect(page.locator('html')).toHaveCSS('scroll-snap-type', 'none')
+  // URL and reveal state change before the native anchor scroll completes.
+  await expect(page.locator('#home-worlds .section-head')).toBeInViewport()
   await page.goto('/research/')
   await page.goBack()
   await expect(page).toHaveURL(/#home-worlds$/)

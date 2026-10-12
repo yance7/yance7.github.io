@@ -251,7 +251,10 @@ for (const viewport of viewports) {
           await expect(page.locator('main#main')).toHaveScreenshot(`${route}-${theme}-desktop-main.png`, componentScreenshotOptions)
         }
         if (route === 'index' && viewport.name === 'desktop') {
-          // Full-page captures must include content after its normal reveal.
+          // Use native keyboard navigation to yield proximity snapping before
+          // traversing offscreen content for the complete-page capture.
+          await page.keyboard.press('End')
+          await expect(page.locator('.site-footer')).toBeInViewport()
           for (const element of await page.locator('main#main .reveal').all()) {
             await element.scrollIntoViewIfNeeded()
             await expect(element).toHaveClass(/revealed/)
