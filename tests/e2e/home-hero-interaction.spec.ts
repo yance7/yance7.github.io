@@ -348,8 +348,11 @@ for (const locale of locales) {
     await page.reload()
     await expect(page.locator('.home-hero-typewriter')).toHaveAttribute('aria-hidden', 'true')
     await waitForSettledHero(page)
-    await page.goto('/works.html')
+    await page.goto(`${locale.route}works/`)
+    await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+    await expect(page.locator('.page-works')).toBeVisible()
     await page.goBack()
+    await expect(page).toHaveURL(new RegExp(`${locale.route}$`))
     await waitForSettledHero(page)
   })
 }
