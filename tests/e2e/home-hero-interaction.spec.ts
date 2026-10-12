@@ -346,11 +346,16 @@ test('@particle-v2 enters the static fallback if a motion preference notificatio
   await page.goto('/')
   await waitForSettledHero(page)
   await page.locator('.home-hero-particles').scrollIntoViewIfNeeded()
-  await pointerSweep(page)
+  const idleFrames = await page.locator('.home-hero-particles').getAttribute('data-frame-count')
+  await frames(page)
+  await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-frame-count', idleFrames!)
   await page.emulateMedia({ reducedMotion: 'reduce' })
   expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true)
   await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-render-mode', 'static')
   await expect(page.locator('.home-hero-particles svg')).toBeVisible()
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-render-mode', 'canvas')
+  await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-particle-state', 'settled')
 })
 
 test('@particle-v2 consumes repeated stirring and returns without residual trails', async ({ page }) => {

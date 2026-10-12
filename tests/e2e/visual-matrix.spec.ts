@@ -251,6 +251,15 @@ for (const viewport of viewports) {
           await expect(page.locator('main#main')).toHaveScreenshot(`${route}-${theme}-desktop-main.png`, componentScreenshotOptions)
         }
         if (route === 'index' && viewport.name === 'desktop') {
+          // Full-page captures must include content after its normal reveal.
+          for (const element of await page.locator('main#main .reveal').all()) {
+            await element.scrollIntoViewIfNeeded()
+            await expect(element).toHaveClass(/revealed/)
+          }
+          await expect(page.locator('main#main .reveal:not(.revealed)')).toHaveCount(0)
+          await page.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }))
+          await resetPointerForVisualCapture(page)
+          await settleHomeHero(page)
           await expect(page).toHaveScreenshot(`index-${theme}-desktop-full.png`, {
             ...fullPageScreenshotOptions,
             fullPage: true
