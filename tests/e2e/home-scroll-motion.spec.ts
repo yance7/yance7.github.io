@@ -241,8 +241,12 @@ for (const path of ['/zh-hk/', '/en/']) {
   test(`home hash content in ${path} avoids replay on reload`, async ({ page }) => {
     await openHome(page, `${path}#home-worlds`)
     await expect(page.locator('#home-worlds .reveal:not(.revealed)')).toHaveCount(0)
+    await expect(page).toHaveURL(/#home-worlds$/)
     await page.reload()
+    await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+    await expect(page.locator('#home-worlds')).toBeAttached()
     await expect(page.locator('#home-worlds .reveal:not(.revealed)')).toHaveCount(0)
+    await expect(page).toHaveURL(/#home-worlds$/)
     await expect(page.locator('html')).toHaveCSS('scroll-snap-type', 'none')
   })
 }
