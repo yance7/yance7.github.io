@@ -504,6 +504,10 @@ test('@particle-v2 cancels stale input when scrolling changes the stage geometry
   await page.setViewportSize({ width: 1440, height: 1100 })
   await page.goto('/')
   await waitForSettledHero(page)
+  // Native keyboard focus suspends proximity so this test can measure a real
+  // geometry change. Snap behavior itself belongs to home-scroll-motion.
+  await page.locator('.theme-orbit').focus()
+  await expect(page.locator('html')).toHaveCSS('scroll-snap-type', 'none')
   const stage = page.locator('.home-hero-particles')
   const top = await stage.evaluate(element => {
     const bounds = element.getBoundingClientRect()
@@ -512,7 +516,7 @@ test('@particle-v2 cancels stale input when scrolling changes the stage geometry
     return bounds.top
   })
   await expect(stage).toHaveAttribute('data-particle-state', 'disturbed')
-  await page.evaluate(() => scrollBy(0, 80))
+  await page.evaluate(() => scrollBy({ top: 80, behavior: 'instant' }))
   await expect.poll(() => stage.evaluate(element => element.getBoundingClientRect().top)).not.toBe(top)
   await expect(stage).toHaveAttribute('data-particle-state', /recovering|settled/)
   await expect(stage).toHaveAttribute('data-moving-particle-count', '0', { timeout: 1500 })
