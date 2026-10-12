@@ -25,8 +25,12 @@ export function useHomeScrollSnap(isHome: boolean, ready: Ref<boolean>) {
   function update() {
     const footer = document.querySelector<HTMLElement>('.site-footer')
     const footerInView = footer && footer.getBoundingClientRect().top < window.innerHeight
+    // Release the last chapter's tail before the footer enters the viewport.
+    // Otherwise proximity can pull scrollIntoView back to the final snap target.
+    const lastSection = document.querySelector<HTMLElement>('#home-beyond')
+    const pastLastChapter = lastSection && lastSection.getBoundingClientRect().top < 0
     const enabled = mounted && isHome && ready.value && desktop?.matches && !reduced?.matches
-      && !suspended && !footerInView && document.body.style.overflow !== 'hidden'
+      && !suspended && !footerInView && !pastLastChapter && document.body.style.overflow !== 'hidden'
     root.classList.toggle('home-scroll-snap', Boolean(enabled))
   }
   function suspend() {

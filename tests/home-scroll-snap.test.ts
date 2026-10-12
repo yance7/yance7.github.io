@@ -31,6 +31,7 @@ describe('home document snap lifecycle', () => {
     const reduced = media('reduced', false)
     let bodyDisconnected = false
     const body = { style: { overflow: '' } }
+    let lastSectionTop = 138
     const frames = new Map<number, FrameRequestCallback>()
     let frameId = 0
     const scrollTo = vi.fn()
@@ -53,7 +54,8 @@ describe('home document snap lifecycle', () => {
     })
     vi.stubGlobal('document', {
       body,
-      querySelector: () => null,
+      querySelector: (selector: string) => selector === '#home-beyond'
+        ? { getBoundingClientRect: () => ({ top: lastSectionTop }) } : null,
       fonts: { ready: Promise.resolve() },
       documentElement: root,
       addEventListener: (event: string, handler: () => void) => listeners.set(`document:${event}`, handler),
@@ -84,8 +86,21 @@ describe('home document snap lifecycle', () => {
       frames.clear()
       pending.forEach(handler => handler(0))
     }
-    return { app, ready, classes, listeners, desktop, reduced, body, root, scrollTo, flushFrames, bodyDisconnected: () => bodyDisconnected }
+    return { app, ready, classes, listeners, desktop, reduced, body, root, scrollTo, flushFrames,
+      setLastSectionTop: (top: number) => { lastSectionTop = top }, bodyDisconnected: () => bodyDisconnected }
   }
+
+  it('releases the final chapter tail before proximity can pull footer navigation backward', () => {
+    const state = setup()
+    expect(state.classes.has('home-scroll-snap')).toBe(true)
+    state.setLastSectionTop(-1)
+    state.listeners.get('window:scroll')!()
+    expect(state.classes.has('home-scroll-snap')).toBe(false)
+    state.setLastSectionTop(138)
+    state.listeners.get('window:scroll')!()
+    expect(state.classes.has('home-scroll-snap')).toBe(true)
+    state.app.unmount()
+  })
 
   it('clears home scope on async failure and unmounts every media, input and body listener', async () => {
     const state = setup()
