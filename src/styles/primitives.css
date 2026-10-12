@@ -181,3 +181,22 @@
   .y-archive-link:hover > span:last-child,
   .y-archive-link:active { transform: none; }
 }
+/* One invisible preference observer shared by pointer directives. */
+.pointer-motion-preference-sentinel {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  transition: width 50ms linear, height 50ms linear;
+}
+
+@media (prefers-reduced-motion: reduce), (hover: none), (pointer: coarse) {
+  .pointer-motion-preference-sentinel { width: 2px; }
+}
+
+@media (forced-colors: active) {
+  .pointer-motion-preference-sentinel { height: 2px; }
+}

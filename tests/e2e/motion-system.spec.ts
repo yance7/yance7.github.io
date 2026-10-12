@@ -91,7 +91,40 @@ test('@pointer-refinement motion directives clear immediately when runtime prefe
   await sheen.hover()
   await expect.poll(() => sheen.evaluate((element) => element.style.getPropertyValue('--pointer-active'))).toBe('1')
   await page.emulateMedia({ forcedColors: 'active' })
+  await expect.poll(() => page.evaluate(() => matchMedia('(forced-colors: active)').matches)).toBe(true)
   await expect.poll(() => sheen.evaluate((element) => element.style.getPropertyValue('--pointer-active'))).toBe('')
+})
+
+test('@pointer-refinement motion directives clear when native media change notifications are missed', async ({ page }) => {
+  await page.addInitScript(() => {
+    const original = window.matchMedia.bind(window)
+    window.matchMedia = query => {
+      const media = original(query)
+      if (query === '(prefers-reduced-motion: reduce)' || query === '(forced-colors: active)') {
+        media.addEventListener = () => undefined
+      }
+      return media
+    }
+  })
+  await page.goto('/works/')
+  test.skip(!(await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches)), 'fine pointer only')
+  const sheen = page.locator('[data-pointer-sheen]').first()
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
+  await sheen.scrollIntoViewIfNeeded()
+  await expect(sheen).toHaveClass(/revealed/)
+  await expect(sheen).toHaveCSS('transform', 'none')
+  await sheen.hover()
+  await expect.poll(() => sheen.evaluate(element => element.style.getPropertyValue('--pointer-active'))).toBe('1')
+  await page.emulateMedia({ forcedColors: 'active' })
+  await expect.poll(() => page.evaluate(() => matchMedia('(forced-colors: active)').matches)).toBe(true)
+  await expect.poll(() => sheen.evaluate(element => element.style.getPropertyValue('--pointer-active'))).toBe('')
+  await page.emulateMedia({ forcedColors: 'none' })
+  await sheen.hover({ position: { x: 100, y: 100 } })
+  await expect.poll(() => sheen.evaluate(element => element.style.getPropertyValue('--pointer-active'))).toBe('1')
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await expect.poll(() => page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true)
+  await expect.poll(() => sheen.evaluate(element => element.style.getPropertyValue('--pointer-active'))).toBe('')
 })
 
 test('Academics passive rows remain inside layout after pointer emphasis', async ({ page }) => {
