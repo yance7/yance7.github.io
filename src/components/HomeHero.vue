@@ -32,13 +32,17 @@ const { state, animateParticles, isIntroActive, introStartedAt } = useHomeHeroIn
         />
 
         <div class="home-hero-actions">
-          <a class="hero-action primary" href="#selected-work">
-            <span>{{ messages.actions.selectedWork }}</span>
-            <span aria-hidden="true">↗</span>
+          <a class="hero-action primary" href="#selected-work" v-magnetic>
+            <span class="hero-action__visual" data-magnetic-visual>
+              <span>{{ messages.actions.selectedWork }}</span>
+              <span aria-hidden="true">↗</span>
+            </span>
           </a>
-          <a class="hero-action secondary" href="#home-worlds">
-            <span>{{ messages.actions.exploreWorlds }}</span>
-            <span aria-hidden="true">↓</span>
+          <a class="hero-action secondary" href="#home-worlds" v-magnetic>
+            <span class="hero-action__visual" data-magnetic-visual>
+              <span>{{ messages.actions.exploreWorlds }}</span>
+              <span aria-hidden="true">↓</span>
+            </span>
           </a>
         </div>
       </div>
