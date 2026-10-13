@@ -1,32 +1,34 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { HomeHeroParticleEngine, type HomeHeroParticle } from '../utils/homeHeroParticlePhysics'
-import { createHomeHeroParticleScene, createHomeHeroTextMask, getHomeHeroParticleGridStep, getHomeHeroParticlePixelRatio } from '../utils/homeHeroParticleScene'
+import { HomeHeroParticleEngine } from '../utils/homeHeroParticlePhysics'
+import { createHomeHeroParticleScene, createHomeHeroTextMask, getHomeHeroParticleGridStep, getHomeHeroParticlePixelRatio, type HomeHeroGlyphLayout } from '../utils/homeHeroParticleScene'
 import { HomeHeroParticleRenderer, type HomeHeroParticleColors } from '../utils/homeHeroParticleRenderer'
 
 const props = defineProps<{ animateIntro: boolean; introStartedAt: number | null }>()
 const stage = ref<HTMLElement | null>(null)
 const canvas = ref<HTMLCanvasElement | null>(null)
+const fallbackText = ref<SVGTextElement | null>(null)
 const renderMode = ref('initializing')
 const particleState = ref('initializing')
 const particleCount = ref(0)
-const fieldCount = ref(0)
+const sourceParticleCount = ref(0)
+const inkArea = ref(0)
 const movingParticleCount = ref(0)
-const ambientCount = ref(0)
 const pixelRatio = ref(1)
-const gridStep = ref(5)
+const gridStep = ref(2)
 const lastInput = ref('none')
 const frameCount = ref(0)
+const animationRunning = ref(false)
 const physicsMs = ref(0)
 const renderMs = ref(0)
 const peakActive = ref(0)
 const peakCandidates = ref(0)
 const fallbackSize = ref({ width: 1080, height: 430 })
-const fallbackFontSize = ref(220)
+const glyphLayout = ref<HomeHeroGlyphLayout>({ fontSize: 220, x: 175, baseline: 290, bounds: { left: 175, top: 130, width: 730, height: 170 } })
+const glyphFont = ref({ family: '', weight: '400' })
 
 let engine: HomeHeroParticleEngine | null = null
 let renderer: HomeHeroParticleRenderer | null = null
-let ambient: HomeHeroParticle[] = []
 let frameId = 0
 let frameFallback = 0
 let generation = 0
@@ -35,8 +37,6 @@ let firstScene = true
 let visible = true
 let focused = true
 let pageVisible = true
-let introUntil = 0
-let ambientUntil = 0
 let inputDownAt = 0
 let dimensionsKey = ''
 let pointerBounds: DOMRect | null = null
@@ -57,8 +57,7 @@ function allowed() { return !motionMedia?.matches && !forcedMedia?.matches && !c
 function running() { return !disposed && allowed() && visible && focused && pageVisible && renderMode.value === 'canvas' }
 function colors(): HomeHeroParticleColors {
   const style = getComputedStyle(stage.value ?? document.documentElement)
-  return { word: style.getPropertyValue('--hero-particle').trim(), field: style.getPropertyValue('--hero-field').trim(),
-    trail: style.getPropertyValue('--hero-particle-trail').trim(), ambient: style.getPropertyValue('--hero-ambient').trim() }
+  return { word: style.getPropertyValue('--hero-particle').trim() }
 }
 function clearFrame() {
   if (frameId) cancelAnimationFrame(frameId)
@@ -79,38 +78,29 @@ function clearScene() {
   renderer?.destroy()
   renderer = null
   engine = null
-  ambient = []
-  ambientCount.value = 0
   movingParticleCount.value = 0
+  animationRunning.value = false
   dimensionsKey = ''
   touches.clear()
   pointerBounds = null
   inputBounds = null
 }
 function staticMode(mode = 'static') {
+  firstScene = false
   generation += 1
   clearScene()
   renderMode.value = mode
   particleState.value = mode
 }
-function dynamicParticles(at: number) {
-  const particles = [...(engine?.active ?? [])].map(id => engine!.scene.particles[id]!)
-  const remaining = ambientUntil - at
-  ambientCount.value = remaining > 0 ? ambient.length : 0
-  for (const p of ambient) {
-    const envelope = Math.min(1, Math.max(0, remaining / 0.5))
-    const phase = p.id * 2.3999632297
-    p.x = p.homeX + Math.sin(at * 1.4 + phase) * 4 * envelope
-    p.y = p.homeY + Math.cos(at * 1.6 + phase) * 3 * envelope
-    if (envelope > 0) particles.push(p)
-  }
-  return particles
+function dynamicParticles() {
+  return [...(engine?.active ?? [])].map(id => engine!.scene.particles[id]!)
 }
-function updateState(at: number) {
+function updateState() {
   movingParticleCount.value = engine?.active.size ?? 0
   peakActive.value = engine?.stats.peakActive ?? 0
   peakCandidates.value = engine?.stats.peakCandidates ?? 0
-  particleState.value = at < introUntil ? 'gathering' : !engine?.active.size ? 'settled' : engine.pointer.connected ? 'disturbed' : 'recovering'
+  particleState.value = engine?.phase ?? renderMode.value
+  animationRunning.value = engine?.needsFrame ?? false
 }
 function animate() {
   clearFrame()
@@ -128,11 +118,26 @@ function animate() {
   engine.advanceTo(at)
   physicsMs.value = performance.now() - start
   const renderStart = performance.now()
-  renderer.drawActive(dynamicParticles(at))
+  renderer.drawActive(dynamicParticles())
   renderMs.value = performance.now() - renderStart
   frameCount.value += 1
-  updateState(at)
-  if (engine.needsFrame || at < introUntil || at < ambientUntil) schedule()
+  updateState()
+  if (engine.needsFrame) schedule()
+}
+
+// This independent SVG measurement also works when Canvas/readback is blocked.
+async function fitStaticGlyph(width: number, height: number, revision = generation) {
+  await nextTick()
+  const text = fallbackText.value
+  if (!text || disposed || revision !== generation) return
+  const box = text.getBBox()
+  if (box.width <= 0 || box.height <= 0) return
+  const previous = glyphLayout.value
+  const scale = Math.min(width * (width <= 760 ? 0.82 : 0.74) / box.width, height * 0.48 / box.height)
+  glyphLayout.value = { fontSize: previous.fontSize * scale,
+    x: (width - box.width * scale) / 2 - (box.x - previous.x) * scale,
+    baseline: (height - box.height * scale) / 2 - (box.y - previous.baseline) * scale,
+    bounds: { left: (width - box.width * scale) / 2, top: (height - box.height * scale) / 2, width: box.width * scale, height: box.height * scale } }
 }
 
 async function rebuild(force = false) {
@@ -142,10 +147,16 @@ async function rebuild(force = false) {
   const height = Math.floor(bounds.height - stage.value!.clientTop * 2)
   if (width < 1 || height < 1) return
   fallbackSize.value = { width, height }
-  // The independent SVG fallback uses the same serif stack and width/height fit.
-  fallbackFontSize.value = Math.min(width * (width <= 760 ? 0.82 : 0.74) / 3.3, height * 0.48 / 0.72)
+  const title = stage.value?.closest('.home-hero')?.querySelector<HTMLElement>('.home-hero-typewriter')
+  const style = getComputedStyle(title ?? stage.value!)
+  glyphFont.value = { family: style.fontFamily, weight: style.fontWeight }
+  gridStep.value = getHomeHeroParticleGridStep(lowResource())
   if (!allowed()) {
     staticMode()
+    const revision = generation
+    await fitStaticGlyph(width, height, revision)
+    await document.fonts.load(`${style.fontWeight} 100px ${style.fontFamily}`, 'YANCE').catch(() => [])
+    await fitStaticGlyph(width, height, revision)
     return
   }
   const step = getHomeHeroParticleGridStep(lowResource())
@@ -155,41 +166,33 @@ async function rebuild(force = false) {
   const revision = ++generation
   clearScene()
   renderMode.value = 'initializing'
-  await nextTick()
+  await fitStaticGlyph(width, height, revision)
   if (disposed || revision !== generation || !allowed() || !canvas.value) return
   try {
-    const title = stage.value?.closest('.home-hero')?.querySelector<HTMLElement>('.home-hero-typewriter')
-    const style = getComputedStyle(title ?? stage.value!)
     // YANCE uses the installed Latin serif stack; do not wait for CJK fonts.
+    await document.fonts.load(`${style.fontWeight} 100px ${style.fontFamily}`, 'YANCE')
+    if (disposed || revision !== generation || !allowed() || !canvas.value) return
     const mask = createHomeHeroTextMask(width, height, style.fontFamily, style.fontWeight)
-    const scene = createHomeHeroParticleScene({ width, height, rgba: mask, gridStep: step, alphaThreshold: 72 })
-    if (scene.wordCount < 40) throw new Error('HomeHero text mask is incomplete')
+    glyphLayout.value = mask.layout
+    const scene = createHomeHeroParticleScene({ width, height, rgba: mask.rgba, gridStep: step, alphaThreshold: 72, maxParticles: lowResource() ? 4000 : 9000 })
+    if (scene.particles.length < 40) throw new Error('HomeHero text mask is incomplete')
     const at = performance.now() / 1000
     engine = new HomeHeroParticleEngine(scene, { startedAt: at, mobile: width <= 760 })
-    const count = lowResource() ? 8 : width <= 760 ? 12 : 20
-    ambient = Array.from({ length: count }, (_, i) => {
-      const homeX = width * (0.08 + ((i * 73 % 101) / 101) * 0.84)
-      const homeY = height * (0.1 + ((i * 47 % 103) / 103) * 0.76)
-      return { id: -i - 1, kind: 'field', homeX, homeY, x: homeX, y: homeY, vx: 0, vy: 0, row: 0, column: 0, settledForMs: 40 }
-    })
-    renderer = new HomeHeroParticleRenderer(canvas.value, { scene, pixelRatio: ratio, colors: colors(), ambient })
+    renderer = new HomeHeroParticleRenderer(canvas.value, { scene, pixelRatio: ratio, colors: colors() })
     dimensionsKey = key
     gridStep.value = step
     pixelRatio.value = ratio
-    particleCount.value = scene.wordCount
-    fieldCount.value = scene.fieldCount
-    const startedAt = (props.introStartedAt ?? 0) / 1000
-    introUntil = firstScene && props.animateIntro && startedAt > 0 ? startedAt + 1.6 : 0
-    if (at < introUntil) {
-      engine.gather()
-      ambientUntil = introUntil
-    } else ambientUntil = 0
+    particleCount.value = scene.particles.length
+    sourceParticleCount.value = scene.sampledCount
+    inkArea.value = Math.round(mask.inkArea)
+    if (firstScene && props.animateIntro) engine.gather()
     firstScene = false
     renderMode.value = 'canvas'
-    renderer.drawActive(dynamicParticles(at))
-    updateState(at)
     updatePausedState()
-  } catch { staticMode('static-fallback') }
+  } catch {
+    staticMode('static-fallback')
+    await fitStaticGlyph(width, height)
+  }
 }
 
 function updatePausedState() {
@@ -197,19 +200,18 @@ function updatePausedState() {
   if (!running()) {
     clearFrame()
     engine.reset(performance.now() / 1000)
-    ambientUntil = 0
-    introUntil = 0
     touches.clear()
     pointerBounds = null
     inputBounds = null
     renderer.drawStatic()
     movingParticleCount.value = 0
-    ambientCount.value = 0
+    animationRunning.value = false
     particleState.value = 'paused'
   } else {
     engine.advanceTo(performance.now() / 1000)
-    updateState(performance.now() / 1000)
-    if (engine.moving || performance.now() / 1000 < introUntil || performance.now() / 1000 < ambientUntil) schedule()
+    renderer.drawActive(dynamicParticles())
+    updateState()
+    if (engine.needsFrame) schedule()
   }
 }
 function eventTime(event: PointerEvent) {
@@ -228,7 +230,6 @@ function move(event: PointerEvent) {
       y: sample.clientY - pointerBounds.top - stage.value!.clientTop, at: eventTime(sample) })
   }
   lastInput.value = event.pointerType || 'pointer'
-  ambientUntil = performance.now() / 1000 + 3
   schedule()
 }
 function down(event: PointerEvent) {
@@ -236,6 +237,7 @@ function down(event: PointerEvent) {
   touches.add(event.pointerId)
   if (touches.size > 1) {
     engine?.pointer.reset()
+    schedule()
     return
   }
   inputDownAt = eventTime(event)
@@ -287,13 +289,15 @@ function scroll() {
 }
 function resize() { void rebuild() }
 function preference() {
-  if (!allowed()) staticMode()
-  else void rebuild(true)
+  void rebuild(true)
+}
+function preferenceSentinel(event: TransitionEvent) {
+  if (event.propertyName === 'width' || event.propertyName === 'height') preference()
 }
 function theme() {
   if (!renderer || !engine) return
   renderer.setColors(colors())
-  renderer.drawActive(dynamicParticles(performance.now() / 1000))
+  renderer.drawActive(dynamicParticles())
 }
 
 watch(() => props.introStartedAt, () => { if (!engine && allowed()) void rebuild() })
@@ -325,6 +329,7 @@ onMounted(() => {
   }
   themeObserver = new MutationObserver(theme)
   themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+  stage.value!.addEventListener('transitionend', preferenceSentinel)
   void rebuild()
 })
 onBeforeUnmount(() => {
@@ -334,6 +339,7 @@ onBeforeUnmount(() => {
   resizeObserver?.disconnect()
   intersectionObserver?.disconnect()
   themeObserver?.disconnect()
+  stage.value?.removeEventListener('transitionend', preferenceSentinel)
   motionMedia?.removeEventListener('change', preference)
   forcedMedia?.removeEventListener('change', preference)
   connection?.removeEventListener('change', preference)
@@ -357,25 +363,27 @@ onBeforeUnmount(() => {
     data-word="YANCE"
     :data-grid-step="gridStep"
     :data-particle-count="particleCount"
-    :data-field-count="fieldCount"
+    :data-source-particle-count="sourceParticleCount"
+    :data-ink-area="inkArea"
     :data-moving-particle-count="movingParticleCount"
-    :data-ambient-count="ambientCount"
     :data-particle-state="particleState"
     :data-pixel-ratio="pixelRatio"
     :data-last-input="lastInput"
     :data-frame-count="frameCount"
+    :data-animation-running="animationRunning"
     :data-physics-ms="physicsMs"
     :data-render-ms="renderMs"
     :data-peak-active="peakActive"
     :data-peak-candidates="peakCandidates"
     :data-cache-count="renderer ? 1 : 0"
+    :data-ink-bounds="JSON.stringify(glyphLayout.bounds)"
     aria-hidden="true"
   >
+    <span class="home-hero-particles-preference-sentinel" aria-hidden="true"></span>
     <canvas v-if="renderMode === 'canvas' || renderMode === 'initializing'" ref="canvas" class="home-hero-particles-canvas" aria-hidden="true"></canvas>
-    <svg class="home-hero-particles-word" :viewBox="`0 0 ${fallbackSize.width} ${fallbackSize.height}`" aria-hidden="true">
-      <defs><pattern id="home-hero-static-dots" width="5" height="5" patternUnits="userSpaceOnUse"><circle cx="2.5" cy="2.5" r="1.7" fill="currentColor" /></pattern></defs>
-      <text :x="fallbackSize.width / 2" :y="fallbackSize.height * 0.46 + fallbackFontSize * 0.34" text-anchor="middle" :font-size="fallbackFontSize" fill="url(#home-hero-static-dots)">YANCE</text>
+    <svg class="home-hero-particles-word" :viewBox="`0 0 ${fallbackSize.width} ${fallbackSize.height}`" :style="{ fontFamily: glyphFont.family, fontWeight: glyphFont.weight }" aria-hidden="true">
+      <defs><pattern id="home-hero-static-dots" :width="gridStep" :height="gridStep" patternUnits="userSpaceOnUse"><circle :cx="gridStep / 2" :cy="gridStep / 2" r=".8" fill="currentColor" /></pattern></defs>
+      <text ref="fallbackText" :x="glyphLayout.x" :y="glyphLayout.baseline" :font-size="glyphLayout.fontSize" fill="url(#home-hero-static-dots)">YANCE</text>
     </svg>
-    <div class="home-hero-particles-labels"><span>RESEARCH</span><span>BUILD</span><span>LIVE</span></div>
   </div>
 </template>

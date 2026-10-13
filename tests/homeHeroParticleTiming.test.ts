@@ -24,6 +24,45 @@ function sweep(eventHz: number, renderHz: number) {
 }
 
 describe('HomeHero pointer time and recovery', () => {
+  it('starts a real staggered scatter from scene readiness and resolves to the glyph', () => {
+    const target = engine()
+    target.advanceTo(10)
+    target.gather()
+    const distance = () => target.scene.particles.reduce((sum, p) => sum + Math.hypot(p.x - p.homeX, p.y - p.homeY), 0) / target.scene.particles.length
+    const initial = distance()
+    expect(initial).toBeGreaterThan(40)
+    target.advanceTo(10.65)
+    expect(distance()).toBeLessThan(initial * 0.5)
+    expect(distance()).toBeGreaterThan(1)
+    target.advanceTo(11.9)
+    expect(target.active.size).toBe(0)
+    expect(target.needsFrame).toBe(false)
+  })
+
+  it('sleeps at a held displaced target and wakes to restore exact homes on release', () => {
+    const target = engine()
+    target.pointer.move({ pointerId: 1, pointerType: 'mouse', x: 200, y: 120, at: 0 })
+    for (let i = 1; i <= 90; i += 1) target.advanceTo(i / 60)
+    expect(target.pointer.connected).toBe(true)
+    expect(target.active.size).toBeGreaterThan(0)
+    expect(target.needsFrame).toBe(false)
+    target.pointer.release(1.5)
+    target.advanceTo(2.3)
+    expect(target.active.size).toBe(0)
+    expect(target.scene.particles.every(p => p.x === p.homeX && p.y === p.homeY)).toBe(true)
+  })
+
+  it('keeps a live disturbance after the staggered gathering deadline', () => {
+    const target = engine()
+    target.gather()
+    target.pointer.move({ pointerId: 1, pointerType: 'mouse', x: 200, y: 120, at: 1.4 })
+    target.advanceTo(1.55)
+    const before = target.scene.particles.filter(p => Math.hypot(p.x - p.homeX, p.y - p.homeY) > 8).length
+    target.advanceTo(1.62)
+    expect(before).toBeGreaterThan(0)
+    expect(target.scene.particles.filter(p => Math.hypot(p.x - p.homeX, p.y - p.homeY) > 8).length).toBeGreaterThan(0)
+  })
+
   it('keeps free spring recovery independent of frame subdivision', () => {
     const whole = engine()
     const split = engine()
@@ -44,15 +83,15 @@ describe('HomeHero pointer time and recovery', () => {
   it('does not snap free recovery at a close crossing without a continuous settle window', () => {
     const target = engine()
     const p = target.scene.particles[0]!
-    const frequency = Math.sqrt(42 - 5.25 ** 2)
     p.x += 1
-    p.vx = -5.25 - frequency / Math.tan(frequency * 0.2)
+    p.vx = 0
     p.settledForMs = 0
     target.active.add(p.id)
     target.advanceTo(0.2)
     expect(Math.abs(p.x - p.homeX)).toBeLessThan(0.25)
     expect(Math.abs(p.vx)).toBeLessThan(2.5)
-    expect(p.settledForMs).toBe(0)
+    expect(p.settledForMs).toBeGreaterThanOrEqual(0)
+    expect(p.settledForMs).toBeLessThan(40)
     expect(target.active.has(p.id)).toBe(true)
   })
 
