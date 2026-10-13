@@ -183,6 +183,7 @@ for (const cancelWithTouch of [false, true]) {
       await expect.poll(() => pendingFonts).toBeGreaterThan(0)
       await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'loading')
       await expect(page.locator('html')).toHaveAttribute('data-home-scroll-restore', 'true')
+      await expect(page.locator('html')).toHaveCSS('scroll-behavior', 'auto')
       if (cancelWithTouch) {
         await page.locator('.home-hero-particles').dispatchEvent('pointerdown', { pointerType: 'touch' })
         await expect(page.locator('html')).not.toHaveAttribute('data-home-scroll-restore')

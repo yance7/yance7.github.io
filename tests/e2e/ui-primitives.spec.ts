@@ -79,23 +79,24 @@ test('@pointer-refinement shared buttons keep static feedback on coarse touch de
 
 test('@pointer-refinement shared button press keeps its semantic hit area stable', async ({ page }) => {
   test.skip(!(await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches)), 'fine pointer only')
-  await page.goto('/concerts/')
-  await page.locator('.poster-open').first().click()
-  const close = page.locator('.lb-close')
-  await expect(page.locator('.lightbox')).not.toHaveClass(/lightbox-enter-active/)
-  await close.hover()
-  const baseline = await close.boundingBox()
+  await page.goto('/404.html')
+  // Exercise the actual shared primitive on a stable page. Modal entry and
+  // dismissal have their own lightbox tests and must not gate press geometry.
+  const button = page.locator('.error-actions .y-button').first()
+  await button.hover()
+  const baseline = await button.boundingBox()
   await page.mouse.down()
-  await expect(close).toHaveCSS('transform', 'none')
-  await expect.poll(() => close.locator('.y-button__visual').evaluate((element) => {
+  await expect(button).toHaveCSS('transform', 'none')
+  await expect.poll(() => button.locator('.y-button__visual').evaluate((element) => {
     const transform = getComputedStyle(element).transform
     return transform === 'none' ? 1 : new DOMMatrixReadOnly(transform).m11
   })).toBeCloseTo(.98, 3)
-  const pressed = await close.boundingBox()
+  const pressed = await button.boundingBox()
   expect(pressed?.x).toBeCloseTo(baseline!.x, 1)
   expect(pressed?.y).toBeCloseTo(baseline!.y, 1)
   await page.mouse.up()
-  await expect(page.locator('.lightbox')).toHaveCount(0)
+  await expect(page).toHaveURL(/\/$/)
+  await expect(page.locator('.home-hero')).toBeVisible()
   await expect(page.locator('.sitewide-cursor')).not.toHaveClass(/is-pressed/)
 })
 
