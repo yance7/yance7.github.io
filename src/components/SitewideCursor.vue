@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { observePointerMotion } from '../utils/pointerMotion'
 
 type CursorContext = 'surface' | 'interactive' | 'text' | 'particle'
 
@@ -16,10 +17,7 @@ const isVisible = ref(false)
 const context = ref<CursorContext>('surface')
 const isPressed = ref(false)
 
-let finePointerMedia: MediaQueryList | null = null
-let hoverMedia: MediaQueryList | null = null
-let reducedMotionMedia: MediaQueryList | null = null
-let forcedColorsMedia: MediaQueryList | null = null
+let motion: ReturnType<typeof observePointerMotion> | undefined
 let domObserver: MutationObserver | null = null
 let themeObserver: MutationObserver | null = null
 let resizeObserver: ResizeObserver | null = null
@@ -35,10 +33,7 @@ let lastPointerPosition = { x: 0, y: 0 }
 
 function canUseCustomCursor() {
   return Boolean(
-    finePointerMedia?.matches
-    && hoverMedia?.matches
-    && !reducedMotionMedia?.matches
-    && !forcedColorsMedia?.matches
+    motion?.allowed()
     && typeof window.requestAnimationFrame === 'function'
   )
 }
@@ -343,39 +338,17 @@ function detachCursorListeners() {
   stopStationaryRefresh()
 }
 
-function addMediaListener(media: MediaQueryList | null) {
-  if (!media) return
-  if (media.addEventListener) media.addEventListener('change', updateSupport)
-  else media.addListener(updateSupport)
-}
-
-function removeMediaListener(media: MediaQueryList | null) {
-  if (!media) return
-  if (media.removeEventListener) media.removeEventListener('change', updateSupport)
-  else media.removeListener(updateSupport)
-}
-
 onMounted(() => {
   if (typeof window.matchMedia !== 'function') return
 
-  finePointerMedia = window.matchMedia('(pointer: fine)')
-  hoverMedia = window.matchMedia('(hover: hover)')
-  reducedMotionMedia = window.matchMedia('(prefers-reduced-motion: reduce)')
-  forcedColorsMedia = window.matchMedia('(forced-colors: active)')
+  motion = observePointerMotion(updateSupport, { notifyWhenAllowed: true })
   updateSupport()
-
-  addMediaListener(finePointerMedia)
-  addMediaListener(hoverMedia)
-  addMediaListener(reducedMotionMedia)
-  addMediaListener(forcedColorsMedia)
 })
 
 onBeforeUnmount(() => {
   resetCursor()
-  removeMediaListener(finePointerMedia)
-  removeMediaListener(hoverMedia)
-  removeMediaListener(reducedMotionMedia)
-  removeMediaListener(forcedColorsMedia)
+  motion?.stop()
+  motion = undefined
   detachCursorListeners()
 })
 </script>
