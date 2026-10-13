@@ -14,8 +14,9 @@ test('@pointer-refinement body text keeps native selection while its real links 
   })
   await page.locator('#cursor-body-text').hover({ position: { x: 30, y: 25 } })
   await expect(page.locator('.sitewide-cursor')).toHaveAttribute('data-context', 'text')
-  await expect(page.locator('html')).not.toHaveClass(/sitewide-cursor-active/)
-  await expect(page.locator('.sitewide-cursor')).toBeHidden()
+  await expect(page.locator('html')).toHaveClass(/sitewide-cursor-active/)
+  await expect(page.locator('.sitewide-cursor')).toBeVisible()
+  await expect(page.locator('.sitewide-cursor-ring')).toHaveCSS('width', '80px')
   await page.locator('#cursor-body-text').dblclick({ position: { x: 30, y: 25 } })
   await expect.poll(() => page.evaluate(() => getSelection()?.toString().trim())).toBe('Selectable')
   await page.getByRole('link', { name: 'Actual link' }).hover()
@@ -33,7 +34,7 @@ test('@pointer-refinement editable regions take priority over an outer action', 
     document.body.append(action)
   })
   await page.getByRole('textbox', { name: 'Nested editor' }).hover()
-  await expect(page.locator('.sitewide-cursor')).toHaveAttribute('data-context', 'text')
+  await expect(page.locator('.sitewide-cursor')).toHaveAttribute('data-context', 'editable')
   await expect(page.locator('html')).not.toHaveClass(/sitewide-cursor-active/)
 })
 
@@ -120,7 +121,7 @@ test('keeps the native cursor over disabled controls', async ({ page }) => {
   await expect(disabledAction).toHaveCSS('cursor', 'not-allowed')
 })
 
-test('@pointer-refinement keeps the center dot at the pointer while the ring follows', async ({ page }) => {
+test('@pointer-refinement keeps both ring and center dot directly at the pointer', async ({ page }) => {
   test.skip(!(await supportsCustomCursor(page)), 'custom pointer is only enabled for a fine, hovering pointer')
   await page.setViewportSize({ width: 1200, height: 900 })
   await page.goto('/')
@@ -160,14 +161,14 @@ test('@pointer-refinement sizes the ring for surface, controls, and particles', 
   const ring = page.locator('.sitewide-cursor-ring')
   const dot = page.locator('.sitewide-cursor-dot')
   await page.locator('[aria-label="Cursor surface fixture"]').hover()
-  await expect.poll(() => ring.evaluate((element) => getComputedStyle(element).width)).toBe('26px')
-  await expect(dot).toHaveCSS('width', '4px')
+  await expect.poll(() => ring.evaluate((element) => getComputedStyle(element).width)).toBe('32px')
+  await expect(dot).toHaveCSS('width', '6px')
 
   await page.locator('.site-nav .nav-rail a').first().hover()
-  await expect.poll(() => ring.evaluate((element) => getComputedStyle(element).width)).toBe('36px')
+  await expect.poll(() => ring.evaluate((element) => getComputedStyle(element).width)).toBe('80px')
 
   await page.locator('.home-hero-particles').hover()
-  await expect.poll(() => ring.evaluate((element) => getComputedStyle(element).width)).toBe('38px')
+  await expect.poll(() => ring.evaluate((element) => getComputedStyle(element).width)).toBe('32px')
 })
 
 test('@pointer-refinement reclassifies a target moved under a stationary pointer', async ({ page }) => {
@@ -267,7 +268,7 @@ test('@pointer-refinement clears the pressed cursor state on release and pointer
       const transform = getComputedStyle(element, '::before').transform
       return transform === 'none' ? 1 : Number(transform.match(/^matrix\(([^,]+)/)?.[1] ?? Number.NaN)
     })
-    if (!ringBox || !dotBox || Math.abs(pressScale - .94) >= .001) return false
+    if (!ringBox || !dotBox || Math.abs(pressScale - 1) >= .001) return false
     return Math.abs(ringBox.x + ringBox.width / 2 - dotBox.x - dotBox.width / 2) < 1
       && Math.abs(ringBox.y + ringBox.height / 2 - dotBox.y - dotBox.height / 2) < 1
   }
@@ -311,7 +312,7 @@ test('distinguishes particle and editable text areas without hiding the native t
 
   const input = page.getByRole('textbox', { name: 'Cursor text fixture' })
   await input.hover()
-  await expect(cursor).toHaveAttribute('data-context', 'text')
+  await expect(cursor).toHaveAttribute('data-context', 'editable')
   await expect(page.locator('html')).not.toHaveClass(/sitewide-cursor-active/)
   await expect(cursor).toBeHidden()
   await expect(input).toHaveCSS('cursor', 'text')

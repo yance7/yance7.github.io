@@ -116,7 +116,7 @@ jobs:
       - name: Install browser
         run: npx playwright install --with-deps ${{ matrix.browser }}
       - name: Run ten rounds of particle interaction tests
-        run: npm run test:e2e -- tests/e2e/home-hero-interaction.spec.ts --project=${{ matrix.project }} --workers=1 --grep '@particle-v2' --repeat-each=10 --retries=0
+        run: npm run test:e2e -- tests/e2e/home-hero-interaction.spec.ts tests/e2e/mimo-alignment.spec.ts --project=${{ matrix.project }} --workers=1 --grep '@particle-v2|MiMo' --repeat-each=10 --retries=0
       - name: Upload stress evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

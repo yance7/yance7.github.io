@@ -2,11 +2,11 @@
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { observePointerMotion } from '../utils/pointerMotion'
 
-type CursorContext = 'surface' | 'interactive' | 'text' | 'particle'
+type CursorContext = 'surface' | 'interactive' | 'text' | 'particle' | 'editable'
 
-const INTERACTIVE_SELECTOR = 'a[href], button, [role="button"], [role="link"], summary, select, input[type="button"], input[type="submit"], input[type="reset"], input[type="checkbox"], input[type="radio"]'
+const INTERACTIVE_SELECTOR = 'a[href], button, [class*="btn"], [role="button"], [role="link"], summary, select, input[type="button"], input[type="submit"], input[type="reset"], input[type="checkbox"], input[type="radio"]'
 const TEXT_SELECTOR = 'textarea, [contenteditable], [role="textbox"], input:not([type]), input[type="text"], input[type="search"], input[type="email"], input[type="url"], input[type="tel"], input[type="password"], input[type="number"]'
-const BODY_TEXT_SELECTOR = 'p, h1, h2, h3, h4, h5, h6, li, dt, dd, blockquote, figcaption, td, th'
+const BODY_TEXT_SELECTOR = 'p, h1, h2, h3, h4, h5, h6, span, li, a, dt, dd, blockquote, figcaption, td, th'
 const DISABLED_SELECTOR = ':disabled, [aria-disabled="true"]'
 const PARTICLE_SELECTOR = '.home-hero-particles, .home-hero-particles-canvas'
 const CURSOR_SELECTOR = '.sitewide-cursor'
@@ -21,9 +21,7 @@ let motion: ReturnType<typeof observePointerMotion> | undefined
 let domObserver: MutationObserver | null = null
 let themeObserver: MutationObserver | null = null
 let resizeObserver: ResizeObserver | null = null
-let animationFrame = 0
 let refreshFrame = 0
-let lastFrameTime = 0
 let activationVersion = 0
 let modalIsOpen = false
 let cursorListenersAttached = false
@@ -42,7 +40,7 @@ function setNativeCursorVisibility() {
   const root = document.documentElement
   const hideNativeCursor = isSupported.value
     && isVisible.value
-    && context.value !== 'text'
+    && context.value !== 'editable'
 
   if (!hideNativeCursor) {
     activationVersion += 1
@@ -55,30 +53,24 @@ function setNativeCursorVisibility() {
     window.requestAnimationFrame(() => {
       if (activation !== activationVersion) return
       if (!cursorElement.value?.classList.contains('is-visible')) return
-      if (context.value === 'text' || !isSupported.value || !isVisible.value) return
+      if (context.value === 'editable' || !isSupported.value || !isVisible.value) return
       root.classList.add('sitewide-cursor-active')
     })
   })
 }
 
 function writeDotPosition() {
-  const element = cursorElement.value
-  if (!element) return
-  element.style.setProperty('--cursor-dot-x', `${lastPointerPosition.x.toFixed(2)}px`)
-  element.style.setProperty('--cursor-dot-y', `${lastPointerPosition.y.toFixed(2)}px`)
+  const dot = cursorElement.value?.querySelector<HTMLElement>('.sitewide-cursor-dot')
+  if (!dot) return
+  dot.style.left = `${lastPointerPosition.x}px`
+  dot.style.top = `${lastPointerPosition.y}px`
 }
 
 function writeRingPosition() {
-  const element = cursorElement.value
-  if (!element) return
-  element.style.setProperty('--cursor-ring-x', `${currentRingPosition.x.toFixed(2)}px`)
-  element.style.setProperty('--cursor-ring-y', `${currentRingPosition.y.toFixed(2)}px`)
-}
-
-function stopAnimation() {
-  if (animationFrame) window.cancelAnimationFrame(animationFrame)
-  animationFrame = 0
-  lastFrameTime = 0
+  const ring = cursorElement.value?.querySelector<HTMLElement>('.sitewide-cursor-ring')
+  if (!ring) return
+  ring.style.left = `${currentRingPosition.x}px`
+  ring.style.top = `${currentRingPosition.y}px`
 }
 
 function stopStationaryRefresh() {
@@ -90,7 +82,6 @@ function resetCursor() {
   isVisible.value = false
   isPressed.value = false
   context.value = 'surface'
-  stopAnimation()
   stopStationaryRefresh()
   setNativeCursorVisibility()
 }
@@ -102,9 +93,9 @@ function classifyTarget(target: Element | null): CursorContext | null {
   const textTarget = target.closest(TEXT_SELECTOR)
   if (textTarget) {
     if (textTarget.hasAttribute('contenteditable')) {
-      if (textTarget instanceof HTMLElement && textTarget.isContentEditable) return 'text'
+      if (textTarget instanceof HTMLElement && textTarget.isContentEditable) return 'editable'
     } else if (!textTarget.matches(DISABLED_SELECTOR)) {
-      return 'text'
+      return 'editable'
     }
   }
 
@@ -112,36 +103,6 @@ function classifyTarget(target: Element | null): CursorContext | null {
   if (target.closest(PARTICLE_SELECTOR)) return 'particle'
   if (target.closest(BODY_TEXT_SELECTOR)) return 'text'
   return 'surface'
-}
-
-function animateRing(timestamp: number) {
-  if (!isVisible.value || !isSupported.value) {
-    animationFrame = 0
-    return
-  }
-
-  const elapsed = lastFrameTime ? Math.min(64, timestamp - lastFrameTime) : 16.67
-  lastFrameTime = timestamp
-  const easing = 1 - Math.exp(-elapsed / 38)
-  currentRingPosition.x += (targetPosition.x - currentRingPosition.x) * easing
-  currentRingPosition.y += (targetPosition.y - currentRingPosition.y) * easing
-
-  const distance = Math.hypot(targetPosition.x - currentRingPosition.x, targetPosition.y - currentRingPosition.y)
-  if (distance < .16) {
-    currentRingPosition = { ...targetPosition }
-    writeRingPosition()
-    animationFrame = 0
-    lastFrameTime = 0
-    return
-  }
-
-  writeRingPosition()
-  animationFrame = window.requestAnimationFrame(animateRing)
-}
-
-function scheduleRingAnimation() {
-  if (animationFrame) return
-  animationFrame = window.requestAnimationFrame(animateRing)
 }
 
 function updateFromPointer(x: number, y: number, target: Element | null) {
@@ -174,7 +135,8 @@ function updateFromPointer(x: number, y: number, target: Element | null) {
   }
 
   if (contextChanged) setNativeCursorVisibility()
-  scheduleRingAnimation()
+  currentRingPosition = { ...targetPosition }
+  writeRingPosition()
 }
 
 function handlePointerMove(event: PointerEvent) {

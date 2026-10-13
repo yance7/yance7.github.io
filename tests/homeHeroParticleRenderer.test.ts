@@ -5,7 +5,7 @@ import { createHomeHeroParticleScene } from '../src/utils/homeHeroParticleScene'
 function context() {
   return { fillStyle: '', globalAlpha: 1, strokeStyle: '', lineWidth: 1, lineCap: '',
     setTransform: vi.fn(), clearRect: vi.fn(), drawImage: vi.fn(), beginPath: vi.fn(), moveTo: vi.fn(),
-    arc: vi.fn(), fill: vi.fn(), stroke: vi.fn(), lineTo: vi.fn(), save: vi.fn(), restore: vi.fn(), rect: vi.fn(), clip: vi.fn() }
+    arc: vi.fn(), fill: vi.fn(), fillRect: vi.fn(), stroke: vi.fn(), lineTo: vi.fn(), save: vi.fn(), restore: vi.fn(), rect: vi.fn(), clip: vi.fn() }
 }
 afterEach(() => vi.unstubAllGlobals())
 describe('HomeHero transparent glyph rendering', () => {
@@ -19,14 +19,15 @@ describe('HomeHero transparent glyph rendering', () => {
       { scene, pixelRatio: 2, colors: { word: '#123' } })
     moving.x += 25
     moving.vx = 180
-    visible.arc.mockClear()
+    visible.fillRect.mockClear()
     renderer.drawActive([moving])
     expect(visible.stroke).not.toHaveBeenCalled()
     expect(visible.lineTo).not.toHaveBeenCalled()
-    expect(visible.arc.mock.calls.every(call => call[2] >= 0.65 && call[2] <= 0.9)).toBe(true)
+    expect(visible.fillRect.mock.calls.every(call => call[2] === 1.8 && call[3] === 1.8)).toBe(true)
+    expect(visible.arc).not.toHaveBeenCalled()
   })
 
-  it('draws a moving dot and a settled neighbor once in a single glyph batch', () => {
+  it('draws a moving dot and a settled neighbor once with per-particle square drawing', () => {
     const visible = context()
     const master = context()
     vi.stubGlobal('document', { createElement: () => ({ width: 0, height: 0, getContext: () => master }) })
@@ -36,11 +37,11 @@ describe('HomeHero transparent glyph rendering', () => {
     const renderer = new HomeHeroParticleRenderer({ getContext: () => visible } as unknown as HTMLCanvasElement,
       { scene, pixelRatio: 2, colors: { word: '#123' } })
     moving.x += 16
-    visible.arc.mockClear()
+    visible.fillRect.mockClear()
     renderer.drawActive([moving])
-    expect(visible.arc.mock.calls.filter(call => call[0] === moving.x && call[1] === moving.y)).toHaveLength(1)
-    expect(visible.arc.mock.calls.filter(call => call[0] === neighbor.homeX && call[1] === neighbor.homeY)).toHaveLength(1)
-    expect(visible.fill).toHaveBeenCalledTimes(1)
+    expect(visible.fillRect.mock.calls.filter(call => call[0] === moving.x - 0.9 && call[1] === moving.y - 0.9)).toHaveLength(1)
+    expect(visible.fillRect.mock.calls.filter(call => call[0] === neighbor.homeX - 0.9 && call[1] === neighbor.homeY - 0.9)).toHaveLength(1)
+    expect(visible.fillRect).toHaveBeenCalledTimes(scene.particles.length)
   })
 
   it('excludes every active home while retaining a neighboring settled dot', () => {
@@ -55,17 +56,17 @@ describe('HomeHero transparent glyph rendering', () => {
       { scene, pixelRatio: 2, colors: { word: '#123' } })
     first.x += 16
     second.x += 16
-    visible.arc.mockClear()
+    visible.fillRect.mockClear()
     renderer.drawActive([first, second])
-    const positions = visible.arc.mock.calls.map(call => `${call[0]}:${call[1]}`)
+    const positions = visible.fillRect.mock.calls.map(call => `${call[0] + 0.9}:${call[1] + 0.9}`)
     expect(positions).not.toContain(`${first.homeX}:${first.homeY}`)
     expect(positions).not.toContain(`${second.homeX}:${second.homeY}`)
     expect(positions).toContain(`${neighbor.homeX}:${neighbor.homeY}`)
     expect(positions).toContain(`${first.x}:${first.y}`)
-    expect(visible.arc).toHaveBeenCalledTimes(scene.particles.length)
+    expect(visible.fillRect).toHaveBeenCalledTimes(scene.particles.length)
     expect(master.clearRect).toHaveBeenCalledTimes(1)
     renderer.drawActive([])
-    expect(visible.drawImage).toHaveBeenCalled()
+    expect(visible.fillRect).toHaveBeenCalledTimes(scene.particles.length * 2)
     expect(master.clearRect).toHaveBeenCalledTimes(1)
   })
 })
