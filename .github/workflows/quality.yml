@@ -403,3 +403,78 @@ jobs:
           name: linux-visual-snapshots
           path: tests/e2e/visual-snapshots/chromium-visual/linux
           if-no-files-found: error
+
+  preference-render-sensitivity:
+    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/codex/test/phase2-integration' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PLAYWRIGHT_USE_PREVIEW: '1'
+      PLAYWRIGHT_OUTPUT_DIR: test-results/linux-preference-render-sensitivity
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install CJK fonts
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends --yes fonts-noto-cjk
+      - name: Build and install WebKit
+        run: |
+          npm run build
+          npx playwright install --with-deps webkit
+      - name: Generate isolated notification fault fixture
+        run: |
+          node --input-type=module <<'NODE'
+          import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+          mkdirSync('.superpowers/preference-negative', { recursive: true })
+          const hook = `
+          test.beforeEach(async ({ page }) => {
+            await page.addInitScript(() => {
+              const NativeObserver = ResizeObserver
+              window.ResizeObserver = class extends NativeObserver {
+                constructor(callback: ResizeObserverCallback) {
+                  super((entries, observer) => {
+                    if (entries.some(entry => entry.target.classList.contains('pointer-motion-preference-sentinel'))) return
+                    callback(entries, observer)
+                  })
+                }
+              }
+            })
+          })
+          `
+          const source = readFileSync('tests/e2e/motion-system.spec.ts', 'utf8').replace("import { expect, test } from '@playwright/test'", "import { expect, test } from '@playwright/test'\n" + hook)
+          writeFileSync('.superpowers/preference-negative/motion-system.spec.ts', source)
+          writeFileSync('.superpowers/preference-negative.config.ts', "import { defineConfig } from '@playwright/test'\nimport base from '../config/playwright.config'\nexport default defineConfig({ ...base, testDir: './preference-negative', projects: [{ ...base.projects![1], testMatch: /motion-system\\.spec\\.ts/ }] })\n")
+          NODE
+      - name: Verify rendering cannot bypass missing JS notifications
+        run: |
+          set +e
+          npx playwright test --config .superpowers/preference-negative.config.ts --project=webkit-desktop --workers=1 --grep 'notifications are missed' --retries=0 > sensitivity.log 2>&1
+          sensitivity_code=$?
+          set -e
+          cat sensitivity.log
+          test "$sensitivity_code" -eq 1
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs'
+          const log = readFileSync('sensitivity.log', 'utf8').replace(/\u001b\[[0-9;]*m/g, '')
+          if (!log.includes('"active": "1"') || !log.includes('"height": "2px"') || !log.includes('Timeout 5000ms')) throw new Error('Expected JS cleanup sensitivity failure not observed')
+          NODE
+      - name: Verify original notifications over ten rounds
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: test-results/linux-preference-render-positive
+        run: npm run test:e2e -- tests/e2e/motion-system.spec.ts --project=webkit-desktop --workers=4 --grep 'motion directives clear' --repeat-each=10 --retries=0
+      - name: Upload sensitivity evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: linux-preference-render-sensitivity
+          path: |
+            test-results/linux-preference-render-sensitivity
+            test-results/linux-preference-render-positive
+            sensitivity.log
+          include-hidden-files: true

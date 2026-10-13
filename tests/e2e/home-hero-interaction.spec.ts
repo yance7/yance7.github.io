@@ -620,10 +620,6 @@ test('@particle-v2 cancels stale input when scrolling changes the stage geometry
   await page.setViewportSize({ width: 1440, height: 1100 })
   await page.goto('/')
   await waitForSettledHero(page)
-  // Native keyboard focus suspends proximity so this test can measure a real
-  // geometry change. Snap behavior itself belongs to home-scroll-motion.
-  await page.locator('.theme-orbit').focus()
-  await expect(page.locator('html')).toHaveCSS('scroll-snap-type', 'none')
   const stage = page.locator('.home-hero-particles')
   const top = await stage.evaluate(element => {
     const bounds = element.getBoundingClientRect()
@@ -632,7 +628,7 @@ test('@particle-v2 cancels stale input when scrolling changes the stage geometry
     return bounds.top
   })
   await expect(stage).toHaveAttribute('data-particle-state', 'disturbed')
-  await page.evaluate(() => scrollBy({ top: 80, behavior: 'instant' }))
+  await page.evaluate(() => scrollBy(0, 80))
   await expect.poll(() => stage.evaluate(element => element.getBoundingClientRect().top)).not.toBe(top)
   await expect(stage).toHaveAttribute('data-particle-state', /recovering|settled/)
   await expect(stage).toHaveAttribute('data-moving-particle-count', '0', { timeout: 1500 })
@@ -668,16 +664,35 @@ test('@particle-v2 finishes visible recovery when animation frame callbacks stop
 
 test('@particle-v2 preserves a disturbance across the intro deadline', async ({ page, isMobile }) => {
   await page.setViewportSize({ width: isMobile ? 390 : 1440, height: 1100 })
-  // Observe the intro before waiting for unrelated page assets to finish.
+  // Observe and inject in the browser before host round trips can miss the intro.
+  await page.addInitScript(() => {
+    const target = window as Window & { heroIntroInput?: { phase: string, accepted: boolean } }
+    let sentPhase: string | undefined
+    const observer = new MutationObserver(() => {
+      const stage = document.querySelector<HTMLElement>('.home-hero-particles')
+      if (stage?.dataset.renderMode !== 'canvas') return
+      if (sentPhase) {
+        if (stage.dataset.lastInput === 'mouse') {
+          target.heroIntroInput = { phase: sentPhase, accepted: true }
+          observer.disconnect()
+        }
+        return
+      }
+      if (stage.dataset.particleState !== 'gathering' || Number(stage.dataset.frameCount) < 1) return
+      sentPhase = stage.dataset.particleState
+      const bounds = stage.getBoundingClientRect()
+      stage.dispatchEvent(new PointerEvent('pointermove', { pointerId: 1, pointerType: 'mouse',
+        clientX: bounds.left + bounds.width * 0.5, clientY: bounds.top + bounds.height * 0.46 }))
+    })
+    observer.observe(document, { childList: true, subtree: true, attributes: true,
+      attributeFilter: ['data-render-mode', 'data-particle-state', 'data-frame-count', 'data-last-input'] })
+  })
   await page.goto('/', { waitUntil: 'domcontentloaded' })
   const stage = page.locator('.home-hero-particles')
   await expect(stage).toHaveAttribute('data-render-mode', 'canvas')
-  await expect(stage).toHaveAttribute('data-particle-state', 'gathering')
-  await stage.evaluate(element => {
-    const bounds = element.getBoundingClientRect()
-    element.dispatchEvent(new PointerEvent('pointermove', { pointerId: 1, pointerType: 'mouse',
-      clientX: bounds.left + bounds.width * 0.5, clientY: bounds.top + bounds.height * 0.46 }))
-  })
+  await expect.poll(() => page.evaluate(() =>
+    (window as Window & { heroIntroInput?: { phase: string, accepted: boolean } }).heroIntroInput
+  )).toEqual({ phase: 'gathering', accepted: true })
   await expect(stage).toHaveAttribute('data-particle-state', 'disturbed', { timeout: 2500 })
   expect(Number(await stage.getAttribute('data-moving-particle-count'))).toBeGreaterThan(0)
   await stage.evaluate(element => element.dispatchEvent(new PointerEvent('pointerleave', { pointerId: 1, pointerType: 'mouse' })))
