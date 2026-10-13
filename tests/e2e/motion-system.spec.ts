@@ -92,7 +92,12 @@ test('@pointer-refinement motion directives clear immediately when runtime prefe
   await expect.poll(() => sheen.evaluate((element) => element.style.getPropertyValue('--pointer-active'))).toBe('1')
   await page.emulateMedia({ forcedColors: 'active' })
   await expect.poll(() => page.evaluate(() => matchMedia('(forced-colors: active)').matches)).toBe(true)
-  await expect.poll(() => sheen.evaluate((element) => element.style.getPropertyValue('--pointer-active'))).toBe('')
+  // Read the applied CSS preference in the same poll as JS cleanup: inline
+  // style reads alone do not observe WebKit's rendering-dependent delivery.
+  await expect.poll(() => sheen.evaluate(element => ({
+    active: element.style.getPropertyValue('--pointer-active'),
+    height: getComputedStyle(document.querySelector('.pointer-motion-preference-sentinel')!).height
+  }))).toEqual({ active: '', height: '2px' })
 })
 
 test('@pointer-refinement motion directives clear when native media change notifications are missed', async ({ page }) => {
@@ -123,16 +128,25 @@ test('@pointer-refinement motion directives clear when native media change notif
   await expect.poll(() => sheen.evaluate(element => element.style.getPropertyValue('--pointer-active'))).toBe('1')
   await page.emulateMedia({ forcedColors: 'active' })
   await expect.poll(() => page.evaluate(() => matchMedia('(forced-colors: active)').matches)).toBe(true)
-  await expect.poll(() => sheen.evaluate(element => element.style.getPropertyValue('--pointer-active'))).toBe('')
+  await expect.poll(() => sheen.evaluate(element => ({
+    active: element.style.getPropertyValue('--pointer-active'),
+    height: getComputedStyle(document.querySelector('.pointer-motion-preference-sentinel')!).height
+  }))).toEqual({ active: '', height: '2px' })
   await expect(page.locator('.sitewide-cursor')).toHaveCount(0)
   await expect(page.locator('html')).not.toHaveClass(/sitewide-cursor-active/)
   await page.emulateMedia({ forcedColors: 'none' })
-  await expect(page.locator('.sitewide-cursor')).toHaveCount(1)
+  await expect.poll(() => page.evaluate(() => ({
+    count: document.querySelectorAll('.sitewide-cursor').length,
+    height: getComputedStyle(document.querySelector('.pointer-motion-preference-sentinel')!).height
+  }))).toEqual({ count: 1, height: '1px' })
   await sheen.hover({ position: { x: 100, y: 100 } })
   await expect.poll(() => sheen.evaluate(element => element.style.getPropertyValue('--pointer-active'))).toBe('1')
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await expect.poll(() => page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true)
-  await expect.poll(() => sheen.evaluate(element => element.style.getPropertyValue('--pointer-active'))).toBe('')
+  await expect.poll(() => sheen.evaluate(element => ({
+    active: element.style.getPropertyValue('--pointer-active'),
+    width: getComputedStyle(document.querySelector('.pointer-motion-preference-sentinel')!).width
+  }))).toEqual({ active: '', width: '2px' })
 })
 
 test('Academics passive rows remain inside layout after pointer emphasis', async ({ page }) => {
