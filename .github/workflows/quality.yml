@@ -641,3 +641,161 @@ jobs:
             test-results/linux-concert-viewpoint-1001
             concert-viewpoint.log
           include-hidden-files: true
+
+  preference-delivery-diagnostic:
+    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/codex/test/phase2-integration' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PLAYWRIGHT_USE_PREVIEW: '1'
+      PLAYWRIGHT_OUTPUT_DIR: test-results/preference-diagnostic
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: 3216d681899bbda7f3f6deaf4d902343d2ff85f4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: sudo apt-get update && sudo apt-get install --no-install-recommends --yes fonts-noto-cjk
+      - run: npm run build && npx playwright install --with-deps webkit
+      - name: Observe native preference delivery without extra layout reads
+        run: |
+          cat >> tests/e2e/motion-system.spec.ts <<'TS'
+
+          test.beforeEach(async ({ page }) => {
+            await page.addInitScript(() => {
+              const rows: unknown[] = []
+              let scope = 'outside'
+              Object.assign(window, { __preferenceProbe: rows })
+              const log = (entry: object) => {
+                rows.push({ at: performance.now(), scope, ...entry })
+                if (rows.length > 1000) rows.shift()
+              }
+              const state = () => ({
+                active: document.querySelector<HTMLElement>('[data-pointer-sheen]')?.style.getPropertyValue('--pointer-active'),
+                supported: Boolean(document.querySelector('.sitewide-cursor')),
+                visible: Boolean(document.querySelector('.sitewide-cursor.is-visible'))
+              })
+              const match = window.matchMedia.bind(window)
+              window.matchMedia = query => new Proxy(match(query), {
+                get(target, key) {
+                  const value = Reflect.get(target, key, target)
+                  if (key === 'matches' && (query.includes('reduced-motion') || query.includes('forced-colors'))) log({ kind: 'mql-read', query, value })
+                  return typeof value === 'function' ? value.bind(target) : value
+                }
+              })
+              const Native = ResizeObserver
+              window.ResizeObserver = class extends Native {
+                constructor(callback: ResizeObserverCallback) {
+                  super((entries, observer) => {
+                    const preferences = entries.filter(entry => entry.target.classList.contains('pointer-motion-preference-sentinel'))
+                    if (!preferences.length) { callback(entries, observer); return }
+                    const previous = scope
+                    scope = 'resize-observer'
+                    log({ kind: 'resize-before', entries: preferences.map(entry => ({ width: entry.contentRect.width, height: entry.contentRect.height })), state: state() })
+                    try { callback(entries, observer) }
+                    finally { log({ kind: 'resize-after', state: state() }); scope = previous }
+                  })
+                }
+              }
+              const set = CSSStyleDeclaration.prototype.setProperty
+              CSSStyleDeclaration.prototype.setProperty = function (name, value, priority) {
+                if (name === '--pointer-active') log({ kind: 'active-write', value })
+                return set.call(this, name, value, priority)
+              }
+              const remove = CSSStyleDeclaration.prototype.removeProperty
+              CSSStyleDeclaration.prototype.removeProperty = function (name) {
+                if (name === '--pointer-active') log({ kind: 'active-remove' })
+                return remove.call(this, name)
+              }
+            })
+          })
+          test.afterEach(async ({ page }, testInfo) => {
+            const rows = await page.evaluate(() => (window as Window & { __preferenceProbe?: unknown[] }).__preferenceProbe).catch(() => undefined)
+            await testInfo.attach('preference-delivery', { body: Buffer.from(JSON.stringify(rows)), contentType: 'application/json' })
+          })
+          TS
+      - run: npm run test:e2e -- tests/e2e/motion-system.spec.ts --project=webkit-desktop --workers=4 --grep 'motion directives clear' --repeat-each=10 --retries=0
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: preference-delivery-diagnostic
+          path: test-results/preference-diagnostic
+          include-hidden-files: true
+  particle-submissions-diagnostic:
+    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/codex/test/phase2-integration' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PLAYWRIGHT_USE_PREVIEW: '1'
+      PLAYWRIGHT_OUTPUT_DIR: test-results/particle-diagnostic
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: a01b7eac7e7910dcecbfcc2e2c3ab4ee6350bbdb
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: sudo apt-get update && sudo apt-get install --no-install-recommends --yes fonts-noto-cjk
+      - run: npm run build && npx playwright install --with-deps webkit
+      - name: Observe exact rectangle submissions and pixel mismatch
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs'
+          const file = 'tests/e2e/home-hero-interaction.spec.ts'
+          const source = readFileSync(file, 'utf8')
+          const hook = `
+          test.beforeEach(async ({ page }) => {
+            await page.addInitScript(() => {
+              const probe = { rects: [], last: '', at: 0 }
+              Object.assign(window, { __particleProbe: probe })
+              const clear = CanvasRenderingContext2D.prototype.clearRect
+              CanvasRenderingContext2D.prototype.clearRect = function (...args) {
+                if (this.canvas.classList.contains('home-hero-particles-canvas')) { probe.rects = []; probe.last = 'clear'; probe.at = performance.now() }
+                return clear.apply(this, args)
+              }
+              const fill = CanvasRenderingContext2D.prototype.fillRect
+              CanvasRenderingContext2D.prototype.fillRect = function (...args) {
+                if (this.canvas.classList.contains('home-hero-particles-canvas')) { probe.rects.push({ args, color: this.fillStyle, alpha: this.globalAlpha }); probe.last = 'rects' }
+                return fill.apply(this, args)
+              }
+              const image = CanvasRenderingContext2D.prototype.drawImage
+              CanvasRenderingContext2D.prototype.drawImage = function (...args) {
+                if (this.canvas.classList.contains('home-hero-particles-canvas')) probe.last = 'image'
+                return image.apply(this, args)
+              }
+            })
+          })
+          test.afterEach(async ({ page }, testInfo) => {
+            const probe = await page.evaluate(() => ({ probe: window.__particleProbe, raster: window.__particleRaster, stage: { ...document.querySelector('.home-hero-particles').dataset }, visible: document.visibilityState, focused: document.hasFocus() }))
+            await testInfo.attach('particle-submissions', { body: Buffer.from(JSON.stringify(probe)), contentType: 'application/json' })
+          })
+          `
+          const diagnosis = `
+          const exact = document.createElement('canvas')
+          exact.width = canvas.width
+          exact.height = canvas.height
+          const exactContext = exact.getContext('2d')
+          exactContext.setTransform(ratio, 0, 0, ratio, 0, 0)
+          for (const rect of window.__particleProbe.rects) { exactContext.fillStyle = rect.color; exactContext.globalAlpha = rect.alpha; exactContext.fillRect(...rect.args) }
+          const exactPixels = exactContext.getImageData(0, 0, exact.width, exact.height).data
+          let centerDifferent = 0
+          let exactDifferent = 0
+          for (let i = 0; i < actualPixels.length; i++) { if (actualPixels[i] !== expectedPixels[i]) centerDifferent++; if (actualPixels[i] !== exactPixels[i]) exactDifferent++ }
+          window.__particleRaster = { centerDifferent, exactDifferent, rects: window.__particleProbe.rects.length, centeredPoints: target.heroPoints.length, expected: count }
+          `
+          const marker = 'return actualPixels.every((value, index) => value === expectedPixels[index])'
+          if (!source.includes(marker)) throw new Error('Raster diagnostic insertion point missing')
+          writeFileSync(file, source.replace(marker, diagnosis + '\n' + marker) + hook)
+          NODE
+      - run: npm run test:e2e -- tests/e2e/home-hero-interaction.spec.ts --project=webkit-desktop --workers=1 --grep 'one touch stream|second stationary finger' --repeat-each=10 --retries=0
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: particle-submissions-diagnostic
+          path: test-results/particle-diagnostic
+          include-hidden-files: true
