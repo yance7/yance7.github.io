@@ -455,11 +455,32 @@ test('adaptive header tracks a cold fragment after the lazy page chunk mounts', 
 
   const target = page.locator('#home-worlds')
   await expect(target).toBeAttached()
-  await expect(page.locator('.site-nav')).toHaveAttribute('data-header-state', 'floating')
-  await expect.poll(() => target.evaluate((element) => {
-    const header = document.querySelector<HTMLElement>('.site-nav')
-    return element.getBoundingClientRect().top - (header?.getBoundingClientRect().bottom ?? 0)
-  })).toBeGreaterThanOrEqual(8)
+  // Observe a rendered frame within the original poll budget, then require
+  // the restored fragment and final geometry together without scrolling it.
+  let renderedFrame: Promise<Buffer> | undefined
+  await expect.poll(async () => {
+    renderedFrame ??= page.screenshot({ caret: 'initial', timeout: 5000 })
+    await renderedFrame
+    return target.evaluate((element) => {
+      const header = document.querySelector<HTMLElement>('.site-nav')
+      const rect = element.getBoundingClientRect()
+      return {
+        fonts: document.documentElement.dataset.fontsReady,
+        hash: window.location.hash,
+        pendingHash: document.documentElement.dataset.initialHash ?? '',
+        header: header?.dataset.headerState,
+        visible: rect.bottom > 0 && rect.top < window.innerHeight,
+        clearsHeader: rect.top - (header?.getBoundingClientRect().bottom ?? 0) >= 8
+      }
+    })
+  }).toEqual({
+    fonts: 'ready',
+    hash: '#home-worlds',
+    pendingHash: '',
+    header: 'floating',
+    visible: true,
+    clearsHeader: true
+  })
 })
 
 test('adaptive header keeps localized controls and deep-link anchors stable', async ({ page }) => {
