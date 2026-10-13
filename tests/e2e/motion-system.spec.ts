@@ -1,5 +1,44 @@
 import { expect, test } from '@playwright/test'
 
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    const records: unknown[] = []
+    Object.assign(window, { pointerPreferenceDiagnostics: records })
+    const state = () => ({ time: performance.now(), visibility: document.visibilityState, focus: document.hasFocus(), reduced: matchMedia('(prefers-reduced-motion: reduce)').matches, forced: matchMedia('(forced-colors: active)').matches })
+    const NativeObserver = window.ResizeObserver
+    window.ResizeObserver = class extends NativeObserver {
+      constructor(callback: ResizeObserverCallback) {
+        super((entries, observer) => {
+          for (const entry of entries) if (entry.target.classList.contains('pointer-motion-preference-sentinel')) records.push({ event: 'resize-observer', size: [entry.contentRect.width, entry.contentRect.height], state: state() })
+          callback(entries, observer)
+        })
+      }
+    }
+    const nativeMatch = window.matchMedia.bind(window)
+    const instrumented = new Set<string>()
+    window.matchMedia = query => {
+      const media = nativeMatch(query)
+      if (!instrumented.has(query) && ['(pointer: fine)', '(hover: hover)', '(prefers-reduced-motion: reduce)', '(forced-colors: active)'].includes(query)) {
+        instrumented.add(query)
+        media.addEventListener('change', () => records.push({ event: 'media-change', query, held: media.matches, state: state() }))
+      }
+      return media
+    }
+  })
+})
+test.afterEach(async ({ page }, testInfo) => {
+  if (!testInfo.title.includes('motion directives clear')) return
+  const diagnostic = await page.evaluate(() => {
+    const sentinel = document.querySelector('.pointer-motion-preference-sentinel')
+    const css = sentinel ? getComputedStyle(sentinel) : null
+    return { records: (window as Window & { pointerPreferenceDiagnostics?: unknown[] }).pointerPreferenceDiagnostics, final: { reduced: matchMedia('(prefers-reduced-motion: reduce)').matches, forced: matchMedia('(forced-colors: active)').matches, sentinel: css ? { width: css.width, height: css.height, display: css.display, visibility: css.visibility } : null, focus: document.hasFocus(), visibility: document.visibilityState, active: document.querySelector<HTMLElement>('[data-pointer-sheen]')?.style.getPropertyValue('--pointer-active') } }
+  })
+  await testInfo.attach('preference-diagnostic.json', { body: JSON.stringify(diagnostic, null, 2), contentType: 'application/json' })
+})
+
+
+
+
 test('@pointer-refinement runtime pointer capability changes clear magnetic feedback and restore the native cursor', async ({ page }) => {
   test.skip(!(await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches)), 'fine pointer only')
   // Playwright cannot change pointer/hover media at runtime. Override only these

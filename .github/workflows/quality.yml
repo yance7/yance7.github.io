@@ -403,3 +403,36 @@ jobs:
           name: linux-visual-snapshots
           path: tests/e2e/visual-snapshots/chromium-visual/linux
           if-no-files-found: error
+
+  preference-diagnostic:
+    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/codex/test/phase2-integration' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PLAYWRIGHT_USE_PREVIEW: '1'
+      PLAYWRIGHT_OUTPUT_DIR: test-results/linux-preference-diagnostic
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install CJK fonts
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends --yes fonts-noto-cjk
+      - name: Build diagnostic target
+        run: npm run build
+      - name: Install WebKit
+        run: npx playwright install --with-deps webkit
+      - name: Diagnose four-worker media delivery without retries
+        run: npm run test:e2e -- tests/e2e/motion-system.spec.ts --project=webkit-desktop --workers=4 --repeat-each=10 --retries=0
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: linux-preference-diagnostic
+          path: test-results/linux-preference-diagnostic
+          include-hidden-files: true
