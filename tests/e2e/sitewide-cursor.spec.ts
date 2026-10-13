@@ -2,6 +2,65 @@ import { expect, test, type Page } from '@playwright/test'
 
 const routes = ['/', '/research/', '/works/', '/concerts/']
 
+test('@pointer-refinement body text keeps native selection while its real links stay actionable', async ({ page }) => {
+  test.skip(!(await supportsCustomCursor(page)), 'fine pointer only')
+  await page.goto('/')
+  await page.evaluate(() => {
+    const paragraph = document.createElement('p')
+    paragraph.id = 'cursor-body-text'
+    paragraph.style.cssText = 'position:fixed;top:260px;left:220px;z-index:2147483647;background:var(--bg);padding:20px'
+    paragraph.innerHTML = 'Selectable body text <a href="#selected-work">Actual link</a>'
+    document.body.append(paragraph)
+  })
+  await page.locator('#cursor-body-text').hover({ position: { x: 30, y: 25 } })
+  await expect(page.locator('.sitewide-cursor')).toHaveAttribute('data-context', 'text')
+  await expect(page.locator('html')).not.toHaveClass(/sitewide-cursor-active/)
+  await expect(page.locator('.sitewide-cursor')).toBeHidden()
+  await page.locator('#cursor-body-text').dblclick({ position: { x: 30, y: 25 } })
+  await expect.poll(() => page.evaluate(() => getSelection()?.toString().trim())).toBe('Selectable')
+  await page.getByRole('link', { name: 'Actual link' }).hover()
+  await expect(page.locator('.sitewide-cursor')).toHaveAttribute('data-context', 'interactive')
+})
+
+test('@pointer-refinement editable regions take priority over an outer action', async ({ page }) => {
+  test.skip(!(await supportsCustomCursor(page)), 'fine pointer only')
+  await page.goto('/')
+  await page.evaluate(() => {
+    const action = document.createElement('div')
+    action.setAttribute('role', 'button')
+    action.style.cssText = 'position:fixed;top:260px;left:220px;z-index:2147483647'
+    action.innerHTML = '<span contenteditable="true" role="textbox" aria-label="Nested editor">Editable value</span>'
+    document.body.append(action)
+  })
+  await page.getByRole('textbox', { name: 'Nested editor' }).hover()
+  await expect(page.locator('.sitewide-cursor')).toHaveAttribute('data-context', 'text')
+  await expect(page.locator('html')).not.toHaveClass(/sitewide-cursor-active/)
+})
+
+test('@pointer-refinement disabled action ancestors suppress interactive feedback on descendant links', async ({ page }) => {
+  test.skip(!(await supportsCustomCursor(page)), 'fine pointer only')
+  await page.goto('/')
+  await page.evaluate(() => {
+    const disabled = document.createElement('div')
+    disabled.setAttribute('aria-disabled', 'true')
+    disabled.style.cssText = 'position:fixed;top:260px;left:220px;z-index:2147483647'
+    disabled.innerHTML = '<a href="#selected-work">Disabled descendant</a>'
+    document.body.append(disabled)
+  })
+  await page.getByRole('link', { name: 'Disabled descendant' }).hover()
+  await expect(page.locator('.sitewide-cursor')).toBeHidden()
+  await expect(page.locator('html')).not.toHaveClass(/sitewide-cursor-active/)
+})
+
+test('@pointer-refinement passive particle feedback does not imply activation when pressed', async ({ page }) => {
+  test.skip(!(await supportsCustomCursor(page)), 'fine pointer only')
+  await page.goto('/')
+  await page.locator('.home-hero-particles').hover()
+  await page.mouse.down()
+  await expect(page.locator('.sitewide-cursor')).not.toHaveClass(/is-pressed/)
+  await page.mouse.up()
+})
+
 async function supportsCustomCursor(page: Page) {
   return page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)
 }
@@ -61,7 +120,7 @@ test('keeps the native cursor over disabled controls', async ({ page }) => {
   await expect(disabledAction).toHaveCSS('cursor', 'not-allowed')
 })
 
-test('keeps the center dot at the pointer while the ring follows', async ({ page }) => {
+test('@pointer-refinement keeps the center dot at the pointer while the ring follows', async ({ page }) => {
   test.skip(!(await supportsCustomCursor(page)), 'custom pointer is only enabled for a fine, hovering pointer')
   await page.setViewportSize({ width: 1200, height: 900 })
   await page.goto('/')
@@ -88,7 +147,7 @@ test('keeps the center dot at the pointer while the ring follows', async ({ page
   }).toBe(true)
 })
 
-test('sizes the ring for surface, controls, and particles', async ({ page }) => {
+test('@pointer-refinement sizes the ring for surface, controls, and particles', async ({ page }) => {
   test.skip(!(await supportsCustomCursor(page)), 'custom pointer is only enabled for a fine, hovering pointer')
   await page.goto('/')
   await page.evaluate(() => {
@@ -101,17 +160,17 @@ test('sizes the ring for surface, controls, and particles', async ({ page }) => 
   const ring = page.locator('.sitewide-cursor-ring')
   const dot = page.locator('.sitewide-cursor-dot')
   await page.locator('[aria-label="Cursor surface fixture"]').hover()
-  await expect.poll(() => ring.evaluate((element) => getComputedStyle(element).width)).toBe('32px')
-  await expect(dot).toHaveCSS('width', '5px')
+  await expect.poll(() => ring.evaluate((element) => getComputedStyle(element).width)).toBe('26px')
+  await expect(dot).toHaveCSS('width', '4px')
 
   await page.locator('.site-nav .nav-rail a').first().hover()
-  await expect.poll(() => ring.evaluate((element) => getComputedStyle(element).width)).toBe('52px')
+  await expect.poll(() => ring.evaluate((element) => getComputedStyle(element).width)).toBe('36px')
 
   await page.locator('.home-hero-particles').hover()
-  await expect.poll(() => ring.evaluate((element) => getComputedStyle(element).width)).toBe('80px')
+  await expect.poll(() => ring.evaluate((element) => getComputedStyle(element).width)).toBe('38px')
 })
 
-test('reclassifies a target moved under a stationary pointer', async ({ page }) => {
+test('@pointer-refinement reclassifies a target moved under a stationary pointer', async ({ page }) => {
   test.skip(!(await supportsCustomCursor(page)), 'custom pointer is only enabled for a fine, hovering pointer')
   await page.goto('/research/')
   await page.mouse.move(220, 180)
@@ -187,7 +246,7 @@ test('restores the native cursor when touch input reaches a fine-pointer page', 
   await expect(page.locator('html')).toHaveClass(/sitewide-cursor-active/)
 })
 
-test('clears the pressed cursor state on release and pointer cancellation', async ({ page }) => {
+test('@pointer-refinement clears the pressed cursor state on release and pointer cancellation', async ({ page }) => {
   test.skip(!(await supportsCustomCursor(page)), 'custom pointer is only enabled for a fine, hovering pointer')
   await page.goto('/works/')
   const cursor = page.locator('.sitewide-cursor')
@@ -259,7 +318,7 @@ test('distinguishes particle and editable text areas without hiding the native t
   await expect(cursor.locator('.sitewide-cursor-dot')).toBeHidden()
 })
 
-test('restores the native cursor after keyboard use, reduced motion, and forced colors', async ({ page }) => {
+test('@pointer-refinement restores the native cursor after keyboard use, reduced motion, and forced colors', async ({ page }) => {
   test.skip(!(await supportsCustomCursor(page)), 'custom pointer is only enabled for a fine, hovering pointer')
   await page.goto('/research/')
 
@@ -357,26 +416,28 @@ test('does not attach global cursor pointer listeners on coarse touch devices', 
   ))).toBe(0)
 })
 
-test('clears cursor state when the pointer leaves or the page lifecycle changes', async ({ page }) => {
+test('@pointer-refinement clears cursor state when the pointer leaves or the page lifecycle changes', async ({ page }) => {
   test.skip(!(await supportsCustomCursor(page)), 'custom pointer is only enabled for a fine, hovering pointer')
   await page.goto('/research/')
 
   const root = page.locator('html')
-  await page.mouse.move(240, 180)
+  await expect(root).toHaveAttribute('data-fonts-ready', 'ready')
+  const surface = page.locator('.archive-hero')
+  await surface.hover({ position: { x: 12, y: 12 } })
   await expect(root).toHaveClass(/sitewide-cursor-active/)
   await page.evaluate(() => {
     document.dispatchEvent(new PointerEvent('pointerout', { bubbles: true, pointerType: 'mouse', relatedTarget: null }))
   })
   await expect(root).not.toHaveClass(/sitewide-cursor-active/)
 
-  await page.mouse.move(244, 184)
+  await surface.hover({ position: { x: 16, y: 16 } })
   await expect(root).toHaveClass(/sitewide-cursor-active/)
   await page.evaluate(() => window.dispatchEvent(new Event('pagehide')))
   await expect(root).not.toHaveClass(/sitewide-cursor-active/)
   await page.evaluate(() => window.dispatchEvent(new Event('pageshow')))
   await expect(root).not.toHaveClass(/sitewide-cursor-active/)
 
-  await page.mouse.move(248, 188)
+  await surface.hover({ position: { x: 20, y: 20 } })
   await expect(root).toHaveClass(/sitewide-cursor-active/)
   await page.evaluate(() => window.dispatchEvent(new Event('blur')))
   await expect(root).not.toHaveClass(/sitewide-cursor-active/)
@@ -400,7 +461,6 @@ test('keeps cursor support consistent across every page, locale, and theme', asy
   ]
   const hasCustomCursor = await supportsCustomCursor(page)
   const cursor = page.locator('.sitewide-cursor')
-  let pointerStep = 0
 
   await page.goto('/')
   for (const { locale, prefix } of localeRoutes) {
@@ -418,8 +478,8 @@ test('keeps cursor support consistent across every page, locale, and theme', asy
 
         if (hasCustomCursor) {
           await expect(cursor).toBeAttached()
-          pointerStep += 1
-          await page.mouse.move(28 + pointerStep * 5, 220 + pointerStep * 3)
+          await page.locator('.theme-orbit').hover()
+          await expect(cursor).toHaveAttribute('data-context', 'interactive')
           await expect(cursor).toBeVisible()
           await expect(page.locator('html')).toHaveClass(/sitewide-cursor-active/)
         } else {

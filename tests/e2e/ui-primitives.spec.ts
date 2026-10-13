@@ -1,5 +1,105 @@
 import { expect, test } from '@playwright/test'
 
+for (const variant of ['primary', 'secondary']) {
+  test(`@pointer-refinement Hero ${variant} press keeps its hit area and label stable`, async ({ page }) => {
+    test.skip(!(await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches)), 'fine pointer only')
+    await page.goto('/')
+    await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'complete')
+    const action = page.locator(`.hero-action.${variant}`)
+    const visual = action.locator('.hero-action__visual')
+    const baseline = await action.boundingBox()
+    await action.hover({ position: { x: 8, y: 8 } })
+    await page.mouse.down()
+    await expect(action).toHaveCSS('transform', 'none')
+    await expect.poll(() => visual.evaluate((element) => {
+      const transform = getComputedStyle(element).transform
+      return transform === 'none' ? 1 : new DOMMatrixReadOnly(transform).m11
+    })).toBeCloseTo(.98, 3)
+    await expect(visual.locator('span').first()).toHaveCSS('transform', 'none')
+    const pressed = await action.boundingBox()
+    expect(pressed?.x).toBeCloseTo(baseline!.x, 1)
+    expect(pressed?.y).toBeCloseTo(baseline!.y, 1)
+    await page.mouse.move(0, 0)
+    await page.mouse.up()
+  })
+}
+
+for (const preference of ['reduced motion', 'forced colors', 'coarse pointer'] as const) {
+  test(`@pointer-refinement both Hero actions keep static feedback under ${preference}`, async ({ page }) => {
+    if (preference === 'coarse pointer') {
+      test.skip(!(await page.evaluate(() => matchMedia('(pointer: coarse)').matches)), 'coarse pointer only')
+    } else {
+      await page.emulateMedia(preference === 'reduced motion'
+        ? { reducedMotion: 'reduce' }
+        : { forcedColors: 'active' })
+    }
+    await page.goto('/')
+    for (const action of await page.locator('.hero-action').all()) {
+      await action.hover()
+      await page.mouse.down()
+      await expect(action).toHaveCSS('transform', 'none')
+      for (const layer of await action.locator('span').all()) {
+        await expect(layer).toHaveCSS('transform', 'none')
+      }
+      await expect(action.locator('.hero-action__visual')).toHaveCSS('translate', 'none')
+      await page.mouse.move(0, 0)
+      await page.mouse.up()
+    }
+  })
+}
+
+for (const preference of ['reduced motion', 'forced colors'] as const) {
+  test(`@pointer-refinement shared buttons keep static feedback under ${preference}`, async ({ page }) => {
+    await page.emulateMedia(preference === 'reduced motion'
+      ? { reducedMotion: 'reduce' }
+      : { forcedColors: 'active' })
+    await page.goto('/404.html')
+    const button = page.locator('.error-actions .y-button').first()
+    const visual = button.locator('.y-button__visual')
+    await button.hover()
+    await expect(visual).toHaveCSS('transform', 'none')
+    await page.mouse.down()
+    await expect(visual).toHaveCSS('transform', 'none')
+    await expect(button).toHaveCSS('transform', 'none')
+    await page.mouse.up()
+  })
+}
+
+test('@pointer-refinement shared buttons keep static feedback on coarse touch devices', async ({ page }) => {
+  test.skip(!(await page.evaluate(() => matchMedia('(pointer: coarse)').matches)), 'coarse pointer only')
+  await page.goto('/404.html')
+  const button = page.locator('.error-actions .y-button').first()
+  const visual = button.locator('.y-button__visual')
+  await button.hover()
+  await page.mouse.down()
+  await expect(visual).toHaveCSS('transform', 'none')
+  await expect(button).toHaveCSS('transform', 'none')
+  await page.mouse.up()
+})
+
+test('@pointer-refinement shared button press keeps its semantic hit area stable', async ({ page }) => {
+  test.skip(!(await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches)), 'fine pointer only')
+  await page.goto('/404.html')
+  // Exercise the actual shared primitive on a stable page. Modal entry and
+  // dismissal have their own lightbox tests and must not gate press geometry.
+  const button = page.locator('.error-actions .y-button').first()
+  await button.hover()
+  const baseline = await button.boundingBox()
+  await page.mouse.down()
+  await expect(button).toHaveCSS('transform', 'none')
+  await expect.poll(() => button.locator('.y-button__visual').evaluate((element) => {
+    const transform = getComputedStyle(element).transform
+    return transform === 'none' ? 1 : new DOMMatrixReadOnly(transform).m11
+  })).toBeCloseTo(.98, 3)
+  const pressed = await button.boundingBox()
+  expect(pressed?.x).toBeCloseTo(baseline!.x, 1)
+  expect(pressed?.y).toBeCloseTo(baseline!.y, 1)
+  await page.mouse.up()
+  await expect(page).toHaveURL(/\/$/)
+  await expect(page.locator('.home-hero')).toBeVisible()
+  await expect(page.locator('.sitewide-cursor')).not.toHaveClass(/is-pressed/)
+})
+
 test('shared project actions expose stable keyboard targets', async ({ page }) => {
   await page.goto('/works/')
 
@@ -150,7 +250,7 @@ test('metric surfaces refine their boundary without adding elevation', async ({ 
   expect(numberMetrics.lineHeight).toBeLessThan(numberMetrics.fontSize)
 })
 
-test('shared control hover lift stays within the restrained motion token', async ({ page }) => {
+test('shared control hover keeps Hero hit areas stable and theme lift restrained', async ({ page }) => {
   await page.goto('/')
   const finePointer = await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)
   test.skip(!finePointer, 'Hover lift is only observable on fine-pointer projects')
@@ -161,6 +261,6 @@ test('shared control hover lift stays within the restrained motion token', async
     await expect.poll(() => control.evaluate((element) => {
       const transform = getComputedStyle(element).transform
       return transform === 'none' ? 0 : new DOMMatrixReadOnly(transform).m42
-    })).toBe(-1)
+    })).toBe(selector === '.hero-action' ? 0 : -1)
   }
 })

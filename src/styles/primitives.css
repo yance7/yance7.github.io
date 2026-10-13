@@ -1,4 +1,22 @@
 /* ===== Shared component primitives ===== */
+.hero-action .hero-action__visual {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  pointer-events: none;
+  transition: translate 180ms var(--ease-out), transform 140ms var(--ease-out);
+}
+.hero-action:is(:hover, :focus-visible, :active) { transform: none; }
+.hero-action:is(:hover, :focus-visible) .hero-action__visual { transform: none; }
+.hero-action:active .hero-action__visual { transform: scale(.98); }
+@media (prefers-reduced-motion: reduce), (forced-colors: active), (hover: none), (pointer: coarse) {
+  .hero-action .hero-action__visual { transition: none; }
+  .hero-action:active .hero-action__visual { transform: none; }
+  .y-button__visual { translate: none; transform: none; }
+}
+
 .y-archive-link {
   display: inline-flex;
   align-items: center;
@@ -79,7 +97,17 @@
   color: var(--ink);
   box-shadow: var(--control-shadow);
 }
-.y-button:not(:disabled):not([aria-disabled='true']):hover {
+.y-button__visual {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  pointer-events: none;
+  transition: translate 180ms var(--ease-out), transform 140ms var(--ease-out);
+}
+.y-button:is(:hover, :active) { transform: none; }
+.y-button:active:not(:disabled):not([aria-disabled='true']) { transform: none; }
+.y-button:not(:disabled):not([aria-disabled='true']):hover .y-button__visual {
   transform: translateY(-1px);
 }
 .y-button--primary:not(:disabled):not([aria-disabled='true']):hover {
@@ -93,7 +121,7 @@
   background: var(--control-hover);
   color: var(--gold);
 }
-.y-button:active:not(:disabled):not([aria-disabled='true']) { transform: translateY(1px) scale(var(--motion-press-scale)); }
+.y-button:active:not(:disabled):not([aria-disabled='true']) .y-button__visual { transform: scale(.98); }
 .y-button:focus-visible { box-shadow: var(--focus-ring); }
 .y-button:disabled,
 .y-button[aria-disabled='true'] { cursor: not-allowed; opacity: .58; }
@@ -124,7 +152,7 @@
     box-shadow: none;
   }
   .y-archive-link:hover > span:last-child { transform: none; }
-  .y-button:not(:disabled):not([aria-disabled='true']):hover { transform: none; }
+  .y-button:not(:disabled):not([aria-disabled='true']):hover .y-button__visual { transform: none; }
   .y-button--primary:not(:disabled):not([aria-disabled='true']):hover {
     border-color: var(--action-fill);
     background: var(--action-fill);
@@ -139,16 +167,35 @@
   .y-button:not(:disabled):not([aria-disabled='true']):hover .y-button__trailing { transform: none; }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce), (forced-colors: active) {
   .y-archive-link,
   .y-archive-link > span:last-child,
   .y-button,
+  .y-button__visual,
   .y-button__leading,
   .y-button__trailing { transition-duration: .01ms; }
-  .y-button:not(:disabled):not([aria-disabled='true']):hover,
-  .y-button:active:not(:disabled):not([aria-disabled='true']) { transform: none; }
+  .y-button:not(:disabled):not([aria-disabled='true']):hover .y-button__visual,
+  .y-button:active:not(:disabled):not([aria-disabled='true']) .y-button__visual { transform: none; }
   .y-button:not(:disabled):not([aria-disabled='true']):hover .y-button__trailing { transform: none; }
   .y-archive-link:hover,
   .y-archive-link:hover > span:last-child,
   .y-archive-link:active { transform: none; }
+}
+/* One invisible preference observer shared by pointer directives. */
+.pointer-motion-preference-sentinel {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce), (hover: none), (pointer: coarse) {
+  .pointer-motion-preference-sentinel { width: 2px; }
+}
+
+@media (forced-colors: active) {
+  .pointer-motion-preference-sentinel { height: 2px; }
 }
