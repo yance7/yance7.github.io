@@ -1,29 +1,21 @@
 import { expect, test } from '@playwright/test'
+import { mkdir, writeFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     const records: unknown[] = []
     Object.assign(window, { pointerPreferenceDiagnostics: records })
-    const state = () => ({ time: performance.now(), visibility: document.visibilityState, focus: document.hasFocus(), reduced: matchMedia('(prefers-reduced-motion: reduce)').matches, forced: matchMedia('(forced-colors: active)').matches })
     const NativeObserver = window.ResizeObserver
     window.ResizeObserver = class extends NativeObserver {
       constructor(callback: ResizeObserverCallback) {
         super((entries, observer) => {
-          for (const entry of entries) if (entry.target.classList.contains('pointer-motion-preference-sentinel')) records.push({ event: 'resize-observer', size: [entry.contentRect.width, entry.contentRect.height], state: state() })
           callback(entries, observer)
+          for (const entry of entries) if (entry.target.classList.contains('pointer-motion-preference-sentinel')) records.push({ event: 'resize-observer', time: performance.now(), size: [entry.contentRect.width, entry.contentRect.height], connected: entry.target.isConnected, active: document.querySelector<HTMLElement>('[data-pointer-sheen]')?.style.getPropertyValue('--pointer-active'), visibility: document.visibilityState })
         })
       }
     }
-    const nativeMatch = window.matchMedia.bind(window)
-    const instrumented = new Set<string>()
-    window.matchMedia = query => {
-      const media = nativeMatch(query)
-      if (!instrumented.has(query) && ['(pointer: fine)', '(hover: hover)', '(prefers-reduced-motion: reduce)', '(forced-colors: active)'].includes(query)) {
-        instrumented.add(query)
-        media.addEventListener('change', () => records.push({ event: 'media-change', query, held: media.matches, state: state() }))
-      }
-      return media
-    }
+
   })
 })
 test.afterEach(async ({ page }, testInfo) => {
@@ -31,9 +23,15 @@ test.afterEach(async ({ page }, testInfo) => {
   const diagnostic = await page.evaluate(() => {
     const sentinel = document.querySelector('.pointer-motion-preference-sentinel')
     const css = sentinel ? getComputedStyle(sentinel) : null
-    return { records: (window as Window & { pointerPreferenceDiagnostics?: unknown[] }).pointerPreferenceDiagnostics, final: { reduced: matchMedia('(prefers-reduced-motion: reduce)').matches, forced: matchMedia('(forced-colors: active)').matches, sentinel: css ? { width: css.width, height: css.height, display: css.display, visibility: css.visibility } : null, focus: document.hasFocus(), visibility: document.visibilityState, active: document.querySelector<HTMLElement>('[data-pointer-sheen]')?.style.getPropertyValue('--pointer-active') } }
+    const cursor = document.querySelector('.sitewide-cursor')
+    const sheen = document.querySelector<HTMLElement>('[data-pointer-sheen]')
+    return { records: (window as Window & { pointerPreferenceDiagnostics?: unknown[] }).pointerPreferenceDiagnostics, final: { reduced: matchMedia('(prefers-reduced-motion: reduce)').matches, forced: matchMedia('(forced-colors: active)').matches, sentinel: css ? { width: css.width, height: css.height, display: css.display, visibility: css.visibility } : null, focus: document.hasFocus(), visibility: document.visibilityState, active: sheen?.style.getPropertyValue('--pointer-active'), cursorDisplay: cursor ? getComputedStyle(cursor).display : null, rootCursor: getComputedStyle(document.documentElement).cursor, sheenOpacity: sheen ? getComputedStyle(sheen, '::after').opacity : null } }
   })
-  await testInfo.attach('preference-diagnostic.json', { body: JSON.stringify(diagnostic, null, 2), contentType: 'application/json' })
+  const directory = resolve(process.env.PLAYWRIGHT_OUTPUT_DIR!, 'preference-records')
+  await mkdir(directory, { recursive: true })
+  const record = { title: testInfo.title, status: testInfo.status, repeat: testInfo.repeatEachIndex, ...diagnostic }
+  await writeFile(resolve(directory, `${testInfo.testId}-${testInfo.repeatEachIndex}.json`), JSON.stringify(record, null, 2))
+  await testInfo.attach('preference-diagnostic.json', { body: JSON.stringify(record), contentType: 'application/json' })
 })
 
 
