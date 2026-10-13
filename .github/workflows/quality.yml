@@ -478,3 +478,71 @@ jobs:
             test-results/linux-preference-render-positive
             sensitivity.log
           include-hidden-files: true
+
+  cold-fragment-render-sensitivity:
+    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/codex/test/phase2-integration' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PLAYWRIGHT_USE_PREVIEW: '1'
+      PLAYWRIGHT_OUTPUT_DIR: test-results/linux-cold-fragment-negative
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install CJK fonts
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends --yes fonts-noto-cjk
+      - name: Build and install WebKit
+        run: |
+          npm run build
+          npx playwright install --with-deps webkit
+      - name: Generate isolated navigation fault fixture
+        run: |
+          node --input-type=module <<'NODE'
+          import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+          mkdirSync('.superpowers/cold-fragment-negative', { recursive: true })
+          const hook = `
+          test.beforeEach(async ({ page }) => {
+            await page.addInitScript(() => {
+              HTMLElement.prototype.scrollIntoView = () => {}
+              window.scrollTo = () => {}
+            })
+          })
+          `
+          const source = readFileSync('tests/e2e/adaptive-header.spec.ts', 'utf8').replace('test.describe.configure({ retries: 0 })', 'test.describe.configure({ retries: 0 })\n' + hook)
+          writeFileSync('.superpowers/cold-fragment-negative/adaptive-header.spec.ts', source)
+          writeFileSync('.superpowers/cold-fragment-negative.config.ts', "import { defineConfig } from '@playwright/test'\nimport base from '../config/playwright.config'\nexport default defineConfig({ ...base, testDir: './cold-fragment-negative', projects: [{ ...base.projects![1], testMatch: /adaptive-header\\.spec\\.ts/ }] })\n")
+          NODE
+      - name: Verify screenshot cannot satisfy blocked fragment navigation
+        run: |
+          set +e
+          npx playwright test --config .superpowers/cold-fragment-negative.config.ts --project=webkit-desktop --workers=1 --grep 'cold fragment' --retries=0 > cold-fragment-sensitivity.log 2>&1
+          sensitivity_code=$?
+          set -e
+          cat cold-fragment-sensitivity.log
+          test "$sensitivity_code" -eq 1
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs'
+          const log = readFileSync('cold-fragment-sensitivity.log', 'utf8').replace(/\u001b\[[0-9;]*m/g, '')
+          if (!log.includes('"header": "resting"') || !log.includes('"visible": false') || !log.includes('Timeout 5000ms')) throw new Error('Expected blocked-navigation sensitivity failure not observed')
+          NODE
+      - name: Verify actual fragment navigation over ten rounds
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: test-results/linux-cold-fragment-positive
+        run: npm run test:e2e -- tests/e2e/adaptive-header.spec.ts --project=webkit-desktop --project=webkit-mobile --workers=4 --grep 'cold fragment' --repeat-each=10 --retries=0
+      - name: Upload fragment sensitivity evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: linux-cold-fragment-render-sensitivity
+          path: |
+            test-results/linux-cold-fragment-negative
+            test-results/linux-cold-fragment-positive
+            cold-fragment-sensitivity.log
+          include-hidden-files: true
