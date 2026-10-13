@@ -1,5 +1,16 @@
 import { expect, test } from '@playwright/test'
 
+// Observe one real rendered frame inside the original poll budget before
+// checking applied CSS and the existing JavaScript cleanup requirements.
+function expectRenderedPreference<T>(page: import('@playwright/test').Page, read: () => Promise<T>) {
+  let renderedFrame: Promise<Buffer> | undefined
+  return expect.poll(async () => {
+    renderedFrame ??= page.screenshot({ caret: 'initial', timeout: 5000 })
+    await renderedFrame
+    return read()
+  })
+}
+
 test('@pointer-refinement runtime pointer capability changes clear magnetic feedback and restore the native cursor', async ({ page }) => {
   test.skip(!(await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches)), 'fine pointer only')
   // Playwright cannot change pointer/hover media at runtime. Override only these
@@ -92,9 +103,7 @@ test('@pointer-refinement motion directives clear immediately when runtime prefe
   await expect.poll(() => sheen.evaluate((element) => element.style.getPropertyValue('--pointer-active'))).toBe('1')
   await page.emulateMedia({ forcedColors: 'active' })
   await expect.poll(() => page.evaluate(() => matchMedia('(forced-colors: active)').matches)).toBe(true)
-  // Read the applied CSS preference in the same poll as JS cleanup: inline
-  // style reads alone do not observe WebKit's rendering-dependent delivery.
-  await expect.poll(() => sheen.evaluate(element => ({
+  await expectRenderedPreference(page, () => sheen.evaluate(element => ({
     active: element.style.getPropertyValue('--pointer-active'),
     height: getComputedStyle(document.querySelector('.pointer-motion-preference-sentinel')!).height
   }))).toEqual({ active: '', height: '2px' })
@@ -128,14 +137,14 @@ test('@pointer-refinement motion directives clear when native media change notif
   await expect.poll(() => sheen.evaluate(element => element.style.getPropertyValue('--pointer-active'))).toBe('1')
   await page.emulateMedia({ forcedColors: 'active' })
   await expect.poll(() => page.evaluate(() => matchMedia('(forced-colors: active)').matches)).toBe(true)
-  await expect.poll(() => sheen.evaluate(element => ({
+  await expectRenderedPreference(page, () => sheen.evaluate(element => ({
     active: element.style.getPropertyValue('--pointer-active'),
     height: getComputedStyle(document.querySelector('.pointer-motion-preference-sentinel')!).height
   }))).toEqual({ active: '', height: '2px' })
   await expect(page.locator('.sitewide-cursor')).toHaveCount(0)
   await expect(page.locator('html')).not.toHaveClass(/sitewide-cursor-active/)
   await page.emulateMedia({ forcedColors: 'none' })
-  await expect.poll(() => page.evaluate(() => ({
+  await expectRenderedPreference(page, () => page.evaluate(() => ({
     count: document.querySelectorAll('.sitewide-cursor').length,
     height: getComputedStyle(document.querySelector('.pointer-motion-preference-sentinel')!).height
   }))).toEqual({ count: 1, height: '1px' })
@@ -143,7 +152,7 @@ test('@pointer-refinement motion directives clear when native media change notif
   await expect.poll(() => sheen.evaluate(element => element.style.getPropertyValue('--pointer-active'))).toBe('1')
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await expect.poll(() => page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true)
-  await expect.poll(() => sheen.evaluate(element => ({
+  await expectRenderedPreference(page, () => sheen.evaluate(element => ({
     active: element.style.getPropertyValue('--pointer-active'),
     width: getComputedStyle(document.querySelector('.pointer-motion-preference-sentinel')!).width
   }))).toEqual({ active: '', width: '2px' })
