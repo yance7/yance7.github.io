@@ -7,7 +7,6 @@ export function useAdaptiveHeader() {
   const sentinelRef = ref<HTMLElement | null>(null)
   let observer: IntersectionObserver | null = null
   let fragmentObserver: MutationObserver | null = null
-  let fragmentFrame: number | undefined
 
   function updateState() {
     const sentinel = sentinelRef.value
@@ -37,27 +36,28 @@ export function useAdaptiveHeader() {
       || Array.from(document.querySelectorAll<HTMLElement>('[data-anchor-id]'))
         .some((target) => target.dataset.anchorId === fragmentId)
 
-    if (targetExists()) return
+    const root = document.documentElement
+    const fontsComplete = () => root.dataset.fontsReady === 'ready' || root.dataset.fontsReady === 'fallback'
+    if (!root.dataset.initialHash && fontsComplete()) return
 
     fragmentObserver = new MutationObserver(() => {
-      if (targetExists() && shell.dataset.pageLoadState === 'ready') {
-        fragmentObserver?.disconnect()
-        fragmentObserver = null
-        fragmentFrame = window.requestAnimationFrame(() => {
-          fragmentFrame = undefined
-          updateState()
-        })
-        return
-      }
+      const pageState = shell.dataset.pageLoadState
+      const hasTarget = Boolean(targetExists())
+      if (pageState === 'ready' && hasTarget) updateState()
 
-      if (shell.dataset.pageLoadState === 'ready' || shell.dataset.pageLoadState === 'error') {
+      // Fragment restoration and deferred fonts can finish after the page chunk.
+      // Read the real geometry at those boundaries, even if scroll/IO is late.
+      const fragmentFinished = !root.dataset.initialHash
+        && (fontsComplete() || window.location.hash !== initialHash)
+      if (fragmentFinished || pageState === 'error' || (pageState === 'ready' && !hasTarget)) {
+        updateState()
         fragmentObserver?.disconnect()
         fragmentObserver = null
       }
     })
-    fragmentObserver.observe(document.body, {
+    fragmentObserver.observe(root, {
       attributes: true,
-      attributeFilter: ['data-page-load-state'],
+      attributeFilter: ['data-page-load-state', 'data-initial-hash', 'data-fonts-ready'],
       childList: true,
       subtree: true
     })
@@ -81,8 +81,6 @@ export function useAdaptiveHeader() {
     observer = null
     fragmentObserver?.disconnect()
     fragmentObserver = null
-    if (fragmentFrame !== undefined) window.cancelAnimationFrame(fragmentFrame)
-    fragmentFrame = undefined
   })
 
   return { headerState, sentinelRef }

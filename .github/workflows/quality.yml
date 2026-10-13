@@ -546,3 +546,98 @@ jobs:
             test-results/linux-cold-fragment-positive
             cold-fragment-sensitivity.log
           include-hidden-files: true
+
+  concert-screenshot-diagnosis:
+    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/codex/test/phase2-integration' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PLAYWRIGHT_USE_PREVIEW: '1'
+      PLAYWRIGHT_OUTPUT_DIR: test-results/linux-concert-screenshot-diagnosis
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install CJK fonts
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends --yes fonts-noto-cjk
+      - name: Build and install Chromium
+        run: |
+          npm run build
+          npx playwright install --with-deps chromium
+      - name: Generate focused screenshot observation
+        run: |
+          node --input-type=module <<'NODE'
+          import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+          mkdirSync('.superpowers/concert-visual-diagnosis', { recursive: true })
+          let source = readFileSync('tests/e2e/visual-matrix.spec.ts', 'utf8')
+          source = source.replace("const routes = ['index', 'academics', 'honors', 'research', 'works', 'concerts'] as const", "const routes = ['concerts'] as const")
+          source = source.replace(/const viewports = \[[\s\S]*?\] as const/, "const viewports = [{ name: 'desktop', width: 1440, height: 900 }] as const")
+          source = source.replace("const themes = ['light', 'dark'] as const", "const themes = ['dark'] as const")
+          const assertion = "await expect(page.locator('main#main')).toHaveScreenshot(`${route}-${theme}-desktop-main.png`, componentScreenshotOptions)"
+          const observed = `
+          const geometry = () => page.evaluate(() => ({
+            scrollY: window.scrollY,
+            viewport: [window.innerWidth, window.innerHeight],
+            active: document.activeElement?.className,
+            regions: ['main#main', '.site-nav', '.skip-link', '#concert-archive'].map(selector => {
+              const rect = document.querySelector(selector)?.getBoundingClientRect()
+              return rect ? [selector, rect.top, rect.bottom, rect.height] : null
+            })
+          }))
+          console.log('CONCERT_BEFORE_MAIN', JSON.stringify(await geometry()))
+          if (process.env.CONCERT_VIEWPOINT) {
+            const top = Number(process.env.CONCERT_VIEWPOINT)
+            await page.evaluate(value => window.scrollTo({ top: value, behavior: 'instant' }), top)
+            await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(top)
+            console.log('CONCERT_CONTROLLED_VIEWPOINT', JSON.stringify(await geometry()))
+          }
+          try { ${assertion} }
+          finally { console.log('CONCERT_AFTER_MAIN', JSON.stringify(await geometry())) }
+          `
+          if (!source.includes(assertion)) throw new Error('Original main screenshot assertion not found')
+          source = source.replace(assertion, observed)
+          writeFileSync('.superpowers/concert-visual-diagnosis/visual-matrix.spec.ts', source)
+          writeFileSync('.superpowers/concert-visual-diagnosis.config.ts', "import { defineConfig } from '@playwright/test'\nimport base from '../config/playwright.config'\nexport default defineConfig({ ...base, testDir: './concert-visual-diagnosis', snapshotPathTemplate: process.cwd() + '/tests/e2e/visual-snapshots/{projectName}/{platform}/{testFilePath}/{arg}{ext}', projects: [base.projects![3]] })\n")
+          NODE
+      - name: Observe original screenshot assertions over ten rounds
+        run: npx playwright test --config .superpowers/concert-visual-diagnosis.config.ts --project=chromium-visual --grep 'captures dark desktop' --workers=2 --repeat-each=10 --retries=0
+      - name: Verify original baseline at the initial archive viewpoint
+        if: ${{ !cancelled() }}
+        env:
+          CONCERT_VIEWPOINT: '985'
+          PLAYWRIGHT_OUTPUT_DIR: test-results/linux-concert-viewpoint-985
+        run: npx playwright test --config .superpowers/concert-visual-diagnosis.config.ts --project=chromium-visual --grep 'captures dark desktop' --workers=2 --repeat-each=10 --retries=0
+      - name: Verify the shifted viewpoint reproduces the original failure
+        if: ${{ !cancelled() }}
+        env:
+          CONCERT_VIEWPOINT: '1001'
+          PLAYWRIGHT_OUTPUT_DIR: test-results/linux-concert-viewpoint-1001
+        run: |
+          set +e
+          npx playwright test --config .superpowers/concert-visual-diagnosis.config.ts --project=chromium-visual --grep 'captures dark desktop' --workers=1 --retries=0 > concert-viewpoint.log 2>&1
+          viewpoint_code=$?
+          set -e
+          cat concert-viewpoint.log
+          test "$viewpoint_code" -eq 1
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs'
+          const log = readFileSync('concert-viewpoint.log', 'utf8')
+          if (!log.includes('concerts-dark-desktop-main.png') || !log.includes('15158 pixels')) throw new Error('Original shifted screenshot failure not reproduced')
+          NODE
+      - name: Upload screenshot diagnosis
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: linux-concert-screenshot-diagnosis
+          path: |
+            test-results/linux-concert-screenshot-diagnosis
+            test-results/linux-concert-viewpoint-985
+            test-results/linux-concert-viewpoint-1001
+            concert-viewpoint.log
+          include-hidden-files: true
