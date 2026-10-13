@@ -105,6 +105,11 @@ test('@pointer-refinement motion directives clear when native media change notif
       }
       return media
     }
+    const addListener = Element.prototype.addEventListener
+    Element.prototype.addEventListener = function (type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions) {
+      if (type === 'transitionend' && this.classList.contains('pointer-motion-preference-sentinel')) return
+      addListener.call(this, type, listener, options)
+    }
   })
   await page.goto('/works/')
   test.skip(!(await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches)), 'fine pointer only')
@@ -119,7 +124,10 @@ test('@pointer-refinement motion directives clear when native media change notif
   await page.emulateMedia({ forcedColors: 'active' })
   await expect.poll(() => page.evaluate(() => matchMedia('(forced-colors: active)').matches)).toBe(true)
   await expect.poll(() => sheen.evaluate(element => element.style.getPropertyValue('--pointer-active'))).toBe('')
+  await expect(page.locator('.sitewide-cursor')).toHaveCount(0)
+  await expect(page.locator('html')).not.toHaveClass(/sitewide-cursor-active/)
   await page.emulateMedia({ forcedColors: 'none' })
+  await expect(page.locator('.sitewide-cursor')).toHaveCount(1)
   await sheen.hover({ position: { x: 100, y: 100 } })
   await expect.poll(() => sheen.evaluate(element => element.style.getPropertyValue('--pointer-active'))).toBe('1')
   await page.emulateMedia({ reducedMotion: 'reduce' })

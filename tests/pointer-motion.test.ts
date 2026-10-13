@@ -7,6 +7,14 @@ it('shares one event-driven sentinel and releases it after the final observer st
   const created: EventTarget[] = []
   const remove = vi.fn()
   const append = vi.fn()
+  const observe = vi.fn()
+  const disconnect = vi.fn()
+  let notify = () => {}
+  vi.stubGlobal('ResizeObserver', class {
+    constructor(callback: () => void) { notify = callback }
+    observe = observe
+    disconnect = disconnect
+  })
   const media = new EventTarget()
   const listeners = vi.spyOn(media, 'removeEventListener')
   vi.stubGlobal('window', { matchMedia: () => media })
@@ -25,17 +33,17 @@ it('shares one event-driven sentinel and releases it after the final observer st
   const second = observePointerMotion(callback)
   try {
     expect(append).toHaveBeenCalledTimes(1)
-    created[0]!.dispatchEvent(Object.assign(new Event('transitionend'), { propertyName: 'height' }))
-    expect(callback).toHaveBeenCalledTimes(2)
-    created[0]!.dispatchEvent(Object.assign(new Event('transitionend'), { propertyName: 'opacity' }))
+    expect(observe).toHaveBeenCalledTimes(1)
+    notify()
     expect(callback).toHaveBeenCalledTimes(2)
     first.stop()
     first.stop()
     expect(remove).not.toHaveBeenCalled()
-    created[0]!.dispatchEvent(Object.assign(new Event('transitionend'), { propertyName: 'width' }))
+    notify()
     expect(callback).toHaveBeenCalledTimes(3)
     second.stop()
     expect(remove).toHaveBeenCalledTimes(1)
+    expect(disconnect).toHaveBeenCalledTimes(1)
     expect(listeners).toHaveBeenCalledTimes(8)
     const third = observePointerMotion(callback)
     expect(append).toHaveBeenCalledTimes(2)
@@ -46,8 +54,14 @@ it('shares one event-driven sentinel and releases it after the final observer st
   }
 })
 
-it('does not clear fresh input on a delayed transition after motion is re-enabled', () => {
+it('does not clear fresh input on an initial or delayed notification after motion is re-enabled', () => {
   let forced = false
+  let notify = () => {}
+  vi.stubGlobal('ResizeObserver', class {
+    constructor(callback: () => void) { notify = callback }
+    observe() {}
+    disconnect() {}
+  })
   const sentinel = Object.assign(new EventTarget(), {
     setAttribute: vi.fn(), getBoundingClientRect: vi.fn(), remove: vi.fn()
   })
@@ -59,15 +73,24 @@ it('does not clear fresh input on a delayed transition after motion is re-enable
   vi.stubGlobal('document', { body: { append: vi.fn() }, createElement: () => sentinel })
   const callback = vi.fn()
   const observer = observePointerMotion(callback)
+  const support = vi.fn()
+  const supportObserver = observePointerMotion(support, { notifyWhenAllowed: true })
   try {
     expect(observer.allowed()).toBe(true)
+    notify()
+    expect(callback).not.toHaveBeenCalled()
+    expect(support).toHaveBeenCalledTimes(1)
     forced = true
-    sentinel.dispatchEvent(Object.assign(new Event('transitionend'), { propertyName: 'height' }))
+    notify()
     expect(callback).toHaveBeenCalledTimes(1)
     expect(observer.allowed()).toBe(false)
     forced = false
-    sentinel.dispatchEvent(Object.assign(new Event('transitionend'), { propertyName: 'height' }))
+    notify()
     expect(callback).toHaveBeenCalledTimes(1)
     expect(observer.allowed()).toBe(true)
-  } finally { observer.stop() }
+    expect(support).toHaveBeenCalledTimes(3)
+  } finally {
+    observer.stop()
+    supportObserver.stop()
+  }
 })
