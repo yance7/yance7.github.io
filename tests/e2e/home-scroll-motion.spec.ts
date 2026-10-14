@@ -265,6 +265,19 @@ test('focus during an observer-triggered home stagger immediately shows its card
   await expect.poll(() => card.evaluate(element => getComputedStyle(element).transitionDuration)).not.toBe('0s')
 })
 
+test('home reload keeps its fragment URL while foreground drawing frames are unavailable', async ({ page }) => {
+  await openHome(page, '/en/#home-worlds')
+  await expect(page).toHaveURL(/#home-worlds$/)
+  await page.addInitScript(() => {
+    window.requestAnimationFrame = () => 1
+    window.cancelAnimationFrame = () => {}
+  })
+  await page.reload()
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+  await expect(page.locator('#home-worlds')).toBeAttached()
+  await expect(page).toHaveURL(/#home-worlds$/)
+})
+
 for (const path of ['/zh-hk/', '/en/']) {
   test(`home hash content in ${path} avoids replay on reload`, async ({ page }) => {
     await openHome(page, `${path}#home-worlds`)

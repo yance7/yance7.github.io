@@ -951,6 +951,10 @@ test('@particle-v2 starts a full gathering after delayed display-font readiness'
 test('@particle-v2 clears a continuously drawn held shape when scrolling changes geometry', async ({ page }) => {
   await page.goto('/')
   await waitForSettledHero(page)
+  // Native proximity can keep a small scroll at the current snap position.
+  // Keyboard navigation yields snapping so this case actually changes geometry.
+  await page.keyboard.press('Home')
+  await expect(page.locator('html')).not.toHaveClass(/home-scroll-snap/)
   const stage = page.locator('.home-hero-particles')
   await stage.scrollIntoViewIfNeeded()
   await savePixels(page)
@@ -960,7 +964,9 @@ test('@particle-v2 clears a continuously drawn held shape when scrolling changes
   await expect(stage).toHaveAttribute('data-animation-running', 'true')
   expect(await changedPixels(page)).toBeGreaterThan(100)
   await frames(page)
-  await page.evaluate(() => scrollBy(0, 40))
+  const previousTop = await stage.evaluate(element => element.getBoundingClientRect().top)
+  await page.evaluate(() => scrollBy({ top: 40, behavior: 'instant' }))
+  await expect.poll(() => stage.evaluate(element => element.getBoundingClientRect().top)).toBeLessThan(previousTop - 1)
   await expect(stage).toHaveAttribute('data-particle-state', 'settled', { timeout: 1000 })
   await expectRecoveredMark(page)
 })

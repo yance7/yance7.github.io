@@ -46,7 +46,7 @@ function clearInitialHashMarker() {
   delete document.documentElement.dataset.initialHash
 }
 
-function restoreInitialHash() {
+function restoreInitialHashUrl() {
   if (!initialHash) return
   if (window.location.hash !== initialHash) {
     window.history.replaceState(
@@ -55,6 +55,10 @@ function restoreInitialHash() {
       `${window.location.pathname}${window.location.search}${initialHash}`
     )
   }
+}
+
+function restoreInitialHash() {
+  restoreInitialHashUrl()
   clearInitialHashMarker()
 }
 
@@ -162,6 +166,9 @@ function scrollToHashTarget(force = false) {
     hashScrolled = true
     return
   }
+  // Keep the address shareable while positioning waits for layout or RAF.
+  // The marker still protects header/font readiness until positioning finishes.
+  restoreInitialHashUrl()
   pendingHashTarget = target
   target.dataset.hashTarget = 'true'
   revealForNavigation(target)
