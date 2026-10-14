@@ -92,6 +92,18 @@ describe('MiMo particle settings', () => {
     expect(engine.needsFrame).toBe(true)
   })
 
+  it.each([1 / 60, 1 / 3, 2])('recovers the full repulsion envelope in nine draws at a %s second frame interval', interval => {
+    const scene = createMimoParticleScene({ width: 600, height: 300, maskWidth: 20, maskHeight: 20, rgba: new Uint8ClampedArray(20 * 20 * 4).fill(255) })
+    const engine = new MimoParticleEngine(scene, { startedAt: 0 })
+    scene.particles.forEach((point, index) => {
+      point.x = point.homeX + 40.3 * Math.cos(index)
+      point.y = point.homeY + 40.3 * Math.sin(index)
+    })
+    for (let draw = 1; draw <= 9; draw++) engine.advanceTo(draw * interval)
+    expect(Math.max(...scene.particles.map(point => Math.hypot(point.x - point.homeX, point.y - point.homeY)))).toBeLessThan(.5)
+    expect(engine.active.size).toBe(0)
+  })
+
   it('accepts mouse movement while preserving the active nonmouse owner', () => {
     const scene = createMimoParticleScene({ width: 100, height: 100, maskWidth: 1, maskHeight: 1, rgba: [0, 0, 0, 255] })
     const engine = new MimoParticleEngine(scene, { startedAt: 0 })

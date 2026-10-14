@@ -2,6 +2,11 @@ import { expect, test } from '@playwright/test'
 import { readMimoReferenceGlyph } from './helpers/mimo-reference'
 
 type HeroPoint = { x: number; y: number; rectX: number; rectY: number; size: number; color: string; alpha: number }
+type HeroIntroWindow = Window & {
+  heroIntroCurrentFrameTime?: number
+  heroIntroDraw?: { time: number, frame: number }
+  heroIntroInput?: { phase: string, accepted: boolean, injectedAt: number }
+}
 type HeroPixelWindow = Window & {
   heroBaseline?: Uint8ClampedArray
   heroHomePoints?: { x: number; y: number }[]
@@ -10,6 +15,12 @@ type HeroPixelWindow = Window & {
   heroPeakDisplacement?: number
   heroReleasedAt?: number
   heroRecoveryMs?: number
+  heroReleasedFrame?: number
+  heroRecoveryFrames?: number
+  heroRecoveryIntervals?: number[]
+  heroLastRenderedAt?: number
+  heroCompletedRenders?: number[]
+  heroBaselineP95?: number
   heroObservedCanvas?: HTMLCanvasElement
   heroCapturedDeformation?: boolean
 }
@@ -61,6 +72,13 @@ async function savePixels(page: import('@playwright/test').Page) {
         const baselinePoints = target.heroHomePoints
         if (!baseline || !baselinePoints) return
         const displacement = Math.max(...target.heroPoints!.map((point, index) => Math.hypot(point.x - baselinePoints[index]!.x, point.y - baselinePoints[index]!.y)))
+        const renderedAt = performance.now()
+        ;(target.heroCompletedRenders ??= []).push(renderedAt)
+        if (target.heroReleasedAt !== undefined && target.heroRecoveryFrames === undefined) {
+          target.heroRecoveryIntervals ??= []
+          target.heroRecoveryIntervals.push(renderedAt - (target.heroLastRenderedAt ?? target.heroReleasedAt))
+        }
+        target.heroLastRenderedAt = renderedAt
         // Retain one actual deformation image; recovery observation needs only
         // positions. Full readback on every recovery frame alters RAF delivery.
         if (displacement > 1 && !target.heroCapturedDeformation) {
@@ -75,6 +93,7 @@ async function savePixels(page: import('@playwright/test').Page) {
         target.heroPeakDisplacement = Math.max(target.heroPeakDisplacement ?? 0, displacement)
         if (displacement < .5 && (target.heroPeakDisplacement ?? 0) > 1 && target.heroReleasedAt !== undefined && target.heroRecoveryMs === undefined) {
           target.heroRecoveryMs = performance.now() - target.heroReleasedAt
+          target.heroRecoveryFrames = Number(canvas.parentElement!.dataset.frameCount) + 1 - target.heroReleasedFrame!
         }
       }
     }
@@ -86,7 +105,26 @@ async function savePixels(page: import('@playwright/test').Page) {
     target.heroCapturedDeformation = false
     target.heroReleasedAt = undefined
     target.heroRecoveryMs = undefined
+    target.heroReleasedFrame = undefined
+    target.heroRecoveryFrames = undefined
+    target.heroRecoveryIntervals = []
+    target.heroCompletedRenders = []
   }, reference)
+  await page.locator('.home-hero-particles').evaluate(element => new Promise<void>(resolve => {
+    const targetFrame = Number((element as HTMLElement).dataset.frameCount) + 12
+    const observer = new MutationObserver(check)
+    function check() {
+      if (Number((element as HTMLElement).dataset.frameCount) < targetFrame) return
+      observer.disconnect()
+      const target = window as HeroPixelWindow
+      const times = target.heroCompletedRenders!
+      const intervals = times.slice(1).map((time, index) => time - times[index]!).sort((a, b) => a - b)
+      target.heroBaselineP95 = intervals[Math.max(0, Math.ceil(intervals.length * .95) - 1)]
+      resolve()
+    }
+    observer.observe(element, { attributes: true, attributeFilter: ['data-frame-count'] })
+    check()
+  }))
 }
 
 async function changedPixels(page: import('@playwright/test').Page) {
@@ -144,6 +182,38 @@ async function pixelRecoveryMs(page: import('@playwright/test').Page) {
   return page.evaluate(() => (window as HeroPixelWindow).heroRecoveryMs!)
 }
 
+async function expectFrameRecovery(page: import('@playwright/test').Page, testInfo: import('@playwright/test').TestInfo) {
+  // Wait on actual component draws, rather than a wall-clock physics deadline.
+  // The observer independently counts the first complete frame within .5px.
+  await page.locator('.home-hero-particles').evaluate(element => new Promise<void>(resolve => {
+    const targetFrame = (window as HeroPixelWindow).heroReleasedFrame! + 9
+    const observer = new MutationObserver(check)
+    function check() {
+      if (Number((element as HTMLElement).dataset.frameCount) >= targetFrame) {
+        observer.disconnect()
+        resolve()
+      }
+    }
+    observer.observe(element, { attributes: true, attributeFilter: ['data-frame-count'] })
+    check()
+  }))
+  const evidence = await page.evaluate(() => {
+    const target = window as HeroPixelWindow
+    const intervals = [...(target.heroRecoveryIntervals ?? [])].sort((a, b) => a - b)
+    const p95 = intervals[Math.max(0, Math.ceil(intervals.length * .95) - 1)] ?? Infinity
+    return { frames: target.heroRecoveryFrames, milliseconds: target.heroRecoveryMs, intervals: target.heroRecoveryIntervals,
+      p95, baselineP95: target.heroBaselineP95, normalRefresh: (target.heroBaselineP95 ?? Infinity) <= 34 }
+  })
+  await testInfo.attach('mimo-recovery-observation', { body: JSON.stringify(evidence), contentType: 'application/json' })
+  console.log('MIMO_RECOVERY_OBSERVATION', JSON.stringify(evidence))
+  expect(evidence.frames, 'independent complete frame recovers within nine actual draws').toBeDefined()
+  expect(evidence.frames!).toBeGreaterThan(0)
+  expect(evidence.frames!).toBeLessThanOrEqual(9)
+  await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-moving-particle-count', '0')
+  await expectRecoveredMark(page)
+  if (evidence.normalRefresh) expect(await pixelRecoveryMs(page)).toBeLessThanOrEqual(1000)
+}
+
 async function frames(page: import('@playwright/test').Page, count = 8) {
   await page.evaluate(count => new Promise<void>(resolve => {
     const frame = () => { if (--count <= 0) resolve(); else requestAnimationFrame(frame) }
@@ -170,6 +240,10 @@ async function pointerSweep(page: import('@playwright/test').Page, durationMs = 
             const target = window as HeroPixelWindow
             target.heroReleasedAt = performance.now()
             target.heroRecoveryMs = undefined
+            target.heroReleasedFrame = Number((element as HTMLElement).dataset.frameCount)
+            target.heroRecoveryFrames = undefined
+            target.heroRecoveryIntervals = []
+            target.heroLastRenderedAt = target.heroReleasedAt
             dispatch(options.pointerType === 'touch' ? 'pointerup' : 'pointerleave', 1)
           }
           resolve()
@@ -439,30 +513,27 @@ for (const locale of locales) {
   })
 }
 
-test('@particle-v2 returns the real squares to the drifting glyph within the standard 1s target', async ({ page }) => {
+test('@particle-v2 returns real squares within nine renders and measures normal-refresh recovery', async ({ page }, testInfo) => {
   await page.goto('/')
   await waitForSettledHero(page)
   await page.locator('.home-hero-particles').scrollIntoViewIfNeeded()
   await savePixels(page)
   await pointerSweep(page)
   expect(await peakChangedPixels(page)).toBeGreaterThan(100)
-  await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-moving-particle-count', '0', { timeout: 1000 })
-  await expectRecoveredMark(page)
-  expect(await pixelRecoveryMs(page)).toBeLessThanOrEqual(1000)
+  await expectFrameRecovery(page, testInfo)
 })
 
-test('@particle-v2 retains real deformation evidence after release has fully recovered', async ({ page }) => {
+test('@particle-v2 retains real deformation evidence after release has fully recovered', async ({ page }, testInfo) => {
   await page.goto('/')
   await waitForSettledHero(page)
   await page.locator('.home-hero-particles').scrollIntoViewIfNeeded()
   await savePixels(page)
   await pointerSweep(page)
-  await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-moving-particle-count', '0', { timeout: 1000 })
-  await expectRecoveredMark(page)
+  await expectFrameRecovery(page, testInfo)
   expect(await peakChangedPixels(page)).toBeGreaterThan(100)
 })
 
-test('@particle-v2 uses frame-based recovery with sparse foreground frames', async ({ page }) => {
+test('@particle-v2 uses frame-based recovery with sparse foreground frames', async ({ page }, testInfo) => {
   await page.addInitScript(() => {
     const requestFrame = window.requestAnimationFrame.bind(window)
     window.requestAnimationFrame = callback => requestFrame(() => {
@@ -475,9 +546,7 @@ test('@particle-v2 uses frame-based recovery with sparse foreground frames', asy
   await savePixels(page)
   await pointerSweep(page)
   expect(await peakChangedPixels(page)).toBeGreaterThan(100)
-  await frames(page, 8)
-  await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-moving-particle-count', '0')
-  await expectRecoveredMark(page)
+  await expectFrameRecovery(page, testInfo)
 })
 
 test('@particle-v2 stops the sampled canvas if a motion preference notification is missed', async ({ page }) => {
@@ -511,16 +580,14 @@ test('@particle-v2 stops the sampled canvas if a motion preference notification 
   await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-particle-state', 'settled')
 })
 
-test('@particle-v2 consumes repeated stirring and returns without residual trails', async ({ page }) => {
+test('@particle-v2 consumes repeated stirring and returns without residual trails', async ({ page }, testInfo) => {
   await page.goto('/')
   await waitForSettledHero(page)
   await page.locator('.home-hero-particles').scrollIntoViewIfNeeded()
   await savePixels(page)
   for (let i = 0; i < 3; i += 1) await pointerSweep(page, 180)
   expect(await peakChangedPixels(page)).toBeGreaterThan(100)
-  await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-moving-particle-count', '0', { timeout: 2000 })
-  await expectRecoveredMark(page)
-  expect(await pixelRecoveryMs(page)).toBeLessThanOrEqual(2000)
+  await expectFrameRecovery(page, testInfo)
 })
 
 test('@particle-v2 continues microdrift frames after the intro and recovery', async ({ page }) => {
@@ -760,20 +827,46 @@ test('@particle-v2 preserves a disturbance across the intro deadline', async ({ 
   await page.setViewportSize({ width: isMobile ? 390 : 1440, height: 1100 })
   // Observe and inject in the browser before host round trips can miss the intro.
   await page.addInitScript(() => {
-    const target = window as Window & { heroIntroInput?: { phase: string, accepted: boolean } }
+    const target = window as HeroIntroWindow
+    const requestFrame = requestAnimationFrame.bind(window)
+    window.requestAnimationFrame = callback => requestFrame(time => {
+      const previous = target.heroIntroCurrentFrameTime
+      target.heroIntroCurrentFrameTime = time
+      try { callback(time) }
+      finally { target.heroIntroCurrentFrameTime = previous }
+    })
+    const getContext = HTMLCanvasElement.prototype.getContext
+    const observed = new WeakSet<CanvasRenderingContext2D>()
+    HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, ...args: unknown[]) {
+      const context = Reflect.apply(getContext, this, args) as CanvasRenderingContext2D | null
+      if (args[0] === '2d' && this.parentElement?.classList.contains('home-hero-particles') && context && !observed.has(context)) {
+        observed.add(context)
+        const clear = context.clearRect.bind(context)
+        const element = this.parentElement
+        context.clearRect = (...bounds) => {
+          if (target.heroIntroCurrentFrameTime !== undefined) target.heroIntroDraw = {
+            time: target.heroIntroCurrentFrameTime, frame: Number(element.dataset.frameCount) + 1
+          }
+          clear(...bounds)
+        }
+      }
+      return context
+    } as HTMLCanvasElement['getContext']
     let sentPhase: string | undefined
+    let injectedAt = 0
     const observer = new MutationObserver(() => {
       const stage = document.querySelector<HTMLElement>('.home-hero-particles')
       if (stage?.dataset.renderMode !== 'canvas') return
       if (sentPhase) {
         if (stage.dataset.lastInput === 'mouse') {
-          target.heroIntroInput = { phase: sentPhase, accepted: true }
+          target.heroIntroInput = { phase: sentPhase, accepted: true, injectedAt }
           observer.disconnect()
         }
         return
       }
       if (stage.dataset.particleState !== 'gathering' || Number(stage.dataset.frameCount) < 1) return
       sentPhase = stage.dataset.particleState
+      injectedAt = performance.now()
       const bounds = stage.getBoundingClientRect()
       stage.dispatchEvent(new PointerEvent('pointermove', { pointerId: 1, pointerType: 'mouse',
         clientX: bounds.left + bounds.width * 0.5, clientY: bounds.top + bounds.height * 0.46 }))
@@ -785,17 +878,30 @@ test('@particle-v2 preserves a disturbance across the intro deadline', async ({ 
   const stage = page.locator('.home-hero-particles')
   await expect(stage).toHaveAttribute('data-render-mode', 'canvas')
   await expect.poll(() => page.evaluate(() =>
-    (window as Window & { heroIntroInput?: { phase: string, accepted: boolean } }).heroIntroInput
-  )).toEqual({ phase: 'gathering', accepted: true })
-  // Sample within the existing deadline: coarse locator polling can miss the
-  // observed entrance transition near the end of the original 2.5s window.
+    (window as HeroIntroWindow).heroIntroInput
+  )).toMatchObject({ phase: 'gathering', accepted: true })
+  // The user selected MiMo's actual RAF clock, including sparse frame delivery.
+  // Observe a component draw after the original 1600ms + 420ms upper bound.
+  await stage.evaluate(element => new Promise<void>(resolve => {
+    const target = window as HeroIntroWindow
+    const observer = new MutationObserver(check)
+    function check() {
+      if (target.heroIntroDraw?.frame === Number((element as HTMLElement).dataset.frameCount)
+        && target.heroIntroDraw.time >= target.heroIntroInput!.injectedAt + 2020) {
+        observer.disconnect()
+        resolve()
+      }
+    }
+    observer.observe(element, { attributes: true, attributeFilter: ['data-frame-count'] })
+    check()
+  }))
   await expect.poll(() => stage.getAttribute('data-particle-state'), { timeout: 2500, intervals: [50, 100] }).toBe('disturbed')
   expect(Number(await stage.getAttribute('data-moving-particle-count'))).toBeGreaterThan(0)
   expect(Number(await stage.getAttribute('data-peak-candidates'))).toBeGreaterThan(0)
   const releaseFrame = Number(await stage.getAttribute('data-frame-count'))
   await stage.evaluate(element => element.dispatchEvent(new PointerEvent('pointerleave', { pointerId: 1, pointerType: 'mouse' })))
   // MiMo blends once per actual render. This seam test verifies input through
-  // the entrance; the independent real-pixel test retains the 1s recovery gate.
+  // the entrance; the independent pixel test measures normal-refresh wall time.
   await expect.poll(async () => Number(await stage.getAttribute('data-frame-count'))).toBeGreaterThanOrEqual(releaseFrame + 9)
   await expect(stage).toHaveAttribute('data-particle-state', 'settled', { timeout: 1500 })
 })

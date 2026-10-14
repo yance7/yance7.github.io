@@ -9,11 +9,13 @@ it('reads current preferences when an older query object retains a stale value',
     setAttribute: vi.fn(), getBoundingClientRect: vi.fn(), remove: vi.fn()
   })
   vi.stubGlobal('window', {
+    addEventListener: vi.fn(), removeEventListener: vi.fn(),
     matchMedia: (query: string) => Object.assign(new EventTarget(), {
       matches: query === '(forced-colors: active)' ? forced : query.includes('fine') || query.includes('hover')
     })
   })
-  vi.stubGlobal('document', { body: { append: vi.fn() }, createElement: () => sentinel })
+  vi.stubGlobal('document', {
+    addEventListener: vi.fn(), removeEventListener: vi.fn(), body: { append: vi.fn() }, createElement: () => sentinel })
   const observer = observePointerMotion(vi.fn())
   try {
     expect(observer.allowed()).toBe(true)
