@@ -8,10 +8,10 @@ function expectRenderedPreference<T>(page: import('@playwright/test').Page, read
   return expect.poll(async () => {
     renderedFrame ??= page.evaluate(() => new Promise<void>((resolve, reject) => {
       const deadline = setTimeout(() => reject(new Error('Preference rendering opportunity did not arrive')), 5000)
-      requestAnimationFrame(() => requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
         clearTimeout(deadline)
         resolve()
-      }))
+      })
     }))
     await renderedFrame
     return read()
