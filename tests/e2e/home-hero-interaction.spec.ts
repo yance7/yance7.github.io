@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { readMimoReferenceGlyph } from './helpers/mimo-reference'
 
-type HeroPoint = { x: number; y: number; size: number; color: string; alpha: number }
+type HeroPoint = { x: number; y: number; rectX: number; rectY: number; size: number; color: string; alpha: number }
 type HeroPixelWindow = Window & {
   heroBaseline?: Uint8ClampedArray
   heroHomePoints?: { x: number; y: number }[]
@@ -11,6 +11,7 @@ type HeroPixelWindow = Window & {
   heroReleasedAt?: number
   heroRecoveryMs?: number
   heroObservedCanvas?: HTMLCanvasElement
+  heroCapturedDeformation?: boolean
 }
 
 async function savePixels(page: import('@playwright/test').Page) {
@@ -23,6 +24,28 @@ async function savePixels(page: import('@playwright/test').Page) {
     target.heroHomePoints = reference.points
     if (target.heroObservedCanvas !== canvas) {
       target.heroObservedCanvas = canvas
+      // Cache the actual native drawing state when it is assigned, rather than
+      // crossing the Canvas API again for every observed rectangle.
+      const colorDescriptor = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillStyle')!
+      const alphaDescriptor = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'globalAlpha')!
+      let currentColor = context.fillStyle
+      let currentAlpha = context.globalAlpha
+      Object.defineProperty(context, 'fillStyle', {
+        configurable: true,
+        get: () => currentColor,
+        set(value: CanvasRenderingContext2D['fillStyle']) {
+          colorDescriptor.set!.call(context, value)
+          currentColor = colorDescriptor.get!.call(context)
+        }
+      })
+      Object.defineProperty(context, 'globalAlpha', {
+        configurable: true,
+        get: () => currentAlpha,
+        set(value: number) {
+          alphaDescriptor.set!.call(context, value)
+          currentAlpha = value
+        }
+      })
       const clear = context.clearRect
       context.clearRect = (...args) => { contextClear(...args) }
       function contextClear(...args: Parameters<typeof clear>) {
@@ -32,18 +55,23 @@ async function savePixels(page: import('@playwright/test').Page) {
       const fill = context.fillRect
       context.fillRect = (x, y, width, height) => {
         fill.call(context, x, y, width, height)
-        target.heroPoints!.push({ x: x + width / 2, y: y + height / 2, size: width, color: String(context.fillStyle), alpha: context.globalAlpha })
-        if (target.heroPoints!.length !== Number(canvas.parentElement!.dataset.particleCount)) return
+        target.heroPoints!.push({ x: x + width / 2, y: y + height / 2, rectX: x, rectY: y, size: width, color: String(currentColor), alpha: currentAlpha })
+        if (target.heroPoints!.length !== target.heroHomePoints!.length) return
         const baseline = target.heroBaseline
         const baselinePoints = target.heroHomePoints
         if (!baseline || !baselinePoints) return
-        const data = context.getImageData(0, 0, canvas.width, canvas.height).data
-        let changed = 0
-        for (let i = 0; i < data.length; i += 4) {
-          if (data[i] !== baseline[i] || data[i + 1] !== baseline[i + 1] || data[i + 2] !== baseline[i + 2] || data[i + 3] !== baseline[i + 3]) changed++
-        }
         const displacement = Math.max(...target.heroPoints!.map((point, index) => Math.hypot(point.x - baselinePoints[index]!.x, point.y - baselinePoints[index]!.y)))
-        target.heroPeak = Math.max(target.heroPeak ?? 0, changed)
+        // Retain one actual deformation image; recovery observation needs only
+        // positions. Full readback on every recovery frame alters RAF delivery.
+        if (displacement > 1 && !target.heroCapturedDeformation) {
+          const data = context.getImageData(0, 0, canvas.width, canvas.height).data
+          let changed = 0
+          for (let i = 0; i < data.length; i += 4) {
+            if (data[i] !== baseline[i] || data[i + 1] !== baseline[i + 1] || data[i + 2] !== baseline[i + 2] || data[i + 3] !== baseline[i + 3]) changed++
+          }
+          target.heroPeak = changed
+          target.heroCapturedDeformation = true
+        }
         target.heroPeakDisplacement = Math.max(target.heroPeakDisplacement ?? 0, displacement)
         if (displacement < .5 && (target.heroPeakDisplacement ?? 0) > 1 && target.heroReleasedAt !== undefined && target.heroRecoveryMs === undefined) {
           target.heroRecoveryMs = performance.now() - target.heroReleasedAt
@@ -55,6 +83,7 @@ async function savePixels(page: import('@playwright/test').Page) {
     if (target.heroPoints?.length !== reference.points.length || reference.points.length !== Number(canvas.parentElement!.dataset.particleCount)) throw new Error('Incomplete particle frame at capture')
     target.heroPeak = 0
     target.heroPeakDisplacement = 0
+    target.heroCapturedDeformation = false
     target.heroReleasedAt = undefined
     target.heroRecoveryMs = undefined
   }, reference)
@@ -96,7 +125,7 @@ async function expectRecoveredMark(page: import('@playwright/test').Page) {
     for (const point of target.heroPoints) {
       context.fillStyle = point.color
       context.globalAlpha = point.alpha
-      context.fillRect(point.x - point.size / 2, point.y - point.size / 2, point.size, point.size)
+      context.fillRect(point.rectX, point.rectY, point.size, point.size)
     }
     const actualPixels = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data
     const expectedPixels = context.getImageData(0, 0, expected.width, expected.height).data

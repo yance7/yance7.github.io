@@ -4,7 +4,8 @@ export function readMimoReferenceGlyph(stage: HTMLElement) {
   const width = Math.floor(stage.getBoundingClientRect().width - stage.clientLeft * 2)
   const height = Math.floor(stage.getBoundingClientRect().height - stage.clientTop * 2)
   const mask = document.createElement('canvas')
-  const context = mask.getContext('2d')!
+  // Match the production readback backend, while keeping sampling independent.
+  const context = mask.getContext('2d', { willReadFrequently: true })!
   const rem = Number.parseFloat(getComputedStyle(document.documentElement).fontSize)
   let size = Math.max(6 * rem, Math.min(14 * rem, innerWidth * .18))
   context.font = `400 ${size}px Amiri, serif`

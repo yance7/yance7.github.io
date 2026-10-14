@@ -63,11 +63,19 @@ export class HomeHeroParticleRenderer {
   }
 
   private drawPoints(context: CanvasRenderingContext2D, particles: readonly HomeHeroParticle[], home: boolean) {
+    let previousColor: string | undefined
+    let previousAlpha: number | undefined
     for (const [index, p] of particles.entries()) {
       const x = home ? p.homeX : p.x
       const y = home ? p.homeY : p.y
-      context.fillStyle = p.color ?? getMimoParticleAppearance(index, p.homeX, this.options.scene.width).color
-      context.globalAlpha = home ? 1 : p.opacity ?? 1
+      const color = p.color ?? getMimoParticleAppearance(index, p.homeX, this.options.scene.width).color
+      const alpha = home ? 1 : p.opacity ?? 1
+      // Keep the original point order and pixels; avoid redundant native state
+      // assignments for consecutive dots that already use the same values.
+      if (color !== previousColor) context.fillStyle = color
+      if (alpha !== previousAlpha) context.globalAlpha = alpha
+      previousColor = color
+      previousAlpha = alpha
       context.fillRect(x - DOT_SIZE / 2, y - DOT_SIZE / 2, DOT_SIZE, DOT_SIZE)
     }
     context.globalAlpha = 1

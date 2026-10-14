@@ -28,6 +28,73 @@ async function gesture(page: Page, type: string, pointerType = 'pen', pointerId 
   }, { type, pointerType, pointerId })
 }
 
+async function expectSampledHomes(page: Page) {
+  const stage = page.locator('.home-hero-particles')
+  const reference = await stage.evaluate(readMimoReferenceGlyph)
+  expect(reference.points.length).toBeGreaterThan(0)
+  const result = await stage.evaluate((element, reference) => {
+    const stage = element as HTMLElement
+    const actual = stage.querySelector('canvas')!
+    const expected = document.createElement('canvas')
+    expected.width = actual.width
+    expected.height = actual.height
+    const drawing = expected.getContext('2d')!
+    drawing.setTransform(reference.ratio, 0, 0, reference.ratio, 0, 0)
+    for (const point of reference.points) {
+      drawing.fillStyle = point.color
+      drawing.fillRect(point.x - .9, point.y - .9, 1.8, 1.8)
+    }
+    const actualPixels = actual.getContext('2d')!.getImageData(0, 0, actual.width, actual.height).data
+    const expectedPixels = drawing.getImageData(0, 0, expected.width, expected.height).data
+    let different = 0
+    for (let i = 0; i < actualPixels.length; i++) if (actualPixels[i] !== expectedPixels[i]) different++
+    return { different, count: reference.points.length, actualCount: Number(stage.dataset.particleCount) }
+  }, reference)
+  expect(result.actualCount).toBe(result.count)
+  expect(result.different).toBe(0)
+}
+
+test('MiMo cancels a native pinch without waiting for another animation frame', async ({ page }) => {
+  await page.addInitScript(() => {
+    const requestFrame = requestAnimationFrame.bind(window)
+    window.requestAnimationFrame = callback => requestFrame(time => {
+      if (!(window as Window & { pausePinchFrames?: boolean }).pausePinchFrames) callback(time)
+    })
+  })
+  await ready(page)
+  await gesture(page, 'pointerdown', 'touch', 17)
+  const stage = page.locator('.home-hero-particles')
+  await expect(stage).toHaveAttribute('data-particle-state', 'disturbed')
+  await page.evaluate(() => { (window as Window & { pausePinchFrames?: boolean }).pausePinchFrames = true })
+  try {
+    await gesture(page, 'pointerdown', 'touch', 18)
+    await expect(stage).toHaveAttribute('data-moving-particle-count', '0')
+    await expect(stage).toHaveAttribute('data-particle-state', 'settled')
+    await expectSampledHomes(page)
+    await gesture(page, 'pointerup', 'touch', 17)
+    await gesture(page, 'pointermove', 'touch', 18)
+    await expect(stage).toHaveAttribute('data-particle-state', 'settled')
+  } finally {
+    await page.evaluate(() => {
+      (window as Window & { pausePinchFrames?: boolean }).pausePinchFrames = false
+      window.dispatchEvent(new Event('blur'))
+      window.dispatchEvent(new Event('focus'))
+    })
+  }
+})
+
+test('MiMo ignores multiple contacts while reduced motion is active', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/')
+  const stage = page.locator('.home-hero-particles')
+  await expect(stage).toHaveAttribute('data-particle-state', 'paused')
+  await gesture(page, 'pointerdown', 'touch', 17)
+  await gesture(page, 'pointerdown', 'touch', 18)
+  await expect(stage).toHaveAttribute('data-moving-particle-count', '0')
+  await expect(stage).toHaveAttribute('data-particle-state', 'paused')
+  await expect(stage).toHaveAttribute('data-animation-running', 'false')
+})
+
 test('MiMo cursor enlarges for an anchor without href', async ({ page }) => {
   test.skip(!await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches))
   await page.goto('/')
@@ -208,28 +275,7 @@ test('MiMo static canvas matches an independently reconstructed sampled glyph', 
   await page.goto('/')
   const stage = page.locator('.home-hero-particles')
   await expect(stage).toHaveAttribute('data-render-mode', 'canvas')
-  const reference = await stage.evaluate(readMimoReferenceGlyph)
-  const result = await stage.evaluate((element, reference) => {
-    const stage = element as HTMLElement
-    const actual = stage.querySelector('canvas')!
-    const expected = document.createElement('canvas')
-    expected.width = actual.width
-    expected.height = actual.height
-    const drawing = expected.getContext('2d')!
-    const ratio = reference.ratio
-    drawing.setTransform(ratio, 0, 0, ratio, 0, 0)
-    for (const point of reference.points) {
-      drawing.fillStyle = point.color
-      drawing.fillRect(point.x - .9, point.y - .9, 1.8, 1.8)
-    }
-    const actualPixels = actual.getContext('2d')!.getImageData(0, 0, actual.width, actual.height).data
-    const expectedPixels = drawing.getImageData(0, 0, expected.width, expected.height).data
-    let different = 0
-    for (let i = 0; i < actualPixels.length; i++) if (actualPixels[i] !== expectedPixels[i]) different++
-    return { different, count: reference.points.length, actualCount: Number(stage.dataset.particleCount) }
-  }, reference)
-  expect(result.actualCount).toBe(result.count)
-  expect(result.different).toBe(0)
+  await expectSampledHomes(page)
 })
 
 test('MiMo ring and dot follow the pointer directly with exact hover sizes', async ({ page }) => {

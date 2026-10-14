@@ -9,6 +9,25 @@ function context() {
 }
 afterEach(() => vi.unstubAllGlobals())
 describe('HomeHero transparent glyph rendering', () => {
+  it('keeps identical consecutive colors and opacity without repeated native state writes', () => {
+    const visible = context()
+    const master = context()
+    vi.stubGlobal('document', { createElement: () => ({ width: 0, height: 0, getContext: () => master }) })
+    const scene = createHomeHeroParticleScene({ width: 4, height: 2, gridStep: 2, rgba: new Uint8ClampedArray(4 * 2 * 4).fill(255) })
+    for (const point of scene.particles) Object.assign(point, { color: '#304020', opacity: .7 })
+    let color = ''
+    let opacity = 1
+    const setColor = vi.fn(value => { color = value })
+    const setOpacity = vi.fn(value => { opacity = value })
+    Object.defineProperty(visible, 'fillStyle', { get: () => color, set: setColor })
+    Object.defineProperty(visible, 'globalAlpha', { get: () => opacity, set: setOpacity })
+    const renderer = new HomeHeroParticleRenderer({ getContext: () => visible } as unknown as HTMLCanvasElement, { scene, pixelRatio: 2, colors: { word: '#123' } })
+    renderer.drawActive([])
+    expect(visible.fillRect).toHaveBeenCalledTimes(2)
+    expect(setColor).toHaveBeenCalledTimes(1)
+    expect(setOpacity.mock.calls).toEqual([[.7], [1]])
+  })
+
   it('renders displaced glyph points with an independent diameter and no connecting strokes', () => {
     const visible = context()
     const master = context()

@@ -226,10 +226,14 @@ function move(event: PointerEvent) {
   schedule()
 }
 function down(event: PointerEvent) {
-  if (event.pointerType === 'mouse') return
+  if (event.pointerType === 'mouse' || !running() || !engine || !renderer) return
   touches.add(event.pointerId)
   if (touches.size > 1) {
-    engine?.pointer.reset()
+    // Native pinch takes ownership of the gesture. Clear the cancelled shape
+    // immediately, even if the browser suspends frames while handling touch.
+    engine?.reset(eventTime(event))
+    renderer?.drawActive([])
+    updateState()
     schedule()
     return
   }

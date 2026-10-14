@@ -359,11 +359,15 @@ describe('release workflow contracts', () => {
     expect(workflow).not.toContain('pull_request:')
     expect(workflow).not.toContain('deploy-pages')
     expect(workflow).toContain("PLAYWRIGHT_USE_PREVIEW: '1'")
-    expect(workflow).toContain('PLAYWRIGHT_OUTPUT_DIR: test-results/particle-stress-${{ matrix.project }}')
+    expect(workflow).toContain('PLAYWRIGHT_OUTPUT_DIR: test-results/particle-stress-${{ matrix.project }}-${{ matrix.suite }}-${{ matrix.shard }}')
+    expect(workflow).toContain('suite: [home-hero-interaction, mimo-alignment]')
+    expect(workflow).toContain('shard: [1, 2]')
+    expect(workflow).toContain('--shard=${{ matrix.shard }}/2')
+    expect(workflow).toContain('tests/e2e/${{ matrix.suite }}.spec.ts')
     for (const project of ['chromium', 'webkit-desktop', 'webkit-mobile']) {
       expect(workflow).toContain(`project: ${project}`)
     }
-    expect(workflow).toContain("--grep '@particle-v2' --repeat-each=10 --retries=0")
+    expect(workflow).toContain("--grep '@particle-v2|MiMo' --repeat-each=10 --retries=0")
     expect(workflow).toContain('if: always()')
   })
 
