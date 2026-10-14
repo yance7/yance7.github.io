@@ -652,7 +652,7 @@ jobs:
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
-          ref: 3dff1b06bf6bf853bb82db40b10eabca0502bec4
+          ref: bedd6f2d62a4ec34979510ac349eaca499b8edb7
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
@@ -672,6 +672,17 @@ jobs:
               const log = (entry: object) => {
                 rows.push({ at: performance.now(), scope, ...entry })
                 if (rows.length > 1000) rows.shift()
+              }
+              const requestFrame = window.requestAnimationFrame.bind(window)
+              let frameId = 0
+              window.requestAnimationFrame = callback => {
+                const id = ++frameId
+                log({ kind: 'raf-register', id })
+                return requestFrame(timestamp => {
+                  log({ kind: 'raf-before', id, timestamp })
+                  try { callback(timestamp) }
+                  finally { log({ kind: 'raf-after', id }) }
+                })
               }
               const state = () => ({
                 active: document.querySelector<HTMLElement>('[data-pointer-sheen]')?.style.getPropertyValue('--pointer-active'),
