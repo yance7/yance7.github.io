@@ -39,6 +39,8 @@ let pageVisible = true
 let dimensionsKey = ''
 let pointerBounds: DOMRect | null = null
 let inputBounds: DOMRect | null = null
+let mousePosition: { x: number, y: number } | null = null
+let cancelledMousePosition: { x: number, y: number } | null = null
 let motionMedia: MediaQueryList | null = null
 let forcedMedia: MediaQueryList | null = null
 let connection: (EventTarget & { saveData?: boolean }) | undefined
@@ -76,6 +78,8 @@ function clearScene() {
   touches.clear()
   pointerBounds = null
   inputBounds = null
+  mousePosition = null
+  cancelledMousePosition = null
 }
 function staticMode(mode = 'static') {
   preferenceKey = currentPreferenceKey()
@@ -199,6 +203,8 @@ function updatePausedState() {
     touches.clear()
     pointerBounds = null
     inputBounds = null
+    mousePosition = null
+    cancelledMousePosition = null
     renderer.drawStatic()
     movingParticleCount.value = 0
     animationRunning.value = false
@@ -214,6 +220,13 @@ function eventTime(event: PointerEvent) {
 }
 function move(event: PointerEvent) {
   if (!running() || !engine || event.pointerType !== 'mouse' && (touches.size !== 1 || !touches.has(event.pointerId))) return
+  if (event.pointerType === 'mouse') {
+    // WebKit redispatches a stationary mouse after the document scrolls under it.
+    // Only new physical coordinates can resume the cancelled coordinate frame.
+    if (cancelledMousePosition?.x === event.clientX && cancelledMousePosition.y === event.clientY) return
+    cancelledMousePosition = null
+    mousePosition = { x: event.clientX, y: event.clientY }
+  }
   pointerBounds ??= stage.value!.getBoundingClientRect()
   inputBounds = pointerBounds
   const samples = event.getCoalescedEvents?.() ?? []
@@ -245,6 +258,10 @@ function release(input: Event) {
   if (event.pointerType === 'mouse') {
     if (event.type !== 'pointerleave') return
     engine?.pointer.deactivate()
+    if (cancelledMousePosition?.x !== event.clientX || cancelledMousePosition.y !== event.clientY) {
+      cancelledMousePosition = null
+    }
+    mousePosition = null
   } else {
     if (event.type === 'pointerleave' || !touches.has(event.pointerId)) return
     touches.delete(event.pointerId)
@@ -280,9 +297,15 @@ function scroll() {
   if (!bounds) return
   // A queued scroll can arrive after input sampled the final stage geometry.
   // Only cancel that stream if its coordinate frame actually changed.
-  if (!inputBounds || inputBounds.left !== bounds.left || inputBounds.top !== bounds.top ||
-    inputBounds.width !== bounds.width || inputBounds.height !== bounds.height) {
-    engine?.pointer.reset()
+  if (inputBounds && (inputBounds.left !== bounds.left || inputBounds.top !== bounds.top ||
+    inputBounds.width !== bounds.width || inputBounds.height !== bounds.height)) {
+    cancelledMousePosition = mousePosition
+    touches.clear()
+    // Native scrolling can suspend RAF just like pinch and blur. Commit the
+    // cancelled scene immediately so no old geometry remains on the canvas.
+    engine?.reset(performance.now() / 1000)
+    renderer?.drawActive([])
+    updateState()
     inputBounds = null
   }
   pointerBounds = null

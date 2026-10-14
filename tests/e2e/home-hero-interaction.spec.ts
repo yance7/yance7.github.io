@@ -687,8 +687,8 @@ test('@particle-v2 consumes live input when RAF timestamps lag behind the event 
   await expect(stage).toHaveAttribute('data-moving-particle-count', '0', { timeout: 1500 })
 })
 
-test('@particle-v2 preserves fresh input measured after a queued scroll', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 1100 })
+test('@particle-v2 preserves fresh input measured after a queued scroll', async ({ page, isMobile }) => {
+  await page.setViewportSize({ width: isMobile ? 390 : 1440, height: 1100 })
   await page.goto('/')
   await waitForSettledHero(page)
   const stage = page.locator('.home-hero-particles')
@@ -703,8 +703,8 @@ test('@particle-v2 preserves fresh input measured after a queued scroll', async 
   expect(Number(await stage.getAttribute('data-peak-candidates'))).toBeGreaterThan(0)
 })
 
-test('@particle-v2 cancels stale input when scrolling changes the stage geometry', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 1100 })
+test('@particle-v2 cancels stale input when scrolling changes the stage geometry', async ({ page, isMobile }) => {
+  await page.setViewportSize({ width: isMobile ? 390 : 1440, height: 1100 })
   await page.goto('/')
   await waitForSettledHero(page)
   const stage = page.locator('.home-hero-particles')
