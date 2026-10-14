@@ -3,15 +3,44 @@ import { observePointerMotion } from '../src/utils/pointerMotion'
 
 afterEach(() => vi.unstubAllGlobals())
 
-it('checks active effects when media and resize notifications are both absent, then stops checking', () => {
+it('clears an owned effect with no animation frames or native preference notifications', () => {
+  vi.useFakeTimers()
   let forced = false
-  const frames = new Map<number, FrameRequestCallback>()
-  let id = 0
-  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
-    frames.set(++id, callback)
-    return id
+  vi.stubGlobal('requestAnimationFrame', vi.fn(() => 1))
+  vi.stubGlobal('cancelAnimationFrame', vi.fn())
+  vi.stubGlobal('window', {
+    matchMedia: (query: string) => Object.assign(new EventTarget(), {
+      matches: query === '(forced-colors: active)' ? forced : query.includes('fine') || query.includes('hover')
+    })
   })
-  vi.stubGlobal('cancelAnimationFrame', (frame: number) => frames.delete(frame))
+  vi.stubGlobal('document', {
+    body: { append: vi.fn() },
+    createElement: () => ({ setAttribute: vi.fn(), remove: vi.fn() })
+  })
+  const callback = vi.fn(() => observer.setActive(false))
+  const observer = observePointerMotion(callback)
+  const support = vi.fn()
+  const supportObserver = observePointerMotion(support, { notifyWhenAllowed: true })
+  try {
+    observer.setActive(true)
+    forced = true
+    vi.advanceTimersByTime(100)
+    expect(callback).toHaveBeenCalledOnce()
+    expect(support).toHaveBeenCalledOnce()
+    expect(vi.getTimerCount()).toBe(0)
+  } finally {
+    observer.stop()
+    supportObserver.stop()
+    vi.useRealTimers()
+  }
+})
+
+it('checks active effects when media and resize notifications are both absent, then stops checking', () => {
+  vi.useFakeTimers()
+  let forced = false
+  const requestFrame = vi.fn(() => 1)
+  vi.stubGlobal('requestAnimationFrame', requestFrame)
+  vi.stubGlobal('cancelAnimationFrame', vi.fn())
   vi.stubGlobal('window', {
     matchMedia: (query: string) => Object.assign(new EventTarget(), {
       matches: query === '(forced-colors: active)' ? forced : query.includes('fine') || query.includes('hover')
@@ -24,22 +53,55 @@ it('checks active effects when media and resize notifications are both absent, t
   const callback = vi.fn(() => observer.setActive(false))
   const observer = observePointerMotion(callback)
   try {
-    expect(frames.size).toBe(0)
+    expect(vi.getTimerCount()).toBe(0)
     observer.setActive(true)
     observer.setActive(true)
-    expect(frames.size).toBe(1)
-    const pending = [...frames.values()]
-    frames.clear()
+    expect(vi.getTimerCount()).toBe(1)
     forced = true
-    pending.forEach(frame => frame(0))
+    vi.advanceTimersByTime(100)
     expect(callback).toHaveBeenCalledOnce()
-    expect(frames.size).toBe(0)
+    expect(vi.getTimerCount()).toBe(0)
     forced = false
     observer.setActive(true)
-    expect(frames.size).toBe(1)
+    expect(vi.getTimerCount()).toBe(1)
     observer.stop()
-    expect(frames.size).toBe(0)
-  } finally { observer.stop() }
+    expect(vi.getTimerCount()).toBe(0)
+    expect(requestFrame).not.toHaveBeenCalled()
+  } finally {
+    observer.stop()
+    vi.useRealTimers()
+  }
+})
+
+it('shares one active timer without resetting allowed effects and releases the last owner', () => {
+  vi.useFakeTimers()
+  vi.stubGlobal('window', {
+    matchMedia: (query: string) => Object.assign(new EventTarget(), { matches: query.includes('fine') || query.includes('hover') })
+  })
+  vi.stubGlobal('document', {
+    body: { append: vi.fn() }, createElement: () => ({ setAttribute: vi.fn(), remove: vi.fn() })
+  })
+  const firstCallback = vi.fn()
+  const secondCallback = vi.fn()
+  const first = observePointerMotion(firstCallback)
+  const second = observePointerMotion(secondCallback)
+  try {
+    first.setActive(true)
+    second.setActive(true)
+    expect(vi.getTimerCount()).toBe(1)
+    vi.advanceTimersByTime(100)
+    expect(firstCallback).not.toHaveBeenCalled()
+    expect(secondCallback).not.toHaveBeenCalled()
+    expect(vi.getTimerCount()).toBe(1)
+    first.stop()
+    expect(vi.getTimerCount()).toBe(1)
+    second.stop()
+    expect(vi.getTimerCount()).toBe(0)
+  } finally {
+    first.stop()
+    second.stop()
+    vi.useRealTimers()
+  }
 })
 
 it('shares one event-driven sentinel and releases it after the final observer stops', () => {
