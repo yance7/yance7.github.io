@@ -138,6 +138,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        project: [chromium, webkit-desktop, webkit-mobile]
+        suite: [home-hero-interaction, mimo-alignment]
+        shard: [1, 2]
         include:
           - project: chromium
             browser: chromium
@@ -147,7 +150,7 @@ jobs:
             browser: webkit
     env:
       PLAYWRIGHT_USE_PREVIEW: '1'
-      PLAYWRIGHT_OUTPUT_DIR: test-results/particle-stress-${{ matrix.project }}
+      PLAYWRIGHT_OUTPUT_DIR: test-results/particle-stress-${{ matrix.project }}-${{ matrix.suite }}-${{ matrix.shard }}
     steps:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -169,13 +172,13 @@ jobs:
       - name: Install browser
         run: npx playwright install --with-deps ${{ matrix.browser }}
       - name: Run ten rounds of particle interaction tests
-        run: npm run test:e2e -- tests/e2e/home-hero-interaction.spec.ts --project=${{ matrix.project }} --workers=1 --grep '@particle-v2' --repeat-each=10 --retries=0
+        run: npm run test:e2e -- tests/e2e/${{ matrix.suite }}.spec.ts --project=${{ matrix.project }} --workers=1 --grep '@particle-v2|MiMo' --repeat-each=10 --retries=0 --shard=${{ matrix.shard }}/2
       - name: Upload stress evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: particle-stress-${{ matrix.project }}
-          path: test-results/particle-stress-${{ matrix.project }}
+          name: particle-stress-${{ matrix.project }}-${{ matrix.suite }}-${{ matrix.shard }}
+          path: test-results/particle-stress-${{ matrix.project }}-${{ matrix.suite }}-${{ matrix.shard }}
           if-no-files-found: ignore
           include-hidden-files: true
   visual-snapshot-review:
