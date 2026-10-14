@@ -95,6 +95,55 @@ test('MiMo ignores multiple contacts while reduced motion is active', async ({ p
   await expect(stage).toHaveAttribute('data-animation-running', 'false')
 })
 
+test('MiMo geometry cancellation clears pixels without frames and ignores stationary mouse redispatch', async ({ page }) => {
+  await page.addInitScript(() => {
+    const requestFrame = requestAnimationFrame.bind(window)
+    window.requestAnimationFrame = callback => requestFrame(time => {
+      const target = window as Window & { pauseMimoFrames?: boolean, pendingMimoFrames?: FrameRequestCallback[] }
+      if (target.pauseMimoFrames) (target.pendingMimoFrames ??= []).push(callback)
+      else callback(time)
+    })
+  })
+  await ready(page)
+  const stage = page.locator('.home-hero-particles')
+  await gesture(page, 'pointermove', 'mouse', 1)
+  await expect(stage).toHaveAttribute('data-particle-state', 'disturbed')
+  try {
+    await stage.evaluate(element => {
+      const bounds = element.getBoundingClientRect()
+      const ink = JSON.parse((element as HTMLElement).dataset.inkBounds!)
+      const x = bounds.left + ink.left + ink.width * .25
+      const y = bounds.top + ink.top + ink.height * .5
+      ;(window as Window & { pauseMimoFrames?: boolean }).pauseMimoFrames = true
+      scrollBy({ top: 40, behavior: 'instant' })
+      document.dispatchEvent(new Event('scroll'))
+      // Layout can also generate boundary events while the mouse stays still.
+      element.dispatchEvent(new PointerEvent('pointerleave', { pointerType: 'mouse', pointerId: 1, clientX: x, clientY: y }))
+      element.dispatchEvent(new PointerEvent('pointermove', { pointerType: 'mouse', pointerId: 1, clientX: x, clientY: y }))
+    })
+    await expect(stage).toHaveAttribute('data-particle-state', 'settled', { timeout: 1000 })
+    await expectSampledHomes(page)
+    await page.evaluate(() => new Promise<void>(resolve => {
+      const target = window as Window & { pauseMimoFrames?: boolean, pendingMimoFrames?: FrameRequestCallback[] }
+      target.pauseMimoFrames = false
+      const pending = target.pendingMimoFrames ?? []
+      target.pendingMimoFrames = []
+      requestAnimationFrame(time => { pending.forEach(callback => callback(time)); resolve() })
+    }))
+    await frames(page)
+    await expect(stage).toHaveAttribute('data-particle-state', 'settled')
+    await expect(stage).toHaveAttribute('data-moving-particle-count', '0')
+    await gesture(page, 'pointermove', 'mouse', 1)
+    await expect(stage).toHaveAttribute('data-particle-state', 'disturbed')
+  } finally {
+    await page.evaluate(() => {
+      ;(window as Window & { pauseMimoFrames?: boolean }).pauseMimoFrames = false
+      dispatchEvent(new Event('blur'))
+      dispatchEvent(new Event('focus'))
+    })
+  }
+})
+
 test('MiMo cursor enlarges for an anchor without href', async ({ page }) => {
   test.skip(!await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches))
   await page.goto('/')
@@ -194,10 +243,14 @@ test('MiMo keeps the pen contact owner when mouse input is interleaved', async (
   await gesture(page, 'pointermove', 'mouse', 1)
   await gesture(page, 'pointerleave', 'mouse', 1)
   await gesture(page, 'pointermove')
+  // This case checks ownership under interleaved inputs. MiMo consumes one
+  // 0.55 blend per actual frame; the separate pixel test measures wall time.
+  await frames(page, 9)
   await expect(stage).toHaveAttribute('data-particle-state', 'settled', { timeout: 1500 })
   await gesture(page, 'pointermove', 'mouse', 1)
   await expect(stage).toHaveAttribute('data-particle-state', 'disturbed')
   await gesture(page, 'pointerup')
+  await frames(page, 9)
   await expect(stage).toHaveAttribute('data-particle-state', 'settled', { timeout: 1500 })
 })
 
