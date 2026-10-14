@@ -173,6 +173,7 @@ async function settleStableConcertLayout(page: Page) {
 async function settleConcertVisualState(page: Page) {
   await stabilizeVisualContext(page)
   await page.locator('#concert-archive').scrollIntoViewIfNeeded()
+  const archiveScrollY = await page.evaluate(() => window.scrollY)
   const railCards = page.locator('#concert-archive-rail .concert-rail-card')
   await expect.poll(() => railCards.count()).toBeGreaterThan(0)
   for (let index = 0; index < await railCards.count(); index += 1) {
@@ -185,6 +186,10 @@ async function settleConcertVisualState(page: Page) {
   })
   await expect.poll(() => page.locator('#concert-archive-rail').evaluate((rail) => rail.scrollLeft)).toBe(0)
   await settleImages(page, '#concert-archive-rail .concert-poster img')
+  // Revealing individual cards may also move the root viewport. Restore the
+  // archive viewpoint so fixed layers occupy the same place in the main capture.
+  await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), archiveScrollY)
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(archiveScrollY)
   await settleStableConcertLayout(page)
 }
 

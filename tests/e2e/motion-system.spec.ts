@@ -1,5 +1,16 @@
 import { expect, test } from '@playwright/test'
 
+// Request rendering once, then observe the original CSS and JavaScript cleanup.
+// Waiting for a RAF callback can hide cleanup that already met the poll budget.
+function expectPreferenceCleanup<T>(page: import('@playwright/test').Page, read: () => Promise<T>) {
+  let renderingRequest: Promise<number> | undefined
+  return expect.poll(async () => {
+    renderingRequest ??= page.evaluate(() => requestAnimationFrame(() => {}))
+    await renderingRequest
+    return read()
+  })
+}
+
 test('@pointer-refinement runtime pointer capability changes clear magnetic feedback and restore the native cursor', async ({ page }) => {
   test.skip(!(await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches)), 'fine pointer only')
   // Playwright cannot change pointer/hover media at runtime. Override only these
@@ -92,7 +103,10 @@ test('@pointer-refinement motion directives clear immediately when runtime prefe
   await expect.poll(() => sheen.evaluate((element) => element.style.getPropertyValue('--pointer-active'))).toBe('1')
   await page.emulateMedia({ forcedColors: 'active' })
   await expect.poll(() => page.evaluate(() => matchMedia('(forced-colors: active)').matches)).toBe(true)
-  await expect.poll(() => sheen.evaluate((element) => element.style.getPropertyValue('--pointer-active'))).toBe('')
+  await expectPreferenceCleanup(page, () => sheen.evaluate(element => ({
+    active: element.style.getPropertyValue('--pointer-active'),
+    height: getComputedStyle(document.querySelector('.pointer-motion-preference-sentinel')!).height
+  }))).toEqual({ active: '', height: '2px' })
 })
 
 test('@pointer-refinement motion directives clear when native media change notifications are missed', async ({ page }) => {
@@ -123,17 +137,82 @@ test('@pointer-refinement motion directives clear when native media change notif
   await expect.poll(() => sheen.evaluate(element => element.style.getPropertyValue('--pointer-active'))).toBe('1')
   await page.emulateMedia({ forcedColors: 'active' })
   await expect.poll(() => page.evaluate(() => matchMedia('(forced-colors: active)').matches)).toBe(true)
-  await expect.poll(() => sheen.evaluate(element => element.style.getPropertyValue('--pointer-active'))).toBe('')
+  await expectPreferenceCleanup(page, () => sheen.evaluate(element => ({
+    active: element.style.getPropertyValue('--pointer-active'),
+    height: getComputedStyle(document.querySelector('.pointer-motion-preference-sentinel')!).height
+  }))).toEqual({ active: '', height: '2px' })
   await expect(page.locator('.sitewide-cursor')).toHaveCount(0)
   await expect(page.locator('html')).not.toHaveClass(/sitewide-cursor-active/)
   await page.emulateMedia({ forcedColors: 'none' })
-  await expect(page.locator('.sitewide-cursor')).toHaveCount(1)
+  await expectPreferenceCleanup(page, () => page.evaluate(() => ({
+    count: document.querySelectorAll('.sitewide-cursor').length,
+    height: getComputedStyle(document.querySelector('.pointer-motion-preference-sentinel')!).height
+  }))).toEqual({ count: 1, height: '1px' })
   await sheen.hover({ position: { x: 100, y: 100 } })
   await expect.poll(() => sheen.evaluate(element => element.style.getPropertyValue('--pointer-active'))).toBe('1')
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await expect.poll(() => page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true)
-  await expect.poll(() => sheen.evaluate(element => element.style.getPropertyValue('--pointer-active'))).toBe('')
+  await expectPreferenceCleanup(page, () => sheen.evaluate(element => ({
+    active: element.style.getPropertyValue('--pointer-active'),
+    width: getComputedStyle(document.querySelector('.pointer-motion-preference-sentinel')!).width
+  }))).toEqual({ active: '', width: '2px' })
 })
+
+for (const media of [{ reducedMotion: 'reduce' }, { forcedColors: 'active' }] as const) {
+  test(`@pointer-refinement effects clear without animation frames or preference notifications ${JSON.stringify(media)}`, async ({ page }) => {
+    await page.addInitScript(() => {
+      const requestFrame = requestAnimationFrame.bind(window)
+      window.requestAnimationFrame = callback => requestFrame(time => {
+        if (!(window as Window & { pausePreferenceFrames?: boolean }).pausePreferenceFrames) callback(time)
+      })
+      const match = matchMedia.bind(window)
+      window.matchMedia = query => {
+        const result = match(query)
+        if (query === '(prefers-reduced-motion: reduce)' || query === '(forced-colors: active)') {
+          result.addEventListener = () => {}
+        }
+        return result
+      }
+      const NativeObserver = ResizeObserver
+      window.ResizeObserver = class extends NativeObserver {
+        constructor(callback: ResizeObserverCallback) {
+          super((entries, observer) => {
+            const observable = entries.filter(entry => !entry.target.classList.contains('pointer-motion-preference-sentinel'))
+            if (observable.length) callback(observable, observer)
+          })
+        }
+      }
+    })
+    await page.goto('/works/')
+    test.skip(!(await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches)), 'fine pointer only')
+    await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
+    const sheen = page.locator('[data-pointer-sheen]').first()
+    await sheen.scrollIntoViewIfNeeded()
+    await expect(sheen).toHaveClass(/revealed/)
+    await expect(sheen).toHaveCSS('transform', 'none')
+    await sheen.hover()
+    await expect.poll(() => sheen.evaluate(element => element.style.getPropertyValue('--pointer-active'))).toBe('1')
+    try {
+      await page.evaluate(() => { (window as Window & { pausePreferenceFrames?: boolean }).pausePreferenceFrames = true })
+      await page.emulateMedia(media)
+      await expect.poll(() => sheen.evaluate(element => ({
+        active: element.style.getPropertyValue('--pointer-active'),
+        width: getComputedStyle(document.querySelector('.pointer-motion-preference-sentinel')!).width,
+        height: getComputedStyle(document.querySelector('.pointer-motion-preference-sentinel')!).height
+      }))).toEqual({ active: '', width: 'reducedMotion' in media ? '2px' : '1px', height: 'forcedColors' in media ? '2px' : '1px' })
+      await expect(page.locator('.sitewide-cursor')).toHaveCount(0)
+      await expect(page.locator('html')).not.toHaveClass(/sitewide-cursor-active/)
+      await page.emulateMedia('reducedMotion' in media ? { reducedMotion: 'no-preference' } : { forcedColors: 'none' })
+      await expect(page.locator('.sitewide-cursor')).toHaveCount(1)
+      await expect(page.locator('html')).not.toHaveClass(/sitewide-cursor-active/)
+    } finally {
+      await page.evaluate(() => {
+        ;(window as Window & { pausePreferenceFrames?: boolean }).pausePreferenceFrames = false
+        dispatchEvent(new Event('blur'))
+      })
+    }
+  })
+}
 
 test('Academics passive rows remain inside layout after pointer emphasis', async ({ page }) => {
   await page.goto('/academics/')
