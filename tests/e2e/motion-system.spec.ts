@@ -1,11 +1,18 @@
 import { expect, test } from '@playwright/test'
 
-// Observe one real rendered frame inside the original poll budget before
-// checking applied CSS and the existing JavaScript cleanup requirements.
+// Observe a rendering opportunity inside the original poll budget before
+// checking applied CSS and JavaScript cleanup. A screenshot alone does not
+// ensure that WebKit has delivered ResizeObserver notifications.
 function expectRenderedPreference<T>(page: import('@playwright/test').Page, read: () => Promise<T>) {
-  let renderedFrame: Promise<Buffer> | undefined
+  let renderedFrame: Promise<void> | undefined
   return expect.poll(async () => {
-    renderedFrame ??= page.screenshot({ caret: 'initial', timeout: 5000 })
+    renderedFrame ??= page.evaluate(() => new Promise<void>((resolve, reject) => {
+      const deadline = setTimeout(() => reject(new Error('Preference rendering opportunity did not arrive')), 5000)
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        clearTimeout(deadline)
+        resolve()
+      }))
+    }))
     await renderedFrame
     return read()
   })
