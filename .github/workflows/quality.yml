@@ -652,7 +652,7 @@ jobs:
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
-          ref: 3216d681899bbda7f3f6deaf4d902343d2ff85f4
+          ref: 3dff1b06bf6bf853bb82db40b10eabca0502bec4
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
@@ -734,7 +734,7 @@ jobs:
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
-          ref: a01b7eac7e7910dcecbfcc2e2c3ab4ee6350bbdb
+          ref: 90ed94ee5ffaf71a68717c9fa539902242e08ba1
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
