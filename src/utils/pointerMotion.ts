@@ -2,7 +2,8 @@ const observers = new Set<() => void>()
 let sentinel: HTMLSpanElement | undefined
 let preferenceObserver: ResizeObserver | undefined
 const activeObservers = new Map<() => void, () => void>()
-let activeFrame = 0
+const supportObservers = new Map<() => void, () => void>()
+let activeTimer: ReturnType<typeof setTimeout> | undefined
 const queryNames = ['(pointer: fine)', '(hover: hover)', '(prefers-reduced-motion: reduce)', '(forced-colors: active)']
 
 function pointerMotionAllowed() {
@@ -11,17 +12,20 @@ function pointerMotionAllowed() {
 }
 
 function checkActiveEffects() {
-  activeFrame = 0
-  if (!pointerMotionAllowed()) for (const notify of [...activeObservers.values()]) notify()
-  if (activeObservers.size && !activeFrame) activeFrame = requestAnimationFrame(checkActiveEffects)
+  activeTimer = undefined
+  if (!pointerMotionAllowed()) {
+    const disabled = new Set([...activeObservers.values(), ...supportObservers.values()])
+    for (const notify of disabled) notify()
+  }
+  if (activeObservers.size && activeTimer === undefined) activeTimer = setTimeout(checkActiveEffects, 100)
 }
 
-function updateActiveFrame() {
+function updateActiveTimer() {
   if (activeObservers.size) {
-    if (!activeFrame) activeFrame = requestAnimationFrame(checkActiveEffects)
-  } else if (activeFrame) {
-    cancelAnimationFrame(activeFrame)
-    activeFrame = 0
+    if (activeTimer === undefined) activeTimer = setTimeout(checkActiveEffects, 100)
+  } else if (activeTimer !== undefined) {
+    clearTimeout(activeTimer)
+    activeTimer = undefined
   }
 }
 
@@ -37,6 +41,7 @@ export function observePointerMotion(onChange: () => void, options: { notifyWhen
   const notifyDisabled = () => { if (options.notifyWhenAllowed || !allowed()) onChange() }
   for (const query of queries) query.addEventListener('change', notifyDisabled)
   observers.add(notifyDisabled)
+  if (options.notifyWhenAllowed) supportObservers.set(notifyDisabled, onChange)
   if (!sentinel) {
     // Observe CSS preference changes independently of MQL event delivery.
     // The shared observer needs neither transitions nor idle polling.
@@ -52,13 +57,13 @@ export function observePointerMotion(onChange: () => void, options: { notifyWhen
   let stopped = false
   return {
     allowed,
-    // Only effects that currently own visible inline state need frame checks.
-    // Native MQL and ResizeObserver notifications can both arrive late in WebKit.
+    // Only effects that currently own visible inline state need checks. A frame
+    // can stop arriving together with native preference notifications in WebKit.
     setActive: (active: boolean) => {
       if (stopped) return
       if (active) activeObservers.set(notifyDisabled, onChange)
       else activeObservers.delete(notifyDisabled)
-      updateActiveFrame()
+      updateActiveTimer()
     },
     stop: () => {
       if (stopped) return
@@ -66,7 +71,8 @@ export function observePointerMotion(onChange: () => void, options: { notifyWhen
       for (const query of queries) query.removeEventListener('change', notifyDisabled)
       observers.delete(notifyDisabled)
       activeObservers.delete(notifyDisabled)
-      updateActiveFrame()
+      supportObservers.delete(notifyDisabled)
+      updateActiveTimer()
       if (!observers.size && sentinel) {
         preferenceObserver?.disconnect()
         preferenceObserver = undefined
