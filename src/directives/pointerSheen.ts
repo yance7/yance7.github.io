@@ -31,6 +31,7 @@ const pointerSheen: Directive<HTMLElement, PointerSheenOptions | undefined> = {
     let frame = 0
     let bounds: PointerSheenBounds | null = null
     const leave = () => {
+      motion.setActive(false)
       cancelAnimationFrame(frame)
       frame = 0
       bounds = null
@@ -50,6 +51,7 @@ const pointerSheen: Directive<HTMLElement, PointerSheenOptions | undefined> = {
         element.style.setProperty('--pointer-x', `${x.toFixed(1)}%`)
         element.style.setProperty('--pointer-y', `${y.toFixed(1)}%`)
         element.style.setProperty('--pointer-active', '1')
+        motion.setActive(true)
         const tiltExcluded = tiltExclude
           && event.target instanceof Element
           && event.target.closest(tiltExclude)

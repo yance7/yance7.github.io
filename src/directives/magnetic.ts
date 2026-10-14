@@ -19,6 +19,7 @@ const magnetic: Directive<HTMLElement, MagneticValue> = {
     let frame = 0
 
     const reset = () => {
+      motion.setActive(false)
       cancelAnimationFrame(frame)
       frame = 0
       visual.style.translate = original.translate
@@ -40,6 +41,7 @@ const magnetic: Directive<HTMLElement, MagneticValue> = {
         const limit = Math.max(1, Math.hypot(x, y))
         visual.style.willChange = 'translate'
         visual.style.translate = `${(x / limit * strength).toFixed(2)}px ${(y / limit * strength).toFixed(2)}px`
+        motion.setActive(true)
       })
     }
 
