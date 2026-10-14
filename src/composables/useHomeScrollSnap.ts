@@ -9,9 +9,13 @@ export function useHomeScrollSnap(isHome: boolean, ready: Ref<boolean>) {
   let fontsObserver: MutationObserver | undefined
   let mounted = false
   let restorationCancelled = false
+  let leaving = false
+  let previousHistoryRestoration: ScrollRestoration | undefined
+  const initialHref = window.location.href
+  let sameDocumentNavigation = false
   const returning = performance.getEntriesByType('navigation')
     .some(entry => (entry as PerformanceNavigationTiming).type === 'back_forward')
-  let savedPosition = isHome && returning && !window.location.hash
+  let savedPosition = isHome && returning && !window.location.hash && !document.documentElement.dataset.initialHash
     ? window.history?.state?.homeReadingPosition as { top: number, left: number } | undefined
     : undefined
   let suspended = Boolean(window.location.hash || document.documentElement.dataset.initialHash)
@@ -19,6 +23,11 @@ export function useHomeScrollSnap(isHome: boolean, ready: Ref<boolean>) {
   if (savedPosition && Number.isFinite(savedPosition.top) && Number.isFinite(savedPosition.left)) {
     suspended = true
     root.dataset.homeScrollRestore = 'true'
+    // The browser's later load-time restoration must not compete with either
+    // our font-gated restore or input that cancels it.
+    previousHistoryRestoration = window.history.state?.homeReadingRestoration ?? window.history.scrollRestoration
+    window.history.replaceState({ ...window.history.state, homeReadingRestoration: previousHistoryRestoration }, '')
+    window.history.scrollRestoration = 'manual'
   } else savedPosition = undefined
 
   function update() {
@@ -50,10 +59,21 @@ export function useHomeScrollSnap(isHome: boolean, ready: Ref<boolean>) {
     fontsObserver = undefined
   }
   function saveReadingPosition() {
+    leaving = true
     window.history.replaceState({
       ...window.history.state,
       homeReadingPosition: { top: window.scrollY, left: window.scrollX }
     }, '')
+  }
+  function releaseHistoryRestoration() {
+    if (previousHistoryRestoration !== undefined && window.history.scrollRestoration === 'manual') {
+      window.history.scrollRestoration = previousHistoryRestoration
+    }
+  }
+  function handleHashChange() {
+    sameDocumentNavigation = true
+    releaseHistoryRestoration()
+    suspend()
   }
   function restoreReadingPosition() {
     if (!mounted || !ready.value || !savedPosition || restorationCancelled) return
@@ -81,14 +101,24 @@ export function useHomeScrollSnap(isHome: boolean, ready: Ref<boolean>) {
     const link = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>('a[href]') : null
     if (!link) return
     const url = new URL(link.href, window.location.href)
-    if (url.pathname === window.location.pathname && url.hash) suspend()
+    if (url.origin === window.location.origin && url.pathname === window.location.pathname
+      && url.search === window.location.search && url.hash) {
+      sameDocumentNavigation = true
+      releaseHistoryRestoration()
+      suspend()
+    }
   }
   function handlePageShow(event: PageTransitionEvent) {
+    leaving = false
     if (event.persisted) suspend()
   }
   function handleHistoryChange() {
-    suspended = true
-    update()
+    // The initial cross-document traversal can emit popstate after mount.
+    // Only a subsequent same-document navigation releases this page's lease.
+    if (!sameDocumentNavigation && window.location.href === initialHref) return
+    sameDocumentNavigation = true
+    releaseHistoryRestoration()
+    suspend()
   }
   watch(ready, () => {
     update()
@@ -108,7 +138,7 @@ export function useHomeScrollSnap(isHome: boolean, ready: Ref<boolean>) {
     document.addEventListener('keydown', handleKey)
     document.addEventListener('pointerdown', suspend, { passive: true })
     document.addEventListener('touchstart', suspend, { passive: true })
-    window.addEventListener('hashchange', suspend)
+    window.addEventListener('hashchange', handleHashChange)
     window.addEventListener('popstate', handleHistoryChange)
     window.addEventListener('pageshow', handlePageShow)
     window.addEventListener('pagehide', saveReadingPosition)
@@ -126,6 +156,7 @@ export function useHomeScrollSnap(isHome: boolean, ready: Ref<boolean>) {
   onBeforeUnmount(() => {
     mounted = false
     cancelRestoration()
+    if (!leaving) releaseHistoryRestoration()
     root.classList.remove('home-scroll-snap')
     desktop?.removeEventListener('change', update)
     reduced?.removeEventListener('change', update)
@@ -134,7 +165,7 @@ export function useHomeScrollSnap(isHome: boolean, ready: Ref<boolean>) {
     document.removeEventListener('keydown', handleKey)
     document.removeEventListener('pointerdown', suspend)
     document.removeEventListener('touchstart', suspend)
-    window.removeEventListener('hashchange', suspend)
+    window.removeEventListener('hashchange', handleHashChange)
     window.removeEventListener('popstate', handleHistoryChange)
     window.removeEventListener('pageshow', handlePageShow)
     window.removeEventListener('pagehide', saveReadingPosition)

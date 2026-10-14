@@ -19,7 +19,8 @@ const renderer = createRenderer<RenderNode, RenderNode>({
 describe('home document snap lifecycle', () => {
   afterEach(() => vi.unstubAllGlobals())
 
-  function setup(isHome = true, options: { returning?: boolean, ready?: boolean, fontsReady?: string } = {}) {
+  function setup(isHome = true, options: { returning?: boolean, ready?: boolean, fontsReady?: string,
+    historyRestoration?: ScrollRestoration, leasedRestoration?: ScrollRestoration } = {}) {
     const classes = new Set<string>()
     const listeners = new Map<string, () => void>()
     const media = (prefix: string, matches: boolean) => ({
@@ -44,7 +45,11 @@ describe('home document snap lifecycle', () => {
     }
     vi.stubGlobal('window', {
       location: { hash: '' }, scrollY: 0,
-      history: { state: options.returning ? { homeReadingPosition: { top: 700, left: 0 } } : null },
+      history: {
+        scrollRestoration: options.historyRestoration ?? 'auto',
+        state: options.returning ? { homeReadingPosition: { top: 700, left: 0 }, homeReadingRestoration: options.leasedRestoration } : null,
+        replaceState: vi.fn()
+      },
       scrollTo,
       requestAnimationFrame: (handler: FrameRequestCallback) => { frames.set(++frameId, handler); return frameId },
       cancelAnimationFrame: (id: number) => frames.delete(id),
@@ -137,12 +142,15 @@ describe('home document snap lifecycle', () => {
 
   it('a touch pointer cancels pending history restoration before async content resolves', async () => {
     const state = setup(true, { returning: true, ready: false })
+    expect(window.history.scrollRestoration).toBe('manual')
     state.listeners.get('document:pointerdown')?.()
     state.ready.value = true
     await state.flushFrames()
     expect(state.scrollTo).not.toHaveBeenCalled()
     expect(state.root.dataset.homeScrollRestore).toBeUndefined()
+    expect(window.history.scrollRestoration).toBe('manual')
     state.app.unmount()
+    expect(window.history.scrollRestoration).toBe('auto')
   })
 
   it.each(['ready', 'fallback'])('history restoration waits for the application font signal %s', async fontsReady => {
@@ -174,6 +182,27 @@ describe('home document snap lifecycle', () => {
     state.listeners.get('document:pointerdown')?.()
     await nextTick()
     expect(state.scrollTo).not.toHaveBeenCalled()
+    state.app.unmount()
+  })
+
+  it('keeps its lease when the initial cold traversal emits popstate after mount', async () => {
+    const state = setup(true, { returning: true, fontsReady: 'loading' })
+    state.listeners.get('window:popstate')?.()
+    expect(window.history.scrollRestoration).toBe('manual')
+    expect(state.root.dataset.homeScrollRestore).toBe('true')
+    state.root.dataset.fontsReady = 'ready'
+    state.listeners.get('root:fonts')?.()
+    await nextTick()
+    expect(state.scrollTo).toHaveBeenCalledExactlyOnceWith({ top: 700, left: 0, behavior: 'instant' })
+    state.app.unmount()
+  })
+
+  it('releases the original policy after returning again to an entry with its previous manual lease', () => {
+    const state = setup(true, { returning: true, fontsReady: 'loading', historyRestoration: 'manual', leasedRestoration: 'auto' })
+    expect(window.history.scrollRestoration).toBe('manual')
+    state.listeners.get('window:hashchange')?.()
+    expect(window.history.scrollRestoration).toBe('auto')
+    expect(state.root.dataset.homeScrollRestore).toBeUndefined()
     state.app.unmount()
   })
 })
