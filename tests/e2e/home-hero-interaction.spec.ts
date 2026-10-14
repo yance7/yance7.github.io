@@ -783,9 +783,16 @@ test('@particle-v2 preserves a disturbance across the intro deadline', async ({ 
   await expect.poll(() => page.evaluate(() =>
     (window as Window & { heroIntroInput?: { phase: string, accepted: boolean } }).heroIntroInput
   )).toEqual({ phase: 'gathering', accepted: true })
-  await expect(stage).toHaveAttribute('data-particle-state', 'disturbed', { timeout: 2500 })
+  // Sample within the existing deadline: coarse locator polling can miss the
+  // observed entrance transition near the end of the original 2.5s window.
+  await expect.poll(() => stage.getAttribute('data-particle-state'), { timeout: 2500, intervals: [50, 100] }).toBe('disturbed')
   expect(Number(await stage.getAttribute('data-moving-particle-count'))).toBeGreaterThan(0)
+  expect(Number(await stage.getAttribute('data-peak-candidates'))).toBeGreaterThan(0)
+  const releaseFrame = Number(await stage.getAttribute('data-frame-count'))
   await stage.evaluate(element => element.dispatchEvent(new PointerEvent('pointerleave', { pointerId: 1, pointerType: 'mouse' })))
+  // MiMo blends once per actual render. This seam test verifies input through
+  // the entrance; the independent real-pixel test retains the 1s recovery gate.
+  await expect.poll(async () => Number(await stage.getAttribute('data-frame-count'))).toBeGreaterThanOrEqual(releaseFrame + 9)
   await expect(stage).toHaveAttribute('data-particle-state', 'settled', { timeout: 1500 })
 })
 
