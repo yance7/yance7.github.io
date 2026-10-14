@@ -202,6 +202,9 @@ for (const media of [{ reducedMotion: 'reduce' }, { forcedColors: 'active' }] as
       }))).toEqual({ active: '', width: 'reducedMotion' in media ? '2px' : '1px', height: 'forcedColors' in media ? '2px' : '1px' })
       await expect(page.locator('.sitewide-cursor')).toHaveCount(0)
       await expect(page.locator('html')).not.toHaveClass(/sitewide-cursor-active/)
+      await page.emulateMedia('reducedMotion' in media ? { reducedMotion: 'no-preference' } : { forcedColors: 'none' })
+      await expect(page.locator('.sitewide-cursor')).toHaveCount(1)
+      await expect(page.locator('html')).not.toHaveClass(/sitewide-cursor-active/)
     } finally {
       await page.evaluate(() => {
         ;(window as Window & { pausePreferenceFrames?: boolean }).pausePreferenceFrames = false
