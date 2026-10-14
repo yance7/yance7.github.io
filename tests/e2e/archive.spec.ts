@@ -258,8 +258,16 @@ test('copy citation cleans up its textarea when the legacy copy command throws',
     Object.defineProperty(document, 'execCommand', { configurable: true, value: () => { throw new Error('copy unavailable') } })
   })
   await page.goto('/research/')
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
 
-  await page.locator('.copy-citation').first().click()
+  const button = page.locator('.copy-citation').first()
+  await button.scrollIntoViewIfNeeded()
+  const item = button.locator('xpath=ancestor::article')
+  await expect(item).toHaveClass(/revealed/)
+  await expect(item).toHaveCSS('opacity', '1')
+  await expect(item).toHaveCSS('transform', 'none')
+  await button.click()
 
   await expect(page.locator('.copy-citation').first()).toHaveAttribute('data-state', 'error')
   await expect(page.locator('textarea')).toHaveCount(0)

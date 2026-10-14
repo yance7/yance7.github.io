@@ -4,6 +4,8 @@ import { getLocalizedPageMeta } from './data/locales'
 import { isPageKey } from './data'
 import { useLocale } from './i18n'
 import { useTheme } from './composables/useTheme'
+import { useHomeScrollSnap } from './composables/useHomeScrollSnap'
+import { revealForNavigation } from './directives/reveal'
 import { decodeHashTarget, retryAsync } from './utils/navigation'
 import { getPageLoader } from './pageLoaders'
 
@@ -44,7 +46,7 @@ function clearInitialHashMarker() {
   delete document.documentElement.dataset.initialHash
 }
 
-function restoreInitialHash() {
+function restoreInitialHashUrl() {
   if (!initialHash) return
   if (window.location.hash !== initialHash) {
     window.history.replaceState(
@@ -53,6 +55,10 @@ function restoreInitialHash() {
       `${window.location.pathname}${window.location.search}${initialHash}`
     )
   }
+}
+
+function restoreInitialHash() {
+  restoreInitialHashUrl()
   clearInitialHashMarker()
 }
 
@@ -160,8 +166,12 @@ function scrollToHashTarget(force = false) {
     hashScrolled = true
     return
   }
+  // Keep the address shareable while positioning waits for layout or RAF.
+  // The marker still protects header/font readiness until positioning finishes.
+  restoreInitialHashUrl()
   pendingHashTarget = target
   target.dataset.hashTarget = 'true'
+  revealForNavigation(target)
 
   const horizontalScroller = findHorizontalScroller(target)
   if (!force && horizontalScroller && !horizontalLayoutIsReady(horizontalScroller)) {
@@ -230,6 +240,7 @@ async function handlePageResolved() {
 }
 
 const isHome = page === 'home'
+useHomeScrollSnap(isHome, computed(() => pageLoadState.value === 'ready'))
 const isError = !page
 const meta = computed(() => page ? getLocalizedPageMeta(locale.value, page) : messages.value.page.home)
 

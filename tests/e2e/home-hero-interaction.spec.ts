@@ -774,6 +774,10 @@ test('@particle-v2 cancels stale input when scrolling changes the stage geometry
   await page.setViewportSize({ width: isMobile ? 390 : 1440, height: 1100 })
   await page.goto('/')
   await waitForSettledHero(page)
+  // Native keyboard focus suspends proximity so this test can measure a real
+  // geometry change. Snap behavior itself belongs to home-scroll-motion.
+  await page.locator('.theme-orbit').focus()
+  await expect(page.locator('html')).toHaveCSS('scroll-snap-type', 'none')
   const stage = page.locator('.home-hero-particles')
   const top = await stage.evaluate(element => {
     const bounds = element.getBoundingClientRect()
@@ -782,7 +786,7 @@ test('@particle-v2 cancels stale input when scrolling changes the stage geometry
     return bounds.top
   })
   await expect(stage).toHaveAttribute('data-particle-state', 'disturbed')
-  await page.evaluate(() => scrollBy(0, 80))
+  await page.evaluate(() => scrollBy({ top: 80, behavior: 'instant' }))
   await expect.poll(() => stage.evaluate(element => element.getBoundingClientRect().top)).not.toBe(top)
   await expect(stage).toHaveAttribute('data-particle-state', /recovering|settled/)
   await expect(stage).toHaveAttribute('data-moving-particle-count', '0', { timeout: 1500 })
@@ -947,6 +951,10 @@ test('@particle-v2 starts a full gathering after delayed display-font readiness'
 test('@particle-v2 clears a continuously drawn held shape when scrolling changes geometry', async ({ page }) => {
   await page.goto('/')
   await waitForSettledHero(page)
+  // Native proximity can keep a small scroll at the current snap position.
+  // Keyboard navigation yields snapping so this case actually changes geometry.
+  await page.keyboard.press('Home')
+  await expect(page.locator('html')).not.toHaveClass(/home-scroll-snap/)
   const stage = page.locator('.home-hero-particles')
   await stage.scrollIntoViewIfNeeded()
   await savePixels(page)
@@ -956,7 +964,9 @@ test('@particle-v2 clears a continuously drawn held shape when scrolling changes
   await expect(stage).toHaveAttribute('data-animation-running', 'true')
   expect(await changedPixels(page)).toBeGreaterThan(100)
   await frames(page)
-  await page.evaluate(() => scrollBy(0, 40))
+  const previousTop = await stage.evaluate(element => element.getBoundingClientRect().top)
+  await page.evaluate(() => scrollBy({ top: 40, behavior: 'instant' }))
+  await expect.poll(() => stage.evaluate(element => element.getBoundingClientRect().top)).toBeLessThan(previousTop - 1)
   await expect(stage).toHaveAttribute('data-particle-state', 'settled', { timeout: 1000 })
   await expectRecoveredMark(page)
 })

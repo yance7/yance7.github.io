@@ -15,6 +15,10 @@ html {
   overscroll-behavior-x: none;
 }
 
+/* Cold home restoration owns positioning until fonts and content are ready.
+   Prevent native smooth history scrolling from competing with that restore. */
+html[data-home-scroll-restore='true'] { scroll-behavior: auto; }
+
 body {
   margin: 0;
   min-width: 320px;

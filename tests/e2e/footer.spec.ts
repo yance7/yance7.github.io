@@ -105,6 +105,8 @@ test('footer contact links expose a visible keyboard focus ring', async ({ page 
 
 test('footer contact feedback is scoped to pointer capabilities', async ({ page }) => {
   await page.goto('/')
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
   const link = page.locator('.foot-contact').first()
   const touchLike = await page.evaluate(() => (
     window.matchMedia('(hover: none)').matches || window.matchMedia('(pointer: coarse)').matches
@@ -113,9 +115,12 @@ test('footer contact feedback is scoped to pointer capabilities', async ({ page 
   if (!touchLike) {
     const contactGrid = page.locator('.foot-contacts')
     await page.evaluate(() => { document.documentElement.style.scrollBehavior = 'auto' })
-    await link.scrollIntoViewIfNeeded()
+    // Native navigation yields homepage snapping. Capture hover only after
+    // the footer's reveal has reached its final geometry.
+    await page.keyboard.press('End')
     await expect(contactGrid).toHaveClass(/revealed/)
     await expect(contactGrid).toHaveCSS('transform', 'none')
+    await link.scrollIntoViewIfNeeded()
     await expect(link).toBeInViewport()
     await link.hover()
     await expect(link).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, -1)')

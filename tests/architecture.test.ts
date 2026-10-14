@@ -344,11 +344,11 @@ describe('release workflow contracts', () => {
     expect(qualityWorkflow).toContain('include-hidden-files: true')
   })
 
-  it('runs HomeHero geometry checks in desktop and mobile WebKit quality jobs', () => {
+  it('runs HomeHero geometry and home reading motion checks in desktop and mobile WebKit quality jobs', () => {
     const qualityWorkflow = readFileSync(resolve(process.cwd(), '.github/workflows/quality.yml'), 'utf8')
 
-    expect(qualityWorkflow).toContain('npm run test:e2e -- tests/e2e/home-hero-layout.spec.ts --project=webkit-desktop --workers=4 --retries=0')
-    expect(qualityWorkflow).toContain('npm run test:e2e -- tests/e2e/home-hero-layout.spec.ts --project=webkit-mobile --workers=4 --retries=0')
+    expect(qualityWorkflow).toContain('npm run test:e2e -- tests/e2e/home-hero-layout.spec.ts tests/e2e/home-scroll-motion.spec.ts --project=webkit-desktop --workers=4 --retries=0')
+    expect(qualityWorkflow).toContain('npm run test:e2e -- tests/e2e/home-hero-layout.spec.ts tests/e2e/home-scroll-motion.spec.ts --project=webkit-mobile --workers=4 --retries=0')
   })
 
   it('keeps Linux particle stress manual, isolated and free of retries', () => {
@@ -472,23 +472,18 @@ describe('motion hierarchy contracts', () => {
   it('lets IntersectionObserver own reveal geometry after initial viewport setup', () => {
     const reveal = readFileSync(resolve(process.cwd(), 'src/directives/reveal.ts'), 'utf8').replace(/\r\n/g, '\n')
 
-    expect(reveal).toContain('currentObserver.unobserve(element)')
+    expect(reveal).toContain('observers.get(profile)?.unobserve(element)')
     expect(reveal).toContain('isInInitialViewport(element.getBoundingClientRect(), window.innerHeight)')
     expect(reveal).toContain('normalizeRevealDelay')
-    expect(reveal).toContain('const observedElements = new Set<HTMLElement>()')
-    expect(reveal).toContain('function revealRemainingAtDocumentEnd()')
+    expect(reveal).toContain('const observedElements = new Map<HTMLElement, RevealProfile>()')
+    expect(reveal).toContain('getRevealObserverOptions(profile)')
     expect(reveal).toContain('document.documentElement.scrollHeight')
-    expect(reveal).toContain("document.querySelectorAll<HTMLElement>('.reveal:not(.revealed)')")
     expect(reveal).toContain("window.addEventListener('scroll', handleScroll, { passive: true })")
-    expect(reveal).toContain('function isNearDocumentEnd()')
-    expect(reveal).toContain('if (reachedDocumentEnd || !isNearDocumentEnd()) return')
-    expect(reveal).toContain('let reachedDocumentEnd = false')
     expect(reveal).toContain('let bottomResizeObserver: ResizeObserver | null = null')
     expect(reveal).toContain("window.removeEventListener('scroll', handleScroll)")
     expect(reveal).toContain('bottomResizeObserver?.disconnect()')
-    expect(reveal).toContain('if (reachedDocumentEnd) {\n      revealImmediately(element)')
     expect(reveal).toContain('new ResizeObserver(')
-    expect(reveal).toContain('observer?.disconnect()')
+    expect(reveal).toContain('observer.disconnect()')
     expect(reveal).toContain('observedElements.delete(element)')
     expect(reveal).not.toContain('RevealVariant')
     expect(reveal).not.toContain('data-reveal-variant')

@@ -4,6 +4,13 @@ export interface RevealModeInput {
 }
 
 export type RevealMode = 'observer' | 'immediate'
+export type RevealProfile = 'default' | 'home'
+
+export function getRevealObserverOptions(profile: RevealProfile = 'default'): IntersectionObserverInit {
+  return profile === 'home'
+    ? { threshold: 0.1, rootMargin: '0px 0px -8% 0px' }
+    : { threshold: 0.08, rootMargin: '0px 0px 120px 0px' }
+}
 
 export const revealMaxDelay = 240
 
