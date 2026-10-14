@@ -1,19 +1,12 @@
 import { expect, test } from '@playwright/test'
 
-// Observe a rendering opportunity inside the original poll budget before
-// checking applied CSS and JavaScript cleanup. A screenshot alone does not
-// ensure that WebKit has delivered ResizeObserver notifications.
-function expectRenderedPreference<T>(page: import('@playwright/test').Page, read: () => Promise<T>) {
-  let renderedFrame: Promise<void> | undefined
+// Request rendering once, then observe the original CSS and JavaScript cleanup.
+// Waiting for a RAF callback can hide cleanup that already met the poll budget.
+function expectPreferenceCleanup<T>(page: import('@playwright/test').Page, read: () => Promise<T>) {
+  let renderingRequest: Promise<number> | undefined
   return expect.poll(async () => {
-    renderedFrame ??= page.evaluate(() => new Promise<void>((resolve, reject) => {
-      const deadline = setTimeout(() => reject(new Error('Preference rendering opportunity did not arrive')), 5000)
-      requestAnimationFrame(() => {
-        clearTimeout(deadline)
-        resolve()
-      })
-    }))
-    await renderedFrame
+    renderingRequest ??= page.evaluate(() => requestAnimationFrame(() => {}))
+    await renderingRequest
     return read()
   })
 }
@@ -110,7 +103,7 @@ test('@pointer-refinement motion directives clear immediately when runtime prefe
   await expect.poll(() => sheen.evaluate((element) => element.style.getPropertyValue('--pointer-active'))).toBe('1')
   await page.emulateMedia({ forcedColors: 'active' })
   await expect.poll(() => page.evaluate(() => matchMedia('(forced-colors: active)').matches)).toBe(true)
-  await expectRenderedPreference(page, () => sheen.evaluate(element => ({
+  await expectPreferenceCleanup(page, () => sheen.evaluate(element => ({
     active: element.style.getPropertyValue('--pointer-active'),
     height: getComputedStyle(document.querySelector('.pointer-motion-preference-sentinel')!).height
   }))).toEqual({ active: '', height: '2px' })
@@ -144,14 +137,14 @@ test('@pointer-refinement motion directives clear when native media change notif
   await expect.poll(() => sheen.evaluate(element => element.style.getPropertyValue('--pointer-active'))).toBe('1')
   await page.emulateMedia({ forcedColors: 'active' })
   await expect.poll(() => page.evaluate(() => matchMedia('(forced-colors: active)').matches)).toBe(true)
-  await expectRenderedPreference(page, () => sheen.evaluate(element => ({
+  await expectPreferenceCleanup(page, () => sheen.evaluate(element => ({
     active: element.style.getPropertyValue('--pointer-active'),
     height: getComputedStyle(document.querySelector('.pointer-motion-preference-sentinel')!).height
   }))).toEqual({ active: '', height: '2px' })
   await expect(page.locator('.sitewide-cursor')).toHaveCount(0)
   await expect(page.locator('html')).not.toHaveClass(/sitewide-cursor-active/)
   await page.emulateMedia({ forcedColors: 'none' })
-  await expectRenderedPreference(page, () => page.evaluate(() => ({
+  await expectPreferenceCleanup(page, () => page.evaluate(() => ({
     count: document.querySelectorAll('.sitewide-cursor').length,
     height: getComputedStyle(document.querySelector('.pointer-motion-preference-sentinel')!).height
   }))).toEqual({ count: 1, height: '1px' })
@@ -159,7 +152,7 @@ test('@pointer-refinement motion directives clear when native media change notif
   await expect.poll(() => sheen.evaluate(element => element.style.getPropertyValue('--pointer-active'))).toBe('1')
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await expect.poll(() => page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true)
-  await expectRenderedPreference(page, () => sheen.evaluate(element => ({
+  await expectPreferenceCleanup(page, () => sheen.evaluate(element => ({
     active: element.style.getPropertyValue('--pointer-active'),
     width: getComputedStyle(document.querySelector('.pointer-motion-preference-sentinel')!).width
   }))).toEqual({ active: '', width: '2px' })
