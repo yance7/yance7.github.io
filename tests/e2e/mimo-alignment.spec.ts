@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, type Page } from '@playwright/test'
+import { test } from './helpers/page-fixture'
 import { readMimoReferenceGlyph } from './helpers/mimo-reference'
 
 async function ready(page: Page) {
@@ -105,6 +106,9 @@ test('MiMo geometry cancellation clears pixels without frames and ignores statio
     })
   })
   await ready(page)
+  // Yield native proximity before testing a real coordinate-frame change.
+  await page.locator('.theme-orbit').focus()
+  await expect(page.locator('html')).toHaveCSS('scroll-snap-type', 'none')
   const stage = page.locator('.home-hero-particles')
   await gesture(page, 'pointermove', 'mouse', 1)
   await expect(stage).toHaveAttribute('data-particle-state', 'disturbed')
@@ -116,6 +120,9 @@ test('MiMo geometry cancellation clears pixels without frames and ignores statio
       const y = bounds.top + ink.top + ink.height * .5
       ;(window as Window & { pauseMimoFrames?: boolean }).pauseMimoFrames = true
       scrollBy({ top: 40, behavior: 'instant' })
+      if (element.getBoundingClientRect().top >= bounds.top - 1) {
+        throw new Error('The geometry test did not move the particle stage')
+      }
       document.dispatchEvent(new Event('scroll'))
       // Layout can also generate boundary events while the mouse stays still.
       element.dispatchEvent(new PointerEvent('pointerleave', { pointerType: 'mouse', pointerId: 1, clientX: x, clientY: y }))
