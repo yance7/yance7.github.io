@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import '@fontsource/amiri/latin-400.css'
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { HomeHeroParticleEngine } from '../utils/homeHeroParticlePhysics'
-import { createHomeHeroParticleScene, createHomeHeroTextMask, getHomeHeroParticleGridStep, getHomeHeroParticlePixelRatio, type HomeHeroGlyphLayout } from '../utils/homeHeroParticleScene'
+import { MimoParticleEngine as HomeHeroParticleEngine, createMimoTextMask as createHomeHeroTextMask, createMimoParticleScene, getMimoFontSize, MIMO_PARTICLE_SETTINGS } from '../utils/mimoParticleModel'
+import { type HomeHeroGlyphLayout } from '../utils/homeHeroParticleScene'
 import { HomeHeroParticleRenderer, type HomeHeroParticleColors } from '../utils/homeHeroParticleRenderer'
 
 const props = defineProps<{ animateIntro: boolean; introStartedAt: number | null }>()
@@ -30,30 +31,28 @@ const glyphFont = ref({ family: '', weight: '400' })
 let engine: HomeHeroParticleEngine | null = null
 let renderer: HomeHeroParticleRenderer | null = null
 let frameId = 0
-let frameFallback = 0
 let generation = 0
 let disposed = false
-let firstScene = true
 let visible = true
 let focused = true
 let pageVisible = true
-let inputDownAt = 0
 let dimensionsKey = ''
 let pointerBounds: DOMRect | null = null
 let inputBounds: DOMRect | null = null
+let mousePosition: { x: number, y: number } | null = null
+let cancelledMousePosition: { x: number, y: number } | null = null
 let motionMedia: MediaQueryList | null = null
 let forcedMedia: MediaQueryList | null = null
 let connection: (EventTarget & { saveData?: boolean }) | undefined
 let resizeObserver: ResizeObserver | null = null
+let preferenceObserver: ResizeObserver | null = null
+let preferenceKey = ''
 let intersectionObserver: IntersectionObserver | null = null
 let themeObserver: MutationObserver | null = null
 const touches = new Set<number>()
 
-function lowResource() {
-  const device = navigator as Navigator & { deviceMemory?: number }
-  return device.deviceMemory !== undefined && device.deviceMemory <= 2 || navigator.hardwareConcurrency > 0 && navigator.hardwareConcurrency <= 2
-}
-function allowed() { return !motionMedia?.matches && !forcedMedia?.matches && !connection?.saveData }
+function canRenderCanvas() { return !forcedMedia?.matches && !connection?.saveData }
+function allowed() { return !motionMedia?.matches && canRenderCanvas() }
 function running() { return !disposed && allowed() && visible && focused && pageVisible && renderMode.value === 'canvas' }
 function colors(): HomeHeroParticleColors {
   const style = getComputedStyle(stage.value ?? document.documentElement)
@@ -61,17 +60,12 @@ function colors(): HomeHeroParticleColors {
 }
 function clearFrame() {
   if (frameId) cancelAnimationFrame(frameId)
-  if (frameFallback) clearTimeout(frameFallback)
   frameId = 0
-  frameFallback = 0
 }
 function schedule() {
-  if (frameId || frameFallback || !running()) return
+  if (frameId || !running()) return
   frameId = requestAnimationFrame(animate)
-  // Some foreground WebKit loads stop delivering RAF callbacks temporarily.
-  // Share one pending frame with a bounded fallback, cancelled by normal RAF
-  // delivery and every lifecycle pause. Settled scenes schedule neither.
-  frameFallback = window.setTimeout(animate, 250)
+
 }
 function clearScene() {
   clearFrame()
@@ -84,9 +78,11 @@ function clearScene() {
   touches.clear()
   pointerBounds = null
   inputBounds = null
+  mousePosition = null
+  cancelledMousePosition = null
 }
 function staticMode(mode = 'static') {
-  firstScene = false
+  preferenceKey = currentPreferenceKey()
   generation += 1
   clearScene()
   renderMode.value = mode
@@ -102,19 +98,19 @@ function updateState() {
   particleState.value = engine?.phase ?? renderMode.value
   animationRunning.value = engine?.needsFrame ?? false
 }
-function animate() {
+function animate(timestamp: number) {
   clearFrame()
   // A browser can update the query without delivering its change event (for
   // example during native pinch emulation). Never leave a stale dynamic canvas.
   if (!disposed && !allowed()) {
-    staticMode()
+    if (canRenderCanvas()) updatePausedState()
+    else staticMode()
     return
   }
   if (!running() || !engine || !renderer) return
   const start = performance.now()
-  // WebKit can deliver an RAF timestamp older than live input. Use the same
-  // monotonic clock as input and lifecycle updates, avoiding rewind or lag.
-  const at = start / 1000
+  // MiMo evaluates entrance and drift from the RAF clock, with one blend per frame.
+  const at = timestamp / 1000
   engine.advanceTo(at)
   physicsMs.value = performance.now() - start
   const renderStart = performance.now()
@@ -129,11 +125,13 @@ function animate() {
 async function fitStaticGlyph(width: number, height: number, revision = generation) {
   await nextTick()
   const text = fallbackText.value
-  if (!text || disposed || revision !== generation) return
+  if (!text || disposed || revision !== generation || renderMode.value === 'canvas') return
   const box = text.getBBox()
   if (box.width <= 0 || box.height <= 0) return
   const previous = glyphLayout.value
-  const scale = Math.min(width * (width <= 760 ? 0.82 : 0.74) / box.width, height * 0.48 / box.height)
+  const remSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
+  const fontSize = getMimoFontSize(window.innerWidth, width, box.width / previous.fontSize * 100, remSize)
+  const scale = fontSize / previous.fontSize
   glyphLayout.value = { fontSize: previous.fontSize * scale,
     x: (width - box.width * scale) / 2 - (box.x - previous.x) * scale,
     baseline: (height - box.height * scale) / 2 - (box.y - previous.baseline) * scale,
@@ -147,11 +145,10 @@ async function rebuild(force = false) {
   const height = Math.floor(bounds.height - stage.value!.clientTop * 2)
   if (width < 1 || height < 1) return
   fallbackSize.value = { width, height }
-  const title = stage.value?.closest('.home-hero')?.querySelector<HTMLElement>('.home-hero-typewriter')
-  const style = getComputedStyle(title ?? stage.value!)
+  const style = { fontFamily: MIMO_PARTICLE_SETTINGS.fontFamily, fontWeight: MIMO_PARTICLE_SETTINGS.fontWeight }
   glyphFont.value = { family: style.fontFamily, weight: style.fontWeight }
-  gridStep.value = getHomeHeroParticleGridStep(lowResource())
-  if (!allowed()) {
+  gridStep.value = 2
+  if (!canRenderCanvas()) {
     staticMode()
     const revision = generation
     await fitStaticGlyph(width, height, revision)
@@ -159,22 +156,22 @@ async function rebuild(force = false) {
     await fitStaticGlyph(width, height, revision)
     return
   }
-  const step = getHomeHeroParticleGridStep(lowResource())
-  const ratio = getHomeHeroParticlePixelRatio(devicePixelRatio, lowResource())
+  const step = 2
+  const ratio = Math.min(devicePixelRatio || 1, 2)
   const key = `${width}:${height}:${step}:${ratio}`
   if (!force && dimensionsKey === key && renderer) return
   const revision = ++generation
   clearScene()
   renderMode.value = 'initializing'
   await fitStaticGlyph(width, height, revision)
-  if (disposed || revision !== generation || !allowed() || !canvas.value) return
+  if (disposed || revision !== generation || !canRenderCanvas() || !canvas.value) return
   try {
-    // YANCE uses the installed Latin serif stack; do not wait for CJK fonts.
+    // Generate the mask only after the locally bundled Amiri regular face loads.
     await document.fonts.load(`${style.fontWeight} 100px ${style.fontFamily}`, 'YANCE')
-    if (disposed || revision !== generation || !allowed() || !canvas.value) return
+    if (disposed || revision !== generation || !canRenderCanvas() || !canvas.value) return
     const mask = createHomeHeroTextMask(width, height, style.fontFamily, style.fontWeight)
     glyphLayout.value = mask.layout
-    const scene = createHomeHeroParticleScene({ width, height, rgba: mask.rgba, gridStep: step, alphaThreshold: 72, maxParticles: lowResource() ? 4000 : 9000 })
+    const scene = createMimoParticleScene({ width, height, ...mask })
     if (scene.particles.length < 40) throw new Error('HomeHero text mask is incomplete')
     const at = performance.now() / 1000
     engine = new HomeHeroParticleEngine(scene, { startedAt: at, mobile: width <= 760 })
@@ -185,8 +182,8 @@ async function rebuild(force = false) {
     particleCount.value = scene.particles.length
     sourceParticleCount.value = scene.sampledCount
     inkArea.value = Math.round(mask.inkArea)
-    if (firstScene && props.animateIntro) engine.gather()
-    firstScene = false
+    if (allowed()) engine.gather(performance.now() / 1000)
+    else engine.reset(at)
     renderMode.value = 'canvas'
     updatePausedState()
   } catch {
@@ -197,19 +194,22 @@ async function rebuild(force = false) {
 
 function updatePausedState() {
   if (!engine || !renderer) return
+  // Cache the preference actually handled by the frame/lifecycle path too.
+  // A missed disable notification must not cause a valid restore to be ignored.
+  preferenceKey = currentPreferenceKey()
   if (!running()) {
     clearFrame()
     engine.reset(performance.now() / 1000)
     touches.clear()
     pointerBounds = null
     inputBounds = null
+    mousePosition = null
+    cancelledMousePosition = null
     renderer.drawStatic()
     movingParticleCount.value = 0
     animationRunning.value = false
     particleState.value = 'paused'
   } else {
-    engine.advanceTo(performance.now() / 1000)
-    renderer.drawActive(dynamicParticles())
     updateState()
     if (engine.needsFrame) schedule()
   }
@@ -219,8 +219,14 @@ function eventTime(event: PointerEvent) {
   return (Math.abs(event.timeStamp - now) < 10000 ? event.timeStamp : now) / 1000
 }
 function move(event: PointerEvent) {
-  if (!running() || !engine || event.pointerType === 'touch' && (touches.size !== 1 || !touches.has(event.pointerId))) return
-  if (!frameId) engine.advanceTo(performance.now() / 1000)
+  if (!running() || !engine || event.pointerType !== 'mouse' && (touches.size !== 1 || !touches.has(event.pointerId))) return
+  if (event.pointerType === 'mouse') {
+    // WebKit redispatches a stationary mouse after the document scrolls under it.
+    // Only new physical coordinates can resume the cancelled coordinate frame.
+    if (cancelledMousePosition?.x === event.clientX && cancelledMousePosition.y === event.clientY) return
+    cancelledMousePosition = null
+    mousePosition = { x: event.clientX, y: event.clientY }
+  }
   pointerBounds ??= stage.value!.getBoundingClientRect()
   inputBounds = pointerBounds
   const samples = event.getCoalescedEvents?.() ?? []
@@ -233,21 +239,34 @@ function move(event: PointerEvent) {
   schedule()
 }
 function down(event: PointerEvent) {
-  if (event.pointerType !== 'touch') return
+  if (event.pointerType === 'mouse' || !running() || !engine || !renderer) return
   touches.add(event.pointerId)
   if (touches.size > 1) {
-    engine?.pointer.reset()
+    // Native pinch takes ownership of the gesture. Clear the cancelled shape
+    // immediately, even if the browser suspends frames while handling touch.
+    engine?.reset(eventTime(event))
+    renderer?.drawActive([])
+    updateState()
     schedule()
     return
   }
-  inputDownAt = eventTime(event)
+  engine?.pointer.start(event.pointerId)
   move(event)
 }
 function release(input: Event) {
   const event = input as PointerEvent
-  if (event.pointerType === 'touch') touches.delete(event.pointerId)
-  engine?.pointer.release(event.pointerType === 'touch' && event.type === 'pointerup' ? Math.max(eventTime(event), inputDownAt + 1 / 60) : eventTime(event))
-  if (event.type === 'pointercancel') engine?.pointer.reset()
+  if (event.pointerType === 'mouse') {
+    if (event.type !== 'pointerleave') return
+    engine?.pointer.deactivate()
+    if (cancelledMousePosition?.x !== event.clientX || cancelledMousePosition.y !== event.clientY) {
+      cancelledMousePosition = null
+    }
+    mousePosition = null
+  } else {
+    if (event.type === 'pointerleave' || !touches.has(event.pointerId)) return
+    touches.delete(event.pointerId)
+    if (engine?.pointer.matches(event.pointerId)) engine.pointer.release(eventTime(event))
+  }
   pointerBounds = null
   schedule()
 }
@@ -278,9 +297,15 @@ function scroll() {
   if (!bounds) return
   // A queued scroll can arrive after input sampled the final stage geometry.
   // Only cancel that stream if its coordinate frame actually changed.
-  if (!inputBounds || inputBounds.left !== bounds.left || inputBounds.top !== bounds.top ||
-    inputBounds.width !== bounds.width || inputBounds.height !== bounds.height) {
-    engine?.pointer.reset()
+  if (inputBounds && (inputBounds.left !== bounds.left || inputBounds.top !== bounds.top ||
+    inputBounds.width !== bounds.width || inputBounds.height !== bounds.height)) {
+    cancelledMousePosition = mousePosition
+    touches.clear()
+    // Native scrolling can suspend RAF just like pinch and blur. Commit the
+    // cancelled scene immediately so no old geometry remains on the canvas.
+    engine?.reset(performance.now() / 1000)
+    renderer?.drawActive([])
+    updateState()
     inputBounds = null
   }
   pointerBounds = null
@@ -288,11 +313,17 @@ function scroll() {
   updatePausedState()
 }
 function resize() { void rebuild() }
+function currentPreferenceKey() {
+  return `${motionMedia?.matches}:${forcedMedia?.matches}:${connection?.saveData}`
+}
 function preference() {
+  const key = currentPreferenceKey()
+  if (key === preferenceKey) return
+  preferenceKey = key
   void rebuild(true)
 }
-function preferenceSentinel(event: TransitionEvent) {
-  if (event.propertyName === 'width' || event.propertyName === 'height') preference()
+function fontsLoaded() {
+  if (renderMode.value !== 'canvas') void fitStaticGlyph(fallbackSize.value.width, fallbackSize.value.height)
 }
 function theme() {
   if (!renderer || !engine) return
@@ -305,6 +336,7 @@ onMounted(() => {
   motionMedia = matchMedia('(prefers-reduced-motion: reduce)')
   forcedMedia = matchMedia('(forced-colors: active)')
   connection = (navigator as Navigator & { connection?: EventTarget & { saveData?: boolean } }).connection
+  preferenceKey = currentPreferenceKey()
   motionMedia.addEventListener('change', preference)
   forcedMedia.addEventListener('change', preference)
   connection?.addEventListener('change', preference)
@@ -312,8 +344,11 @@ onMounted(() => {
   focused = document.hasFocus()
   stage.value!.addEventListener('pointermove', move, { passive: true })
   stage.value!.addEventListener('pointerdown', down, { passive: true })
-  for (const type of ['pointerup', 'pointercancel', 'pointerleave']) stage.value!.addEventListener(type, release, { passive: true })
+  stage.value!.addEventListener('pointerleave', release, { passive: true })
+  window.addEventListener('pointerup', release, { passive: true })
+  window.addEventListener('pointercancel', release, { passive: true })
   document.addEventListener('visibilitychange', visibility)
+  document.fonts.addEventListener('loadingdone', fontsLoaded)
   document.addEventListener('scroll', scroll, { capture: true, passive: true })
   window.addEventListener('resize', resize, { passive: true })
   window.addEventListener('blur', blur)
@@ -322,6 +357,8 @@ onMounted(() => {
   if ('ResizeObserver' in window) {
     resizeObserver = new ResizeObserver(resize)
     resizeObserver.observe(stage.value!)
+    preferenceObserver = new ResizeObserver(preference)
+    preferenceObserver.observe(stage.value!.querySelector('.home-hero-particles-preference-sentinel')!)
   }
   if ('IntersectionObserver' in window) {
     intersectionObserver = new IntersectionObserver(intersection)
@@ -329,7 +366,6 @@ onMounted(() => {
   }
   themeObserver = new MutationObserver(theme)
   themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
-  stage.value!.addEventListener('transitionend', preferenceSentinel)
   void rebuild()
 })
 onBeforeUnmount(() => {
@@ -337,16 +373,19 @@ onBeforeUnmount(() => {
   generation += 1
   clearScene()
   resizeObserver?.disconnect()
+  preferenceObserver?.disconnect()
   intersectionObserver?.disconnect()
   themeObserver?.disconnect()
-  stage.value?.removeEventListener('transitionend', preferenceSentinel)
   motionMedia?.removeEventListener('change', preference)
   forcedMedia?.removeEventListener('change', preference)
   connection?.removeEventListener('change', preference)
   stage.value?.removeEventListener('pointermove', move)
   stage.value?.removeEventListener('pointerdown', down)
-  for (const type of ['pointerup', 'pointercancel', 'pointerleave']) stage.value?.removeEventListener(type, release)
+  stage.value?.removeEventListener('pointerleave', release)
+  window.removeEventListener('pointerup', release)
+  window.removeEventListener('pointercancel', release)
   document.removeEventListener('visibilitychange', visibility)
+  document.fonts.removeEventListener('loadingdone', fontsLoaded)
   document.removeEventListener('scroll', scroll, true)
   window.removeEventListener('resize', resize)
   window.removeEventListener('blur', blur)
@@ -382,7 +421,7 @@ onBeforeUnmount(() => {
     <span class="home-hero-particles-preference-sentinel" aria-hidden="true"></span>
     <canvas v-if="renderMode === 'canvas' || renderMode === 'initializing'" ref="canvas" class="home-hero-particles-canvas" aria-hidden="true"></canvas>
     <svg class="home-hero-particles-word" :viewBox="`0 0 ${fallbackSize.width} ${fallbackSize.height}`" :style="{ fontFamily: glyphFont.family, fontWeight: glyphFont.weight }" aria-hidden="true">
-      <defs><pattern id="home-hero-static-dots" :width="gridStep" :height="gridStep" patternUnits="userSpaceOnUse"><circle :cx="gridStep / 2" :cy="gridStep / 2" r=".8" fill="currentColor" /></pattern></defs>
+      <defs><pattern id="home-hero-static-dots" :width="gridStep" :height="gridStep" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="1.8" height="1.8" fill="currentColor" /></pattern></defs>
       <text ref="fallbackText" :x="glyphLayout.x" :y="glyphLayout.baseline" :font-size="glyphLayout.fontSize" fill="url(#home-hero-static-dots)">YANCE</text>
     </svg>
   </div>

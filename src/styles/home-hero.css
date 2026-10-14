@@ -255,6 +255,8 @@ html[data-locale='en'] .home-hero-typewriter-line-accent {
 }
 
 .home-hero-particles {
+  font-family: 'Amiri', serif;
+  font-weight: 400;
   --hero-stage-center: #87977c;
   --hero-stage-edge: #788c73;
   --hero-stage-glow: rgba(244, 244, 231, .1);
@@ -298,7 +300,6 @@ html[data-theme='dark'] .home-hero-particles {
   height: 1px;
   opacity: 0;
   pointer-events: none;
-  transition: width 50ms linear, height 50ms linear;
 }
 
 @media (prefers-reduced-motion: reduce) {

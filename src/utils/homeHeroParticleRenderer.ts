@@ -1,5 +1,6 @@
 import type { HomeHeroParticle } from './homeHeroParticlePhysics'
 import type { HomeHeroParticleScene } from './homeHeroParticleScene'
+import { getMimoParticleAppearance } from './mimoParticleModel'
 
 export interface HomeHeroParticleColors { word: string }
 export interface HomeHeroParticleRendererOptions {
@@ -8,7 +9,7 @@ export interface HomeHeroParticleRendererOptions {
   colors: HomeHeroParticleColors
 }
 
-const DOT_RADIUS = 0.8 // 1.6 CSS px diameter, independent of mask sampling.
+const DOT_SIZE = 1.8
 
 export class HomeHeroParticleRenderer {
   private readonly context: CanvasRenderingContext2D
@@ -23,12 +24,11 @@ export class HomeHeroParticleRenderer {
     this.context = context
     this.masterContext = masterContext
     const { width, height } = options.scene
-    this.canvas.width = this.master.width = Math.ceil(width * options.pixelRatio)
-    this.canvas.height = this.master.height = Math.ceil(height * options.pixelRatio)
+    this.canvas.width = this.master.width = Math.floor(width * options.pixelRatio)
+    this.canvas.height = this.master.height = Math.floor(height * options.pixelRatio)
     this.context.setTransform(options.pixelRatio, 0, 0, options.pixelRatio, 0, 0)
     this.masterContext.setTransform(options.pixelRatio, 0, 0, options.pixelRatio, 0, 0)
     this.buildMaster()
-    this.drawStatic()
   }
 
   setColors(colors: HomeHeroParticleColors) {
@@ -44,10 +44,6 @@ export class HomeHeroParticleRenderer {
   }
 
   drawActive(particles: readonly HomeHeroParticle[]) {
-    if (!particles.length) {
-      this.drawStatic()
-      return
-    }
     const { width, height, particles: glyph } = this.options.scene
     this.context.clearRect(0, 0, width, height)
     // Measurements favor one current-position batch for the dense glyph.
@@ -67,14 +63,21 @@ export class HomeHeroParticleRenderer {
   }
 
   private drawPoints(context: CanvasRenderingContext2D, particles: readonly HomeHeroParticle[], home: boolean) {
-    context.fillStyle = this.options.colors.word
-    context.beginPath()
-    for (const p of particles) {
+    let previousColor: string | undefined
+    let previousAlpha: number | undefined
+    for (const [index, p] of particles.entries()) {
       const x = home ? p.homeX : p.x
       const y = home ? p.homeY : p.y
-      context.moveTo(x + DOT_RADIUS, y)
-      context.arc(x, y, DOT_RADIUS, 0, Math.PI * 2)
+      const color = p.color ?? getMimoParticleAppearance(index, p.homeX, this.options.scene.width).color
+      const alpha = home ? 1 : p.opacity ?? 1
+      // Keep the original point order and pixels; avoid redundant native state
+      // assignments for consecutive dots that already use the same values.
+      if (color !== previousColor) context.fillStyle = color
+      if (alpha !== previousAlpha) context.globalAlpha = alpha
+      previousColor = color
+      previousAlpha = alpha
+      context.fillRect(x - DOT_SIZE / 2, y - DOT_SIZE / 2, DOT_SIZE, DOT_SIZE)
     }
-    context.fill()
+    context.globalAlpha = 1
   }
 }

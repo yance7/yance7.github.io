@@ -9,6 +9,8 @@ export interface HomeHeroParticleTarget {
   row: number
   column: number
   settledForMs: number
+  color?: string
+  opacity?: number
 }
 
 export interface HomeHeroTextMask {
@@ -212,33 +214,4 @@ export interface HomeHeroGlyphLayout {
   x: number
   baseline: number
   bounds: { left: number; top: number; width: number; height: number }
-}
-
-export function createHomeHeroTextMask(width: number, height: number, fontFamily: string, fontWeight: string): { rgba: Uint8ClampedArray; layout: HomeHeroGlyphLayout; inkArea: number } {
-  const scratch = document.createElement('canvas')
-  scratch.width = width
-  scratch.height = height
-  const context = scratch.getContext('2d', { willReadFrequently: true })
-  if (!context) throw new Error('HomeHero text mask is unavailable')
-  context.font = `${fontWeight} 100px ${fontFamily}`
-  const base = context.measureText('YANCE')
-  const inkWidth = base.actualBoundingBoxLeft + base.actualBoundingBoxRight || base.width
-  const inkHeight = base.actualBoundingBoxAscent + base.actualBoundingBoxDescent || 80
-  if (inkWidth <= 0) throw new Error('HomeHero display font could not be measured')
-  const fontSize = Math.min(width * (width <= 760 ? 0.82 : 0.74) / inkWidth, height * 0.48 / inkHeight) * 100
-  context.font = `${fontWeight} ${fontSize}px ${fontFamily}`
-  const metrics = context.measureText('YANCE')
-  const left = metrics.actualBoundingBoxLeft || 0
-  const right = metrics.actualBoundingBoxRight || metrics.width
-  const ascent = metrics.actualBoundingBoxAscent || fontSize * 0.72
-  const descent = metrics.actualBoundingBoxDescent || fontSize * 0.08
-  const x = width / 2 + (left - right) / 2
-  const baseline = height / 2 + (ascent - descent) / 2
-  context.fillStyle = '#fff'
-  context.fillText('YANCE', x, baseline)
-  const rgba = context.getImageData(0, 0, width, height).data
-  let inkArea = 0
-  for (let index = 3; index < rgba.length; index += 4) inkArea += rgba[index]! / 255
-  return { rgba, inkArea,
-    layout: { fontSize, x, baseline, bounds: { left: x - left, top: baseline - ascent, width: left + right, height: ascent + descent } } }
 }
