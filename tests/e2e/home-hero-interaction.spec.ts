@@ -407,29 +407,33 @@ test('@particle-v2 recolors every current square without resetting the disturbed
       expected.height = canvas.height
       const context = expected.getContext('2d')!
       context.scale(reference.ratio, reference.ratio)
+      let nativeColorsMatch = true
       points.forEach((point, index) => {
         context.fillStyle = reference.points[index]!.color
+        if (String(context.fillStyle) !== point.color) nativeColorsMatch = false
         context.globalAlpha = point.alpha
         context.fillRect(point.rectX, point.rectY, point.size, point.size)
       })
       const actual = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data
       const intended = context.getImageData(0, 0, canvas.width, canvas.height).data
-      let minimum = 255
-      let maximum = 0
-      let opaqueCount = 0
-      // Premultiplied antialias edges can round a channel by one on readback.
-      // Endpoints apply to opaque pixels; the complete oracle still checks all edges.
-      for (let offset = 0; offset < actual.length; offset += 4) if (actual[offset + 3] === 255) {
-        opaqueCount++
-        minimum = Math.min(minimum, actual[offset]!)
-        maximum = Math.max(maximum, actual[offset]!)
-      }
-      return { equal: actual.every((value, index) => value === intended[index]), minimum, maximum, opaqueCount }
+      // Overlapping antialias edges can round channels even when their combined
+      // alpha becomes 255. Check native source colors exactly, then all composed
+      // pixels against the independent raster. Probe endpoints as solid cells.
+      const probe = document.createElement('canvas')
+      probe.width = probe.height = 1
+      const solid = probe.getContext('2d')!
+      const style = getComputedStyle(canvas.parentElement!)
+      const endpoints = ['--hero-particle-start', '--hero-particle-end'].map(token => {
+        solid.fillStyle = style.getPropertyValue(token).trim()
+        solid.fillRect(0, 0, 1, 1)
+        return [...solid.getImageData(0, 0, 1, 1).data]
+      })
+      return { equal: actual.every((value, index) => value === intended[index]), nativeColorsMatch, endpoints, count: points.length }
     }, reference)
     expect(pixels.equal, 'all actual pixels match the independent theme palette at current positions').toBe(true)
-    expect(pixels.opaqueCount).toBeGreaterThan(0)
-    if (theme === 'dark') expect(pixels.minimum).toBeGreaterThanOrEqual(175)
-    else expect(pixels.maximum).toBeLessThanOrEqual(62)
+    expect(pixels.count).toBe(reference.points.length)
+    expect(pixels.nativeColorsMatch, 'every native point color matches the independent seed blend exactly').toBe(true)
+    expect(pixels.endpoints).toEqual(theme === 'dark' ? [[212, 224, 208, 255], [175, 197, 170, 255]] : [[45, 58, 30, 255], [62, 79, 42, 255]])
   }
   await stage.dispatchEvent('pointerleave', { pointerType: 'mouse', pointerId: 1 })
   await expectRecoveredMark(page)
