@@ -29,16 +29,19 @@
   scroll-behavior: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 2px;
   overscroll-behavior-x: contain; scrollbar-color: var(--gold) var(--surface); touch-action: pan-x pan-y;
 }
-.concert-rail-track { display: flex; align-items: flex-start; gap: var(--space-4); width: max-content; min-width: 100%; }
+.concert-rail-track { display: flex; align-items: stretch; gap: var(--space-4); width: max-content; min-width: 100%; }
 .concert-rail-card {
   flex: 0 0 clamp(252px, 29vw, 370px); min-width: 0; display: grid; gap: var(--space-4);
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-small);
   background: var(--surface); box-shadow: var(--shadow-1); scroll-snap-align: start; scroll-snap-stop: always;
   transition: transform var(--dur-base) var(--ease-spring), border-color var(--dur-base), box-shadow var(--dur-base);
 }
 .concert-rail-card:hover { border-color: var(--gold); box-shadow: var(--interactive-shadow); transform: translateY(var(--motion-control-lift)); }
-.concert-rail-card .concert-poster { width: 100%; max-width: none; }
-.concert-rail-card-info { display: grid; grid-template-columns: auto 1fr; gap: var(--space-3); align-items: start; }
+.concert-rail-card .concert-poster { width: 100%; max-width: none; align-self: start; }
+.concert-rail-card-info { display: grid; grid-template-columns: auto 1fr; gap: var(--space-3); align-items: start; align-content: start; }
+.concert-rail-card-info .concert-info { min-width: 0; overflow-wrap: anywhere; }
 .concert-rail-card-info .concert-date { padding-top: 2px; }
 .concert-rail-card-info .concert-date span { margin-top: 9px; }
 .concert-rail-card-info .concert-info h3 { margin-top: 8px; font-size: clamp(1.45rem, 2.1vw, 2.15rem); }
