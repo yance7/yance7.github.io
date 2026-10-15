@@ -416,13 +416,18 @@ test('@particle-v2 recolors every current square without resetting the disturbed
       const intended = context.getImageData(0, 0, canvas.width, canvas.height).data
       let minimum = 255
       let maximum = 0
-      for (let offset = 0; offset < actual.length; offset += 4) if (actual[offset + 3]! > 240) {
+      let opaqueCount = 0
+      // Premultiplied antialias edges can round a channel by one on readback.
+      // Endpoints apply to opaque pixels; the complete oracle still checks all edges.
+      for (let offset = 0; offset < actual.length; offset += 4) if (actual[offset + 3] === 255) {
+        opaqueCount++
         minimum = Math.min(minimum, actual[offset]!)
         maximum = Math.max(maximum, actual[offset]!)
       }
-      return { equal: actual.every((value, index) => value === intended[index]), minimum, maximum }
+      return { equal: actual.every((value, index) => value === intended[index]), minimum, maximum, opaqueCount }
     }, reference)
     expect(pixels.equal, 'all actual pixels match the independent theme palette at current positions').toBe(true)
+    expect(pixels.opaqueCount).toBeGreaterThan(0)
     if (theme === 'dark') expect(pixels.minimum).toBeGreaterThanOrEqual(175)
     else expect(pixels.maximum).toBeLessThanOrEqual(62)
   }
