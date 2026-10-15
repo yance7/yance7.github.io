@@ -9,7 +9,6 @@ export interface HomeHeroParticleTarget {
   row: number
   column: number
   settledForMs: number
-  color?: string
   opacity?: number
 }
 

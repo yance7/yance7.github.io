@@ -283,7 +283,7 @@ for (const locale of locales) {
     await expect(stage.locator('[data-y-mark], [data-butterfly]')).toHaveCount(0)
     await expect(stage.locator('svg text')).toHaveText('YANCE')
     expect(Number(await stage.getAttribute('data-particle-count'))).toBeGreaterThan(100)
-    expect(Number(await stage.getAttribute('data-particle-count'))).toBeLessThanOrEqual(5200)
+    expect(Number(await stage.getAttribute('data-particle-count'))).toBeLessThanOrEqual(12000)
     expect(await stage.getAttribute('data-field-count')).toBeNull()
     expect(await stage.getAttribute('data-ambient-count')).toBeNull()
     const background = await stage.locator('canvas').evaluate(element => {
@@ -379,17 +379,104 @@ test('@particle-v2 pauses offscreen and resumes without replaying the intro', as
   await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'complete')
 })
 
-test('@particle-v2 preserves the fixed MiMo palette when the site theme changes', async ({ page }) => {
+test('@particle-v2 recolors every current square without resetting the disturbed glyph', async ({ page }) => {
   await page.goto('/')
   await waitForSettledHero(page)
   const stage = page.locator('.home-hero-particles')
   const count = await stage.getAttribute('data-particle-count')
   await savePixels(page)
-  await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'dark'))
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
-  await expect(stage).toHaveAttribute('data-particle-state', 'settled')
-  await expect(stage).toHaveAttribute('data-particle-count', count ?? '')
+  await pointerSweep(page, 300, 'mouse', false)
+  await expect(stage).toHaveAttribute('data-particle-state', 'disturbed')
+  for (const theme of ['dark', 'light', 'dark', 'light']) {
+    const continuity = await page.evaluate(async theme => {
+      const target = window as HeroPixelWindow
+      const before = target.heroPoints!.map(point => [point.x, point.y, point.alpha])
+      document.documentElement.setAttribute('data-theme', theme)
+      await Promise.resolve()
+      return { before, after: target.heroPoints!.map(point => [point.x, point.y, point.alpha]) }
+    }, theme)
+    expect(continuity.after).toEqual(continuity.before)
+    await expect(stage).toHaveAttribute('data-particle-state', 'disturbed')
+    await expect(stage).toHaveAttribute('data-particle-count', count ?? '')
+    const reference = await stage.evaluate(readMimoReferenceGlyph)
+    const pixels = await stage.locator('canvas').evaluate((element, reference) => {
+      const canvas = element as HTMLCanvasElement
+      const points = (window as HeroPixelWindow).heroPoints!
+      const expected = document.createElement('canvas')
+      expected.width = canvas.width
+      expected.height = canvas.height
+      const context = expected.getContext('2d')!
+      context.scale(reference.ratio, reference.ratio)
+      points.forEach((point, index) => {
+        context.fillStyle = reference.points[index]!.color
+        context.globalAlpha = point.alpha
+        context.fillRect(point.rectX, point.rectY, point.size, point.size)
+      })
+      const actual = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data
+      const intended = context.getImageData(0, 0, canvas.width, canvas.height).data
+      let minimum = 255
+      let maximum = 0
+      for (let offset = 0; offset < actual.length; offset += 4) if (actual[offset + 3]! > 240) {
+        minimum = Math.min(minimum, actual[offset]!)
+        maximum = Math.max(maximum, actual[offset]!)
+      }
+      return { equal: actual.every((value, index) => value === intended[index]), minimum, maximum }
+    }, reference)
+    expect(pixels.equal, 'all actual pixels match the independent theme palette at current positions').toBe(true)
+    if (theme === 'dark') expect(pixels.minimum).toBeGreaterThanOrEqual(175)
+    else expect(pixels.maximum).toBeLessThanOrEqual(62)
+  }
+  await stage.dispatchEvent('pointerleave', { pointerType: 'mouse', pointerId: 1 })
   await expectRecoveredMark(page)
+})
+
+test('@particle-v2 recolors during gathering without changing the current draw or entrance clock', async ({ page }) => {
+  await page.addInitScript(() => {
+    type Capture = { first: number[]; color: string; frame: string; phase: string }
+    const target = window as Window & { gatheringPalette?: { before: Capture; after: Capture } }
+    const nativeGetContext = HTMLCanvasElement.prototype.getContext
+    let first: number[] = []
+    let color = ''
+    HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, ...args: unknown[]) {
+      const context = Reflect.apply(nativeGetContext, this, args) as CanvasRenderingContext2D | null
+      if (args[0] === '2d' && this.parentElement?.classList.contains('home-hero-particles') && context) {
+        const clear = context.clearRect.bind(context)
+        const fill = context.fillRect.bind(context)
+        context.clearRect = (...bounds) => { first = []; clear(...bounds) }
+        context.fillRect = (...bounds) => {
+          if (!first.length) { first = bounds; color = String(context.fillStyle) }
+          fill(...bounds)
+        }
+      }
+      return context
+    } as HTMLCanvasElement['getContext']
+    let switching = false
+    const observer = new MutationObserver(() => {
+      const stage = document.querySelector<HTMLElement>('.home-hero-particles')
+      if (switching || stage?.dataset.particleState !== 'gathering' || Number(stage.dataset.frameCount) < 2) return
+      switching = true
+      const capture = (): Capture => ({ first: [...first], color, frame: stage.dataset.frameCount!, phase: stage.dataset.particleState! })
+      const before = capture()
+      document.documentElement.setAttribute('data-theme', 'dark')
+      queueMicrotask(() => queueMicrotask(() => {
+        target.gatheringPalette = { before, after: capture() }
+        observer.disconnect()
+      }))
+    })
+    observer.observe(document, { subtree: true, attributes: true, attributeFilter: ['data-frame-count'] })
+  })
+  await page.goto('/')
+  await expect.poll(() => page.evaluate(() => (window as Window & { gatheringPalette?: unknown }).gatheringPalette)).toBeDefined()
+  const evidence = await page.evaluate(() => (window as Window & { gatheringPalette?: {
+    before: { first: number[]; color: string; frame: string; phase: string }
+    after: { first: number[]; color: string; frame: string; phase: string }
+  } }).gatheringPalette!)
+  expect(evidence.before.first).toHaveLength(4)
+  expect(evidence.after.first).toEqual(evidence.before.first)
+  expect(evidence.after.frame).toBe(evidence.before.frame)
+  expect(evidence.after.phase).toBe('gathering')
+  expect(evidence.after.color).not.toBe(evidence.before.color)
+  await waitForSettledHero(page)
 })
 
 test('shows a static YANCE mark when reduced motion is requested', async ({ page }) => {
@@ -418,6 +505,10 @@ test('keeps a static YANCE mark when data saving is enabled', async ({ page }) =
   await expect(stage).toHaveAttribute('data-render-mode', 'static')
   await expect(stage.locator('canvas')).toHaveCount(0)
   await expect(stage.locator('.home-hero-particles-word')).toHaveText('YANCE')
+  for (const theme of ['dark', 'light']) {
+    await page.evaluate(theme => document.documentElement.setAttribute('data-theme', theme), theme)
+    await expect(stage.locator('.home-hero-particles-word')).toHaveCSS('color', theme === 'dark' ? 'rgb(212, 224, 208)' : 'rgb(45, 58, 30)')
+  }
 })
 
 test('keeps YANCE visible in forced colors', async ({ page }) => {
