@@ -257,6 +257,27 @@ test('concert archive exposes a native horizontal scrolling contract', async ({ 
   expect(scrollState.overflowX).toMatch(/auto|scroll/)
 })
 
+test('concert archive scrolls through native Android touch input without opening the poster', async ({ page, context, browserName, isMobile }) => {
+  test.skip(browserName !== 'chromium' || !isMobile, 'Native CDP touch input is verified in the Android Chromium project')
+  await gotoConcerts(page)
+  await page.evaluate(() => document.fonts.ready)
+  await page.locator('.concert-rail-card').first().scrollIntoViewIfNeeded()
+  const rail = page.locator('.concert-archive-rail')
+  const start = await rail.evaluate(element => {
+    const box = element.getBoundingClientRect()
+    return { x: box.left + box.width * .8, y: Math.max(100, Math.min(innerHeight - 194, box.top + 120)) }
+  })
+  const client = await context.newCDPSession(page)
+  await client.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [start] })
+  for (let step = 1; step <= 12; step++) {
+    await client.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: start.x - step * 20, y: start.y }] })
+    await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => resolve())))
+  }
+  await client.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+  await expect.poll(() => rail.evaluate(element => element.scrollLeft)).toBeGreaterThan(0)
+  await expect(page.locator('.lightbox')).toHaveCount(0)
+})
+
 test('concert poster hover feedback is disabled on coarse pointers', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'webkit-mobile', 'Coarse-pointer contract is verified on the mobile WebKit project')
   await gotoConcerts(page)
