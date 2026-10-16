@@ -1,4 +1,4 @@
-// Independent browser oracle for the MiMo mask, stride, homes and palette.
+// Independent browser oracle for the Amiri mask, bounded homes and theme palette.
 // Keep this separate from production functions so regressions remain observable.
 export function readMimoReferenceGlyph(stage: HTMLElement) {
   const width = Math.floor(stage.getBoundingClientRect().width - stage.clientLeft * 2)
@@ -26,16 +26,33 @@ export function readMimoReferenceGlyph(stage: HTMLElement) {
   context.fillStyle = '#fff'
   context.fillText('YANCE', padding - left, padding + ascent)
   const rgba = context.getImageData(0, 0, mask.width, mask.height).data
-  const raw: { x: number; y: number }[] = []
+  const raw: { x: number; y: number; contour: boolean }[] = []
+  const ink = (x: number, y: number) => x >= 0 && y >= 0 && x < mask.width && y < mask.height
+    && rgba[(y * mask.width + x) * 4 + 3]! > 40
   for (let y = 0; y < mask.height; y += 2) for (let x = 0; x < mask.width; x += 2) {
-    if (rgba[(y * mask.width + x) * 4 + 3]! > 40) raw.push({ x: width / 2 - mask.width / 2 + x, y: height / 2 - mask.height / 2 + y })
+    if (ink(x, y)) raw.push({ x: width / 2 - mask.width / 2 + x, y: height / 2 - mask.height / 2 + y,
+      contour: [[-2, 0], [2, 0], [0, -2], [0, 2]].some(([dx, dy]) => !ink(x + dx!, y + dy!)) })
   }
-  const budget = Math.max(900, Math.min(5200, Math.floor(width * height / 90)))
-  const stride = Math.max(1, Math.ceil(raw.length / budget))
-  const points = raw.filter((_point, index) => index % stride === 0).map((point, index) => {
+  const contourCount = raw.filter(point => point.contour).length
+  const protectedContour = contourCount <= 12000
+  const candidates = raw.filter(point => !protectedContour || !point.contour)
+  const quota = Math.min(candidates.length, protectedContour ? 12000 - contourCount : 12000)
+  const retained = new Set(candidates.filter((_point, i) => Math.floor((i + 1) * quota / candidates.length) !== Math.floor(i * quota / candidates.length)))
+  const sampled = raw.length <= 12000 ? raw : raw.filter(point => protectedContour && point.contour || retained.has(point))
+  const style = getComputedStyle(stage)
+  const channels = (name: string) => {
+    // Let the browser normalize CSS colors independently from the renderer parser.
+    context.fillStyle = style.getPropertyValue(name).trim()
+    context.clearRect(0, 0, 1, 1)
+    context.fillRect(0, 0, 1, 1)
+    return [...context.getImageData(0, 0, 1, 1).data].slice(0, 3)
+  }
+  const start = channels('--hero-particle-start')
+  const end = channels('--hero-particle-end')
+  const points = sampled.map((point, index) => {
     const seed = ((9301 * index + 49297) % 233280) / 233280
     const blend = Math.max(0, Math.min(1, point.x / Math.max(1, width) + (seed - .5) * .35))
-    return { ...point, color: `rgb(${Math.round(45 + 17 * blend)},${Math.round(58 + 21 * blend)},${Math.round(30 + 12 * blend)})` }
+    return { x: point.x, y: point.y, color: `rgb(${start.map((value, channel) => Math.round(value + (end[channel]! - value) * blend)).join(',')})` }
   })
   return { width, height, ratio: Math.min(devicePixelRatio || 1, 2), points }
 }

@@ -17,15 +17,92 @@ describe('MiMo particle settings', () => {
       fontFamily: 'Amiri, serif', fontWeight: '400', gridStep: 2,
       alphaThreshold: 40, pointSize: 1.8, radius: 120, maxOffset: 40,
       pointerBlend: 0.18, particleBlend: 0.55,
-      entranceSeconds: 1.6, entranceDelaySeconds: 0.42, driftAmplitude: 0.15,
-      colorStart: '#2d3a1e', colorEnd: '#3e4f2a'
+      entranceSeconds: 1.6, entranceDelaySeconds: 0.42, driftAmplitude: 0.15
     })
   })
 
-  it('calculates the area budget with the original lower and upper bounds', () => {
-    expect(getMimoParticleBudget(350, 300)).toBe(1166)
-    expect(getMimoParticleBudget(1260, 480)).toBe(5200)
-    expect(getMimoParticleBudget(100, 100)).toBe(900)
+  it('bounds point allocation without penalizing ordinary small screens', () => {
+    expect(getMimoParticleBudget()).toBe(12000)
+  })
+
+  it.each([
+    { width: 350, height: 300, maskWidth: 170, maskHeight: 34, count: 1445 },
+    { width: 1114, height: 478, maskWidth: 206, maskHeight: 138, count: 7107 }
+  ])('retains the complete ordinary $count-point mask instead of halving it', fixture => {
+    const rgba = new Uint8ClampedArray(fixture.maskWidth * fixture.maskHeight * 4).fill(255)
+    const scene = createMimoParticleScene({ ...fixture, rgba })
+    expect(scene.sampledCount).toBe(fixture.count)
+    expect(scene.particles).toHaveLength(fixture.count)
+    expect(new Set(scene.particles.map(point => `${point.homeX}:${point.homeY}`)).size).toBe(fixture.count)
+  })
+
+  it('bounds an oversized mask without a stride cliff and preserves its contour and counter edges', () => {
+    const maskWidth = 280
+    const maskHeight = 240
+    const rgba = new Uint8ClampedArray(maskWidth * maskHeight * 4).fill(255)
+    for (let row = 30; row < 70; row++) for (let column = 40; column < 60; column++) {
+      rgba[((row * 2) * maskWidth + column * 2) * 4 + 3] = 0
+    }
+    const mask = { width: 1200, height: 500, maskWidth, maskHeight, rgba }
+    const scene = createMimoParticleScene(mask)
+    expect(scene.sampledCount).toBe(16000)
+    expect(scene.particles).toHaveLength(12000)
+    expect(scene.particles.length).toBeLessThanOrEqual(getMimoParticleBudget())
+    const homes = new Set(scene.particles.map(point => `${point.column}:${point.row}`))
+    for (const [column, row] of [[0, 0], [139, 0], [0, 119], [139, 119], [39, 30], [60, 30], [40, 29], [40, 70]]) {
+      expect(homes.has(`${column}:${row}`), `missing contour ${column}:${row}`).toBe(true)
+    }
+    expect(new Set(scene.particles.map(point => point.row)).size).toBe(120)
+    expect(createMimoParticleScene(mask).particles).toEqual(scene.particles)
+  })
+
+  it('keeps almost all samples when a mask only slightly exceeds the bound', () => {
+    const scene = createMimoParticleScene({ width: 1200, height: 500, maskWidth: 242, maskHeight: 200,
+      rgba: new Uint8ClampedArray(242 * 200 * 4).fill(255) })
+    expect(scene.sampledCount).toBe(12100)
+    expect(scene.particles).toHaveLength(12000)
+    expect(scene.particles.length / scene.sampledCount).toBeGreaterThan(.99)
+  })
+
+  it('uniformly bounds a pathological mask whose every point is a contour', () => {
+    const maskWidth = 400
+    const maskHeight = 400
+    const rgba = new Uint8ClampedArray(maskWidth * maskHeight * 4)
+    for (let y = 0; y < maskHeight; y += 2) for (let x = 0; x < maskWidth; x += 2) {
+      if ((x / 2 + y / 2) % 2 === 0) rgba[(y * maskWidth + x) * 4 + 3] = 255
+    }
+    const mask = { width: 1200, height: 500, maskWidth, maskHeight, rgba }
+    const scene = createMimoParticleScene(mask)
+    expect(scene.sampledCount).toBe(20000)
+    expect(scene.particles).toHaveLength(12000)
+    expect(new Set(scene.particles.map(point => point.row)).size).toBe(200)
+    expect(new Set(scene.particles.map(point => `${point.row}:${point.column}`)).size).toBe(12000)
+    for (let row = 0; row < 200; row++) expect(scene.particles.filter(point => point.row === row)).toHaveLength(60)
+  })
+
+  it('keeps representative motion identical when more samples are retained', () => {
+    const dense = createMimoParticleScene({ width: 600, height: 300, maskWidth: 20, maskHeight: 20,
+      rgba: new Uint8ClampedArray(20 * 20 * 4).fill(255) })
+    const sparse = { ...dense, particles: [{ ...dense.particles[0]! }] }
+    const engines = [sparse, dense].map(scene => new MimoParticleEngine(scene, { startedAt: 0 }))
+    engines.forEach(engine => engine.gather(0))
+    for (const time of [.1, .3, .6, 1]) {
+      engines.forEach(engine => engine.advanceTo(time))
+      expect(dense.particles[0]).toEqual(sparse.particles[0])
+    }
+    engines.forEach(engine => {
+      engine.reset(3)
+      engine.pointer.move({ x: 310, y: 160, pointerType: 'mouse', pointerId: 1, at: 3 })
+    })
+    for (const time of [3.01, 3.02, 3.03]) {
+      engines.forEach(engine => engine.advanceTo(time))
+      expect(dense.particles[0]).toEqual(sparse.particles[0])
+    }
+    engines.forEach(engine => engine.pointer.release(3.04))
+    for (let frame = 1; frame <= 9; frame++) {
+      engines.forEach(engine => engine.advanceTo(3.04 + frame / 60))
+      expect(dense.particles[0]).toEqual(sparse.particles[0])
+    }
   })
 
   it('uses viewport-based clamp typography and then the 92% width cap', () => {

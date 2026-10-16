@@ -10,15 +10,13 @@ export const MIMO_PARTICLE_SETTINGS = Object.freeze({
   particleBlend: 0.55,
   entranceSeconds: 1.6,
   entranceDelaySeconds: 0.42,
-  driftAmplitude: 0.15,
-  colorStart: '#2d3a1e',
-  colorEnd: '#3e4f2a'
+  driftAmplitude: 0.15
 })
 
 export interface MimoPosition { x: number; y: number }
 
-export function getMimoParticleBudget(width: number, height: number) {
-  return Math.max(900, Math.min(5200, Math.floor(width * height / 90)))
+export function getMimoParticleBudget() {
+  return 12000
 }
 
 export function getMimoFontSize(viewportWidth: number, containerWidth: number, textWidthAt100: number, remSize = 16) {
@@ -40,19 +38,39 @@ export function getMimoRepulsion(particle: MimoPosition, pointer: MimoPosition, 
 export interface MimoTextMask { maskWidth: number; maskHeight: number; rgba: ArrayLike<number> }
 
 export function createMimoParticleScene(mask: MimoTextMask & { width: number; height: number }): HomeHeroParticleScene {
-  const samples: HomeHeroParticleTarget[] = []
+  const budget = getMimoParticleBudget()
+  const opaque = (x: number, y: number) => x >= 0 && y >= 0 && x < mask.maskWidth && y < mask.maskHeight
+    && (mask.rgba[(y * mask.maskWidth + x) * 4 + 3] ?? 0) > 40
+  const boundary = (x: number, y: number) => !opaque(x - 2, y) || !opaque(x + 2, y) || !opaque(x, y - 2) || !opaque(x, y + 2)
+  let sampledCount = 0
+  let contourCount = 0
   for (let y = 0; y < mask.maskHeight; y += 2) {
     for (let x = 0; x < mask.maskWidth; x += 2) {
-      if ((mask.rgba[(y * mask.maskWidth + x) * 4 + 3] ?? 0) <= 40) continue
-      const homeX = mask.width / 2 - mask.maskWidth / 2 + x
-      const homeY = mask.height / 2 - mask.maskHeight / 2 + y
-      samples.push({ id: samples.length, homeX, homeY, x: homeX, y: homeY, vx: 0, vy: 0, row: y / 2, column: x / 2, settledForMs: 40 })
+      if (!opaque(x, y)) continue
+      sampledCount++
+      if (boundary(x, y)) contourCount++
     }
   }
-  const stride = Math.max(1, Math.ceil(samples.length / getMimoParticleBudget(mask.width, mask.height)))
-  const particles = samples.filter((_point, index) => index % stride === 0)
-  particles.forEach((point, index) => { point.id = index })
-  return { width: mask.width, height: mask.height, gridStep: 2, particles, sampledCount: samples.length, cellSize: 24, cells: new Map() }
+  const preserveContour = contourCount <= budget
+  const population = preserveContour ? sampledCount - contourCount : sampledCount
+  const quota = Math.min(population, preserveContour ? budget - contourCount : budget)
+  let eligibleIndex = 0
+  const particles: HomeHeroParticleTarget[] = []
+  for (let y = 0; y < mask.maskHeight; y += 2) {
+    for (let x = 0; x < mask.maskWidth; x += 2) {
+      if (!opaque(x, y)) continue
+      if (sampledCount > budget && !(preserveContour && boundary(x, y))) {
+        // Evenly distribute a fixed quota without the old ceil-stride cliff.
+        const keep = Math.floor((eligibleIndex + 1) * quota / population) > Math.floor(eligibleIndex * quota / population)
+        eligibleIndex++
+        if (!keep) continue
+      }
+      const homeX = mask.width / 2 - mask.maskWidth / 2 + x
+      const homeY = mask.height / 2 - mask.maskHeight / 2 + y
+      particles.push({ id: particles.length, homeX, homeY, x: homeX, y: homeY, vx: 0, vy: 0, row: y / 2, column: x / 2, settledForMs: 40 })
+    }
+  }
+  return { width: mask.width, height: mask.height, gridStep: 2, particles, sampledCount, cellSize: 24, cells: new Map() }
 }
 
 export function createMimoTextMask(width: number, height: number, fontFamily: string, fontWeight: string) {
@@ -110,10 +128,7 @@ export function getMimoParticleAppearance(index: number, homeX: number, width: n
   const seed = ((9301 * index + 49297) % 233280) / 233280
   const depth = 0.45 + ((233 * index + 97) % 1000) / 1000 * 0.9
   const blend = Math.max(0, Math.min(1, homeX / Math.max(1, width) + (seed - 0.5) * 0.35))
-  const start = [45, 58, 30]
-  const end = [62, 79, 42]
-  const channels = start.map((value, channel) => Math.round(value + (end[channel]! - value) * blend))
-  return { seed, depth, color: `rgb(${channels.join(',')})` }
+  return { seed, depth, blend }
 }
 
 interface MimoInput extends MimoPosition { pointerId: number; pointerType: string; at: number }
@@ -162,8 +177,7 @@ export class MimoParticleEngine {
     this.clock = options.startedAt
     this.pointer = new MimoPointer(scene.width, scene.height)
     this.starts = scene.particles.map((point, index) => {
-      const { seed, depth, color } = getMimoParticleAppearance(index, point.homeX, scene.width)
-      point.color = color
+      const { seed, depth } = getMimoParticleAppearance(index, point.homeX, scene.width)
       point.opacity = 1
       const angle = seed * Math.PI * 2
       const spread = 180 * (0.35 + 0.75 * depth)

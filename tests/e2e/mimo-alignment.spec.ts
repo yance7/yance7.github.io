@@ -167,7 +167,7 @@ test('MiMo cursor enlarges for an anchor without href', async ({ page }) => {
 })
 
 for (const route of ['/', '/zh-hk/', '/en/']) {
-  test(`MiMo ${route} samples loaded Amiri on a 2px grid with the area budget`, async ({ page }) => {
+  test(`MiMo ${route} retains the loaded Amiri 2px samples within the point cap`, async ({ page }) => {
     await page.goto(route)
     const stage = page.locator('.home-hero-particles')
     await expect(stage).toHaveAttribute('data-render-mode', 'canvas')
@@ -178,10 +178,9 @@ for (const route of ['/', '/zh-hk/', '/en/']) {
       const width = Math.floor(stage.getBoundingClientRect().width - stage.clientLeft * 2)
       const height = Math.floor(stage.getBoundingClientRect().height - stage.clientTop * 2)
       const source = Number(stage.dataset.sourceParticleCount)
-      const budget = Math.max(900, Math.min(5200, Math.floor(width * height / 90)))
       return {
         font: [...document.fonts].some(face => face.family.includes('Amiri') && face.weight === '400' && face.status === 'loaded'),
-        count: Number(stage.dataset.particleCount), expected: Math.ceil(source / Math.max(1, Math.ceil(source / budget))),
+        count: Number(stage.dataset.particleCount), expected: Math.min(source, 12000), source,
         ratio: Number(stage.dataset.pixelRatio), expectedRatio: Math.min(devicePixelRatio || 1, 2),
         width: canvas.width, height: canvas.height, expectedWidth: Math.floor(width * Math.min(devicePixelRatio || 1, 2)),
         expectedHeight: Math.floor(height * Math.min(devicePixelRatio || 1, 2))
@@ -191,7 +190,9 @@ for (const route of ['/', '/zh-hk/', '/en/']) {
     await expect(stage).toHaveAttribute('data-grid-step', '2')
     expect(result.count).toBe(result.expected)
     expect(result.count).toBeGreaterThan(100)
-    expect(result.count).toBeLessThanOrEqual(5200)
+    expect(result.count).toBeLessThanOrEqual(12000)
+    expect(result.count / result.source).toBeGreaterThanOrEqual(.9)
+    expect((await stage.evaluate(readMimoReferenceGlyph)).points).toHaveLength(result.count)
     expect(result.ratio).toBe(result.expectedRatio)
     expect(result.width).toBe(result.expectedWidth)
     expect(result.height).toBe(result.expectedHeight)
@@ -335,7 +336,11 @@ test('MiMo static canvas matches an independently reconstructed sampled glyph', 
   await page.goto('/')
   const stage = page.locator('.home-hero-particles')
   await expect(stage).toHaveAttribute('data-render-mode', 'canvas')
-  await expectSampledHomes(page)
+  for (const theme of ['light', 'dark', 'light']) {
+    await page.evaluate(theme => document.documentElement.setAttribute('data-theme', theme), theme)
+    await expectSampledHomes(page)
+    await expect(stage).toHaveAttribute('data-animation-running', 'false')
+  }
 })
 
 test('MiMo ring and dot follow the pointer directly with exact hover sizes', async ({ page }) => {
