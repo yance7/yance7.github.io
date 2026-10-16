@@ -56,7 +56,11 @@ function allowed() { return !motionMedia?.matches && canRenderCanvas() }
 function running() { return !disposed && allowed() && visible && focused && pageVisible && renderMode.value === 'canvas' }
 function colors(): HomeHeroParticleColors {
   const style = getComputedStyle(stage.value ?? document.documentElement)
-  return { word: style.getPropertyValue('--hero-particle').trim() }
+  const fallback = style.getPropertyValue('--hero-particle').trim()
+  return {
+    start: style.getPropertyValue('--hero-particle-start').trim() || fallback,
+    end: style.getPropertyValue('--hero-particle-end').trim() || fallback
+  }
 }
 function clearFrame() {
   if (frameId) cancelAnimationFrame(frameId)
