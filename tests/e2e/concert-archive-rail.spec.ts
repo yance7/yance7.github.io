@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { concerts } from '../../src/data/concerts'
 
 const archiveIds = [
   'fforever-2026-10-06',
@@ -256,6 +257,27 @@ test('concert archive exposes a native horizontal scrolling contract', async ({ 
   expect(scrollState.overflowX).toMatch(/auto|scroll/)
 })
 
+test('concert archive scrolls through native Android touch input without opening the poster', async ({ page, context, browserName, isMobile }) => {
+  test.skip(browserName !== 'chromium' || !isMobile, 'Native CDP touch input is verified in the Android Chromium project')
+  await gotoConcerts(page)
+  await page.evaluate(() => document.fonts.ready)
+  await page.locator('.concert-rail-card').first().scrollIntoViewIfNeeded()
+  const rail = page.locator('.concert-archive-rail')
+  const start = await rail.evaluate(element => {
+    const box = element.getBoundingClientRect()
+    return { x: box.left + box.width * .8, y: Math.max(100, Math.min(innerHeight - 194, box.top + 120)) }
+  })
+  const client = await context.newCDPSession(page)
+  await client.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [start] })
+  for (let step = 1; step <= 12; step++) {
+    await client.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: start.x - step * 20, y: start.y }] })
+    await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => resolve())))
+  }
+  await client.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+  await expect.poll(() => rail.evaluate(element => element.scrollLeft)).toBeGreaterThan(0)
+  await expect(page.locator('.lightbox')).toHaveCount(0)
+})
+
 test('concert poster hover feedback is disabled on coarse pointers', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'webkit-mobile', 'Coarse-pointer contract is verified on the mobile WebKit project')
   await gotoConcerts(page)
@@ -290,8 +312,87 @@ const concertRoutes = [
   { locale: 'en', path: '/en/concerts/' }
 ]
 
+async function expectUniformCards(page: Page) {
+  await page.evaluate(() => document.fonts.ready)
+  const geometry = await page.locator('.concert-rail-card').evaluateAll(elements => elements.map(element => {
+    const card = element.getBoundingClientRect()
+    const poster = element.querySelector<HTMLElement>('.concert-poster')!.getBoundingClientRect()
+    const info = element.querySelector<HTMLElement>('.concert-rail-card-info')!.getBoundingClientRect()
+    const text = [...element.querySelectorAll<HTMLElement>('.concert-info > *, .concert-date')]
+    return { id: element.getAttribute('data-concert-id'), width: card.width, height: card.height,
+      posterWidth: poster.width, posterHeight: poster.height, infoStart: info.top - card.top, gap: info.top - poster.bottom,
+      clipped: text.filter(node => {
+        const box = node.getBoundingClientRect()
+        return node.scrollWidth > node.clientWidth + 1 || node.scrollHeight > node.clientHeight + 1
+          || box.bottom > card.bottom - 1 || box.right > card.right - 1 || box.left < card.left + 1
+      }).map(node => node.textContent),
+      fit: getComputedStyle(element.querySelector('.poster-foreground')!).objectFit }
+  }))
+  expect(geometry).toHaveLength(concerts.length)
+  for (const key of ['width', 'height', 'infoStart', 'gap'] as const) {
+    const values = geometry.map(card => card[key])
+    expect(Math.max(...values) - Math.min(...values), `all cards have uniform ${key}`).toBeLessThanOrEqual(1)
+  }
+  for (const card of geometry) {
+    expect(Math.abs(card.posterHeight - card.posterWidth * 4 / 3), `${card.id} poster ratio`).toBeLessThanOrEqual(1)
+    expect(card.clipped, `${card.id} complete text`).toEqual([])
+    expect(card.fit).toBe('contain')
+  }
+  expect(await page.evaluate(() => Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - innerWidth)).toBeLessThanOrEqual(1)
+}
+
+for (const route of concertRoutes) for (const width of [320, 390, 768, 1024, 1440]) for (const theme of ['light', 'dark']) {
+  test(`uniform card geometry: ${route.locale} ${width}px ${theme}`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 1000 })
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await gotoConcertRoute(page, route.path)
+    await expect(page.locator('.concert-rail-card')).toHaveCount(concerts.length)
+    await page.evaluate(theme => document.documentElement.setAttribute('data-theme', theme), theme)
+    await expectUniformCards(page)
+  })
+}
+
+test('uniform cards retain complete text at 200 percent text scaling and after resize', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  await gotoConcertRoute(page, '/en/concerts/')
+  // Double each text element's computed font size. This is text-only scaling,
+  // not a viewport simulation or a claim of native browser page zoom coverage.
+  await page.locator('.concert-rail-card').evaluateAll(cards => {
+    const nodes = cards.flatMap(card => [...card.querySelectorAll<HTMLElement>('.concert-info > *, .concert-date')])
+    const sizes = nodes.map(node => getComputedStyle(node).fontSize)
+    nodes.forEach((node, index) => { node.style.fontSize = `${Number.parseFloat(sizes[index]!) * 2}px` })
+  })
+  await expectUniformCards(page)
+  await page.setViewportSize({ width: 320, height: 844 })
+  await expectUniformCards(page)
+})
+
+test('uniform adjacent cards retain default motion styling after reveal', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  await gotoConcerts(page)
+  const cards = page.locator('.concert-rail-card')
+  await cards.first().scrollIntoViewIfNeeded()
+  await page.mouse.move(0, 0)
+  for (let i = 0; i < 3; i++) await expect(cards.nth(i)).toHaveClass(/revealed/)
+  await expect.poll(async () => cards.nth(2).evaluate(element => getComputedStyle(element).opacity)).toBe('1')
+  await expectUniformCards(page)
+})
+
+test('uniform cards survive actual language navigation after fonts are ready', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await gotoConcerts(page)
+  await expectUniformCards(page)
+  for (const route of ['/en/concerts/', '/zh-hk/concerts/', '/concerts/']) {
+    await page.locator(`.locale-switcher-desktop a[href="${route}"]`).click()
+    await expect(page.locator('.concert-rail-card')).toHaveCount(concerts.length)
+    await expectUniformCards(page)
+  }
+})
+
 for (const route of concertRoutes) {
-  for (const width of [390, 768, 1024, 1440]) {
+  for (const width of [320, 390, 768, 1024, 1440]) {
     test(`concert archive stays inside the viewport: ${route.locale} ${width}px`, async ({ page }) => {
       await page.setViewportSize({ width, height: 900 })
       await gotoConcertRoute(page, route.path)
