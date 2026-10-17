@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import '../styles/home-hero.css'
+import '../fonts-home-hero.css'
 import { computed } from 'vue'
 import { getLocalizedHomeCopy } from '../data/locales'
 import { useHomeHeroIntro } from '../composables/useHomeHeroIntro'
@@ -29,19 +30,20 @@ const { state, animateParticles, isIntroActive, introStartedAt } = useHomeHeroIn
           :greeting="greeting"
           :statement="statement"
           :final-state="!isIntroActive"
+          :started-at="introStartedAt"
         />
 
         <div class="home-hero-actions">
           <a class="hero-action primary" href="#selected-work" v-magnetic>
             <span class="hero-action__visual" data-magnetic-visual>
-              <span>{{ messages.actions.selectedWork }}</span>
-              <span aria-hidden="true">↗</span>
+              <span class="hero-action__label">{{ messages.actions.selectedWork }}</span>
+              <span class="hero-action__arrow" aria-hidden="true">↗</span>
             </span>
           </a>
           <a class="hero-action secondary" href="#home-worlds" v-magnetic>
             <span class="hero-action__visual" data-magnetic-visual>
-              <span>{{ messages.actions.exploreWorlds }}</span>
-              <span aria-hidden="true">↓</span>
+              <span class="hero-action__label">{{ messages.actions.exploreWorlds }}</span>
+              <span class="hero-action__arrow" aria-hidden="true">↓</span>
             </span>
           </a>
         </div>

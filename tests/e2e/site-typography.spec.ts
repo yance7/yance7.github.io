@@ -69,6 +69,75 @@ async function readRenderedFontNames(page: Page, selector: string) {
 }
 
 for (const locale of locales) {
+  test(`${locale.name} greeting really renders WenKai without changing the particle face`, async ({ page }) => {
+    await page.goto(locale.homeRoute)
+    const greeting = page.locator('.home-hero-typewriter')
+    await expect(greeting).toHaveAttribute('data-font-state', 'ready')
+    await expect(greeting).toHaveCSS('font-weight', '400')
+    await expect(page.locator('.home-hero-particles')).toHaveCSS('font-family', 'Amiri, serif')
+    if (page.context().browser()?.browserType().name() === 'chromium') {
+      for (const selector of ['.home-hero-typewriter-line-greeting', '.home-hero-typewriter-copy']) {
+        const fonts = await readRenderedFontEntries(page, selector)
+        expect(fonts.filter(({ glyphCount }) => glyphCount > 0).every(({ familyName, isCustomFont }) =>
+          /LXGW WenKai TC|霞鶩文楷 TC/.test(familyName) && isCustomFont
+        ), JSON.stringify(fonts)).toBe(true)
+        expect(fonts.some(({ glyphCount }) => glyphCount > 0)).toBe(true)
+      }
+    }
+    const requests: string[] = []
+    page.on('request', request => requests.push(request.url()))
+    await page.goto(locale.archiveRoute)
+    await expect(page.locator('.hero-title').first()).toBeVisible()
+    expect(requests.filter(url => /hero-greeting-wenkai.*\.woff2/.test(url))).toEqual([])
+  })
+}
+
+test('a rejected greeting font leaves complete readable fallback text', async ({ page }) => {
+  await page.route('**/hero-greeting-wenkai-*.woff2', route => route.abort('failed'))
+  await page.goto('/en/')
+  const greeting = page.locator('.home-hero-typewriter')
+  await expect(greeting).toHaveAttribute('data-font-state', 'fallback')
+  await expect(greeting).toHaveAttribute('data-final-state', 'true')
+  await expect(greeting).toBeVisible()
+  await expect(page.locator('h1.home-hero-title')).toHaveText('Hi, I’m Yance Welcome to my world')
+  await expect(page.locator('.home-hero-typewriter-line-greeting')).toHaveCSS('clip-path', 'none')
+  await expect(page.locator('.home-hero-typewriter-line-statement')).toHaveCSS('clip-path', 'none')
+  await expect(page.locator('.home-hero-particles')).toHaveCSS('font-family', 'Amiri, serif')
+})
+
+test('a late greeting response cannot replay typing or block the global font signal forever', async ({ page }) => {
+  let release = () => {}
+  const barrier = new Promise<void>(resolve => { release = resolve })
+  await page.route('**/hero-greeting-wenkai-*.woff2', async route => {
+    await barrier
+    await route.continue()
+  })
+  try {
+    await page.goto('/zh-hk/', { waitUntil: 'domcontentloaded' })
+    const greeting = page.locator('.home-hero-typewriter')
+    await expect(greeting).toHaveAttribute('data-font-state', 'fallback')
+    await expect(greeting).toBeVisible()
+    await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'fallback', { timeout: 8000 })
+    const before = await greeting.evaluate(element => ({
+      font: getComputedStyle(element).fontFamily,
+      text: element.textContent,
+      clip: [...element.children].map(line => getComputedStyle(line).clipPath)
+    }))
+    const response = page.waitForResponse('**/hero-greeting-wenkai-*.woff2')
+    release()
+    await response
+    await page.evaluate(() => document.fonts.ready)
+    await expect(greeting).toHaveAttribute('data-font-state', 'fallback')
+    await expect(greeting).toHaveAttribute('data-final-state', 'true')
+    expect(await greeting.evaluate(element => ({
+      font: getComputedStyle(element).fontFamily,
+      text: element.textContent,
+      clip: [...element.children].map(line => getComputedStyle(line).clipPath)
+    }))).toEqual(before)
+  } finally { release() }
+})
+
+for (const locale of locales) {
   test(`${locale.name} loads its font stylesheet and used font faces after first content mounts`, async ({ page }) => {
     await page.addInitScript(() => {
       type MountEvidence = {
@@ -228,13 +297,8 @@ for (const locale of locales) {
     if (isChromium) {
       const homeText = await page.locator('.home-hero-typewriter').innerText()
 
-      if (locale.name === 'English') {
-        expect(renderedHomeFonts.some((font) => /Georgia|Times|Liberation Serif/i.test(font))).toBe(true)
-      } else {
-        expect(homeText).toMatch(/\p{Script=Han}/u)
-        expect(renderedHomeFonts.some((font) => /Noto Sans|PingFang|MiSans|Microsoft YaHei|Microsoft JhengHei/i.test(font))).toBe(true)
-        expect(renderedHomeFonts.some((font) => /Noto Serif/i.test(font))).toBe(false)
-      }
+      if (locale.name !== 'English') expect(homeText).toMatch(/\p{Script=Han}/u)
+      expect(renderedHomeFonts.some((font) => /LXGW WenKai TC|霞鶩文楷 TC/i.test(font))).toBe(true)
     }
 
     if (locale.name === 'English') {
@@ -245,7 +309,7 @@ for (const locale of locales) {
       expect(lightHome.body).toContain('MiSans')
       expect(lightHome.body).toContain(locale.cjkSans)
     }
-    expect(lightHome.homeTitle).toContain('Georgia')
+    expect(lightHome.homeTitle).toContain('Yance Hero WenKai')
     expect(lightHome.homeTitle).toContain(locale.name === 'English' ? 'Noto Sans SC Variable' : locale.cjkSans)
     expect(lightHome.action).toContain('Inter Variable')
     expect(lightHome.navigation).toContain('Inter Variable')

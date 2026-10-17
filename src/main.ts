@@ -28,13 +28,16 @@ const fontStylesheets = {
 } as const
 
 async function loadFonts() {
-  try {
-    await fontStylesheets[locale]()
-    await document.fonts.ready
-    document.documentElement.dataset.fontsReady = 'ready'
-  } catch {
-    document.documentElement.dataset.fontsReady = 'fallback'
-  }
+  let deadline: ReturnType<typeof setTimeout> | undefined
+  const loading = fontStylesheets[locale]()
+    .then(() => document.fonts.ready)
+    .then(() => 'ready' as const, () => 'fallback' as const)
+  const fallback = new Promise<'fallback'>(resolve => {
+    deadline = setTimeout(() => resolve('fallback'), 4000)
+  })
+  // Scroll restoration and the adaptive header need a terminal signal even on stalled networks.
+  document.documentElement.dataset.fontsReady = await Promise.race([loading, fallback])
+  clearTimeout(deadline)
 }
 
 const fontLoadTimeout = 2400
