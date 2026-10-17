@@ -1,0 +1,8 @@
+/* Homepage greeting only. Upstream names and copyright remain in the subset. */
+@font-face {
+  font-family: 'Yance Hero WenKai';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/hero-greeting-wenkai-tc-regular.woff2') format('woff2');
+}

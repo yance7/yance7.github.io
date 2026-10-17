@@ -398,6 +398,14 @@ html[data-locale='en'] .hero-title.hero-lyric .lyric-space {
   width: .3em;
   flex: 0 0 auto;
 }
+/* Keep the short honors title's closing quote with its final unbroken word. */
+html[data-locale='en'] body[data-page='honors'] .hero-title.hero-lyric::after { content: none; }
+html[data-locale='en'] body[data-page='honors'] .hero-title.hero-lyric .lyric-word:last-child::after {
+  content: '」';
+  color: var(--gold);
+  font-style: normal;
+  margin-left: .16em;
+}
 @keyframes lyric-char-in { to { opacity: 1; transform: none; } }
 .hero-copy {
   max-width: var(--w-editorial); margin: 0; color: var(--muted);

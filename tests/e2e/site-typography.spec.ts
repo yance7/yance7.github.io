@@ -30,6 +30,79 @@ const locales = [
   }
 ] as const
 
+for (const width of [390, 768]) {
+  test(`the English honors title keeps words and its quote on text lines at ${width}px`, async ({ page }, testInfo) => {
+    await page.setViewportSize({ width, height: 900 })
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto('/en/honors/')
+    await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', /^(ready|fallback)$/)
+    await page.evaluate(() => document.fonts.ready)
+    const title = page.locator('.hero-title.hero-lyric')
+    const geometry = await title.evaluate(element => {
+      const words = [...element.querySelectorAll('.lyric-word')]
+      return {
+        words: words.map(word => word.textContent),
+        lines: new Set(words.map(word => Math.round(word.getBoundingClientRect().top))).size,
+        overflow: element.scrollWidth > element.clientWidth + 1 || document.documentElement.scrollWidth > innerWidth + 1
+      }
+    })
+    expect(geometry.words).toEqual(['Step', 'by', 'step,', 'I', 'keep', 'climbing'])
+    expect(geometry.lines).toBeGreaterThanOrEqual(2)
+    expect(geometry.lines).toBeLessThanOrEqual(4)
+    expect(geometry.overflow).toBe(false)
+    await expect(title).toHaveAttribute('aria-label', 'Step by step, I keep climbing')
+    await page.locator('.archive-hero').screenshot({ path: testInfo.outputPath('english-honors-natural.png') })
+  })
+}
+
+test('the English honors closing quote stays with its last word at a line boundary', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/en/honors/')
+  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', /^(ready|fallback)$/)
+  await page.evaluate(() => document.fonts.ready)
+  const title = page.locator('.hero-title.hero-lyric')
+  const quoteWidth = await title.evaluate(element => {
+    const before = getComputedStyle(element, '::before')
+    const probe = document.createElement('span')
+    probe.textContent = '「'
+    probe.style.cssText = 'position:fixed;visibility:hidden;white-space:nowrap'
+    probe.style.font = before.font
+    probe.style.letterSpacing = before.letterSpacing
+    document.body.append(probe)
+    const quoteWidth = probe.getBoundingClientRect().width
+    probe.remove()
+    const textWidth = [...element.querySelectorAll('.lyric-char, .lyric-space')]
+      .reduce((total, span) => total + span.getBoundingClientRect().width, 0)
+    // All words plus the opening quote fit, but there is no room for the closing
+    // quote. Ordinary wrapping must move the last word together with that quote.
+    const title = element as HTMLElement
+    title.style.maxWidth = 'none'
+    title.style.textWrap = 'wrap'
+    title.style.width = `${textWidth + quoteWidth * 1.5 + Number.parseFloat(before.marginRight)}px`
+    return quoteWidth
+  })
+  const geometry = await title.evaluate(element => {
+    const words = [...element.querySelectorAll('.lyric-word')]
+    const last = words.at(-1)!
+    const lastTextWidth = [...last.querySelectorAll('.lyric-char')].reduce((total, char) => total + char.getBoundingClientRect().width, 0)
+    return {
+      words: words.map(word => word.textContent),
+      lines: new Set(words.map(word => Math.round(word.getBoundingClientRect().top))).size,
+      wordLines: words.map(word => new Set([...word.querySelectorAll('.lyric-char')].map(char => Math.round(char.getBoundingClientRect().top))).size),
+      lastWordExtraWidth: last.getBoundingClientRect().width - lastTextWidth,
+      overflow: element.scrollWidth > element.clientWidth + 1
+    }
+  })
+  expect(geometry.words).toEqual(['Step', 'by', 'step,', 'I', 'keep', 'climbing'])
+  expect(quoteWidth).toBeGreaterThan(0)
+  expect(geometry.lastWordExtraWidth).toBeGreaterThanOrEqual(quoteWidth)
+  expect(geometry.lines).toBe(2)
+  expect(geometry.wordLines).toEqual([1, 1, 1, 1, 1, 1])
+  expect(geometry.overflow).toBe(false)
+  await expect(title).toHaveAttribute('aria-label', 'Step by step, I keep climbing')
+})
+
 async function readFontRoles(page: Page) {
   return page.evaluate(() => {
     const fontFamily = (selector: string) => {
@@ -67,6 +140,92 @@ async function readRenderedFontEntries(page: Page, selector: string) {
 async function readRenderedFontNames(page: Page, selector: string) {
   return (await readRenderedFontEntries(page, selector)).map(({ familyName }) => familyName)
 }
+
+for (const locale of locales) {
+  test(`${locale.name} greeting really renders WenKai without changing the particle face`, async ({ page }) => {
+    await page.goto(locale.homeRoute)
+    const greeting = page.locator('.home-hero-typewriter')
+    await expect(greeting).toHaveAttribute('data-font-state', 'ready')
+    await expect(greeting).toHaveCSS('font-weight', '400')
+    await expect(page.locator('.home-hero-particles')).toHaveCSS('font-family', 'Amiri, serif')
+    if (page.context().browser()?.browserType().name() === 'chromium') {
+      for (const selector of ['.home-hero-typewriter-line-greeting', '.home-hero-typewriter-copy']) {
+        const fonts = await readRenderedFontEntries(page, selector)
+        expect(fonts.filter(({ glyphCount }) => glyphCount > 0).every(({ familyName, isCustomFont }) =>
+          /LXGW WenKai TC|霞鶩文楷 TC/.test(familyName) && isCustomFont
+        ), JSON.stringify(fonts)).toBe(true)
+        expect(fonts.some(({ glyphCount }) => glyphCount > 0)).toBe(true)
+      }
+    }
+    const requests: string[] = []
+    page.on('request', request => requests.push(request.url()))
+    await page.goto(locale.archiveRoute)
+    await expect(page.locator('.hero-title').first()).toBeVisible()
+    expect(requests.filter(url => /hero-greeting-wenkai.*\.woff2/.test(url))).toEqual([])
+  })
+}
+
+test('a rejected greeting font leaves complete readable fallback text', async ({ page }) => {
+  await page.route('**/hero-greeting-wenkai-*.woff2', route => route.abort('failed'))
+  await page.goto('/en/')
+  const greeting = page.locator('.home-hero-typewriter')
+  await expect(greeting).toHaveAttribute('data-font-state', 'fallback')
+  await expect(greeting).toHaveAttribute('data-final-state', 'true')
+  await expect(greeting).toBeVisible()
+  await expect(page.locator('h1.home-hero-title')).toHaveText('Hi, I’m Yance Welcome to my world')
+  await expect(page.locator('.home-hero-typewriter-line-greeting')).toHaveCSS('clip-path', 'none')
+  await expect(page.locator('.home-hero-typewriter-line-statement')).toHaveCSS('clip-path', 'none')
+  await expect(page.locator('.home-hero-particles')).toHaveCSS('font-family', 'Amiri, serif')
+})
+
+test('archive pages do not register or request the homepage greeting font', async ({ page }) => {
+  const requests: string[] = []
+  page.on('request', request => requests.push(request.url()))
+  await page.goto('/academics/')
+  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
+  expect(await page.evaluate(() => [...document.fonts].some(face => face.family.includes('Yance Hero WenKai')))).toBe(false)
+  expect(requests.some(url => /fonts-home-hero|hero-greeting-wenkai/.test(url))).toBe(false)
+})
+
+test('a rejected greeting stylesheet still leaves the home page readable', async ({ page }) => {
+  await page.route('**/fonts-home-hero-*.css', route => route.abort('failed'))
+  await page.goto('/')
+  await expect(page.locator('.home-hero-typewriter')).toHaveAttribute('data-font-state', 'fallback')
+  await expect(page.locator('.home-hero-typewriter')).toBeVisible()
+  await expect(page.locator('h1.home-hero-title')).toHaveText('你好，我是 Yance 欢迎来到我的世界')
+})
+
+test('a late greeting response cannot replay typing or block the global font signal forever', async ({ page }) => {
+  let release = () => {}
+  const barrier = new Promise<void>(resolve => { release = resolve })
+  await page.route('**/hero-greeting-wenkai-*.woff2', async route => {
+    await barrier
+    await route.continue()
+  })
+  try {
+    await page.goto('/zh-hk/', { waitUntil: 'domcontentloaded' })
+    const greeting = page.locator('.home-hero-typewriter')
+    await expect(greeting).toHaveAttribute('data-font-state', 'fallback')
+    await expect(greeting).toBeVisible()
+    await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'fallback', { timeout: 8000 })
+    const before = await greeting.evaluate(element => ({
+      font: getComputedStyle(element).fontFamily,
+      text: element.textContent,
+      clip: [...element.children].map(line => getComputedStyle(line).clipPath)
+    }))
+    const response = page.waitForResponse('**/hero-greeting-wenkai-*.woff2')
+    release()
+    await response
+    await page.evaluate(() => document.fonts.ready)
+    await expect(greeting).toHaveAttribute('data-font-state', 'fallback')
+    await expect(greeting).toHaveAttribute('data-final-state', 'true')
+    expect(await greeting.evaluate(element => ({
+      font: getComputedStyle(element).fontFamily,
+      text: element.textContent,
+      clip: [...element.children].map(line => getComputedStyle(line).clipPath)
+    }))).toEqual(before)
+  } finally { release() }
+})
 
 for (const locale of locales) {
   test(`${locale.name} loads its font stylesheet and used font faces after first content mounts`, async ({ page }) => {
@@ -228,13 +387,8 @@ for (const locale of locales) {
     if (isChromium) {
       const homeText = await page.locator('.home-hero-typewriter').innerText()
 
-      if (locale.name === 'English') {
-        expect(renderedHomeFonts.some((font) => /Georgia|Times|Liberation Serif/i.test(font))).toBe(true)
-      } else {
-        expect(homeText).toMatch(/\p{Script=Han}/u)
-        expect(renderedHomeFonts.some((font) => /Noto Sans|PingFang|MiSans|Microsoft YaHei|Microsoft JhengHei/i.test(font))).toBe(true)
-        expect(renderedHomeFonts.some((font) => /Noto Serif/i.test(font))).toBe(false)
-      }
+      if (locale.name !== 'English') expect(homeText).toMatch(/\p{Script=Han}/u)
+      expect(renderedHomeFonts.some((font) => /LXGW WenKai TC|霞鶩文楷 TC/i.test(font))).toBe(true)
     }
 
     if (locale.name === 'English') {
@@ -245,7 +399,7 @@ for (const locale of locales) {
       expect(lightHome.body).toContain('MiSans')
       expect(lightHome.body).toContain(locale.cjkSans)
     }
-    expect(lightHome.homeTitle).toContain('Georgia')
+    expect(lightHome.homeTitle).toContain('Yance Hero WenKai')
     expect(lightHome.homeTitle).toContain(locale.name === 'English' ? 'Noto Sans SC Variable' : locale.cjkSans)
     expect(lightHome.action).toContain('Inter Variable')
     expect(lightHome.navigation).toContain('Inter Variable')
