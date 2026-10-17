@@ -72,26 +72,30 @@
   width: 100%;
   max-width: 100%;
   color: var(--ink);
-  font-family: var(--font-home-title);
+  font-family: var(--font-home-greeting);
   font-size: clamp(2.5rem, 4.2vw, 4.5rem);
   font-weight: 400;
-  letter-spacing: -.055em;
-  line-height: 1.1;
+  font-synthesis: none;
+  letter-spacing: 0;
+  line-height: 1.25;
   overflow-wrap: break-word;
   text-align: center;
 }
+
+.home-hero-typewriter[data-font-state='loading'] { visibility: hidden; }
+.home-hero-typewriter[data-font-state='fallback'] { font-family: var(--font-home-title); }
 
 .home-hero-typewriter-line {
   display: block;
   min-width: 0;
 }
 
-.home-hero-typewriter[data-final-state='false'] .home-hero-typewriter-line-greeting {
+.home-hero-typewriter[data-font-state='ready'][data-final-state='false'] .home-hero-typewriter-line-greeting {
   clip-path: inset(0 100% 0 0);
-  animation: home-hero-line-reveal var(--home-hero-greeting-duration) steps(var(--home-hero-greeting-steps), end) both;
+  animation: home-hero-line-reveal var(--home-hero-greeting-duration) steps(var(--home-hero-greeting-steps), end) var(--home-hero-greeting-delay) both;
 }
 
-.home-hero-typewriter[data-final-state='false'] .home-hero-typewriter-line-statement {
+.home-hero-typewriter[data-font-state='ready'][data-final-state='false'] .home-hero-typewriter-line-statement {
   clip-path: inset(0 100% 0 0);
   animation: home-hero-line-reveal var(--home-hero-statement-duration) steps(var(--home-hero-statement-steps), end) var(--home-hero-statement-delay) both;
 }
@@ -103,7 +107,7 @@
 .home-hero-typewriter-line-accent {
   color: var(--gold);
   font-size: clamp(2.15rem, 3.9vw, 4rem);
-  line-height: 1.12;
+  line-height: 1.25;
 }
 
 .home-hero-cursor {
@@ -149,14 +153,14 @@
 
 html[data-locale='en'] .home-hero-typewriter {
   font-size: clamp(2rem, 4.1vw, 4.35rem);
-  letter-spacing: -.045em;
-  line-height: 1.08;
+  letter-spacing: 0;
+  line-height: 1.25;
 }
 
 html[data-locale='en'] .home-hero-typewriter-line-accent {
   max-width: 100%;
   font-size: clamp(2rem, 3.6vw, 3.7rem);
-  line-height: 1.14;
+  line-height: 1.25;
 }
 
 .home-hero-actions {
@@ -191,6 +195,10 @@ html[data-locale='en'] .home-hero-typewriter-line-accent {
   transition: transform var(--dur-fast) var(--ease-out), border-color var(--dur-base), background-color var(--dur-base), color var(--dur-base), box-shadow var(--dur-base);
 }
 
+@media (min-width: 761px) {
+  .hero-action { max-width: 240px; }
+}
+
 .hero-action.primary {
   border-color: var(--action-fill);
   background: var(--action-fill);
@@ -216,7 +224,8 @@ html[data-locale='en'] .home-hero-typewriter-line-accent {
   transform: translateY(1px) scale(var(--motion-press-scale));
 }
 
-.hero-action span {
+.hero-action__label,
+.hero-action__arrow {
   display: inline-block;
   transition: transform var(--dur-fast) var(--ease-out);
 }

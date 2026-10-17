@@ -1,13 +1,16 @@
 /* ===== Shared component primitives ===== */
 .hero-action .hero-action__visual {
-  display: inline-flex;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) 20px;
   align-items: center;
-  justify-content: space-between;
-  gap: 14px;
+  gap: 12px;
   width: 100%;
   pointer-events: none;
   transition: translate 180ms var(--ease-out), transform 140ms var(--ease-out);
 }
+.hero-action__visual::before { content: ''; }
+.hero-action__label { min-width: 0; text-align: center; overflow-wrap: anywhere; }
+.hero-action__arrow { justify-self: end; }
 .hero-action:is(:hover, :focus-visible, :active) { transform: none; }
 .hero-action:is(:hover, :focus-visible) .hero-action__visual { transform: none; }
 .hero-action:active .hero-action__visual { transform: scale(.98); }

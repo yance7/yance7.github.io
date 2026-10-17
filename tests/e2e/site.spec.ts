@@ -70,7 +70,7 @@ async function settleAccessibilityState(page: Page) {
 
   await expect(page.locator('html')).toHaveAttribute(
     'data-fonts-ready',
-    'ready',
+    /^(ready|fallback)$/,
     { timeout: 10_000 }
   )
 
@@ -130,6 +130,13 @@ async function expectAccessible(page: Page, options: { settle?: boolean } = {}) 
   const results = await new AxeBuilder({ page }).analyze()
   expect(results.violations).toEqual([])
 }
+
+test('axe remains usable when the locale font stylesheet fails', async ({ page }) => {
+  await page.route(/\/fonts-(?:en|zh-cn|zh-hk)-[^/]+\.css$/, route => route.abort('failed'))
+  await page.goto('/research/')
+  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'fallback')
+  await expectAccessible(page)
+})
 
 async function prepareMobileReducedMotion(page: Page) {
   await page.setViewportSize({ width: 390, height: 844 })
