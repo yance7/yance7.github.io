@@ -63,7 +63,23 @@ test('concert archive keeps original posters out of the initial request set', as
   await expect(firstCard.locator('.poster-foreground')).toHaveAttribute('src', /\/assets\/concerts\/thumbs\/[^/]+\.jpg$/)
   await expect(firstCard.locator('.poster-backdrop')).toHaveAttribute('src', /\/assets\/concerts\/thumbs\/[^/]+\.jpg$/)
 
-  await firstCard.locator('.poster-open').click()
+  const opener = firstCard.locator('.poster-open')
+  await opener.scrollIntoViewIfNeeded()
+  // Firefox may return from automatic scrolling before the target stops moving.
+  await expect.poll(() => opener.evaluate(async element => {
+    const before = element.getBoundingClientRect()
+    const scrollBefore = window.scrollY
+    await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+    const after = element.getBoundingClientRect()
+    return after.top >= 0 && after.bottom <= innerHeight
+      && after.left >= 0 && after.right <= innerWidth
+      && Math.abs(before.top - after.top) < .5
+      && Math.abs(before.left - after.left) < .5
+      && Math.abs(before.height - after.height) < .5
+      && Math.abs(scrollBefore - window.scrollY) < .5
+  })).toBe(true)
+  expect(originalRequests).toEqual([])
+  await opener.click()
   await expect(page.locator('.lightbox')).toBeVisible()
   await expect.poll(() => originalRequests.length).toBe(1)
 })
