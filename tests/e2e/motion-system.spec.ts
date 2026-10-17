@@ -192,17 +192,24 @@ for (const media of [{ reducedMotion: 'reduce' }, { forcedColors: 'active' }] as
     await expect(sheen).toHaveCSS('transform', 'none')
     await sheen.hover()
     await expect.poll(() => sheen.evaluate(element => element.style.getPropertyValue('--pointer-active'))).toBe('1')
+    // This case exercises the timer fallback independently of the CSS sentinel.
+    // Its dimensions can also remain stale while WebKit rendering is stalled.
+    await page.addStyleTag({ content: '.pointer-motion-preference-sentinel { width: 1px !important; height: 1px !important; }' })
     try {
       await page.evaluate(() => { (window as Window & { pausePreferenceFrames?: boolean }).pausePreferenceFrames = true })
       await page.emulateMedia(media)
       await expect.poll(() => sheen.evaluate(element => ({
         active: element.style.getPropertyValue('--pointer-active'),
-        width: getComputedStyle(document.querySelector('.pointer-motion-preference-sentinel')!).width,
-        height: getComputedStyle(document.querySelector('.pointer-motion-preference-sentinel')!).height
-      }))).toEqual({ active: '', width: 'reducedMotion' in media ? '2px' : '1px', height: 'forcedColors' in media ? '2px' : '1px' })
+        reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
+        forcedColors: matchMedia('(forced-colors: active)').matches
+      }))).toEqual({ active: '', reducedMotion: 'reducedMotion' in media, forcedColors: 'forcedColors' in media })
       await expect(page.locator('.sitewide-cursor')).toHaveCount(0)
       await expect(page.locator('html')).not.toHaveClass(/sitewide-cursor-active/)
       await page.emulateMedia('reducedMotion' in media ? { reducedMotion: 'no-preference' } : { forcedColors: 'none' })
+      await expect.poll(() => page.evaluate(() => ({
+        reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
+        forcedColors: matchMedia('(forced-colors: active)').matches
+      }))).toEqual({ reducedMotion: false, forcedColors: false })
       await expect(page.locator('.sitewide-cursor')).toHaveCount(1)
       await expect(page.locator('html')).not.toHaveClass(/sitewide-cursor-active/)
     } finally {
