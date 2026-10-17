@@ -27,12 +27,21 @@ const viewports = [
   { width: 844, height: 390 }
 ] as const
 
-for (const locale of locales) {
-  test(`${locale.route} Home hero preserves centered vertical geometry`, async ({ page }) => {
+for (const fallback of [false, true]) for (const locale of locales) {
+  test(`${locale.route} Home hero preserves centered vertical geometry${fallback ? ' with unavailable greeting font' : ''}`, async ({ page }) => {
+    if (fallback) await page.route('**/hero-greeting-wenkai-*.woff2', route => route.abort('failed'))
     await page.setViewportSize(viewports[0])
     await page.goto(locale.route)
 
-    await expect(page.locator('.home-hero-typewriter')).toHaveAttribute('data-font-state', 'ready')
+    const greeting = page.locator('.home-hero-typewriter')
+    await expect(greeting).toHaveAttribute('data-font-state', /^(ready|fallback)$/)
+    if (fallback) await expect(greeting).toHaveAttribute('data-font-state', 'fallback')
+    if (await greeting.getAttribute('data-font-state') === 'fallback') {
+      await expect(greeting).toHaveAttribute('data-final-state', 'true')
+      await expect(greeting).toBeVisible()
+      await expect(greeting.locator(':scope > span').first()).toHaveCSS('clip-path', 'none')
+      await expect(greeting.locator(':scope > span').last()).toHaveCSS('clip-path', 'none')
+    }
 
     for (const viewport of viewports) {
       await page.setViewportSize(viewport)
@@ -101,6 +110,18 @@ for (const locale of locales) {
     }
   })
 }
+
+test('desktop CTA bounds remain stable with a wide fallback interface font', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  await page.goto('/en/')
+  await page.addStyleTag({ content: '.hero-action { font-family: monospace; }' })
+  for (const action of await page.locator('.hero-action').all()) {
+    const box = await action.boundingBox()
+    expect(box!.width).toBeLessThanOrEqual(240)
+    await expect(action).toBeVisible()
+  }
+})
 
 test('keeps coarse-pointer CTA hover states free of motion', async ({ page }) => {
   await page.goto('/index.html')
