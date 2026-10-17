@@ -45,6 +45,8 @@ jobs:
         run: npm run deadcode
       - name: Asset audit
         run: npm run audit:assets
+      - name: Greeting font coverage
+        run: npm run fonts:hero:check
       - name: Unit tests
         run: npm run unit
       - name: Generate sitemap

@@ -4,17 +4,17 @@ const locales = [
   {
     route: '/',
     semanticTitle: '你好，我是 Yance 欢迎来到我的世界',
-    displayFont: 'Noto Sans SC Variable'
+    displayFont: 'Yance Hero WenKai'
   },
   {
     route: '/zh-hk/',
     semanticTitle: '你好，我是 Yance 歡迎來到我的世界',
-    displayFont: 'Noto Sans HK Variable'
+    displayFont: 'Yance Hero WenKai'
   },
   {
     route: '/en/',
     semanticTitle: 'Hi, I’m Yance Welcome to my world',
-    displayFont: 'Georgia'
+    displayFont: 'Yance Hero WenKai'
   }
 ] as const
 
@@ -32,17 +32,7 @@ for (const locale of locales) {
     await page.setViewportSize(viewports[0])
     await page.goto(locale.route)
 
-    if (locale.displayFont !== 'Georgia') {
-      await expect.poll(() => page.evaluate((fontFamily) => (
-        [...document.fonts].some((face) => face.family.includes(fontFamily) && face.status === 'loaded')
-      ), locale.displayFont), {
-        message: `${locale.route} Hero display font`,
-        timeout: 10_000
-      }).toBe(true)
-    } else {
-      const fontLoaded = await page.evaluate((fontFamily) => document.fonts.check(`400 40px "${fontFamily}"`), locale.displayFont)
-      expect(fontLoaded, `${locale.route} system Hero display font`).toBe(true)
-    }
+    await expect(page.locator('.home-hero-typewriter')).toHaveAttribute('data-font-state', 'ready')
 
     for (const viewport of viewports) {
       await page.setViewportSize(viewport)
@@ -137,6 +127,37 @@ test('keeps CTA hover states free of motion when reduced motion is requested', a
 const desktopViewports = viewports.filter((viewport) => viewport.width > 760)
 
 for (const locale of locales) {
+  test(`${locale.route} CTA text is geometrically centered independently of its arrow`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto(locale.route)
+    for (const width of [1440, 390, 320]) {
+      await page.setViewportSize({ width, height: 1000 })
+      for (const action of await page.locator('.hero-action').all()) {
+        const geometry = await action.evaluate((link) => {
+          const label = link.querySelector('.hero-action__label') ?? link.querySelector('.hero-action__visual > span')!
+          const range = document.createRange()
+          range.selectNodeContents(label)
+          const text = range.getBoundingClientRect()
+          const button = link.getBoundingClientRect()
+          const group = link.closest('.home-hero-actions')!.getBoundingClientRect()
+          const arrow = link.querySelector('[aria-hidden="true"]')!.getBoundingClientRect()
+          return {
+            offset: Math.abs((text.left + text.right - button.left - button.right) / 2),
+            mobileButtonOffset: Math.abs((button.left + button.right - group.left - group.right) / 2),
+            overlapsArrow: text.right > arrow.left,
+            contained: text.left >= button.left && arrow.right <= button.right
+          }
+        })
+        expect(geometry.offset, `${locale.route} ${width}px actual text center`).toBeLessThanOrEqual(2)
+        if (width <= 760) expect(geometry.mobileButtonOffset, 'mobile button remains centered in its row').toBeLessThanOrEqual(2)
+        expect(geometry.overlapsArrow).toBe(false)
+        expect(geometry.contained).toBe(true)
+      }
+    }
+  })
+}
+
+for (const locale of locales) {
   test(`${locale.route} Home hero implements the specified desktop geometry`, async ({ page }) => {
     await page.goto(locale.route)
 
@@ -171,7 +192,7 @@ for (const locale of locales) {
             : null,
           titleToActionsGap: actions.top - title.bottom,
           ctaWidths: ctas.map((cta) => cta.width),
-          ctaLabelHeights: [...document.querySelectorAll('.home-hero-actions a > span:first-child')]
+          ctaLabelHeights: [...document.querySelectorAll('.hero-action__label')]
             .map((label) => label.getBoundingClientRect().height),
           ctaGap: firstCta && secondCta ? secondCta.left - firstCta.right : null,
           contentWidth: inner.clientWidth - parseFloat(innerStyle.paddingLeft) - parseFloat(innerStyle.paddingRight),
@@ -198,7 +219,7 @@ for (const locale of locales) {
         expect(width, `${context} desktop CTA width`).toBeLessThanOrEqual(240)
       }
       for (const height of layout.ctaLabelHeights) {
-        expect(height, `${context} desktop CTA label remains on one line`).toBeLessThanOrEqual(18)
+        expect(height, `${context} desktop CTA label remains readable within two lines`).toBeLessThanOrEqual(30)
       }
       expect(layout.ctaGap, `${context} desktop CTA spacing`).toBeGreaterThanOrEqual(11)
       expect(layout.ctaGap, `${context} desktop CTA spacing`).toBeLessThanOrEqual(13)

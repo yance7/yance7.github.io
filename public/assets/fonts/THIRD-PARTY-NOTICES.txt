@@ -1,5 +1,7 @@
 Third-party font notices
 
+LXGW WenKai TC Regular 400 v1.522 is subset locally for the two homepage greeting lines in Simplified Chinese, Traditional Chinese and English. Copyright 2022-2026 The LXGW WenKai Project Authors (https://github.com/lxgw/LxgwWenkaiTC). It is distributed under the SIL Open Font License 1.1, retained in licenses/lxgw-wenkai-tc-OFL.txt. The subset preserves the font's upstream internal names and copyright; Yance Hero WenKai is a CSS alias only. Source and subset hashes are recorded in src/assets/fonts/hero-greeting-font.json.
+
 Amiri 400 is bundled for the homepage particle glyph through @fontsource/amiri 5.3.0 under the SIL Open Font License 1.1. Copyright 2010-2022 The Amiri Project Authors (https://github.com/aliftype/amiri). Its license text is retained in licenses/amiri-OFL.txt.
 
 Inter, Noto Sans SC, Noto Sans HK, and IBM Plex Mono are bundled by this website under the SIL Open Font License 1.1. Their corresponding license texts are in the licenses directory. Each notice applies only to its named font software.
