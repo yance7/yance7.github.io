@@ -195,6 +195,10 @@ html[data-locale='en'] .home-hero-typewriter-line-accent {
   transition: transform var(--dur-fast) var(--ease-out), border-color var(--dur-base), background-color var(--dur-base), color var(--dur-base), box-shadow var(--dur-base);
 }
 
+@media (min-width: 761px) {
+  .hero-action { max-width: 240px; }
+}
+
 .hero-action.primary {
   border-color: var(--action-fill);
   background: var(--action-fill);
