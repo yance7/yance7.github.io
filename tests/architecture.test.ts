@@ -55,9 +55,7 @@ describe('critical rendering contracts', () => {
     expect(main).not.toContain('loadLocaleFontStylesheet')
     expect(main).not.toContain('data-locale-font-preload')
     expect(main).toContain("document.documentElement.dataset.fontsReady = 'loading'")
-    expect(main).toContain("await document.fonts.ready")
-    expect(main).toContain("document.documentElement.dataset.fontsReady = 'ready'")
-    expect(main).toContain("document.documentElement.dataset.fontsReady = 'fallback'")
+    // Readiness outcomes, including a stalled request, are exercised in site-typography.spec.ts.
     const loadFonts = main.slice(main.indexOf('async function loadFonts'), main.indexOf('const app = createApp'))
     expect(loadFonts).not.toContain('mountApp()')
     expect(loadFonts).not.toContain('document.fonts.load(')

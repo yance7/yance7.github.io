@@ -41,7 +41,7 @@ test('native proximity aligns near a stable section and permits reading between 
   await expect(target).toHaveCSS('transform', 'none')
   const middle = await target.evaluate(element => {
     const rect = element.getBoundingClientRect()
-    const top = scrollY + rect.top + rect.height * 0.5
+    const top = Math.round(scrollY + rect.top + rect.height * 0.5)
     scrollTo({ top, behavior: 'instant' })
     return top
   })
