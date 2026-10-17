@@ -12,6 +12,8 @@ const routes = [
 
 test('English leadership renders the approved institution names without truncation', async ({ page }) => {
   await page.goto('/en/')
+  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
+  await page.evaluate(() => document.fonts.ready)
   const names = page.locator('.beyond-leadership > span')
   await expect(names).toHaveText([
     'iHOSA Science and Technology Club', 'Biology Club',
