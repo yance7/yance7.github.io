@@ -1,3 +1,5 @@
+import type { HomeHeroParticleScene, HomeHeroParticleTarget } from './homeHeroParticleTypes'
+
 export const MIMO_PARTICLE_SETTINGS = Object.freeze({
   fontFamily: 'Amiri, serif',
   fontWeight: '400',
@@ -121,9 +123,6 @@ export function followMimoParticle(current: MimoPosition, target: MimoPosition):
     y: current.y + (target.y - current.y) * MIMO_PARTICLE_SETTINGS.particleBlend
   }
 }
-import type { HomeHeroParticleScene, HomeHeroParticleTarget } from './homeHeroParticleScene'
-
-
 export function getMimoParticleAppearance(index: number, homeX: number, width: number) {
   const seed = ((9301 * index + 49297) % 233280) / 233280
   const depth = 0.45 + ((233 * index + 97) % 1000) / 1000 * 0.9

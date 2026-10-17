@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { ESLint } from 'eslint'
 import { describe, expect, it } from 'vitest'
 import {
   auditRepository,
@@ -14,6 +15,15 @@ import {
 const repositoryRoot = resolve(fileURLToPath(new URL('..', import.meta.url)))
 
 describe('repository hygiene', () => {
+  it('lints maintained source while excluding generated reports and nested review worktrees', async () => {
+    const eslint = new ESLint({ cwd: repositoryRoot, overrideConfigFile: resolve(repositoryRoot, 'config/eslint.config.js') })
+
+    expect(await eslint.isPathIgnored(resolve(repositoryRoot, 'src/main.ts'))).toBe(false)
+    expect(await eslint.isPathIgnored(resolve(repositoryRoot, 'tests/mimoParticleModel.test.ts'))).toBe(false)
+    expect(await eslint.isPathIgnored(resolve(repositoryRoot, 'test-results/review-copy/src/main.ts'))).toBe(true)
+    expect(await eslint.isPathIgnored(resolve(repositoryRoot, 'test-results/report.js'))).toBe(true)
+  })
+
   it('keeps internal collaboration paths out of the tracked public tree', () => {
     const report = auditRepository()
 

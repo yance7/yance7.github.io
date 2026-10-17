@@ -1,5 +1,4 @@
-import type { HomeHeroParticle } from './homeHeroParticlePhysics'
-import type { HomeHeroParticleScene } from './homeHeroParticleScene'
+import type { HomeHeroParticle, HomeHeroParticleScene } from './homeHeroParticleTypes'
 import { getMimoParticleAppearance } from './mimoParticleModel'
 import { parseHexColor } from './contrast'
 

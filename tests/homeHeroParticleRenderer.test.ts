@@ -1,6 +1,16 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { HomeHeroParticleRenderer } from '../src/utils/homeHeroParticleRenderer'
-import { createHomeHeroParticleScene } from '../src/utils/homeHeroParticleScene'
+import type { HomeHeroParticleScene } from '../src/utils/homeHeroParticleTypes'
+
+function createScene(points: readonly (readonly [number, number])[] = [[1.5, 1.5]], width = 2, height = 2, gridStep = 2): HomeHeroParticleScene {
+  return {
+    width, height, gridStep, sampledCount: points.length, cellSize: 24, cells: new Map(),
+    particles: points.map(([homeX, homeY], id) => ({
+      id, homeX, homeY, x: homeX, y: homeY, vx: 0, vy: 0,
+      row: Math.floor(homeY / gridStep), column: Math.floor(homeX / gridStep), settledForMs: 40
+    }))
+  }
+}
 
 function context() {
   return { fillStyle: '', globalAlpha: 1, strokeStyle: '', lineWidth: 1, lineCap: '',
@@ -13,7 +23,7 @@ describe('HomeHero transparent glyph rendering', () => {
     const visible = context()
     const master = context()
     vi.stubGlobal('document', { createElement: () => ({ width: 0, height: 0, getContext: () => master }) })
-    const scene = createHomeHeroParticleScene({ width: 2, height: 2, gridStep: 2, rgba: new Uint8ClampedArray(16).fill(255) })
+    const scene = createScene()
     const renderer = new HomeHeroParticleRenderer({ getContext: () => visible } as unknown as HTMLCanvasElement,
       { scene, pixelRatio: 1, colors: { start: color, end: color } })
     renderer.drawActive([])
@@ -23,7 +33,7 @@ describe('HomeHero transparent glyph rendering', () => {
   it.each(['rgb(256,0,0)', '#12345', 'not-a-color'])('rejects an unsupported palette value %s', color => {
     const visible = context()
     vi.stubGlobal('document', { createElement: () => ({ width: 0, height: 0, getContext: () => context() }) })
-    const scene = createHomeHeroParticleScene({ width: 2, height: 2, gridStep: 2, rgba: new Uint8ClampedArray(16).fill(255) })
+    const scene = createScene()
     expect(() => new HomeHeroParticleRenderer({ getContext: () => visible } as unknown as HTMLCanvasElement,
       { scene, pixelRatio: 1, colors: { start: color, end: '#123' } })).toThrow('Unsupported HomeHero particle color')
   })
@@ -32,7 +42,7 @@ describe('HomeHero transparent glyph rendering', () => {
     const visible = context()
     const master = context()
     vi.stubGlobal('document', { createElement: () => ({ width: 0, height: 0, getContext: () => master }) })
-    const scene = createHomeHeroParticleScene({ width: 2, height: 2, gridStep: 2, rgba: new Uint8ClampedArray(16).fill(255) })
+    const scene = createScene()
     Object.assign(scene.particles[0]!, { color: '#010101', x: 15, y: 18, opacity: .7 })
     const renderer = new HomeHeroParticleRenderer({ getContext: () => visible } as unknown as HTMLCanvasElement,
       { scene, pixelRatio: 1, colors: { start: '#d4e0d0', end: '#d4e0d0' } })
@@ -46,7 +56,7 @@ describe('HomeHero transparent glyph rendering', () => {
     const visible = context()
     const master = context()
     vi.stubGlobal('document', { createElement: () => ({ width: 0, height: 0, getContext: () => master }) })
-    const scene = createHomeHeroParticleScene({ width: 2, height: 2, gridStep: 2, rgba: new Uint8ClampedArray(16).fill(255) })
+    const scene = createScene()
     const point = scene.particles[0]!
     Object.assign(point, { x: 13, y: 17, opacity: .42 })
     const before = { ...point }
@@ -66,7 +76,7 @@ describe('HomeHero transparent glyph rendering', () => {
     const visible = context()
     const master = context()
     vi.stubGlobal('document', { createElement: () => ({ width: 0, height: 0, getContext: () => master }) })
-    const scene = createHomeHeroParticleScene({ width: 2, height: 2, gridStep: 2, rgba: new Uint8ClampedArray(16).fill(255) })
+    const scene = createScene()
     scene.width = 100
     scene.height = 100
     Object.assign(scene.particles[0]!, { homeX: 50, x: 50 })
@@ -86,7 +96,7 @@ describe('HomeHero transparent glyph rendering', () => {
     const visible = context()
     const master = context()
     vi.stubGlobal('document', { createElement: () => ({ width: 0, height: 0, getContext: () => master }) })
-    const scene = createHomeHeroParticleScene({ width: 4, height: 2, gridStep: 2, rgba: new Uint8ClampedArray(4 * 2 * 4).fill(255) })
+    const scene = createScene([[1.5, 1.5], [3.5, 1.5]], 4, 2)
     for (const point of scene.particles) Object.assign(point, { color: '#304020', opacity: .7 })
     let color = ''
     let opacity = 1
@@ -105,7 +115,7 @@ describe('HomeHero transparent glyph rendering', () => {
     const visible = context()
     const master = context()
     vi.stubGlobal('document', { createElement: () => ({ width: 0, height: 0, getContext: () => master }) })
-    const scene = createHomeHeroParticleScene({ width: 80, height: 40, gridStep: 2, rgba: new Uint8ClampedArray(80 * 40 * 4).fill(255) })
+    const scene = createScene([[1.5, 1.5], [3.5, 1.5]], 80, 40)
     const moving = scene.particles[0]!
     const renderer = new HomeHeroParticleRenderer({ getContext: () => visible } as unknown as HTMLCanvasElement,
       { scene, pixelRatio: 2, colors: { start: '#123', end: '#123' } })
@@ -123,7 +133,7 @@ describe('HomeHero transparent glyph rendering', () => {
     const visible = context()
     const master = context()
     vi.stubGlobal('document', { createElement: () => ({ width: 0, height: 0, getContext: () => master }) })
-    const scene = createHomeHeroParticleScene({ width: 320, height: 240, gridStep: 5, rgba: new Uint8ClampedArray(320 * 240 * 4).fill(255) })
+    const scene = createScene([[62.5, 62.5], [62.5, 67.5]], 320, 240, 5)
     const moving = scene.particles.find(p => p.homeX === 62.5 && p.homeY === 62.5)!
     const neighbor = scene.particles.find(p => p.homeX === 62.5 && p.homeY === 67.5)!
     const renderer = new HomeHeroParticleRenderer({ getContext: () => visible } as unknown as HTMLCanvasElement,
@@ -140,7 +150,7 @@ describe('HomeHero transparent glyph rendering', () => {
     const visible = context()
     const master = context()
     vi.stubGlobal('document', { createElement: () => ({ width: 0, height: 0, getContext: () => master }) })
-    const scene = createHomeHeroParticleScene({ width: 320, height: 240, gridStep: 5, rgba: new Uint8ClampedArray(320 * 240 * 4).fill(255) })
+    const scene = createScene([[62.5, 62.5], [62.5, 67.5], [72.5, 62.5]], 320, 240, 5)
     const first = scene.particles[0]!
     const second = scene.particles[1]!
     const neighbor = scene.particles[2]!
