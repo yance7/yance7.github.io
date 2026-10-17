@@ -10,6 +10,33 @@ const routes = [
   '/en/concerts/'
 ] as const
 
+test('English leadership renders the approved institution names without truncation', async ({ page }) => {
+  await page.goto('/en/')
+  const names = page.locator('.beyond-leadership > span')
+  await expect(names).toHaveText([
+    'iHOSA Science and Technology Club', 'Biology Club',
+    'Student Institute for Self Management', 'Student Institute for Self Management'
+  ])
+  for (const width of [320, 390, 768, 1440]) {
+    await page.setViewportSize({ width, height: 1000 })
+    for (const theme of ['light', 'dark']) {
+      if (await page.locator('html').getAttribute('data-theme') !== theme) await page.locator('.theme-orbit').click()
+      await names.first().scrollIntoViewIfNeeded()
+      const readable = await names.evaluateAll(elements => elements.every(element => {
+        const box = element.getBoundingClientRect()
+        const range = document.createRange()
+        range.selectNodeContents(element)
+        const text = range.getBoundingClientRect()
+        return text.left >= box.left - 1 && text.right <= box.right + 1
+          && element.scrollHeight <= element.clientHeight + 1
+          && parseFloat(getComputedStyle(element).fontSize) >= 12
+      }))
+      expect(readable, `${width}px ${theme} complete institution labels`).toBe(true)
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    }
+  }
+})
+
 const viewports = [
   { name: 'narrow', width: 320, height: 844 },
   { name: 'mobile', width: 390, height: 844 },

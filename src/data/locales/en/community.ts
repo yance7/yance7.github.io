@@ -2,10 +2,10 @@ import type { CommunityLocaleCopy } from '../types.ts'
 
 export const communityCopy = {
   leadership: [
-    { role: 'President', org: 'iHOSA Technology Innovation Club', period: '2025.09 — 2026.09', note: '' },
+    { role: 'President', org: 'iHOSA Science and Technology Club', period: '2025.09 — 2026.09', note: '' },
     { role: 'Vice President', org: 'Biology Club', period: '2025.09 — 2026.09', note: '' },
-    { role: 'Chair', org: 'Student Self-Management Committee', period: '2025.09 — 2026.09', note: '' },
-    { role: 'Vice Chair', org: 'Student Self-Management Committee', period: '2024.09 — 2025.09', note: '' }
+    { role: 'Chair', org: 'Student Institute for Self Management', period: '2025.09 — 2026.09', note: '' },
+    { role: 'Vice Chair', org: 'Student Institute for Self Management', period: '2024.09 — 2025.09', note: '' }
   ],
   activities: [
     { id: 'low-carbon-volunteer', featured: true, title: 'Protect the Earth, Live Low-Carbon', period: '2024.03 — 2024.04', org: 'Beijing Volunteer Federation', detail: 'Completed 72 hours of service and produced social videos promoting organic produce and energy-saving habits.' },
