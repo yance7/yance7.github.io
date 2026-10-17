@@ -13,6 +13,7 @@
   --font-interface: var(--font-latin-sans), var(--font-cjk-sans), sans-serif;
   --font-editorial: var(--font-latin-serif), var(--font-cjk-sans), sans-serif;
   --font-home-title: var(--font-latin-serif), var(--font-cjk-sans), sans-serif;
+  --font-home-greeting: "Yance Hero WenKai", var(--font-home-title);
   --font-technical: "IBM Plex Mono", var(--font-cjk-sans), monospace;
   --sans: var(--font-interface);
   --serif: var(--font-editorial);
