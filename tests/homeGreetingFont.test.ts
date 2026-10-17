@@ -11,8 +11,14 @@ function installFontSet(load: () => Promise<unknown[]>, check = true) {
   vi.stubGlobal('document', { fonts: { load, check: () => check } })
 }
 
-beforeEach(() => { vi.resetModules(); vi.useFakeTimers() })
-afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers() })
+beforeEach(() => {
+  vi.resetModules()
+  vi.useFakeTimers()
+})
+afterEach(() => {
+  vi.unstubAllGlobals()
+  vi.useRealTimers()
+})
 
 describe('home greeting font readiness', () => {
   it('accepts an explicitly loaded and usable greeting face', async () => {
@@ -53,7 +59,10 @@ describe('home greeting font readiness', () => {
 
   it('reuses a single settled readiness operation across locale updates', async () => {
     let loads = 0
-    installFontSet(async () => { loads += 1; return [{ family: 'Yance Hero WenKai', status: 'loaded' }] })
+    installFontSet(async () => {
+      loads += 1
+      return [{ family: 'Yance Hero WenKai', status: 'loaded' }]
+    })
     const load = await loader()
     const first = load('你好')
     const second = load('Welcome')

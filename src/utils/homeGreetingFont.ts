@@ -12,7 +12,7 @@ export function loadHomeGreetingFont(sample: string): Promise<GreetingFontState>
     }
     try {
       const font = '400 40px "Yance Hero WenKai"'
-      document.fonts.load(font, sample).then(faces => {
+      import('../fonts-home-hero.css').then(() => document.fonts.load(font, sample)).then(faces => {
         finish(faces.length > 0 && document.fonts.check(font, sample) ? 'ready' : 'fallback')
       }, () => finish('fallback'))
     } catch {

@@ -105,6 +105,23 @@ test('a rejected greeting font leaves complete readable fallback text', async ({
   await expect(page.locator('.home-hero-particles')).toHaveCSS('font-family', 'Amiri, serif')
 })
 
+test('archive pages do not register or request the homepage greeting font', async ({ page }) => {
+  const requests: string[] = []
+  page.on('request', request => requests.push(request.url()))
+  await page.goto('/academics/')
+  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
+  expect(await page.evaluate(() => [...document.fonts].some(face => face.family.includes('Yance Hero WenKai')))).toBe(false)
+  expect(requests.some(url => /fonts-home-hero|hero-greeting-wenkai/.test(url))).toBe(false)
+})
+
+test('a rejected greeting stylesheet still leaves the home page readable', async ({ page }) => {
+  await page.route('**/fonts-home-hero-*.css', route => route.abort('failed'))
+  await page.goto('/')
+  await expect(page.locator('.home-hero-typewriter')).toHaveAttribute('data-font-state', 'fallback')
+  await expect(page.locator('.home-hero-typewriter')).toBeVisible()
+  await expect(page.locator('h1.home-hero-title')).toHaveText('你好，我是 Yance 欢迎来到我的世界')
+})
+
 test('a late greeting response cannot replay typing or block the global font signal forever', async ({ page }) => {
   let release = () => {}
   const barrier = new Promise<void>(resolve => { release = resolve })

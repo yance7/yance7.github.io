@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import '../styles/home-hero.css'
-import '../fonts-home-hero.css'
 import { computed } from 'vue'
 import { getLocalizedHomeCopy } from '../data/locales'
 import { useHomeHeroIntro } from '../composables/useHomeHeroIntro'

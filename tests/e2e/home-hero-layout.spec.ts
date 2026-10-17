@@ -139,14 +139,17 @@ for (const locale of locales) {
           range.selectNodeContents(label)
           const text = range.getBoundingClientRect()
           const button = link.getBoundingClientRect()
+          const group = link.closest('.home-hero-actions')!.getBoundingClientRect()
           const arrow = link.querySelector('[aria-hidden="true"]')!.getBoundingClientRect()
           return {
             offset: Math.abs((text.left + text.right - button.left - button.right) / 2),
+            mobileButtonOffset: Math.abs((button.left + button.right - group.left - group.right) / 2),
             overlapsArrow: text.right > arrow.left,
             contained: text.left >= button.left && arrow.right <= button.right
           }
         })
         expect(geometry.offset, `${locale.route} ${width}px actual text center`).toBeLessThanOrEqual(2)
+        if (width <= 760) expect(geometry.mobileButtonOffset, 'mobile button remains centered in its row').toBeLessThanOrEqual(2)
         expect(geometry.overlapsArrow).toBe(false)
         expect(geometry.contained).toBe(true)
       }
