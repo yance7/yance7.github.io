@@ -83,7 +83,6 @@ describe('footer component contract', () => {
     const footer = readFileSync(resolve(root, 'src/components/SiteFooter.vue'), 'utf8')
     const icon = resolve(root, 'src/components/FooterContactIcon.vue')
     const styles = readFileSync(resolve(root, 'src/styles/components.css'), 'utf8')
-    const responsive = readFileSync(resolve(root, 'src/styles/responsive.css'), 'utf8')
 
     expect(existsSync(icon)).toBe(true)
     expect(footer).toContain("import { footerContacts } from '../data/footerContacts'")
@@ -104,14 +103,11 @@ describe('footer component contract', () => {
 
     expect(styles).toContain('.foot-identity')
     expect(styles).toContain('.foot-contacts')
-    expect(styles).toMatch(/\.foot-contacts\s*\{[\s\S]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/)
     expect(styles).toContain('min-height: 60px')
     expect(styles).toContain('min-width: 44px')
     expect(styles).not.toContain('transition: all')
     expect(styles).toContain('transition: color 200ms var(--ease-soft)')
-    expect(responsive).toMatch(/@media \(max-width: 960px\)[\s\S]*\.foot-contacts[\s\S]*repeat\(2, minmax\(0, 1fr\)\)/)
-    expect(responsive).toContain('@media (max-width: 300px)')
-    expect(responsive).toContain('.foot-contacts { grid-template-columns: 1fr; }')
+    // Content-sized wrapping and real text gaps are checked in footer.spec.ts.
     expect(footer).toContain('<span class="foot-contact-arrow" aria-hidden="true">↗</span>')
     expect(footer).not.toContain("contact.external ? '↗' : '→'")
   })
