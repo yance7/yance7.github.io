@@ -22,8 +22,9 @@
   box-sizing: border-box;
   width: 32px;
   height: 32px;
-  border: 1px solid #000;
+  border: 1px solid var(--cursor-ring);
   background: transparent;
+  box-shadow: 0 0 0 1px var(--cursor-edge), inset 0 0 0 1px var(--cursor-edge);
   transition: width 0.5s cubic-bezier(.23, 1, .32, 1), height 0.5s cubic-bezier(.23, 1, .32, 1);
 }
 .sitewide-cursor[data-context='text'] .sitewide-cursor-ring,
@@ -34,7 +35,8 @@
 .sitewide-cursor-dot {
   width: 6px;
   height: 6px;
-  background: #000;
+  background: var(--cursor-dot);
+  box-shadow: 0 0 0 1px var(--cursor-edge);
 }
 html.sitewide-cursor-active,
 html.sitewide-cursor-active * { cursor: none !important; }

@@ -2,6 +2,38 @@ import { expect, test, type Page } from '@playwright/test'
 
 const routes = ['/', '/research/', '/works/', '/concerts/']
 
+for (const { from, to, color } of [
+  { from: 'light', to: 'dark', color: 'rgb(238, 234, 226)' },
+  { from: 'dark', to: 'light', color: 'rgb(0, 0, 0)' }
+]) {
+  test(`@pointer-refinement cursor colors follow ${from} to ${to} without resizing`, async ({ page }) => {
+    test.skip(!(await supportsCustomCursor(page)), 'fine pointer only')
+    await page.addInitScript(theme => localStorage.setItem('yance-theme', theme), from)
+    // Test one real theme transition per case, independently of the Hero entrance.
+    await page.goto('/404.html')
+    await expect(page.locator('html')).toHaveAttribute('data-theme', from)
+    await page.locator('.theme-orbit').click()
+    await expect(page.locator('html')).toHaveAttribute('data-theme', to)
+    await page.evaluate(() => {
+      const surface = document.createElement('div')
+      surface.id = 'cursor-theme-surface'
+      surface.style.cssText = 'position:fixed;left:220px;top:260px;width:80px;height:60px;z-index:2147483647;background:var(--bg)'
+      document.body.append(surface)
+    })
+    const ring = page.locator('.sitewide-cursor-ring')
+    const dot = page.locator('.sitewide-cursor-dot')
+    await page.locator('#cursor-theme-surface').hover()
+    await expect(page.locator('.sitewide-cursor')).toBeVisible()
+    await expect(ring).toHaveCSS('border-top-color', color)
+    await expect(dot).toHaveCSS('background-color', color)
+    await expect(ring).toHaveCSS('width', '32px')
+    await expect(dot).toHaveCSS('width', '6px')
+    await page.locator('.y-button').first().hover()
+    await expect(ring).toHaveCSS('width', '80px')
+    await expect(ring).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+  })
+}
+
 test('@pointer-refinement body text keeps native selection while its real links stay actionable', async ({ page }) => {
   test.skip(!(await supportsCustomCursor(page)), 'fine pointer only')
   await page.goto('/')
