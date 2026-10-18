@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
 const contacts = [
   { label: '邮箱', href: 'mailto:yance777@outlook.com', value: 'yance777@outlook.com', external: false },
@@ -68,7 +68,7 @@ for (const width of [320, 390, 768, 1024, 1440]) {
       return {
         documentWidth: document.documentElement.scrollWidth,
         viewportWidth: window.innerWidth,
-        gridColumns: getComputedStyle(grid).gridTemplateColumns.split(' ').length,
+        groupWidth: grid.getBoundingClientRect().width,
         firstRowTopDelta: Math.abs(firstRow[0]!.top - firstRow[1]!.top),
         hitAreas: links.map((link) => {
           const rect = link.getBoundingClientRect()
@@ -82,11 +82,58 @@ for (const width of [320, 390, 768, 1024, 1440]) {
     expect(geometry.documentWidth, `${width}px footer overflow`).toBeLessThanOrEqual(geometry.viewportWidth)
     expect(geometry.svgCount).toBe(2)
     expect(geometry.hitAreas.every(({ width: hitWidth, height }) => hitWidth >= 44 && height >= 44)).toBe(true)
-    expect(geometry.rowHeights.every((height) => Math.abs(height - geometry.rowHeights[0]!) <= 1)).toBe(true)
-    if (width >= 320) {
-      expect(geometry.gridColumns, `${width}px contact grid`).toBe(2)
+    if (width >= 768) {
       expect(geometry.firstRowTopDelta, `${width}px contact first row`).toBeLessThanOrEqual(1)
     }
+  })
+}
+
+async function expectContentFittedContacts(page: Page, label: string) {
+  await page.locator('.site-footer').scrollIntoViewIfNeeded()
+  const cards = await page.locator('.foot-contact').evaluateAll(links => links.map(link => {
+    const rect = link.getBoundingClientRect()
+    const arrow = link.querySelector('.foot-contact-arrow')!.getBoundingClientRect()
+    const textRanges = [...link.querySelectorAll('.foot-contact-copy > span')].map(span => {
+      const range = document.createRange()
+      range.selectNodeContents(span)
+      return range.getBoundingClientRect()
+    })
+    return {
+      width: rect.width,
+      gap: arrow.left - Math.max(...textRanges.map(text => text.right)),
+      containsText: textRanges.every(text => text.left >= rect.left && text.right <= rect.right),
+      overflow: link.scrollWidth > link.clientWidth + 1
+    }
+  }))
+  for (const card of cards) {
+    expect(card.gap, `${label} text-to-arrow gap`).toBeGreaterThanOrEqual(10)
+    expect(card.gap, `${label} text-to-arrow gap`).toBeLessThanOrEqual(14)
+    expect(card.containsText).toBe(true)
+    expect(card.overflow).toBe(false)
+  }
+  expect(cards[0]!.width, 'short GitHub card does not stretch to match email').toBeGreaterThan(cards[1]!.width + 20)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+}
+
+for (const locale of locales) {
+  for (const width of [1440, 960, 768, 390, 320]) {
+    test(`footer cards fit their actual contact content: ${locale.name} at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 1000 })
+      await page.emulateMedia({ reducedMotion: 'reduce' })
+      await page.goto(locale.path)
+      await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
+      await expectContentFittedContacts(page, `${locale.name} ${width}px`)
+    })
+  }
+
+  test(`footer cards retain their content fit after a responsive resize: ${locale.name}`, async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 })
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto(locale.path)
+    await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
+    await expectContentFittedContacts(page, `${locale.name} before resize`)
+    await page.setViewportSize({ width: 320, height: 1000 })
+    await expectContentFittedContacts(page, `${locale.name} after resize`)
   })
 }
 

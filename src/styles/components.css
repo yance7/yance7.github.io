@@ -219,24 +219,26 @@ html[data-locale='en'] .section-copy {
 .foot-mark:hover, .foot-mark:focus-visible { color: var(--gold); background: var(--surface-hover); transform: translateY(var(--motion-control-lift)); }
 .foot-mark:hover .brand-mark-image { filter: var(--brand-mark-hover-filter); }
 .foot-contacts {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  flex: 1 1 720px;
-  width: min(100%, 720px);
-  max-width: 720px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  flex: 0 1 auto;
+  max-inline-size: 100%;
   min-width: 0;
   margin: 0;
   font-style: normal;
 }
 .foot-contact {
   display: grid;
-  grid-template-columns: 22px minmax(0, 1fr) 14px;
+  grid-template-columns: 22px minmax(0, max-content) 14px;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+  flex: 0 1 auto;
+  inline-size: fit-content;
+  max-inline-size: 100%;
   min-width: 44px;
   min-height: 60px;
-  padding: 9px 10px;
+  padding: 12px;
   box-sizing: border-box;
   border: 1px solid transparent; border-radius: var(--radius-small); color: var(--dim);
   transition: color 200ms var(--ease-soft), background-color 200ms var(--ease-soft), border-color 200ms var(--ease-soft), transform 200ms var(--ease-out);
