@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { mkdir, writeFile } from 'node:fs/promises'
 
 const contacts = [
   { label: '邮箱', href: 'mailto:yance777@outlook.com', value: 'yance777@outlook.com', external: false },
@@ -89,11 +90,35 @@ for (const width of [320, 390, 768, 1024, 1440]) {
 }
 
 async function expectContentFittedContacts(page: Page, label: string) {
-  // These reduced-motion checks measure contact geometry after a resize.
+  const hostStartedAt = Date.now()
   await page.locator('.site-footer').evaluate(footer => footer.scrollIntoView({ behavior: 'instant', block: 'center' }))
-  const readCards = () => page.locator('.foot-contact').evaluateAll(links => links.map(link => {
+  // Viewport APIs can return before resize and viewport-unit layout have rendered.
+  // Sample after rendering, rather than polling intermediate geometry for a match.
+  const rendering = await page.evaluate(() => new Promise<{
+    timeOrigin: number
+    frames: { time: number; wall: number; width: number; padding: string }[]
+    resizeEvents: { time: number; wall: number; width: number }[]
+  }>(resolve => {
+    const frames: { time: number; wall: number; width: number; padding: string }[] = []
+    const sample = () => frames.push({
+      time: performance.now(), wall: Date.now(), width: innerWidth,
+      padding: getComputedStyle(document.querySelector('.site-footer')!).paddingLeft
+    })
+    requestAnimationFrame(() => {
+      sample()
+      requestAnimationFrame(() => {
+        sample()
+        const resizeEvents = (window as Window & {
+          footerResizeEvents?: { time: number; wall: number; width: number }[]
+        }).footerResizeEvents ?? []
+        resolve({ timeOrigin: performance.timeOrigin, frames, resizeEvents })
+      })
+    })
+  }))
+  const cards = await page.locator('.foot-contact').evaluateAll(links => links.map(link => {
     const rect = link.getBoundingClientRect()
     const arrow = link.querySelector('.foot-contact-arrow')!.getBoundingClientRect()
+    const copy = link.querySelector('.foot-contact-copy')!.getBoundingClientRect()
     const textRanges = [...link.querySelectorAll('.foot-contact-copy > span')].map(span => {
       const range = document.createRange()
       range.selectNodeContents(span)
@@ -102,15 +127,20 @@ async function expectContentFittedContacts(page: Page, label: string) {
     return {
       width: rect.width,
       gap: arrow.left - Math.max(...textRanges.map(text => text.right)),
+      columnGap: arrow.left - copy.right,
+      copyWidth: copy.width,
       containsText: textRanges.every(text => text.left >= rect.left && text.right <= rect.right),
       overflow: link.scrollWidth > link.clientWidth + 1
     }
   }))
-  let cards: Awaited<ReturnType<typeof readCards>> = []
-  await expect.poll(async () => {
-    cards = await readCards()
-    return cards.length === 2 && cards.every(card => card.gap >= 10 && card.gap <= 14 && card.containsText && !card.overflow)
-  }, { message: `${label} responsive contact reflow`, timeout: 5000 }).toBe(true)
+  const evidencePath = test.info().outputPath(`footer-geometry-${label.replace(/[^a-z0-9-]/gi, '-')}.json`)
+  await mkdir(test.info().outputDir, { recursive: true })
+  await writeFile(evidencePath, JSON.stringify({ label, hostStartedAt, hostFinishedAt: Date.now(), rendering, cards }))
+  await test.info().attach(`footer-geometry-${label}`, {
+    path: evidencePath,
+    contentType: 'application/json'
+  })
+  expect(cards).toHaveLength(2)
   for (const card of cards) {
     expect(card.gap, `${label} text-to-arrow gap`).toBeGreaterThanOrEqual(10)
     expect(card.gap, `${label} text-to-arrow gap`).toBeLessThanOrEqual(14)
@@ -138,6 +168,14 @@ for (const locale of locales) {
     await page.goto(locale.path)
     await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
     await expectContentFittedContacts(page, `${locale.name} before resize`)
+    await page.evaluate(() => {
+      const resizeEvents: { time: number; wall: number; width: number }[] = []
+      const footerWindow = window as Window & { footerResizeEvents?: typeof resizeEvents }
+      footerWindow.footerResizeEvents = resizeEvents
+      addEventListener('resize', () => {
+        if (resizeEvents.length < 20) resizeEvents.push({ time: performance.now(), wall: Date.now(), width: innerWidth })
+      }, { passive: true })
+    })
     await page.setViewportSize({ width: 320, height: 1000 })
     await expectContentFittedContacts(page, `${locale.name} after resize`)
   })
