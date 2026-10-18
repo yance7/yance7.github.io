@@ -89,8 +89,9 @@ for (const width of [320, 390, 768, 1024, 1440]) {
 }
 
 async function expectContentFittedContacts(page: Page, label: string) {
-  await page.locator('.site-footer').scrollIntoViewIfNeeded()
-  const cards = await page.locator('.foot-contact').evaluateAll(links => links.map(link => {
+  // These reduced-motion checks measure contact geometry after a resize.
+  await page.locator('.site-footer').evaluate(footer => footer.scrollIntoView({ behavior: 'instant', block: 'center' }))
+  const readCards = () => page.locator('.foot-contact').evaluateAll(links => links.map(link => {
     const rect = link.getBoundingClientRect()
     const arrow = link.querySelector('.foot-contact-arrow')!.getBoundingClientRect()
     const textRanges = [...link.querySelectorAll('.foot-contact-copy > span')].map(span => {
@@ -105,6 +106,11 @@ async function expectContentFittedContacts(page: Page, label: string) {
       overflow: link.scrollWidth > link.clientWidth + 1
     }
   }))
+  let cards: Awaited<ReturnType<typeof readCards>> = []
+  await expect.poll(async () => {
+    cards = await readCards()
+    return cards.length === 2 && cards.every(card => card.gap >= 10 && card.gap <= 14 && card.containsText && !card.overflow)
+  }, { message: `${label} responsive contact reflow`, timeout: 5000 }).toBe(true)
   for (const card of cards) {
     expect(card.gap, `${label} text-to-arrow gap`).toBeGreaterThanOrEqual(10)
     expect(card.gap, `${label} text-to-arrow gap`).toBeLessThanOrEqual(14)

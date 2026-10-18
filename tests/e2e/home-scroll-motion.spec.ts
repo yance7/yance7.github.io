@@ -14,6 +14,17 @@ test.beforeEach(async ({ page }) => {
       })
     }
     Object.defineProperty(window, '__fontReadinessTimeline', { value: timeline })
+    const scrollTimeline: Record<string, unknown>[] = []
+    Object.defineProperty(window, '__homeScrollTimeline', { value: scrollTimeline })
+    const recordScroll = (event: string, key?: string) => {
+      if (scrollTimeline.length === 100) scrollTimeline.shift()
+      scrollTimeline.push({ event, key, time: performance.now(), wallTime: Date.now(), scrollY })
+    }
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Home' || event.key === 'End') recordScroll('keydown', event.key)
+    })
+    document.addEventListener('scroll', () => recordScroll('scroll'), { passive: true })
+    document.addEventListener('scrollend', () => recordScroll('scrollend'), { passive: true })
     const observer = new MutationObserver(records => {
       for (const mutation of records) {
         if (mutation.target !== document.documentElement) continue
@@ -60,6 +71,18 @@ test.afterEach(async ({ page }, testInfo) => {
     hash: location.hash,
     initialHash: document.documentElement.dataset.initialHash, scrollY,
     timeline: (window as Window & { __fontReadinessTimeline?: unknown }).__fontReadinessTimeline,
+    scrollTimeline: (window as Window & { __homeScrollTimeline?: unknown }).__homeScrollTimeline,
+    geometry: {
+      scrollHeight: document.documentElement.scrollHeight, viewportHeight: innerHeight,
+      nativeScrollEnded: document.documentElement.dataset.nativeScrollEnded,
+      snap: getComputedStyle(document.documentElement).scrollSnapType,
+      focusedTag: document.activeElement?.tagName,
+      focusedClass: document.activeElement?.className,
+      footer: document.querySelector('.site-footer')?.getBoundingClientRect().toJSON(),
+      sections: Array.from(document.querySelectorAll('.page-home > section')).map(element => ({
+        id: element.id, ...element.getBoundingClientRect().toJSON()
+      }))
+    },
     resources: performance.getEntriesByType('resource')
       .filter(entry => /(?:fonts[^/]*\.css|\.woff2?(?:\?|$))/.test(entry.name))
       .map(entry => entry.toJSON())
@@ -76,7 +99,11 @@ async function openHome(page: Page, path = '/') {
   const assertion = { startedAt: Date.now(), finishedAt: undefined as number | undefined }
   fontAssertions.get(page)?.push(assertion)
   try {
-    await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
+    // The failed WebKit wait reported loading despite a ready mutation inside
+    // its deadline. Read independently with the original 5000ms upper bound.
+    await expect.poll(() => page.evaluate(() => document.documentElement.dataset.fontsReady), {
+      timeout: 5000, intervals: [20, 50, 100, 100, 500]
+    }).toBe('ready')
   } finally {
     assertion.finishedAt = Date.now()
   }
