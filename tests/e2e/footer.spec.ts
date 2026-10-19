@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { mkdir, writeFile } from 'node:fs/promises'
 
 const contacts = [
   { label: '邮箱', href: 'mailto:yance777@outlook.com', value: 'yance777@outlook.com', external: false },
@@ -88,23 +89,143 @@ for (const width of [320, 390, 768, 1024, 1440]) {
   })
 }
 
-async function expectContentFittedContacts(page: Page, label: string) {
-  await page.locator('.site-footer').scrollIntoViewIfNeeded()
-  const cards = await page.locator('.foot-contact').evaluateAll(links => links.map(link => {
-    const rect = link.getBoundingClientRect()
-    const arrow = link.querySelector('.foot-contact-arrow')!.getBoundingClientRect()
-    const textRanges = [...link.querySelectorAll('.foot-contact-copy > span')].map(span => {
-      const range = document.createRange()
-      range.selectNodeContents(span)
-      return range.getBoundingClientRect()
-    })
-    return {
-      width: rect.width,
-      gap: arrow.left - Math.max(...textRanges.map(text => text.right)),
-      containsText: textRanges.every(text => text.left >= rect.left && text.right <= rect.right),
-      overflow: link.scrollWidth > link.clientWidth + 1
+async function observeFooterGeometry(page: Page, resize: { width: number; padding: number } | null = null) {
+  await page.locator('.site-footer').waitFor({ state: 'attached' })
+  return page.evaluateHandle(target => {
+    type ResizeEvent = { time: number; wall: number; width: number; trusted: boolean }
+    type LayoutSample = { time: number; wall: number; width: number; padding: string; paddingRight: string; trigger: string }
+    const footer = document.querySelector<HTMLElement>('.site-footer')!
+    const measure = (resizeEvent: ResizeEvent | null = null, layoutObservations: LayoutSample[] = []) => {
+      footer.scrollIntoView({ behavior: 'instant', block: 'center' })
+      const cards = Array.from(footer.querySelectorAll<HTMLElement>('.foot-contact'), link => {
+        const rect = link.getBoundingClientRect()
+        const arrow = link.querySelector('.foot-contact-arrow')!.getBoundingClientRect()
+        const copy = link.querySelector('.foot-contact-copy')!.getBoundingClientRect()
+        const textRanges = [...link.querySelectorAll('.foot-contact-copy > span')].map(span => {
+          const range = document.createRange()
+          range.selectNodeContents(span)
+          return range.getBoundingClientRect()
+        })
+        return {
+          width: rect.width,
+          gap: arrow.left - Math.max(...textRanges.map(text => text.right)),
+          columnGap: arrow.left - copy.right,
+          copyWidth: copy.width,
+          containsText: textRanges.every(text => text.left >= rect.left && text.right <= rect.right),
+          overflow: link.scrollWidth > link.clientWidth + 1
+        }
+      })
+      const frame = {
+        time: performance.now(), wall: Date.now(), width: innerWidth,
+        padding: getComputedStyle(footer).paddingLeft,
+        paddingRight: getComputedStyle(footer).paddingRight
+      }
+      return {
+        cards,
+        documentWidth: document.documentElement.scrollWidth,
+        viewportWidth: innerWidth,
+        rendering: {
+          timeOrigin: performance.timeOrigin,
+          phase: resizeEvent ? 'resize-layout' : 'initial-layout',
+          sampledAt: frame,
+          layoutObservations: [...layoutObservations],
+          resizeEvents: resizeEvent ? [resizeEvent] : []
+        }
+      }
     }
-  }))
+    // Initial viewports are set before navigation. Their synchronous layout read
+    // needs no empty RAFs, which can be seconds apart in a busy WebKit runner.
+    const before = measure()
+    let cancel = () => {}
+    let settled = false
+    let event: ResizeEvent | null = null
+    const observations: LayoutSample[] = []
+    const resized = target === null ? null : new Promise<ReturnType<typeof measure>>((resolve, reject) => {
+      const captureIfReady = (trigger: string) => {
+        if (settled) return
+        try {
+          const style = getComputedStyle(footer)
+          const sample = {
+            time: performance.now(), wall: Date.now(), width: innerWidth,
+            padding: style.paddingLeft, paddingRight: style.paddingRight, trigger
+          }
+          if (observations.length < 20) observations.push(sample)
+          // The shared shell uses 5vw padding (16px at this test's 320px
+          // viewport with zero emulated safe-area insets). A resize event or
+          // fixed frame count can precede that used-value update. Observe it
+          // without polling the card gap that the assertions must still test.
+          if (!event || sample.width !== target.width
+            || parseFloat(sample.padding) !== target.padding || parseFloat(sample.paddingRight) !== target.padding) return
+          cancel()
+          resolve(measure(event, observations))
+        } catch (error) {
+          cancel()
+          reject(error)
+        }
+      }
+      const observer = new ResizeObserver(() => captureIfReady('resize-observer'))
+      const onResize = (nativeEvent: Event) => {
+        if (innerWidth !== target.width) return
+        event = { time: performance.now(), wall: Date.now(), width: innerWidth, trusted: nativeEvent.isTrusted }
+        captureIfReady('resize-event')
+      }
+      cancel = () => {
+        settled = true
+        removeEventListener('resize', onResize)
+        observer.disconnect()
+      }
+      observer.observe(footer)
+      addEventListener('resize', onResize, { passive: true })
+    })
+    return { before, resized, cancel: () => cancel(), inspect: () => ({ target, event, observations, settled }) }
+  }, resize)
+}
+
+type FooterGeometry = Awaited<ReturnType<Awaited<ReturnType<typeof observeFooterGeometry>>['jsonValue']>>['before']
+const footerObservations = new WeakMap<Page, {
+  handle: Awaited<ReturnType<typeof observeFooterGeometry>>
+  startedAt: number
+}>()
+
+// The body deadline can cancel browser calls before finally can inspect them.
+// afterEach runs before the page fixture closes, so retain and release ownership
+// here and record an explicit unavailable reason if the browser already died.
+test.afterEach(async ({ page }, info) => {
+  const observation = footerObservations.get(page)
+  if (!observation) return
+  footerObservations.delete(page)
+  let state: unknown
+  let unavailable: string | undefined
+  try {
+    state = await observation.handle.evaluate(value => {
+      const snapshot = value.inspect()
+      value.cancel()
+      return snapshot
+    })
+  } catch (error) {
+    unavailable = String(error)
+  } finally {
+    await observation.handle.dispose().catch(error => { unavailable ??= String(error) })
+  }
+  if (info.status !== info.expectedStatus || unavailable) {
+    const lifecyclePath = info.outputPath('footer-resize-lifecycle.json')
+    await mkdir(info.outputDir, { recursive: true })
+    await writeFile(lifecyclePath, JSON.stringify({ hostStartedAt: observation.startedAt, hostFinishedAt: Date.now(), state, unavailable }))
+    await info.attach('footer-resize-lifecycle', { path: lifecyclePath, contentType: 'application/json' })
+  }
+  if (unavailable) throw new Error(`Footer observer cleanup unavailable: ${unavailable}`)
+})
+
+async function expectContentFittedContacts(geometry: FooterGeometry, label: string, hostStartedAt: number) {
+  const { cards } = geometry
+  const evidencePath = test.info().outputPath(`footer-geometry-${label.replace(/[^a-z0-9-]/gi, '-')}.json`)
+  await mkdir(test.info().outputDir, { recursive: true })
+  await writeFile(evidencePath, JSON.stringify({ label, hostStartedAt, hostFinishedAt: Date.now(), ...geometry }))
+  await test.info().attach(`footer-geometry-${label}`, {
+    path: evidencePath,
+    contentType: 'application/json'
+  })
+  expect(cards).toHaveLength(2)
   for (const card of cards) {
     expect(card.gap, `${label} text-to-arrow gap`).toBeGreaterThanOrEqual(10)
     expect(card.gap, `${label} text-to-arrow gap`).toBeLessThanOrEqual(14)
@@ -112,7 +233,7 @@ async function expectContentFittedContacts(page: Page, label: string) {
     expect(card.overflow).toBe(false)
   }
   expect(cards[0]!.width, 'short GitHub card does not stretch to match email').toBeGreaterThan(cards[1]!.width + 20)
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  expect(geometry.documentWidth <= geometry.viewportWidth).toBe(true)
 }
 
 for (const locale of locales) {
@@ -122,7 +243,13 @@ for (const locale of locales) {
       await page.emulateMedia({ reducedMotion: 'reduce' })
       await page.goto(locale.path)
       await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
-      await expectContentFittedContacts(page, `${locale.name} ${width}px`)
+      const startedAt = Date.now()
+      const observation = await observeFooterGeometry(page)
+      try {
+        await expectContentFittedContacts(await observation.evaluate(value => value.before), `${locale.name} ${width}px`, startedAt)
+      } finally {
+        await observation.dispose()
+      }
     })
   }
 
@@ -131,9 +258,14 @@ for (const locale of locales) {
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.goto(locale.path)
     await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
-    await expectContentFittedContacts(page, `${locale.name} before resize`)
+    const startedAt = Date.now()
+    const observation = await observeFooterGeometry(page, { width: 320, padding: 16 })
+    footerObservations.set(page, { handle: observation, startedAt })
+    await expectContentFittedContacts(await observation.evaluate(value => value.before), `${locale.name} before resize`, startedAt)
+    const resizedAt = Date.now()
     await page.setViewportSize({ width: 320, height: 1000 })
-    await expectContentFittedContacts(page, `${locale.name} after resize`)
+    const resized = await observation.evaluate(value => value.resized!)
+    await expectContentFittedContacts(resized, `${locale.name} after resize`, resizedAt)
   })
 }
 

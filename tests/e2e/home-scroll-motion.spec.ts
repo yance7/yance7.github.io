@@ -1,9 +1,112 @@
 import { expect, test, type Page } from '@playwright/test'
 
+const fontAssertions = new WeakMap<Page, { startedAt: number, finishedAt?: number }[]>()
+
+// Passive evidence for readiness failures: preserve the original assertion and timing.
+test.beforeEach(async ({ page }) => {
+  fontAssertions.set(page, [])
+  await page.addInitScript(() => {
+    const timeline: Record<string, unknown>[] = []
+    const record = (event: string, details: Record<string, unknown> = {}) => {
+      if (timeline.length < 100) timeline.push({
+        event, time: performance.now(), wallTime: Date.now(),
+        visibility: document.visibilityState, ...details
+      })
+    }
+    Object.defineProperty(window, '__fontReadinessTimeline', { value: timeline })
+    const scrollTimeline: Record<string, unknown>[] = []
+    Object.defineProperty(window, '__homeScrollTimeline', { value: scrollTimeline })
+    const recordScroll = (event: string, key?: string) => {
+      if (scrollTimeline.length === 100) scrollTimeline.shift()
+      scrollTimeline.push({ event, key, time: performance.now(), wallTime: Date.now(), scrollY })
+    }
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Home' || event.key === 'End') recordScroll('keydown', event.key)
+    })
+    document.addEventListener('scroll', () => recordScroll('scroll'), { passive: true })
+    document.addEventListener('scrollend', () => recordScroll('scrollend'), { passive: true })
+    const observer = new MutationObserver(records => {
+      for (const mutation of records) {
+        if (mutation.target !== document.documentElement) continue
+        record('fonts-ready-attribute', {
+          oldValue: mutation.oldValue,
+          value: document.documentElement.getAttribute('data-fonts-ready')
+        })
+      }
+    })
+    observer.observe(document, {
+      subtree: true, attributes: true, attributeOldValue: true,
+      attributeFilter: ['data-fonts-ready']
+    })
+    const recordReadyPromise = () => {
+      void document.fonts.ready.then(() => record('font-set-ready-promise'))
+    }
+    document.fonts.addEventListener('loading', () => {
+      record('font-set-loading')
+      recordReadyPromise()
+    })
+    document.fonts.addEventListener('loadingdone', () => record('font-set-loadingdone'))
+    document.fonts.addEventListener('loadingerror', () => record('font-set-loadingerror'))
+    document.addEventListener('visibilitychange', () => record('visibilitychange'))
+    window.addEventListener('pageshow', event => record('pageshow', { persisted: event.persisted }))
+    record('init')
+    recordReadyPromise()
+  })
+})
+
+test.afterEach(async ({ page }, testInfo) => {
+  if (testInfo.status === testInfo.expectedStatus) return
+  await testInfo.attach('font-readiness-assertions', {
+    body: JSON.stringify(fontAssertions.get(page) ?? [], null, 2),
+    contentType: 'application/json'
+  })
+  const browser = await page.evaluate(() => ({
+    timeOrigin: performance.timeOrigin,
+    time: performance.now(), wallTime: Date.now(), visibility: document.visibilityState,
+    state: document.documentElement.dataset.fontsReady,
+    fontStatus: document.fonts.status,
+    fontFaces: Array.from(document.fonts)
+      .filter(face => face.status !== 'unloaded')
+      .map(face => ({ family: face.family, weight: face.weight, style: face.style, status: face.status })),
+    hash: location.hash,
+    initialHash: document.documentElement.dataset.initialHash, scrollY,
+    timeline: (window as Window & { __fontReadinessTimeline?: unknown }).__fontReadinessTimeline,
+    scrollTimeline: (window as Window & { __homeScrollTimeline?: unknown }).__homeScrollTimeline,
+    geometry: {
+      scrollHeight: document.documentElement.scrollHeight, viewportHeight: innerHeight,
+      nativeScrollEnded: document.documentElement.dataset.nativeScrollEnded,
+      snap: getComputedStyle(document.documentElement).scrollSnapType,
+      focusedTag: document.activeElement?.tagName,
+      focusedClass: document.activeElement?.className,
+      footer: document.querySelector('.site-footer')?.getBoundingClientRect().toJSON(),
+      sections: Array.from(document.querySelectorAll('.page-home > section')).map(element => ({
+        id: element.id, ...element.getBoundingClientRect().toJSON()
+      }))
+    },
+    resources: performance.getEntriesByType('resource')
+      .filter(entry => /(?:fonts[^/]*\.css|\.woff2?(?:\?|$))/.test(entry.name))
+      .map(entry => entry.toJSON())
+  })).catch(error => ({ unavailable: String(error) }))
+  await testInfo.attach('font-readiness-timeline', {
+    body: JSON.stringify({ assertions: fontAssertions.get(page), browser }, null, 2),
+    contentType: 'application/json'
+  })
+})
+
 async function openHome(page: Page, path = '/') {
   await page.goto(path)
   await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
-  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
+  const assertion = { startedAt: Date.now(), finishedAt: undefined as number | undefined }
+  fontAssertions.get(page)?.push(assertion)
+  try {
+    // The failed WebKit wait reported loading despite a ready mutation inside
+    // its deadline. Read independently with the original 5000ms upper bound.
+    await expect.poll(() => page.evaluate(() => document.documentElement.dataset.fontsReady), {
+      timeout: 5000, intervals: [20, 50, 100, 100, 500]
+    }).toBe('ready')
+  } finally {
+    assertion.finishedAt = Date.now()
+  }
 }
 
 async function hasDesktopInput(page: Page) {
