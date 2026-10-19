@@ -30,6 +30,79 @@ const locales = [
   }
 ] as const
 
+for (const width of [390, 768]) {
+  test(`the English honors title keeps words and its quote on text lines at ${width}px`, async ({ page }, testInfo) => {
+    await page.setViewportSize({ width, height: 900 })
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto('/en/honors/')
+    await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', /^(ready|fallback)$/)
+    await page.evaluate(() => document.fonts.ready)
+    const title = page.locator('.hero-title.hero-lyric')
+    const geometry = await title.evaluate(element => {
+      const words = [...element.querySelectorAll('.lyric-word')]
+      return {
+        words: words.map(word => word.textContent),
+        lines: new Set(words.map(word => Math.round(word.getBoundingClientRect().top))).size,
+        overflow: element.scrollWidth > element.clientWidth + 1 || document.documentElement.scrollWidth > innerWidth + 1
+      }
+    })
+    expect(geometry.words).toEqual(['Step', 'by', 'step,', 'I', 'keep', 'climbing'])
+    expect(geometry.lines).toBeGreaterThanOrEqual(2)
+    expect(geometry.lines).toBeLessThanOrEqual(4)
+    expect(geometry.overflow).toBe(false)
+    await expect(title).toHaveAttribute('aria-label', 'Step by step, I keep climbing')
+    await page.locator('.archive-hero').screenshot({ path: testInfo.outputPath('english-honors-natural.png') })
+  })
+}
+
+test('the English honors closing quote stays with its last word at a line boundary', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/en/honors/')
+  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', /^(ready|fallback)$/)
+  await page.evaluate(() => document.fonts.ready)
+  const title = page.locator('.hero-title.hero-lyric')
+  const quoteWidth = await title.evaluate(element => {
+    const before = getComputedStyle(element, '::before')
+    const probe = document.createElement('span')
+    probe.textContent = '「'
+    probe.style.cssText = 'position:fixed;visibility:hidden;white-space:nowrap'
+    probe.style.font = before.font
+    probe.style.letterSpacing = before.letterSpacing
+    document.body.append(probe)
+    const quoteWidth = probe.getBoundingClientRect().width
+    probe.remove()
+    const textWidth = [...element.querySelectorAll('.lyric-char, .lyric-space')]
+      .reduce((total, span) => total + span.getBoundingClientRect().width, 0)
+    // All words plus the opening quote fit, but there is no room for the closing
+    // quote. Ordinary wrapping must move the last word together with that quote.
+    const title = element as HTMLElement
+    title.style.maxWidth = 'none'
+    title.style.textWrap = 'wrap'
+    title.style.width = `${textWidth + quoteWidth * 1.5 + Number.parseFloat(before.marginRight)}px`
+    return quoteWidth
+  })
+  const geometry = await title.evaluate(element => {
+    const words = [...element.querySelectorAll('.lyric-word')]
+    const last = words.at(-1)!
+    const lastTextWidth = [...last.querySelectorAll('.lyric-char')].reduce((total, char) => total + char.getBoundingClientRect().width, 0)
+    return {
+      words: words.map(word => word.textContent),
+      lines: new Set(words.map(word => Math.round(word.getBoundingClientRect().top))).size,
+      wordLines: words.map(word => new Set([...word.querySelectorAll('.lyric-char')].map(char => Math.round(char.getBoundingClientRect().top))).size),
+      lastWordExtraWidth: last.getBoundingClientRect().width - lastTextWidth,
+      overflow: element.scrollWidth > element.clientWidth + 1
+    }
+  })
+  expect(geometry.words).toEqual(['Step', 'by', 'step,', 'I', 'keep', 'climbing'])
+  expect(quoteWidth).toBeGreaterThan(0)
+  expect(geometry.lastWordExtraWidth).toBeGreaterThanOrEqual(quoteWidth)
+  expect(geometry.lines).toBe(2)
+  expect(geometry.wordLines).toEqual([1, 1, 1, 1, 1, 1])
+  expect(geometry.overflow).toBe(false)
+  await expect(title).toHaveAttribute('aria-label', 'Step by step, I keep climbing')
+})
+
 async function readFontRoles(page: Page) {
   return page.evaluate(() => {
     const fontFamily = (selector: string) => {
