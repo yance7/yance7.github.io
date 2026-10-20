@@ -2,7 +2,7 @@
 import '@fontsource/amiri/latin-400.css'
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { MimoParticleEngine as HomeHeroParticleEngine, createMimoTextMask as createHomeHeroTextMask, createMimoParticleScene, getMimoFontSize, MIMO_PARTICLE_SETTINGS } from '../utils/mimoParticleModel'
-import { type HomeHeroGlyphLayout } from '../utils/homeHeroParticleScene'
+import type { HomeHeroGlyphLayout } from '../utils/homeHeroParticleTypes'
 import { HomeHeroParticleRenderer, type HomeHeroParticleColors } from '../utils/homeHeroParticleRenderer'
 
 const props = defineProps<{ animateIntro: boolean; introStartedAt: number | null }>()

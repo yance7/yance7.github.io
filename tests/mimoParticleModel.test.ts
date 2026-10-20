@@ -12,6 +12,56 @@ import {
 } from '../src/utils/mimoParticleModel'
 
 describe('MiMo particle settings', () => {
+  it.each([
+    { maskWidth: 0, maskHeight: 0, rgba: [] },
+    { maskWidth: 2, maskHeight: 2, rgba: new Uint8ClampedArray(16) }
+  ])('keeps empty and transparent masks empty: $maskWidth x $maskHeight', mask => {
+    const scene = createMimoParticleScene({ width: 100, height: 100, ...mask })
+    const engine = new MimoParticleEngine(scene, { startedAt: 0 })
+    engine.gather()
+    engine.advanceTo(3)
+    expect(scene.particles).toEqual([])
+    expect(scene.sampledCount).toBe(0)
+    expect(engine.active.size).toBe(0)
+    expect(engine.phase).toBe('settled')
+  })
+
+  it('resets entrance, ownership, active state and exact glyph positions using the supplied clock', () => {
+    const scene = createMimoParticleScene({ width: 100, height: 100, maskWidth: 4, maskHeight: 4, rgba: new Uint8ClampedArray(64).fill(255) })
+    const engine = new MimoParticleEngine(scene, { startedAt: 0 })
+    engine.gather()
+    engine.pointer.start(17)
+    engine.pointer.move({ x: 30, y: 40, pointerType: 'pen', pointerId: 17, at: .1 })
+    engine.advanceTo(.2)
+    expect(engine.phase).toBe('gathering')
+    expect(engine.active.size).toBeGreaterThan(0)
+
+    engine.reset(4)
+    expect(scene.particles.every(point => point.x === point.homeX && point.y === point.homeY && point.opacity === 1)).toBe(true)
+    expect(engine.active.size).toBe(0)
+    expect(engine.moving).toBe(false)
+    expect(engine.phase).toBe('settled')
+    expect(engine.pointer.connected).toBe(false)
+    expect(engine.pointer.matches(17)).toBe(false)
+    engine.gather()
+    expect(engine.gatheringUntil).toBeCloseTo(6.02)
+  })
+
+  it('ignores another nonmouse owner and nonfinite coordinates without reactivating input', () => {
+    const scene = createMimoParticleScene({ width: 100, height: 100, maskWidth: 1, maskHeight: 1, rgba: [0, 0, 0, 255] })
+    const engine = new MimoParticleEngine(scene, { startedAt: 0 })
+    engine.pointer.start(17)
+    engine.pointer.move({ x: 30, y: 40, pointerType: 'pen', pointerId: 17, at: 0 })
+    engine.pointer.move({ x: 80, y: 90, pointerType: 'touch', pointerId: 18, at: .1 })
+    engine.pointer.move({ x: Number.NaN, y: 50, pointerType: 'pen', pointerId: 17, at: .2 })
+    expect(engine.pointer.position).toEqual({ x: 30, y: 40 })
+    expect(engine.pointer.matches(17)).toBe(true)
+    engine.pointer.deactivate()
+    engine.pointer.move({ x: Number.POSITIVE_INFINITY, y: 50, pointerType: 'mouse', pointerId: 1, at: .3 })
+    expect(engine.pointer.position).toEqual({ x: 30, y: 40 })
+    expect(engine.pointer.connected).toBe(false)
+  })
+
   it('uses the reported font, sampling, drawing and entrance values', () => {
     expect(MIMO_PARTICLE_SETTINGS).toMatchObject({
       fontFamily: 'Amiri, serif', fontWeight: '400', gridStep: 2,
