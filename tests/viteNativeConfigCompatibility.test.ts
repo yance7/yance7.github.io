@@ -1,7 +1,8 @@
 import { execFileSync } from 'node:child_process'
-import { existsSync, readdirSync, readFileSync } from 'node:fs'
-import { dirname, extname, join, relative, resolve } from 'node:path'
+import { existsSync, readFileSync } from 'node:fs'
+import { dirname, join, relative, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { collectMaintainedSourceFiles } from './helpers/maintainedSourceFiles'
 
 type ImportViolation = {
   file: string
@@ -15,20 +16,6 @@ type ImportResolution = {
 }
 
 const root = process.cwd()
-
-function collectTypeScriptFiles(directory: string): string[] {
-  const files: string[] = []
-  for (const entry of readdirSync(directory, { withFileTypes: true })) {
-    if (entry.name === '.git' || entry.name === 'dist' || entry.name === 'node_modules' || entry.name === 'tests') continue
-    const path = join(directory, entry.name)
-    if (entry.isDirectory()) {
-      files.push(...collectTypeScriptFiles(path))
-    } else if (entry.isFile() && ['.js', '.json', '.mjs', '.ts', '.tsx', '.vue'].includes(extname(entry.name))) {
-      files.push(path)
-    }
-  }
-  return files
-}
 
 function collectRelativeImports(source: string): string[] {
   const imports = new Set<string>()
@@ -114,7 +101,7 @@ describe('Vite native config compatibility', () => {
   })
 
   it('does not suppress Vite native loader warnings through configuration', () => {
-    const source = collectTypeScriptFiles(root)
+    const source = collectMaintainedSourceFiles(root)
       .map((file) => readFileSync(file, 'utf8'))
       .join('\n')
 
