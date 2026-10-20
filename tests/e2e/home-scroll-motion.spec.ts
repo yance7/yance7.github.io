@@ -1,6 +1,9 @@
 import { expect, test, type Page } from '@playwright/test'
+import { startFontReadinessObservation, type FontReadinessObservation } from './helpers/fontReadiness'
 
-const fontAssertions = new WeakMap<Page, { startedAt: number, finishedAt?: number }[]>()
+const fontAssertions = new WeakMap<Page, {
+  startedAt: number, finishedAt?: number, observation?: FontReadinessObservation
+}[]>()
 
 // Passive evidence for readiness failures: preserve the original assertion and timing.
 test.beforeEach(async ({ page }) => {
@@ -96,14 +99,23 @@ test.afterEach(async ({ page }, testInfo) => {
 async function openHome(page: Page, path = '/') {
   await page.goto(path)
   await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
-  const assertion = { startedAt: Date.now(), finishedAt: undefined as number | undefined }
+  const assertion: { startedAt: number, finishedAt?: number, observation?: FontReadinessObservation } = {
+    startedAt: Date.now()
+  }
   fontAssertions.get(page)?.push(assertion)
   try {
-    // The failed WebKit wait reported loading despite a ready mutation inside
-    // its deadline. Read independently with the original 5000ms upper bound.
-    await expect.poll(() => page.evaluate(() => document.documentElement.dataset.fontsReady), {
-      timeout: 5000, intervals: [20, 50, 100, 100, 500]
-    }).toBe('ready')
+    // Observe strictly ready inside the original five-second window. The
+    // browser witness survives a delayed protocol reply; the test's existing
+    // total timeout still bounds receipt. Do not restart the observation clock.
+    const deadline = assertion.startedAt + 5000
+    const observation = await page.evaluateHandle(startFontReadinessObservation, deadline)
+    try {
+      assertion.observation = await observation.evaluate(holder => holder.result)
+    } finally {
+      await observation.dispose()
+    }
+    expect(assertion.observation.state, JSON.stringify(assertion.observation)).toBe('ready')
+    expect(assertion.observation.observedAt).toBeLessThanOrEqual(deadline)
   } finally {
     assertion.finishedAt = Date.now()
   }
@@ -112,6 +124,88 @@ async function openHome(page: Page, path = '/') {
 async function hasDesktopInput(page: Page) {
   return page.evaluate(() => matchMedia('(min-width: 1025px) and (hover: hover) and (pointer: fine)').matches)
 }
+
+test.describe('font readiness observation', () => {
+  const start = Date.UTC(2026, 9, 19)
+
+  test.beforeEach(async ({ page }) => {
+    await page.clock.install({ time: start })
+    await page.clock.pauseAt(start)
+    await page.setContent('<html data-fonts-ready="loading"><body></body></html>')
+  })
+
+  test('retains an in-window ready witness when consumed after the deadline', async ({ page }) => {
+    const observation = await page.evaluateHandle(startFontReadinessObservation, start + 5000)
+    try {
+      await page.clock.runFor(4472)
+      await page.evaluate(() => { document.documentElement.dataset.fontsReady = 'ready' })
+      await page.clock.runFor(1000)
+      expect(await observation.evaluate(holder => holder.result))
+        .toEqual({ state: 'ready', observedAt: start + 4472, deadline: start + 5000 })
+    } finally {
+      await observation.dispose()
+    }
+  })
+
+  test('rejects late ready even before a delayed deadline timer runs', async ({ page }) => {
+    const observation = await page.evaluateHandle(startFontReadinessObservation, start + 5000)
+    try {
+      // Changing wall time does not execute the pending timer.
+      await page.clock.setSystemTime(start + 5001)
+      await page.evaluate(() => { document.documentElement.dataset.fontsReady = 'ready' })
+      expect(await observation.evaluate(holder => holder.result))
+        .toEqual({ state: 'timeout', observedAt: start + 5001, deadline: start + 5000 })
+    } finally {
+      await observation.dispose()
+    }
+  })
+
+  test('rejects fallback rather than accepting a terminal font state as ready', async ({ page }) => {
+    const observation = await page.evaluateHandle(startFontReadinessObservation, start + 5000)
+    try {
+      await page.clock.runFor(100)
+      await page.evaluate(() => { document.documentElement.dataset.fontsReady = 'fallback' })
+      expect(await observation.evaluate(holder => holder.result))
+        .toEqual({ state: 'fallback', observedAt: start + 100, deadline: start + 5000 })
+    } finally {
+      await observation.dispose()
+    }
+  })
+
+  test('rejects fonts that remain loading at the original deadline', async ({ page }) => {
+    const observation = await page.evaluateHandle(startFontReadinessObservation, start + 5000)
+    try {
+      await page.clock.runFor(5000)
+      expect(await observation.evaluate(holder => holder.result))
+        .toEqual({ state: 'timeout', observedAt: start + 5000, deadline: start + 5000 })
+    } finally {
+      await observation.dispose()
+    }
+  })
+
+  test('accepts fonts already ready when observation starts within the window', async ({ page }) => {
+    await page.evaluate(() => { document.documentElement.dataset.fontsReady = 'ready' })
+    const observation = await page.evaluateHandle(startFontReadinessObservation, start + 5000)
+    try {
+      expect(await observation.evaluate(holder => holder.result))
+        .toEqual({ state: 'ready', observedAt: start, deadline: start + 5000 })
+    } finally {
+      await observation.dispose()
+    }
+  })
+
+  test('rejects an initial ready read when installation itself misses the window', async ({ page }) => {
+    await page.clock.setSystemTime(start + 5001)
+    await page.evaluate(() => { document.documentElement.dataset.fontsReady = 'ready' })
+    const observation = await page.evaluateHandle(startFontReadinessObservation, start + 5000)
+    try {
+      expect(await observation.evaluate(holder => holder.result))
+        .toEqual({ state: 'timeout', observedAt: start + 5001, deadline: start + 5000 })
+    } finally {
+      await observation.dispose()
+    }
+  })
+})
 
 test('home native snap follows desktop input, width and runtime motion preferences', async ({ page }) => {
   await openHome(page)
