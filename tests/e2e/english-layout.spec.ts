@@ -10,6 +10,33 @@ const routes = [
   '/en/concerts/'
 ] as const
 
+for (const width of [320, 390, 768, 1440]) for (const theme of ['light', 'dark']) {
+  test(`English leadership renders the approved institution names without truncation at ${width}px ${theme}`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 1000 })
+    await page.addInitScript(theme => localStorage.setItem('yance-theme', theme), theme)
+    await page.goto('/en/')
+    await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
+    await page.evaluate(() => document.fonts.ready)
+    const names = page.locator('.beyond-leadership > span')
+    await expect(names).toHaveText([
+      'iHOSA Science and Technology Club', 'Biology Club',
+      'Student Institute for Self Management', 'Student Institute for Self Management'
+    ])
+    await names.first().scrollIntoViewIfNeeded()
+    const readable = await names.evaluateAll(elements => elements.every(element => {
+      const box = element.getBoundingClientRect()
+      const range = document.createRange()
+      range.selectNodeContents(element)
+      const text = range.getBoundingClientRect()
+      return text.left >= box.left - 1 && text.right <= box.right + 1
+        && element.scrollHeight <= element.clientHeight + 1
+        && parseFloat(getComputedStyle(element).fontSize) >= 12
+    }))
+    expect(readable, `${width}px ${theme} complete institution labels`).toBe(true)
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  })
+}
+
 const viewports = [
   { name: 'narrow', width: 320, height: 844 },
   { name: 'mobile', width: 390, height: 844 },
@@ -103,8 +130,8 @@ async function expectEnglishLayoutSurfacesInsideViewport(page: Page) {
   expect(violations).toEqual([])
 }
 
-async function expectEnglishTextSurfacesReadable(page: Page) {
-  const violations = await page.evaluate(() => {
+async function readEnglishTextSurfaceViolations(page: Page) {
+  return page.evaluate(() => {
     const selectors = [
       '.home-hero-kicker',
       '.home-hero-typewriter',
@@ -153,8 +180,10 @@ async function expectEnglishTextSurfacesReadable(page: Page) {
           ancestor = ancestor.parentElement
         }
 
-        const hasHorizontalOverflow = element.scrollWidth > element.clientWidth + 1
         const rect = element.getBoundingClientRect()
+        // Inline boxes have no clientWidth; Gecko still reports their scrollWidth.
+        const contentWidth = element.clientWidth || rect.width
+        const hasHorizontalOverflow = element.scrollWidth > contentWidth + 1
         return hasHorizontalOverflow
           || rect.left < -1
           || rect.right > window.innerWidth + 1
@@ -170,8 +199,32 @@ async function expectEnglishTextSurfacesReadable(page: Page) {
       })))
   })
 
-  expect(violations).toEqual([])
 }
+
+async function expectEnglishTextSurfacesReadable(page: Page) {
+  expect(await readEnglishTextSurfaceViolations(page)).toEqual([])
+}
+
+test('English readability checks actual inline geometry and still detects clipping', async ({ page }) => {
+  await page.goto('/en/academics/')
+  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
+  await page.evaluate(() => document.fonts.ready)
+  await page.evaluate(() => {
+    const probe = document.createElement('span')
+    probe.id = 'inline-readability-probe'
+    probe.className = 'education-name'
+    probe.style.cssText = 'white-space:nowrap'
+    probe.textContent = 'Inline probe'
+    document.querySelector('main')!.append(probe)
+  })
+  expect(await readEnglishTextSurfaceViolations(page)).toEqual([])
+  await page.locator('#inline-readability-probe').evaluate(element => {
+    element.style.cssText = 'display:inline-block;width:16px;white-space:nowrap;overflow:hidden'
+  })
+  expect(await readEnglishTextSurfaceViolations(page)).toEqual(expect.arrayContaining([
+    expect.objectContaining({ text: 'Inline probe' })
+  ]))
+})
 
 async function expectEnglishLeadershipRowsDoNotCollide(page: Page) {
   const violations = await page.evaluate(() => {

@@ -65,6 +65,15 @@ function collectStrings(value: unknown): string[] {
 }
 
 describe('English content hygiene', () => {
+  it('uses the approved leadership institution names without changing roles or dates', () => {
+    expect(getLocalizedCommunity('en').leadership.map(({ role, org, period }) => ({ role, org, period }))).toEqual([
+      { role: 'President', org: 'iHOSA Science and Technology Club', period: '2025.09 — 2026.09' },
+      { role: 'Vice President', org: 'Biology Club', period: '2025.09 — 2026.09' },
+      { role: 'Chair', org: 'Student Institute for Self Management', period: '2025.09 — 2026.09' },
+      { role: 'Vice Chair', org: 'Student Institute for Self Management', period: '2024.09 — 2025.09' }
+    ])
+  })
+
   const englishSources = [
     uiMessages.en,
     ...pageEntries.map(({ key }) => getLocalizedPageMeta('en', key)),

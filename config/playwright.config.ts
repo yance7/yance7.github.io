@@ -47,8 +47,8 @@ export default defineConfig({
       testMatch: /(?:site|locale|scroll-progress|footer|ui-primitives|english-layout|adaptive-header|works-showcase|concert-archive-rail|concert-archive-preservation|research-layout|motion-system|home-scroll-motion|home-hero-layout|home-hero-interaction|mimo-alignment|sitewide-cursor|page-urls|site-typography)\.spec\.ts/
     },
     { name: 'chromium-visual', use: { ...devices['Desktop Chrome'] }, testMatch: /visual-matrix\.spec\.ts/ },
-    { name: 'firefox-desktop-smoke', use: { ...devices['Desktop Firefox'] }, testMatch: /(?:compatibility|concert-archive-rail|concert-archive-preservation|home-scroll-motion|home-hero-layout|home-hero-interaction|mimo-alignment|sitewide-cursor|page-urls|site-typography)\.spec\.ts/ },
-    { name: 'chromium-android-smoke', use: { ...devices['Pixel 5'] }, testMatch: /(?:compatibility|concert-archive-rail|concert-archive-preservation|home-scroll-motion|home-hero-interaction|mimo-alignment|sitewide-cursor|page-urls|site-typography)\.spec\.ts/ }
+    { name: 'firefox-desktop-smoke', use: { ...devices['Desktop Firefox'] }, testMatch: /(?:compatibility|english-layout|concert-archive-rail|concert-archive-preservation|home-scroll-motion|home-hero-layout|home-hero-interaction|mimo-alignment|sitewide-cursor|page-urls|site-typography)\.spec\.ts/ },
+    { name: 'chromium-android-smoke', use: { ...devices['Pixel 5'] }, testMatch: /(?:compatibility|english-layout|concert-archive-rail|concert-archive-preservation|home-scroll-motion|home-hero-interaction|mimo-alignment|sitewide-cursor|page-urls|site-typography)\.spec\.ts/ }
   ],
   webServer: {
     cwd: repositoryRoot,
