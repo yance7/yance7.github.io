@@ -75,7 +75,12 @@ jobs:
       - name: Install browser
         run: npx playwright install --with-deps ${{ matrix.browser }}
       - name: Run ten rounds of home reading and focus tests
-        run: npm run test:e2e -- tests/e2e/home-scroll-motion.spec.ts --project=${{ matrix.project }} --workers=1 --grep 'native snap follows|native proximity|natural footer|history restores|cold restoration|focus during|focus reveals|immediate focus reveal|reveals remain' --repeat-each=10 --retries=0
+        run: |
+          if [ '${{ matrix.project }}' = 'webkit-desktop' ]; then
+            npm run test:e2e -- tests/e2e/home-hero-layout.spec.ts tests/e2e/home-scroll-motion.spec.ts --project=webkit-desktop --workers=4 --repeat-each=10 --retries=0
+          else
+            npm run test:e2e -- tests/e2e/home-scroll-motion.spec.ts --project=${{ matrix.project }} --workers=1 --grep 'native snap follows|native proximity|natural footer|history restores|cold restoration|focus during|focus reveals|immediate focus reveal|reveals remain|home hash content' --repeat-each=10 --retries=0
+          fi
       - name: Upload stress evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -347,7 +352,8 @@ jobs:
       - name: WebKit mobile footer quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-footer
-        run: npm run test:e2e -- tests/e2e/footer.spec.ts --project=webkit-mobile --workers=4 --retries=0
+        # Serial execution preserves more headroom within the unchanged font deadline.
+        run: npm run test:e2e -- tests/e2e/footer.spec.ts --project=webkit-mobile --workers=1 --retries=0
       - name: WebKit mobile UI primitive quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-primitives

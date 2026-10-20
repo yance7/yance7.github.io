@@ -1,14 +1,211 @@
 import { expect, test, type Page } from '@playwright/test'
+import { startFontReadinessObservation, type FontReadinessObservation } from './helpers/fontReadiness'
+
+const fontAssertions = new WeakMap<Page, {
+  startedAt: number, finishedAt?: number, observation?: FontReadinessObservation
+}[]>()
+
+// Passive evidence for readiness failures: preserve the original assertion and timing.
+test.beforeEach(async ({ page }) => {
+  fontAssertions.set(page, [])
+  await page.addInitScript(() => {
+    const timeline: Record<string, unknown>[] = []
+    const record = (event: string, details: Record<string, unknown> = {}) => {
+      if (timeline.length < 100) timeline.push({
+        event, time: performance.now(), wallTime: Date.now(),
+        visibility: document.visibilityState, ...details
+      })
+    }
+    Object.defineProperty(window, '__fontReadinessTimeline', { value: timeline })
+    const scrollTimeline: Record<string, unknown>[] = []
+    Object.defineProperty(window, '__homeScrollTimeline', { value: scrollTimeline })
+    const recordScroll = (event: string, key?: string) => {
+      if (scrollTimeline.length === 100) scrollTimeline.shift()
+      scrollTimeline.push({ event, key, time: performance.now(), wallTime: Date.now(), scrollY })
+    }
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Home' || event.key === 'End') recordScroll('keydown', event.key)
+    })
+    document.addEventListener('scroll', () => recordScroll('scroll'), { passive: true })
+    document.addEventListener('scrollend', () => recordScroll('scrollend'), { passive: true })
+    const observer = new MutationObserver(records => {
+      for (const mutation of records) {
+        if (mutation.target !== document.documentElement) continue
+        record('fonts-ready-attribute', {
+          oldValue: mutation.oldValue,
+          value: document.documentElement.getAttribute('data-fonts-ready')
+        })
+      }
+    })
+    observer.observe(document, {
+      subtree: true, attributes: true, attributeOldValue: true,
+      attributeFilter: ['data-fonts-ready']
+    })
+    const recordReadyPromise = () => {
+      void document.fonts.ready.then(() => record('font-set-ready-promise'))
+    }
+    document.fonts.addEventListener('loading', () => {
+      record('font-set-loading')
+      recordReadyPromise()
+    })
+    document.fonts.addEventListener('loadingdone', () => record('font-set-loadingdone'))
+    document.fonts.addEventListener('loadingerror', () => record('font-set-loadingerror'))
+    document.addEventListener('visibilitychange', () => record('visibilitychange'))
+    window.addEventListener('pageshow', event => record('pageshow', { persisted: event.persisted }))
+    record('init')
+    recordReadyPromise()
+  })
+})
+
+test.afterEach(async ({ page }, testInfo) => {
+  if (testInfo.status === testInfo.expectedStatus) return
+  await testInfo.attach('font-readiness-assertions', {
+    body: JSON.stringify(fontAssertions.get(page) ?? [], null, 2),
+    contentType: 'application/json'
+  })
+  const browser = await page.evaluate(() => ({
+    timeOrigin: performance.timeOrigin,
+    time: performance.now(), wallTime: Date.now(), visibility: document.visibilityState,
+    state: document.documentElement.dataset.fontsReady,
+    fontStatus: document.fonts.status,
+    fontFaces: Array.from(document.fonts)
+      .filter(face => face.status !== 'unloaded')
+      .map(face => ({ family: face.family, weight: face.weight, style: face.style, status: face.status })),
+    hash: location.hash,
+    initialHash: document.documentElement.dataset.initialHash, scrollY,
+    timeline: (window as Window & { __fontReadinessTimeline?: unknown }).__fontReadinessTimeline,
+    scrollTimeline: (window as Window & { __homeScrollTimeline?: unknown }).__homeScrollTimeline,
+    geometry: {
+      scrollHeight: document.documentElement.scrollHeight, viewportHeight: innerHeight,
+      nativeScrollEnded: document.documentElement.dataset.nativeScrollEnded,
+      snap: getComputedStyle(document.documentElement).scrollSnapType,
+      focusedTag: document.activeElement?.tagName,
+      focusedClass: document.activeElement?.className,
+      footer: document.querySelector('.site-footer')?.getBoundingClientRect().toJSON(),
+      sections: Array.from(document.querySelectorAll('.page-home > section')).map(element => ({
+        id: element.id, ...element.getBoundingClientRect().toJSON()
+      }))
+    },
+    resources: performance.getEntriesByType('resource')
+      .filter(entry => /(?:fonts[^/]*\.css|\.woff2?(?:\?|$))/.test(entry.name))
+      .map(entry => entry.toJSON())
+  })).catch(error => ({ unavailable: String(error) }))
+  await testInfo.attach('font-readiness-timeline', {
+    body: JSON.stringify({ assertions: fontAssertions.get(page), browser }, null, 2),
+    contentType: 'application/json'
+  })
+})
 
 async function openHome(page: Page, path = '/') {
   await page.goto(path)
   await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
-  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
+  const assertion: { startedAt: number, finishedAt?: number, observation?: FontReadinessObservation } = {
+    startedAt: Date.now()
+  }
+  fontAssertions.get(page)?.push(assertion)
+  try {
+    // Observe strictly ready inside the original five-second window. The
+    // browser witness survives a delayed protocol reply; the test's existing
+    // total timeout still bounds receipt. Do not restart the observation clock.
+    const deadline = assertion.startedAt + 5000
+    const observation = await page.evaluateHandle(startFontReadinessObservation, deadline)
+    try {
+      assertion.observation = await observation.evaluate(holder => holder.result)
+    } finally {
+      await observation.dispose()
+    }
+    expect(assertion.observation.state, JSON.stringify(assertion.observation)).toBe('ready')
+    expect(assertion.observation.observedAt).toBeLessThanOrEqual(deadline)
+  } finally {
+    assertion.finishedAt = Date.now()
+  }
 }
 
 async function hasDesktopInput(page: Page) {
   return page.evaluate(() => matchMedia('(min-width: 1025px) and (hover: hover) and (pointer: fine)').matches)
 }
+
+test.describe('font readiness observation', () => {
+  const start = Date.UTC(2026, 9, 19)
+
+  test.beforeEach(async ({ page }) => {
+    await page.clock.install({ time: start })
+    await page.clock.pauseAt(start)
+    await page.setContent('<html data-fonts-ready="loading"><body></body></html>')
+  })
+
+  test('retains an in-window ready witness when consumed after the deadline', async ({ page }) => {
+    const observation = await page.evaluateHandle(startFontReadinessObservation, start + 5000)
+    try {
+      await page.clock.runFor(4472)
+      await page.evaluate(() => { document.documentElement.dataset.fontsReady = 'ready' })
+      await page.clock.runFor(1000)
+      expect(await observation.evaluate(holder => holder.result))
+        .toEqual({ state: 'ready', observedAt: start + 4472, deadline: start + 5000 })
+    } finally {
+      await observation.dispose()
+    }
+  })
+
+  test('rejects late ready even before a delayed deadline timer runs', async ({ page }) => {
+    const observation = await page.evaluateHandle(startFontReadinessObservation, start + 5000)
+    try {
+      // Changing wall time does not execute the pending timer.
+      await page.clock.setSystemTime(start + 5001)
+      await page.evaluate(() => { document.documentElement.dataset.fontsReady = 'ready' })
+      expect(await observation.evaluate(holder => holder.result))
+        .toEqual({ state: 'timeout', observedAt: start + 5001, deadline: start + 5000 })
+    } finally {
+      await observation.dispose()
+    }
+  })
+
+  test('rejects fallback rather than accepting a terminal font state as ready', async ({ page }) => {
+    const observation = await page.evaluateHandle(startFontReadinessObservation, start + 5000)
+    try {
+      await page.clock.runFor(100)
+      await page.evaluate(() => { document.documentElement.dataset.fontsReady = 'fallback' })
+      expect(await observation.evaluate(holder => holder.result))
+        .toEqual({ state: 'fallback', observedAt: start + 100, deadline: start + 5000 })
+    } finally {
+      await observation.dispose()
+    }
+  })
+
+  test('rejects fonts that remain loading at the original deadline', async ({ page }) => {
+    const observation = await page.evaluateHandle(startFontReadinessObservation, start + 5000)
+    try {
+      await page.clock.runFor(5000)
+      expect(await observation.evaluate(holder => holder.result))
+        .toEqual({ state: 'timeout', observedAt: start + 5000, deadline: start + 5000 })
+    } finally {
+      await observation.dispose()
+    }
+  })
+
+  test('accepts fonts already ready when observation starts within the window', async ({ page }) => {
+    await page.evaluate(() => { document.documentElement.dataset.fontsReady = 'ready' })
+    const observation = await page.evaluateHandle(startFontReadinessObservation, start + 5000)
+    try {
+      expect(await observation.evaluate(holder => holder.result))
+        .toEqual({ state: 'ready', observedAt: start, deadline: start + 5000 })
+    } finally {
+      await observation.dispose()
+    }
+  })
+
+  test('rejects an initial ready read when installation itself misses the window', async ({ page }) => {
+    await page.clock.setSystemTime(start + 5001)
+    await page.evaluate(() => { document.documentElement.dataset.fontsReady = 'ready' })
+    const observation = await page.evaluateHandle(startFontReadinessObservation, start + 5000)
+    try {
+      expect(await observation.evaluate(holder => holder.result))
+        .toEqual({ state: 'timeout', observedAt: start + 5001, deadline: start + 5000 })
+    } finally {
+      await observation.dispose()
+    }
+  })
+})
 
 test('home native snap follows desktop input, width and runtime motion preferences', async ({ page }) => {
   await openHome(page)

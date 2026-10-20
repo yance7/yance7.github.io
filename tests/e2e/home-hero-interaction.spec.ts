@@ -582,13 +582,12 @@ test('does not show touch feedback for input outside the Hero', async ({ page })
   await page.goto('/')
 
   const ripple = page.locator('.home-hero-touch-ripple')
-  const footer = page.locator('footer')
-  await footer.scrollIntoViewIfNeeded()
-  const point = await footer.evaluate((element) => {
-    const bounds = element.getBoundingClientRect()
-    return { x: bounds.left + bounds.width / 2, y: bounds.top + bounds.height / 2 }
-  })
-  await page.touchscreen.tap(point.x, point.y)
+  const footerIdentity = page.getByRole('contentinfo').getByRole('paragraph').first()
+  await footerIdentity.scrollIntoViewIfNeeded()
+  const originalUrl = page.url()
+  // The footer center can be a contact link; use visible noninteractive copy.
+  await footerIdentity.tap()
+  await expect(page).toHaveURL(originalUrl)
   await expect(ripple).toHaveAttribute('data-active', 'false')
 })
 
