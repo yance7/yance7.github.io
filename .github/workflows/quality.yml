@@ -352,7 +352,8 @@ jobs:
       - name: WebKit mobile footer quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-footer
-        run: npm run test:e2e -- tests/e2e/footer.spec.ts --project=webkit-mobile --workers=4 --retries=0
+        # Serial execution preserves more headroom within the unchanged font deadline.
+        run: npm run test:e2e -- tests/e2e/footer.spec.ts --project=webkit-mobile --workers=1 --retries=0
       - name: WebKit mobile UI primitive quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-primitives
