@@ -3,13 +3,13 @@ import type { Project } from './types.ts'
 export const projects = [
   {
     id: 'fresheye', status: 'deployed', action: 'live', updatedAt: '2026-08-08',
-    title: '鲜眸', en: 'FreshEye', domain: 'fresheye.yance777.com', tone: 'aqua',
+    title: '鲜眸', en: 'FreshEye', domain: 'fresheye.yance.me', tone: 'aqua',
     discipline: 'COMPUTER VISION / WEB PRODUCT',
     description: '上传鱼眼照片，AI 评估水产品新鲜度，输出等级、置信度与 Grad-CAM 热力图。',
     value: '让水产品新鲜度评估从实验室走向日常使用。',
     role: '全栈开发 · 模型训练 · UI 设计',
     stack: ['PyTorch', 'ONNX', 'Vue 3', 'Hugging Face Spaces'],
-    href: 'https://fresheye.yance777.com',
+    href: 'https://fresheye.yance.me',
     github: 'https://github.com/yance7/FreshEye',
     story: {
       label: 'FROM RESEARCH TO PRODUCT',
@@ -35,7 +35,7 @@ export const projects = [
       sequenceLabel: 'PRODUCT FLOW',
       sequence: ['Upload', 'Inference', 'Confidence', 'Grad-CAM', 'PDF'],
       proof: [
-        { type: 'deployment', label: 'LIVE PRODUCT', value: 'fresheye.yance777.com', href: 'https://fresheye.yance777.com', external: true },
+        { type: 'deployment', label: 'LIVE PRODUCT', value: 'fresheye.yance.me', href: 'https://fresheye.yance.me', external: true },
         { type: 'source', label: 'SOURCE', value: 'GitHub', href: 'https://github.com/yance7/FreshEye', external: true }
       ]
     }

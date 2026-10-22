@@ -529,7 +529,7 @@ describe('motion hierarchy contracts', () => {
     expect(research).toContain('translateY(var(--motion-control-lift))')
     expect(works).toContain('translateY(var(--motion-control-lift))')
     expect(research).toMatch(/\.method-toggle\s*\{[\s\S]*border-radius:\s*var\(--control-radius\)/)
-    expect(research).toMatch(/\.method-toggle:hover\s*\{[\s\S]*box-shadow:\s*var\(--interactive-shadow\);[\s\S]*transform:\s*translateY\(var\(--motion-control-lift\)\)/)
+    expect(research).toMatch(/\.method-toggle:where\([^\n]+\):hover\s*\{[\s\S]*box-shadow:\s*var\(--interactive-shadow\);[\s\S]*transform:\s*translateY\(var\(--motion-control-lift\)\)/)
     expect(research).not.toContain('translateY(-2px)')
     expect(works).not.toContain('translateY(-2px)')
   })

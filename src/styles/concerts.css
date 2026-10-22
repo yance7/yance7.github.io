@@ -20,8 +20,8 @@
   background: var(--media-control-bg); color: var(--media-overlay-ink); font-size: 14px;
   transition: color var(--dur-fast), border-color var(--dur-fast), background-color var(--dur-fast), transform var(--dur-fast) var(--ease-spring);
 }
-.concert-rail-controls button:hover { border-color: var(--media-control-hover-border); background: var(--media-control-hover); color: var(--gold); transform: translateY(var(--motion-control-lift)); }
-.concert-rail-controls button:active { color: var(--gold); transform: translateY(1px) scale(var(--motion-press-scale)); }
+.concert-rail-controls button:where(:not(:disabled):not([aria-disabled='true'])):hover { border-color: var(--media-control-hover-border); background: var(--media-control-hover); color: var(--gold); transform: translateY(var(--motion-control-lift)); }
+.concert-rail-controls button:where(:not(:disabled):not([aria-disabled='true'])):active { color: var(--gold); transform: translateY(1px) scale(var(--motion-press-scale)); }
 .concert-rail-controls button:focus-visible { outline-color: var(--focus); box-shadow: var(--focus-ring); }
 .concert-rail-controls button:disabled { cursor: not-allowed; opacity: .38; transform: none; }
 .concert-archive-rail {

@@ -3,7 +3,7 @@ import type { Locale } from '../i18n/types.ts'
 import { getLocalizedPageMeta } from './locales/index.ts'
 import { pageEntries, pageRegistry, type PageKey } from './pageRegistry.ts'
 
-export const SITE_ORIGIN = 'https://www.yance777.com'
+export const SITE_ORIGIN = 'https://yance.me'
 
 interface SeoAlternate {
   hreflang: string

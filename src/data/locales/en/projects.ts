@@ -24,7 +24,7 @@ export const projectsCopy = {
           { label: '03 / DELIVERY', title: 'From inference to an explainable report', detail: 'Confidence, Grad-CAM heatmaps, and PDF export form one complete decision flow.' }
         ],
         sequenceLabel: 'PRODUCT FLOW', sequence: ['Upload', 'Inference', 'Confidence', 'Grad-CAM', 'PDF'],
-        proof: [{ type: 'deployment', label: 'LIVE PRODUCT', value: 'fresheye.yance777.com', href: 'https://fresheye.yance777.com', external: true }, { type: 'source', label: 'SOURCE', value: 'GitHub', href: 'https://github.com/yance7/FreshEye', external: true }]
+        proof: [{ type: 'deployment', label: 'LIVE PRODUCT', value: 'fresheye.yance.me', href: 'https://fresheye.yance.me', external: true }, { type: 'source', label: 'SOURCE', value: 'GitHub', href: 'https://github.com/yance7/FreshEye', external: true }]
       }
     },
     'ap-microeconomics-notes': {

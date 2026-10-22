@@ -32,7 +32,7 @@ test('canonical directory pages load directly in all three locales', async ({ pa
     if (useProductionPreview) {
       await expect(page.locator('link[rel="canonical"]'), route).toHaveAttribute(
         'href',
-        `https://www.yance777.com${route}`
+        `https://yance.me${route}`
       )
     }
   }
@@ -74,7 +74,7 @@ for (const route of legacyHomeRoutes) {
     if (useProductionPreview) {
       await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
         'href',
-        `https://www.yance777.com${route.canonical}`
+        `https://yance.me${route.canonical}`
       )
     }
   })

@@ -166,5 +166,5 @@ const concertOriginals = readdirSync(join(dist, 'assets/concerts')).filter((file
 const concertThumbs = readdirSync(join(dist, 'assets/concerts/thumbs')).filter((file) => /\.(?:webp|avif)$/i.test(file))
 assert(concertOriginals.length > 0, 'Concert 原图产物为空')
 assert(concertThumbs.length > 0, 'Concert 缩略图产物为空')
-assert(read('CNAME').trim() === 'www.yance777.com', 'CNAME 产物不正确')
+assert(read('CNAME').trim() === 'yance.me', 'CNAME 产物不正确')
 console.log(`smoke: ${pageEntries.length} root routes, ${localizedSitemapEntries.length} localized sitemap URLs, and static assets verified`)

@@ -24,7 +24,7 @@ export const projectsCopy = {
           { label: '03 / DELIVERY', title: '由推理結果到可解釋報告', detail: '信心度、Grad-CAM 熱力圖及 PDF 報告，共同構成完整判斷流程。' }
         ],
         sequenceLabel: '產品流程', sequence: ['上載', '推理', '信心度', 'Grad-CAM', 'PDF'],
-        proof: [{ type: 'deployment', label: '上線產品', value: 'fresheye.yance777.com', href: 'https://fresheye.yance777.com', external: true }, { type: 'source', label: '原始碼', value: 'GitHub', href: 'https://github.com/yance7/FreshEye', external: true }]
+        proof: [{ type: 'deployment', label: '上線產品', value: 'fresheye.yance.me', href: 'https://fresheye.yance.me', external: true }, { type: 'source', label: '原始碼', value: 'GitHub', href: 'https://github.com/yance7/FreshEye', external: true }]
       }
     },
     'ap-microeconomics-notes': {

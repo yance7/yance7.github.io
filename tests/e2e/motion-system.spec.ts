@@ -572,6 +572,36 @@ test('theme controls use bounded transitions for state changes', async ({ page }
   expect(milliseconds.every((duration) => duration >= 180 && duration <= 320), JSON.stringify(durations)).toBe(true)
 })
 
+test('interactive button feedback stays inside the 160–220ms budget', async ({ page }) => {
+  test.skip(!(await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches)), 'fine pointer only')
+  for (const [route, selector] of [
+    ['/404.html', '.y-button'],
+    ['/honors/', '.filter-btn'],
+    ['/research/', '.method-toggle, .tl-link'],
+    ['/', '.hero-action__visual']
+  ]) {
+    await page.goto(route!)
+    const control = page.locator(selector!).first()
+    await expect(control).toBeAttached()
+    const durations = await page.locator(selector!).evaluateAll(elements => elements.flatMap(element => getComputedStyle(element).transitionDuration.split(',').map(value => Number.parseFloat(value) * (value.trim().endsWith('ms') ? 1 : 1000))))
+    expect(durations.every(value => value >= 160 && value <= 220), `${route}: ${durations}`).toBe(true)
+  }
+})
+
+test('disabled rail buttons keep their passive appearance on hover', async ({ page }) => {
+  test.skip(!(await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches)), 'fine pointer only')
+  await page.goto('/concerts/')
+  const previous = page.locator('[data-rail-direction="previous"]')
+  await expect(previous).toBeDisabled()
+  await previous.hover()
+  const feedback = await previous.evaluate(element => {
+    const style = getComputedStyle(element)
+    return { animations: element.getAnimations().length, transform: style.transform }
+  })
+  expect(feedback.animations).toBe(0)
+  expect(feedback.transform).toBe('none')
+})
+
 test('mobile menu close control uses a bounded hover transition', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/en/')
