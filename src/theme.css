@@ -74,13 +74,13 @@
   --dur-base: .28s;
   --dur-slow: .52s;
   --dur-page: .56s;
-  --reveal-distance: 28px;
-  --reveal-duration: .68s;
+  --reveal-distance: 16px;
+  --reveal-duration: .5s;
   --reveal-stagger-step: 60ms;
-  --reveal-max-delay: 240ms;
+  --reveal-max-delay: 180ms;
 
   /* 统一交互幅度 */
-  --motion-lift: -3px;
+  --motion-lift: -2px;
   --motion-control-lift: -1px;
   --motion-media-scale: 1.03;
   --motion-icon-shift: 4px;

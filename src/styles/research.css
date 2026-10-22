@@ -445,7 +445,7 @@
   .toolchain-cell:hover:not(:focus-visible) { background: var(--surface-strong); }
   .toolchain-cell:hover:not(:focus-visible)::after { transform: scaleX(0); }
   .toolchain-cell:hover:not(:focus-visible) .tc-no { color: var(--line-strong); }
-  .toolchain-group:hover:not(:focus-visible) { background: var(--surface-strong); transform: none; }
+  .toolchain-group:hover:not(:focus-visible) { background: var(--surface-strong); }
   .tc-tool:hover:not(:focus-visible) { border-color: var(--line); color: inherit; transform: none; }
   .tl-metrics .metric-item:hover:not(:focus-visible) { background: var(--surface-strong); }
   .method-toggle:hover:not(:focus-visible) {

@@ -39,7 +39,7 @@ const selectedActivities = computed(() => community.value.activities.filter((ite
           :key="item.id"
           class="focus-card focus-research"
           :href="buildLocalizedPageHref('research', locale, { hash: `#${item.id}` })"
-          v-reveal="{ profile: 'home', delay: Math.min(i + 1, 4) * 60 }"
+          v-reveal="{ profile: 'home', delay: Math.min(i, 3) * 60 }"
           v-pointer-sheen
         >
           <span class="focus-label">{{ messages.home.researchLabel }} / 0{{ i + 1 }}</span>
@@ -59,7 +59,7 @@ const selectedActivities = computed(() => community.value.activities.filter((ite
           :key="item.id"
           class="focus-card focus-product"
           :class="item.tone"
-          v-reveal="{ profile: 'home', delay: Math.min(i + featuredResearch.length + 1, 4) * 60 }"
+          v-reveal="{ profile: 'home', delay: Math.min(i + featuredResearch.length, 3) * 60 }"
           v-pointer-sheen
         >
           <a class="focus-card-main" :href="buildLocalizedPageHref('works', locale, { hash: `#project-${item.id}` })">
@@ -95,7 +95,7 @@ const selectedActivities = computed(() => community.value.activities.filter((ite
           :class="`accent-${w.accent}`"
           :href="w.href"
           :style="{ '--wi': i }"
-          v-reveal="{ profile: 'home', delay: Math.min(i + 1, 4) * 60 }"
+          v-reveal="{ profile: 'home', delay: Math.min(i, 3) * 60 }"
         >
           <div class="world-left">
             <span class="world-no">{{ w.no }}</span>

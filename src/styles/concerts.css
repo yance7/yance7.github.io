@@ -38,7 +38,7 @@
   background: var(--surface); box-shadow: var(--shadow-1); scroll-snap-align: start; scroll-snap-stop: always;
   transition: transform var(--dur-base) var(--ease-spring), border-color var(--dur-base), box-shadow var(--dur-base);
 }
-.concert-rail-card:hover { border-color: var(--gold); box-shadow: var(--interactive-shadow); transform: translateY(var(--motion-control-lift)); }
+.concert-rail-card:hover { border-color: var(--gold); box-shadow: var(--interactive-shadow); }
 .concert-rail-card .concert-poster { width: 100%; max-width: none; align-self: start; }
 .concert-rail-card-info { display: grid; grid-template-columns: auto 1fr; gap: var(--space-3); align-items: start; align-content: start; }
 .concert-rail-card-info .concert-info { min-width: 0; overflow-wrap: anywhere; }
@@ -178,7 +178,7 @@
   .concert-poster:hover:not(:focus-visible) .poster-foreground { transform: none; }
   .concert-poster:hover:not(:focus-visible) .poster-hint { opacity: 0; transform: translateY(8px); }
   .concert-rail-controls button:hover:not(:focus-visible) { border-color: var(--media-control-border); background: var(--media-control-bg); color: inherit; transform: none; }
-  .concert-rail-card:hover:not(:focus-within) { border-color: var(--line); box-shadow: var(--shadow-1); transform: none; }
+  .concert-rail-card:hover:not(:focus-within) { border-color: var(--line); box-shadow: var(--shadow-1); }
 }
 @media (prefers-reduced-motion: reduce) {
   .poster-fade-enter-active,
@@ -206,4 +206,8 @@
   }
   .concert-poster:hover:not(:focus-visible) .poster-foreground { transform: none; filter: drop-shadow(0 12px 18px rgba(0, 0, 0, .16)); }
   .concert-poster:hover:not(:focus-visible) .poster-hint { opacity: 0; transform: translateY(8px); }
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .concert-rail-card.revealed:is(:hover, :focus-within):not([inert]) { translate: 0 var(--motion-lift); }
 }

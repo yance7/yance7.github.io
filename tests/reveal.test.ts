@@ -73,7 +73,9 @@ describe('reveal mode contract', () => {
   it('normalizes stagger delays into the shared reveal budget', () => {
     expect(normalizeRevealDelay(-10)).toBe(0)
     expect(normalizeRevealDelay(61.4)).toBe(61)
-    expect(normalizeRevealDelay(800)).toBe(240)
+    expect(normalizeRevealDelay(180)).toBe(180)
+    expect(normalizeRevealDelay(240)).toBe(180)
+    expect(normalizeRevealDelay(800)).toBe(180)
     expect(normalizeRevealDelay(Number.NaN)).toBe(0)
   })
 

@@ -491,10 +491,10 @@ describe('motion hierarchy contracts', () => {
     const styles = readFileSync(resolve(process.cwd(), 'src/styles/components.css'), 'utf8')
     const theme = readFileSync(resolve(process.cwd(), 'src/theme.css'), 'utf8')
 
-    expect(theme).toContain('--reveal-distance: 28px')
-    expect(theme).toContain('--reveal-duration: .68s')
+    expect(theme).toContain('--reveal-distance: 16px')
+    expect(theme).toContain('--reveal-duration: .5s')
     expect(theme).toContain('--reveal-stagger-step: 60ms')
-    expect(theme).toContain('--reveal-max-delay: 240ms')
+    expect(theme).toContain('--reveal-max-delay: 180ms')
     expect(styles).toContain('transform: translate3d(0, var(--reveal-distance), 0)')
     expect(styles).toContain('transform var(--reveal-duration) var(--ease-out)')
     expect(styles).not.toContain('data-reveal-variant')

@@ -112,6 +112,13 @@ describe('reveal observer lifecycle', () => {
     expect(listeners.has('focusin')).toBe(true)
   })
 
+  it('stagger delays only entrance properties, leaving interaction feedback immediate', () => {
+    const element = mount('default', 800)
+    expect(element.style.transitionDelay.split(',').map(value => value.trim())).toEqual([
+      '180ms', '180ms', '0ms', '0ms', '0ms', '0ms'
+    ])
+  })
+
   it('home updates preserve a completed reveal without restoring stagger delays', () => {
     const element = mount('home')
     reduced.matches = true

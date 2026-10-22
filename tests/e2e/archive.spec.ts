@@ -64,12 +64,16 @@ test('honors filtering renders compact cards without detail controls', async ({ 
   await expect(page.locator('.honor-expand, .honor-detail')).toHaveCount(0)
 })
 
-test('honor cards use a quiet reveal animation', async ({ page }) => {
+test('honor cards finish the shared reveal without replaying metadata on hover', async ({ page }) => {
   await page.goto('/honors/')
   const card = page.locator('.honor-card').first()
   await card.scrollIntoViewIfNeeded()
   await expect(card).toHaveClass(/revealed/)
-  await expect.poll(() => card.evaluate((element) => getComputedStyle(element).animationName)).toBe('honor-card-in')
+  await expect(card).toHaveCSS('opacity', '1')
+  await expect(card).toHaveCSS('transform', 'none')
+  await card.hover()
+  await expect(card).toHaveCSS('animation-name', 'none')
+  await expect(card.locator('.honor-date')).toHaveCSS('animation-name', 'none')
 })
 
 test('research methodology disclosure and proof links are reachable', async ({ page }) => {

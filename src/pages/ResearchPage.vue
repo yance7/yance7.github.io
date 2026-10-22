@@ -34,7 +34,7 @@ const sections = computed(() => getLocalizedResearchSections(locale.value))
         :accent="sections.toolchain.accent"
         :copy="sections.toolchain.copy"
       />
-      <div class="toolchain-panel" v-reveal>
+      <div class="toolchain-panel">
         <div class="toolchain-intro">
           <div>
             <span class="tc-kicker">{{ sections.toolchain.workbench }}</span>
@@ -60,7 +60,7 @@ const sections = computed(() => getLocalizedResearchSections(locale.value))
             v-for="(group, i) in researchMethodGroups"
             :key="group.id"
             class="toolchain-group"
-            v-reveal="{ delay: Math.min(i, 4) * 60 }"
+            v-reveal="{ delay: Math.min(i, 3) * 60 }"
           >
             <div class="tc-group-head">
               <span class="tc-group-no">0{{ i + 1 }}</span>
