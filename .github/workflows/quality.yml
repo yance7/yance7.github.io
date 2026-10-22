@@ -328,7 +328,7 @@ jobs:
       - name: WebKit desktop concert archive preservation
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-concert-archive
-        run: npm run test:e2e -- tests/e2e/concert-archive-preservation.spec.ts --project=webkit-desktop --workers=4 --retries=0
+        run: npm run test:e2e -- tests/e2e/concert-archive-rail.spec.ts tests/e2e/concert-archive-preservation.spec.ts --project=webkit-desktop --workers=4 --retries=0
       - name: WebKit mobile ScrollProgress quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-scroll-progress
@@ -373,7 +373,7 @@ jobs:
       - name: WebKit mobile concert archive preservation
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-concert-archive
-        run: npm run test:e2e -- tests/e2e/concert-archive-preservation.spec.ts --project=webkit-mobile --workers=4 --retries=0
+        run: npm run test:e2e -- tests/e2e/concert-archive-rail.spec.ts tests/e2e/concert-archive-preservation.spec.ts --project=webkit-mobile --workers=4 --retries=0
       - name: Chromium visual quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/visual

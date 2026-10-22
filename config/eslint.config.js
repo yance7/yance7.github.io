@@ -55,7 +55,7 @@ export default [
     languageOptions: { globals: { ...globals.node, ...globals.browser } }
   },
   {
-    files: ['tests/**/*.ts'],
+    files: ['tests/**/*.{ts,vue}'],
     languageOptions: { globals: { ...globals.node, ...globals.browser } }
   }
 ]

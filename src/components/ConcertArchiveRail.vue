@@ -1,27 +1,31 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import type { Concert, LightboxPayload } from '../data/types'
 import type { ConcertLocaleCopy } from '../data/locales/types'
 import { isConcertUpcoming } from '../data/concerts'
 import { useLocale } from '../i18n'
 import { concertPosterPresentation, originalImageUrl, thumbnailFallbackUrl, thumbnailUrl } from '../utils/concertMedia'
+import { findNearestCenteredIndex, getCenteredScrollLeft, getRailInset } from '../utils/horizontalRail'
 
 const props = defineProps<{
   concerts: Concert[]
   now: Date
   section: ConcertLocaleCopy['section']
 }>()
-
-const emit = defineEmits<{
-  'open-lightbox': [payload: LightboxPayload]
-}>()
-
+const emit = defineEmits<{ 'open-lightbox': [payload: LightboxPayload] }>()
 const railRef = ref<HTMLElement | null>(null)
 const railControls = reactive({ previous: false, next: false })
 const reducedMotion = ref(false)
 const { messages } = useLocale()
 let resizeObserver: ResizeObserver | undefined
 let reducedMotionQuery: MediaQueryList | undefined
+let pendingIndex: number | undefined
+let visibleIndex = 0
+let layoutFrame: number | undefined
+let controlFrame: number | undefined
+let hasLayout = false
+let needsAlignment = false
+let mounted = false
 
 function formatConcertDate(date: string) {
   return date.replaceAll('-', '.')
@@ -29,9 +33,8 @@ function formatConcertDate(date: string) {
 
 function openLightbox(item: Concert, event?: MouseEvent) {
   if (event?.currentTarget instanceof HTMLElement) event.currentTarget.focus()
-  const image = originalImageUrl(item.poster.file)
   emit('open-lightbox', {
-    images: [image],
+    images: [originalImageUrl(item.poster.file)],
     index: 0,
     meta: { artist: item.artist, tour: item.tour }
   })
@@ -41,101 +44,151 @@ function statusFor(item: Concert) {
   return isConcertUpcoming(item, props.now) ? 'upcoming' : 'attended'
 }
 
+function cardsFor(rail: HTMLElement) {
+  return [...rail.querySelectorAll<HTMLElement>('.concert-rail-card')]
+}
+
+function centersFor(cards: HTMLElement[]) {
+  return cards.map(card => card.offsetLeft + card.offsetWidth / 2)
+}
+
 function updateRailControls() {
   const rail = railRef.value
   if (!rail) return
+  const cards = cardsFor(rail)
   const maxScrollLeft = Math.max(0, rail.scrollWidth - rail.clientWidth)
-  const tolerance = 1
-  railControls.previous = rail.scrollLeft > tolerance
-  railControls.next = rail.scrollLeft < maxScrollLeft - tolerance
-}
-
-function scrollRail(direction: -1 | 1) {
-  const rail = railRef.value
-  const cards = rail ? [...rail.querySelectorAll<HTMLElement>('.concert-rail-card')] : []
-  const firstCard = cards[0]
-  if (!rail || !firstCard) return
-
-  const currentIndex = cards.reduce((nearestIndex, card, index) => {
-    const nearestCard = cards[nearestIndex]!
-    const cardOffset = Math.abs((card.offsetLeft - firstCard.offsetLeft) - rail.scrollLeft)
-    const nearestOffset = Math.abs((nearestCard.offsetLeft - firstCard.offsetLeft) - rail.scrollLeft)
-    return cardOffset < nearestOffset ? index : nearestIndex
-  }, 0)
-  const targetCard = cards[Math.max(0, Math.min(cards.length - 1, currentIndex + direction))]
-  if (!targetCard) return
-  const behavior = reducedMotion.value ? 'auto' : 'smooth'
-  const isTouchViewport = window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0
-  if (isTouchViewport) {
-    if (behavior === 'auto') {
-      targetCard.scrollIntoView({ behavior, block: 'nearest', inline: 'start' })
-      updateRailControls()
-      return
-    }
-    requestAnimationFrame(() => {
-      targetCard.scrollIntoView({ behavior, block: 'nearest', inline: 'start' })
-      updateRailControls()
-    })
+  if (cards.length < 2 || maxScrollLeft <= 1) {
+    railControls.previous = false
+    railControls.next = false
+    pendingIndex = undefined
     return
   }
+  const centers = centersFor(cards)
+  if (pendingIndex !== undefined && Math.abs(rail.scrollLeft - getCenteredScrollLeft(centers[pendingIndex]!, rail.clientWidth, maxScrollLeft)) <= 1) pendingIndex = undefined
+  visibleIndex = findNearestCenteredIndex(centers, rail.scrollLeft + rail.clientWidth / 2)
+  const index = pendingIndex ?? visibleIndex
+  railControls.previous = index > 0
+  railControls.next = index < cards.length - 1
+}
 
-  const maxScrollLeft = Math.max(0, rail.scrollWidth - rail.clientWidth)
-  const targetScrollLeft = Math.max(0, Math.min(
-    maxScrollLeft,
-    targetCard.offsetLeft - firstCard.offsetLeft
-  ))
-  requestAnimationFrame(() => {
-    if (behavior === 'auto') {
-      rail.scrollLeft = targetScrollLeft
-    } else {
-      rail.scrollTo({
-        left: targetScrollLeft,
-        behavior
-      })
-    }
+function onRailScroll() {
+  if (controlFrame !== undefined) return
+  controlFrame = requestAnimationFrame(() => {
+    controlFrame = undefined
+    if (layoutFrame !== undefined) return
     updateRailControls()
   })
 }
 
-function onRailWheel(event: WheelEvent) {
-  if (!event.shiftKey) return
-  const delta = event.deltaX || event.deltaY
-  if (!delta) return
-  const rail = event.currentTarget as HTMLElement
-  const previousSnapType = rail.style.scrollSnapType
-  const previousBehavior = rail.style.scrollBehavior
-  rail.style.scrollSnapType = 'none'
-  rail.style.scrollBehavior = 'auto'
-  rail.scrollLeft = Math.max(0, Math.min(rail.scrollWidth - rail.clientWidth, rail.scrollLeft + delta))
-  requestAnimationFrame(() => {
-    rail.style.scrollSnapType = previousSnapType
-    rail.style.scrollBehavior = previousBehavior
+function clearPendingTarget() {
+  pendingIndex = undefined
+  onRailScroll()
+}
+
+function scrollRail(direction: -1 | 1) {
+  const rail = railRef.value
+  if (!rail) return
+  const centers = centersFor(cardsFor(rail))
+  if (!centers.length || rail.scrollWidth <= rail.clientWidth + 1) return
+  const current = pendingIndex ?? findNearestCenteredIndex(centers, rail.scrollLeft + rail.clientWidth / 2)
+  pendingIndex = Math.max(0, Math.min(centers.length - 1, current + direction))
+  rail.scrollTo({
+    left: getCenteredScrollLeft(centers[pendingIndex]!, rail.clientWidth, rail.scrollWidth - rail.clientWidth),
+    behavior: reducedMotion.value ? 'auto' : 'smooth'
   })
-  event.preventDefault()
+  updateRailControls()
+}
+
+function measureLayout() {
+  layoutFrame = undefined
+  const rail = railRef.value
+  if (!rail || !mounted) return
+  const previousPadding = rail.style.paddingInline
+  // Old center insets can inflate clientWidth after a narrow resize.
+  // The unpadded shell gives the available width without disturbing scroll.
+  const viewportWidth = Math.min(rail.clientWidth, rail.parentElement?.clientWidth ?? rail.clientWidth)
+  const cards = cardsFor(rail)
+  const first = cards[0]
+  const last = cards.at(-1)
+  const index = hasLayout ? pendingIndex ?? visibleIndex : 0
+  const span = first && last ? last.offsetLeft + last.offsetWidth - first.offsetLeft : 0
+  const inset = getRailInset(viewportWidth, first?.offsetWidth ?? 0, span, cards.length)
+  const changed = previousPadding !== inset + 'px'
+  rail.style.paddingInline = inset + 'px'
+  if ((changed || !hasLayout || needsAlignment) && cards[index]) {
+    const card = cards[index]!
+    rail.scrollTo({ left: getCenteredScrollLeft(card.offsetLeft + card.offsetWidth / 2, rail.clientWidth, rail.scrollWidth - rail.clientWidth), behavior: 'auto' })
+    pendingIndex = undefined
+  }
+  hasLayout = true
+  needsAlignment = false
+  rail.dataset.railReady = 'true'
+  updateRailControls()
+}
+
+function scheduleLayout() {
+  if (!mounted || layoutFrame !== undefined) return
+  layoutFrame = requestAnimationFrame(measureLayout)
+}
+
+function observeCards() {
+  resizeObserver?.disconnect()
+  const rail = railRef.value
+  if (rail) {
+    resizeObserver?.observe(rail)
+    const first = cardsFor(rail)[0]
+    if (first) resizeObserver?.observe(first)
+  }
+  scheduleLayout()
 }
 
 function syncReducedMotion(event?: MediaQueryListEvent) {
   reducedMotion.value = event?.matches ?? reducedMotionQuery?.matches ?? false
+  const rail = railRef.value
+  if (reducedMotion.value && rail && pendingIndex !== undefined) {
+    const card = cardsFor(rail)[pendingIndex]
+    if (card) rail.scrollTo({ left: getCenteredScrollLeft(card.offsetLeft + card.offsetWidth / 2, rail.clientWidth, rail.scrollWidth - rail.clientWidth), behavior: 'auto' })
+  }
+  clearPendingTarget()
 }
 
+watch(() => props.concerts.map(item => item.id).join('|'), (ids, previousIds) => {
+  const previousId = previousIds.split('|')[pendingIndex ?? visibleIndex]
+  const retainedIndex = ids.split('|').indexOf(previousId ?? '')
+  pendingIndex = undefined
+  visibleIndex = retainedIndex >= 0 ? retainedIndex : Math.max(0, Math.min(visibleIndex, props.concerts.length - 1))
+  needsAlignment = true
+  void nextTick(observeCards)
+}, { flush: 'post' })
+
 onMounted(() => {
+  mounted = true
   reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
   syncReducedMotion()
   reducedMotionQuery.addEventListener('change', syncReducedMotion)
-
+  if (typeof ResizeObserver !== 'undefined') resizeObserver = new ResizeObserver(scheduleLayout)
   const rail = railRef.value
-  if (rail) {
-    resizeObserver = new ResizeObserver(updateRailControls)
-    resizeObserver.observe(rail)
-  }
-  nextTick(updateRailControls)
+  rail?.addEventListener('wheel', clearPendingTarget, { passive: true })
+  rail?.addEventListener('touchstart', clearPendingTarget, { passive: true })
+  window.addEventListener('resize', scheduleLayout)
+  document.fonts?.addEventListener('loadingdone', scheduleLayout)
+  void document.fonts?.ready.then(() => { if (mounted) scheduleLayout() })
+  observeCards()
 })
 
 onBeforeUnmount(() => {
+  mounted = false
   resizeObserver?.disconnect()
   reducedMotionQuery?.removeEventListener('change', syncReducedMotion)
+  railRef.value?.removeEventListener('wheel', clearPendingTarget)
+  railRef.value?.removeEventListener('touchstart', clearPendingTarget)
+  window.removeEventListener('resize', scheduleLayout)
+  document.fonts?.removeEventListener('loadingdone', scheduleLayout)
+  if (layoutFrame !== undefined) cancelAnimationFrame(layoutFrame)
+  if (controlFrame !== undefined) cancelAnimationFrame(controlFrame)
 })
 </script>
+
 
 <template>
   <div class="concert-archive-shell">
@@ -170,10 +223,12 @@ onBeforeUnmount(() => {
       id="concert-archive-rail"
       class="concert-archive-rail"
       data-horizontal-scroll
+      data-horizontal-align="center"
       role="region"
       :aria-label="section.archive"
-      @scroll="updateRailControls"
-      @wheel="onRailWheel"
+      @scroll="onRailScroll"
+      @pointerdown="clearPendingTarget"
+      @focusin="clearPendingTarget"
     >
       <div class="concert-rail-track">
         <article
