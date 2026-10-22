@@ -508,18 +508,26 @@ test('card hover composes with a running reveal without replacing its offset', a
   await page.goto('/works/')
   await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
   const card = page.locator('#project-ap-microeconomics-notes')
-  const offset = await card.evaluate(element => new Promise<number>(resolve => {
-    const pauseEntrance = (event: Event) => {
-      if (event.target !== element || (event as TransitionEvent).propertyName !== 'transform') return
+  await expect(card).not.toHaveClass(/revealed/)
+  const offset = await card.evaluate(element => new Promise<number>((resolve, reject) => {
+    // A queued transitionrun event can arrive after a 500ms transition finishes
+    // on a busy browser. Observe the real reveal class mutation in its microtask
+    // and pause the original CSS transition before the next painting opportunity.
+    const observer = new MutationObserver(() => {
+      if (!element.classList.contains('revealed')) return
+      observer.disconnect()
       const transition = element.getAnimations().find(animation => (
         'transitionProperty' in animation && animation.transitionProperty === 'transform'
-      ))!
+      ))
+      if (!transition) {
+        reject(new Error('Expected the CSS transform transition at reveal start'))
+        return
+      }
       transition.pause()
       transition.currentTime = 250
-      element.removeEventListener('transitionrun', pauseEntrance)
       resolve(new DOMMatrixReadOnly(getComputedStyle(element).transform).m42)
-    }
-    element.addEventListener('transitionrun', pauseEntrance)
+    })
+    observer.observe(element, { attributes: true, attributeFilter: ['class'] })
     element.scrollIntoView({ block: 'center', behavior: 'instant' })
   }))
   expect(offset).toBeGreaterThan(0)
