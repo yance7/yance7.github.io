@@ -6,14 +6,14 @@
   gap: 12px;
   width: 100%;
   pointer-events: none;
-  transition: translate 180ms var(--ease-out), transform 140ms var(--ease-out);
+  transition: translate 180ms var(--ease-out), transform 180ms var(--ease-out);
 }
 .hero-action__visual::before { content: ''; }
 .hero-action__label { min-width: 0; text-align: center; overflow-wrap: anywhere; }
 .hero-action__arrow { justify-self: end; }
 .hero-action:is(:hover, :focus-visible, :active) { transform: none; }
 .hero-action:is(:hover, :focus-visible) .hero-action__visual { transform: none; }
-.hero-action:active .hero-action__visual { transform: scale(.98); }
+.hero-action:active .hero-action__visual { transform: scale(var(--motion-press-scale)); }
 @media (prefers-reduced-motion: reduce), (forced-colors: active), (hover: none), (pointer: coarse) {
   .hero-action .hero-action__visual { transition: none; }
   .hero-action:active .hero-action__visual { transform: none; }
@@ -72,10 +72,10 @@
   text-decoration: none;
   transition:
     transform var(--dur-fast) var(--ease-out),
-    background-color var(--dur-base) var(--ease-soft),
-    border-color var(--dur-base) var(--ease-soft),
-    color var(--dur-base) var(--ease-soft),
-    box-shadow var(--dur-base) var(--ease-soft);
+    background-color var(--dur-fast) var(--ease-soft),
+    border-color var(--dur-fast) var(--ease-soft),
+    color var(--dur-fast) var(--ease-soft),
+    box-shadow var(--dur-fast) var(--ease-soft);
 }
 
 .y-button--sm { min-height: var(--control-height-sm); padding-inline: var(--space-4); }
@@ -106,7 +106,7 @@
   justify-content: center;
   gap: var(--space-2);
   pointer-events: none;
-  transition: translate 180ms var(--ease-out), transform 140ms var(--ease-out);
+  transition: translate 180ms var(--ease-out), transform 180ms var(--ease-out);
 }
 .y-button:is(:hover, :active) { transform: none; }
 .y-button:active:not(:disabled):not([aria-disabled='true']) { transform: none; }
@@ -124,7 +124,7 @@
   background: var(--control-hover);
   color: var(--gold);
 }
-.y-button:active:not(:disabled):not([aria-disabled='true']) .y-button__visual { transform: scale(.98); }
+.y-button:active:not(:disabled):not([aria-disabled='true']) .y-button__visual { transform: scale(var(--motion-press-scale)); }
 .y-button:focus-visible { box-shadow: var(--focus-ring); }
 .y-button:disabled,
 .y-button[aria-disabled='true'] { cursor: not-allowed; opacity: .58; }

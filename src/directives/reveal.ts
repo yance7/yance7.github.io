@@ -162,10 +162,14 @@ const reveal: Directive<HTMLElement, RevealValue> = {
       observer.observe(element)
       observedElements.set(element, profile)
       startListeners()
+      element.dataset.revealPreparing = 'true'
       element.classList.add('reveal')
-      element.style.transitionDelay = delay > 0 ? `${delay}ms` : ''
+      element.style.transitionDelay = delay > 0 ? `${delay}ms, ${delay}ms, 0ms, 0ms, 0ms, 0ms` : ''
+      element.getBoundingClientRect()
+      delete element.dataset.revealPreparing
       handleScroll()
     } catch {
+      delete element.dataset.revealPreparing
       revealElement(element, true)
       revealImmediately(element)
     }
@@ -181,7 +185,7 @@ const reveal: Directive<HTMLElement, RevealValue> = {
       revealElement(element, true)
       return
     }
-    element.style.transitionDelay = delay > 0 ? `${delay}ms` : ''
+    element.style.transitionDelay = delay > 0 ? `${delay}ms, ${delay}ms, 0ms, 0ms, 0ms, 0ms` : ''
   },
   unmounted(element) {
     mountedElements.delete(element)

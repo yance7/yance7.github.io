@@ -12,7 +12,7 @@ export function getRevealObserverOptions(profile: RevealProfile = 'default'): In
     : { threshold: 0.08, rootMargin: '0px 0px 120px 0px' }
 }
 
-export const revealMaxDelay = 240
+export const revealMaxDelay = 180
 
 export function normalizeRevealDelay(delay = 0) {
   if (!Number.isFinite(delay)) return 0

@@ -183,7 +183,7 @@ onBeforeUnmount(() => {
           :data-anchor-id="`concert-${item.id}`"
           :data-concert-id="item.id"
           :data-concert-status="statusFor(item)"
-          v-reveal="{ delay: Math.min(i, 4) * 60 }"
+          v-reveal="{ delay: Math.min(i, 3) * 60 }"
         >
           <div
             class="concert-poster"

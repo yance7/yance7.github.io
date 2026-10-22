@@ -30,14 +30,14 @@
 .world-card::after {
   content: ''; position: absolute; left: 0; top: 16%; bottom: 16%; width: 2px;
   border-radius: var(--radius-pill); background: currentColor; opacity: 0; transform: scaleY(.55);
-  transition: opacity var(--dur-fast), transform var(--dur-base) var(--ease-out);
+  transition: opacity var(--dur-fast), transform var(--dur-fast) var(--ease-out);
 }
-.world-card:is(:hover, :focus-visible) { transform: translateY(var(--motion-lift)); background: var(--surface-hover); box-shadow: var(--interactive-shadow); }
+.world-card:is(:hover, :focus-visible) { background: var(--surface-hover); box-shadow: var(--interactive-shadow); }
 .world-card:is(:hover, :focus-visible)::after { opacity: .72; transform: scaleY(1); }
 .world-card:is(:hover, :focus-visible) .world-arrow { opacity: 1; transform: none; }
 .world-left { display: flex; align-items: center; gap: 16px; }
 .world-no { font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: var(--tracking-latin-wide); color: var(--gold); }
-.world-icon { font-size: 24px; color: var(--dim); transition: transform var(--dur-base) var(--ease-spring), color var(--dur-base); }
+.world-icon { font-size: 24px; color: var(--dim); transition: transform var(--dur-fast) var(--ease-spring), color var(--dur-fast); }
 .world-card:is(:hover, :focus-visible) .world-icon { transform: translateY(var(--motion-control-lift)); color: var(--gold); }
 .world-center strong { font-family: var(--font-editorial); font-size: 1.8rem; font-weight: 400; display: block; }
 .world-center em { font-family: var(--font-editorial); font-style: italic; font-size: .95rem; color: var(--dim); }
@@ -45,7 +45,7 @@
 .world-arrow {
   font-size: 20px; color: var(--gold);
   opacity: 0; transform: translate(-4px, 2px);
-  transition: opacity var(--dur-base), transform var(--dur-base) var(--ease-apple);
+  transition: opacity var(--dur-fast), transform var(--dur-fast) var(--ease-apple);
 }
   .world-card.accent-aqua .world-no { color: var(--aqua); }
   .world-card.accent-violet .world-no { color: var(--violet); }
@@ -84,7 +84,7 @@
     transition: opacity var(--dur-fast);
   }
   .focus-card > * { position: relative; z-index: 1; }
-  .focus-card:is(:hover, :focus-visible, :focus-within) { transform: translateY(var(--motion-lift)); border-color: var(--gold); background: var(--surface-hover); box-shadow: var(--interactive-shadow); }
+  .focus-card:is(:hover, :focus-visible, :focus-within) { border-color: var(--gold); background: var(--surface-hover); box-shadow: var(--interactive-shadow); }
   .focus-card:is(:focus-visible, :focus-within)::before { opacity: .42; }
   .focus-card.focus-product.gold:is(:hover, :focus-within) { border-color: var(--gold); }
   .focus-card.focus-product.aqua:is(:hover, :focus-within) { border-color: var(--aqua); }
@@ -309,11 +309,11 @@ html[data-locale='en'] .beyond-leadership small { grid-column: 2; }
 }
 
 @media (hover: none), (pointer: coarse) {
-  .world-card:hover:not(:focus-visible) { transform: none; background: var(--surface-strong); box-shadow: none; }
+  .world-card:hover:not(:focus-visible) { background: var(--surface-strong); box-shadow: none; }
   .world-card:hover:not(:focus-visible) .world-arrow { opacity: 0; transform: translate(-4px, 2px); }
   .world-card:hover:not(:focus-visible) .world-icon { transform: none; color: var(--dim); }
   .focus-card:hover:not(:focus-visible):not(:focus-within) {
-    transform: none; border-color: var(--line); background: var(--surface); box-shadow: var(--shadow-1);
+    border-color: var(--line); background: var(--surface); box-shadow: var(--shadow-1);
   }
   .home-focus-grid:has(.focus-research:hover:not(:focus-visible)) .home-focus-connector,
   .home-focus-grid:has(.focus-product:hover:not(:focus-visible)) .home-focus-connector { opacity: .72; }
@@ -335,4 +335,8 @@ html[data-locale='en'] .beyond-leadership small { grid-column: 2; }
   .focus-live-link:is(:hover, :focus-visible) span,
   .world-card:is(:hover, :focus-visible) .world-icon,
   .world-card:is(:hover, :focus-visible) .world-arrow { transform: none !important; }
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  :is(.world-card, .focus-card).revealed:is(:hover, :focus-visible, :focus-within):not([aria-disabled="true"]):not([inert]) { translate: 0 var(--motion-lift); }
 }

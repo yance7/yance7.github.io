@@ -320,7 +320,7 @@ test('Research toolchain groups use a bounded staggered reveal', async ({ page }
   await expect(groups).toHaveCount(3)
 
   const delays = await groups.evaluateAll((elements) => (
-    elements.map((element) => element.style.transitionDelay)
+    elements.map((element) => element.style.transitionDelay.split(',')[0])
   ))
 
   expect(delays).toEqual(['', '60ms', '120ms'])
@@ -444,11 +444,17 @@ test('reveal content uses the shared fade-up tokens with a bounded stagger', asy
 
     return {
       distance: getComputedStyle(document.documentElement).getPropertyValue('--reveal-distance').trim(),
+      offsetY: new DOMMatrixReadOnly(style.transform).m42,
+      opacity: Number(style.opacity),
+      fadeDuration: durations[properties.indexOf('opacity')],
       durationMs
     }
   })
-  expect(initialMotion.distance).toBe('28px')
-  expect(initialMotion.durationMs).toBe(680)
+  expect(initialMotion.distance).toBe('16px')
+  expect(initialMotion.offsetY).toBe(16)
+  expect(initialMotion.opacity).toBe(0)
+  expect(initialMotion.fadeDuration).toBe('0.5s')
+  expect(initialMotion.durationMs).toBe(500)
 
   await secondProject.evaluate((element) => {
     element.scrollIntoView({ behavior: 'instant', block: 'center', inline: 'nearest' })
@@ -465,7 +471,7 @@ test('reveal content uses the shared fade-up tokens with a bounded stagger', asy
       .map((element) => element.style.transitionDelay)
       .filter(Boolean)
       .map((value) => Number.parseFloat(value)))
-    expect(delays.every((delay) => delay <= 240)).toBe(true)
+    expect(delays.every((delay) => delay <= 180)).toBe(true)
   }
 })
 
@@ -497,6 +503,62 @@ test('reduced motion completes every reveal immediately', async ({ page }) => {
   ))).toBe(true)
 })
 
+test('card hover composes with a running reveal without replacing its offset', async ({ page }) => {
+  test.skip(!(await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches)), 'fine pointer only')
+  await page.goto('/works/')
+  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
+  const card = page.locator('#project-ap-microeconomics-notes')
+  await expect(card).not.toHaveClass(/revealed/)
+  const offset = await card.evaluate(element => new Promise<number>((resolve, reject) => {
+    // A queued transitionrun event can arrive after a 500ms transition finishes
+    // on a busy browser. Observe the real reveal class mutation in its microtask
+    // and pause the original CSS transition before the next painting opportunity.
+    const observer = new MutationObserver(() => {
+      if (!element.classList.contains('revealed')) return
+      observer.disconnect()
+      const transition = element.getAnimations().find(animation => (
+        'transitionProperty' in animation && animation.transitionProperty === 'transform'
+      ))
+      if (!transition) {
+        reject(new Error('Expected the CSS transform transition at reveal start'))
+        return
+      }
+      transition.pause()
+      transition.currentTime = 250
+      resolve(new DOMMatrixReadOnly(getComputedStyle(element).transform).m42)
+    })
+    observer.observe(element, { attributes: true, attributeFilter: ['class'] })
+    element.scrollIntoView({ block: 'center', behavior: 'instant' })
+  }))
+  expect(offset).toBeGreaterThan(0)
+  await card.hover({ force: true })
+  await expect.poll(() => card.evaluate(element => getComputedStyle(element).translate)).toBe('0px -2px')
+  expect(await card.evaluate(element => new DOMMatrixReadOnly(getComputedStyle(element).transform).m42)).toBeCloseTo(offset, 2)
+  await card.evaluate(element => element.getAnimations().forEach(animation => animation.finish()))
+  await expect(card).toHaveCSS('opacity', '1')
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await expect(card).toHaveCSS('translate', 'none')
+  await expect(card).toHaveCSS('transform', 'none')
+})
+
+test('AP rows and method groups enter without an animated parent displacement', async ({ page }) => {
+  for (const [route, panel, child] of [
+    ['/academics/', '.ap-panel', '.ap-row'],
+    ['/research/', '.toolchain-panel', '.toolchain-group']
+  ]) {
+    await page.goto(route!)
+    await expect(page.locator(panel!)).not.toHaveClass(/reveal/)
+    await expect(page.locator(child!).first()).toHaveClass(/reveal/)
+    const motion = await page.locator(child!).last().evaluate(element => {
+      const style = getComputedStyle(element)
+      return { properties: style.transitionProperty.split(',').map(value => value.trim()), durations: style.transitionDuration.split(',').map(value => value.trim()) }
+    })
+    for (const property of ['opacity', 'transform']) {
+      expect(motion.durations[motion.properties.indexOf(property)]).toBe('0.5s')
+    }
+  }
+})
+
 test('theme controls use bounded transitions for state changes', async ({ page }) => {
   await page.goto('/en/')
 
@@ -508,6 +570,36 @@ test('theme controls use bounded transitions for state changes', async ({ page }
   ))
 
   expect(milliseconds.every((duration) => duration >= 180 && duration <= 320), JSON.stringify(durations)).toBe(true)
+})
+
+test('interactive button feedback stays inside the 160–220ms budget', async ({ page }) => {
+  test.skip(!(await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches)), 'fine pointer only')
+  for (const [route, selector] of [
+    ['/404.html', '.y-button'],
+    ['/honors/', '.filter-btn'],
+    ['/research/', '.method-toggle, .tl-link'],
+    ['/', '.hero-action__visual']
+  ]) {
+    await page.goto(route!)
+    const control = page.locator(selector!).first()
+    await expect(control).toBeAttached()
+    const durations = await page.locator(selector!).evaluateAll(elements => elements.flatMap(element => getComputedStyle(element).transitionDuration.split(',').map(value => Number.parseFloat(value) * (value.trim().endsWith('ms') ? 1 : 1000))))
+    expect(durations.every(value => value >= 160 && value <= 220), `${route}: ${durations}`).toBe(true)
+  }
+})
+
+test('disabled rail buttons keep their passive appearance on hover', async ({ page }) => {
+  test.skip(!(await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches)), 'fine pointer only')
+  await page.goto('/concerts/')
+  const previous = page.locator('[data-rail-direction="previous"]')
+  await expect(previous).toBeDisabled()
+  await previous.hover()
+  const feedback = await previous.evaluate(element => {
+    const style = getComputedStyle(element)
+    return { animations: element.getAnimations().length, transform: style.transform }
+  })
+  expect(feedback.animations).toBe(0)
+  expect(feedback.transform).toBe('none')
 })
 
 test('mobile menu close control uses a bounded hover transition', async ({ page }) => {

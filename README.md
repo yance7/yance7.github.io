@@ -7,7 +7,7 @@
 <p align="center">一个以档案叙事组织学术、研究、作品与现场记忆的多语言个人网站。</p>
 
 <p align="center">
-  <a href="https://www.yance777.com">www.yance777.com</a>
+  <a href="https://yance.me">yance.me</a>
 </p>
 
 <p align="center">
@@ -24,7 +24,7 @@
 
 | 如果你想…… | 从这里开始 |
 | --- | --- |
-| 浏览线上网站 | [www.yance777.com](https://www.yance777.com) |
+| 浏览线上网站 | [yance.me](https://yance.me) |
 | 修改页面结构或路由视图 | [`src/pages/`](src/pages/) |
 | 修改页面共享内容与多语言文案 | [`src/data/`](src/data/) |
 | 修改自定义 Vue 指令 | [`src/directives/`](src/directives/) |
@@ -144,7 +144,7 @@ npx playwright install --with-deps chromium webkit firefox
 
 - 通过 `.github/workflows/pages.yml` 部署。
 - 发布目标为 GitHub Pages。
-- 自定义域名为 `www.yance777.com`。
+- 自定义域名为 `yance.me`。
 - `dist/` 不进入 Git。
 
 ## 资源、隐私与使用边界

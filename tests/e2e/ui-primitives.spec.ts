@@ -14,7 +14,7 @@ for (const variant of ['primary', 'secondary']) {
     await expect.poll(() => visual.evaluate((element) => {
       const transform = getComputedStyle(element).transform
       return transform === 'none' ? 1 : new DOMMatrixReadOnly(transform).m11
-    })).toBeCloseTo(.98, 3)
+    })).toBeCloseTo(.985, 3)
     await expect(visual.locator('span').first()).toHaveCSS('transform', 'none')
     const pressed = await action.boundingBox()
     expect(pressed?.x).toBeCloseTo(baseline!.x, 1)
@@ -90,7 +90,7 @@ test('@pointer-refinement shared button press keeps its semantic hit area stable
   await expect.poll(() => button.locator('.y-button__visual').evaluate((element) => {
     const transform = getComputedStyle(element).transform
     return transform === 'none' ? 1 : new DOMMatrixReadOnly(transform).m11
-  })).toBeCloseTo(.98, 3)
+  })).toBeCloseTo(.985, 3)
   const pressed = await button.boundingBox()
   expect(pressed?.x).toBeCloseTo(baseline!.x, 1)
   expect(pressed?.y).toBeCloseTo(baseline!.y, 1)

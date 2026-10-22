@@ -386,9 +386,9 @@ html[data-locale='en'] .section-copy {
   opacity: 0;
   transform: translate3d(0, var(--reveal-distance), 0);
   transition:
-    opacity var(--dur-base) var(--ease-out),
-    transform var(--reveal-duration) var(--ease-out);
-  will-change: opacity, transform;
+    opacity var(--reveal-duration) var(--ease-out),
+    transform var(--reveal-duration) var(--ease-out),
+    translate var(--dur-fast) var(--ease-out);
 }
 .reveal.revealed {
   opacity: 1;
@@ -398,22 +398,23 @@ html[data-locale='en'] .section-copy {
 .reveal.showcase,
 .reveal.focus-card,
 .reveal.world-card,
+.reveal.education-row,
+.reveal.ap-row,
+.reveal.toolchain-group,
 .reveal.honor-card,
 .reveal.tl-item,
 .reveal.concert-rail-card {
   transition:
-    opacity var(--dur-base) var(--ease-out),
+    opacity var(--reveal-duration) var(--ease-out),
     transform var(--reveal-duration) var(--ease-out),
-    background-color var(--dur-base),
-    border-color var(--dur-base),
-    box-shadow var(--dur-base);
+    translate var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast),
+    border-color var(--dur-fast),
+    box-shadow var(--dur-fast);
 }
 
-.reveal[data-reveal-profile='home'] {
-  --reveal-distance: 20px;
-  --reveal-duration: .55s;
-  transition-duration: .55s, .55s, var(--dur-base), var(--dur-base), var(--dur-base);
-}
+/* State overrides follow the card transition list with equal specificity. */
+.reveal[data-reveal-preparing='true'] { transition: none; }
 .reveal[data-reveal-immediate='true'],
 .reveal:not(.revealed):focus-within {
   opacity: 1;

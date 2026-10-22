@@ -25,7 +25,7 @@ const academics = computed(() => getLocalizedAcademics(locale.value))
           v-for="(edu, i) in academics.education"
           :key="edu.name"
           class="education-row"
-          v-reveal="{ delay: Math.min(i, 4) * 60 }"
+          v-reveal="{ delay: Math.min(i, 3) * 60 }"
         >
           <span class="education-period">{{ edu.period }}</span>
           <span class="education-name">{{ edu.name }}</span>
@@ -54,14 +54,14 @@ const academics = computed(() => getLocalizedAcademics(locale.value))
         :copy="academics.sections.apArchive.copy"
       />
 
-      <div class="ap-panel" v-reveal>
+      <div class="ap-panel">
         <div class="panel-label">{{ academics.sections.apArchive.panelLabel }}</div>
         <div
           v-for="(row, i) in academics.apScores"
           :key="row.name"
           class="ap-row"
           :class="row.status"
-          v-reveal="{ delay: Math.min(i, 4) * 60 }"
+          v-reveal="{ delay: Math.min(i, 3) * 60 }"
         >
           <span class="ap-no">{{ String(i + 1).padStart(2, '0') }}</span>
           <div class="ap-main">
