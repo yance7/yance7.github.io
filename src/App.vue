@@ -87,6 +87,7 @@ function scrollTargetVertically(target: HTMLElement) {
 
 function scrollTargetHorizontally(target: HTMLElement, scroller: HTMLElement) {
   if (scroller.dataset.horizontalAlign === 'center') {
+    scroller.dispatchEvent(new CustomEvent('rail-target', { detail: target }))
     scroller.scrollLeft = getCenteredScrollLeft(target.offsetLeft + target.offsetWidth / 2, scroller.clientWidth, scroller.scrollWidth - scroller.clientWidth)
     return
   }

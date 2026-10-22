@@ -25,6 +25,8 @@ let layoutFrame: number | undefined
 let controlFrame: number | undefined
 let hasLayout = false
 let needsAlignment = false
+let layoutWidth = 0
+let layoutCardWidth = 0
 let mounted = false
 
 function formatConcertDate(date: string) {
@@ -85,6 +87,15 @@ function clearPendingTarget() {
   onRailScroll()
 }
 
+function onRailTarget(event: Event) {
+  const rail = railRef.value
+  if (!rail) return
+  const index = cardsFor(rail).indexOf((event as CustomEvent<HTMLElement>).detail)
+  if (index < 0) return
+  pendingIndex = index
+  visibleIndex = index
+}
+
 function scrollRail(direction: -1 | 1) {
   const rail = railRef.value
   if (!rail) return
@@ -103,24 +114,25 @@ function measureLayout() {
   layoutFrame = undefined
   const rail = railRef.value
   if (!rail || !mounted) return
-  const previousPadding = rail.style.paddingInline
-  // Old center insets can inflate clientWidth after a narrow resize.
-  // The unpadded shell gives the available width without disturbing scroll.
-  const viewportWidth = Math.min(rail.clientWidth, rail.parentElement?.clientWidth ?? rail.clientWidth)
+  const previousInset = rail.style.getPropertyValue('--rail-inset')
   const cards = cardsFor(rail)
   const first = cards[0]
   const last = cards.at(-1)
+  const width = rail.clientWidth
+  const cardWidth = first?.offsetWidth ?? 0
   const index = hasLayout ? pendingIndex ?? visibleIndex : 0
   const span = first && last ? last.offsetLeft + last.offsetWidth - first.offsetLeft : 0
-  const inset = getRailInset(viewportWidth, first?.offsetWidth ?? 0, span, cards.length)
-  const changed = previousPadding !== inset + 'px'
-  rail.style.paddingInline = inset + 'px'
+  const inset = getRailInset(width, cardWidth, span, cards.length)
+  const changed = previousInset !== inset + 'px' || layoutWidth !== width || layoutCardWidth !== cardWidth
+  rail.style.setProperty('--rail-inset', inset + 'px')
   if ((changed || !hasLayout || needsAlignment) && cards[index]) {
     const card = cards[index]!
     rail.scrollTo({ left: getCenteredScrollLeft(card.offsetLeft + card.offsetWidth / 2, rail.clientWidth, rail.scrollWidth - rail.clientWidth), behavior: 'auto' })
     pendingIndex = undefined
   }
   hasLayout = true
+  layoutWidth = width
+  layoutCardWidth = cardWidth
   needsAlignment = false
   rail.dataset.railReady = 'true'
   updateRailControls()
@@ -227,6 +239,7 @@ onBeforeUnmount(() => {
       role="region"
       :aria-label="section.archive"
       @scroll="onRailScroll"
+      @rail-target="onRailTarget"
       @pointerdown="clearPendingTarget"
       @focusin="clearPendingTarget"
     >

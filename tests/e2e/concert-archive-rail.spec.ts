@@ -452,6 +452,7 @@ async function centerError(rail: Locator, index: number) {
 }
 
 test('concert hash centers a fully visible off-center poster', async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 900 })
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.addInitScript(() => {
     const state = globalThis as typeof globalThis & { __holdCenterLayout?: boolean }
@@ -488,13 +489,16 @@ test('concert hash centers a fully visible off-center poster', async ({ page }) 
 })
 
 test('concert resize fallback works without ResizeObserver', async ({ page }) => {
-  await page.addInitScript(() => { Object.defineProperty(window, 'ResizeObserver', { value: undefined, configurable: true }) })
+  const errors: string[] = []
+  page.on('pageerror', error => errors.push(error.message))
+  await page.addInitScript(() => { Reflect.deleteProperty(window, 'ResizeObserver') })
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/concerts/#concert-kpl-2025-11-08')
   const rail = page.locator('.concert-archive-rail')
   await expect.poll(() => centerError(rail, 10)).toBeLessThanOrEqual(2)
   await page.setViewportSize({ width: 390, height: 844 })
   await expect.poll(() => centerError(rail, 10)).toBeLessThanOrEqual(2)
+  expect(errors).toEqual([])
 })
 
 test('concert pointer input cancels a queued button destination', async ({ page }) => {
@@ -571,7 +575,7 @@ for (const route of ['/concerts/', '/zh-hk/concerts/', '/en/concerts/']) {
   })
 }
 
-test('concert native horizontal wheel centers without preventing vertical input', async ({ page, isMobile }) => {
+test('concert native horizontal wheel settles at a poster center', async ({ page, isMobile }) => {
   test.skip(isMobile, 'wheel input belongs to desktop devices')
   await page.goto('/concerts/')
   const rail = page.locator('.concert-archive-rail')
@@ -583,9 +587,22 @@ test('concert native horizontal wheel centers without preventing vertical input'
     const center = element.scrollLeft + element.clientWidth / 2
     return Math.min(...[...element.querySelectorAll<HTMLElement>('.concert-rail-card')].map(card => Math.abs(card.offsetLeft + card.offsetWidth / 2 - center)))
   })).toBeLessThanOrEqual(2)
+})
+
+test('concert native vertical wheel over the rail scrolls the page', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'wheel input belongs to desktop devices')
+  await page.goto('/concerts/')
+  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
+  await page.locator('.concert-archive-rail').hover()
+  await expect.poll(() => page.evaluate(async () => {
+    const before = scrollY
+    await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+    return Math.abs(scrollY - before) < .5
+  })).toBe(true)
   const initialY = await page.evaluate(() => scrollY)
-  await page.mouse.wheel(0, 180)
-  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(initialY)
+  expect(initialY).toBeGreaterThan(0)
+  await page.mouse.wheel(0, -180)
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeLessThan(initialY)
 })
 
 for (const count of [0, 1, 2]) {
