@@ -168,7 +168,7 @@ onBeforeUnmount(() => {
       <img ref="backdropRef" class="poster-backdrop" :src="thumbnailFallbackUrl(poster.file)" alt="" :width="poster.width" :height="poster.height" loading="lazy" decoding="async" @error="onBackdropError">
     </picture>
     <button ref="openRef" class="poster-open" type="button" :aria-label="openLabel" :aria-describedby="state === 'loading' || state === 'error' ? statusId : undefined" @click="emit('open', $event)">
-      <picture class="poster-foreground-layer">
+      <picture :key="requestId" class="poster-foreground-layer">
         <source v-if="!jpegFallback" :srcset="thumbnailUrl(poster.file)" type="image/webp">
         <img
           :key="requestId + '-' + (jpegFallback ? 'jpeg' : 'webp')"
