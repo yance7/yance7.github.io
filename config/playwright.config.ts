@@ -12,6 +12,7 @@ const webServerCommand = usePreview
   : `npm run dev -- --host 127.0.0.1 --port ${previewPort}`
 
 export default defineConfig({
+  globalSetup: '../tests/fixtures/build-media-fixture.ts',
   testDir: '../tests/e2e',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,

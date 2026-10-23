@@ -1,5 +1,5 @@
 /* ===== 演唱会 ===== */
-.concert-group { padding-bottom: 60px; }
+.concert-group { padding-bottom: 60px; transition-property: none; }
 .group-header {
   display: flex; align-items: baseline; gap: 20px; flex-wrap: wrap;
   margin-bottom: 32px; padding-bottom: 16px; border-bottom: 1px solid var(--line);
@@ -25,17 +25,18 @@
 .concert-rail-controls button:focus-visible { outline-color: var(--focus); box-shadow: var(--focus-ring); }
 .concert-rail-controls button:disabled { cursor: not-allowed; opacity: .38; transform: none; }
 .concert-archive-rail {
-  overflow-x: auto; overflow-y: hidden; padding: 4px 2px 20px;
-  scroll-behavior: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 2px;
-  overscroll-behavior-x: contain; scrollbar-color: var(--gold) var(--surface); touch-action: pan-x pan-y;
+  transition-property: none;
+  position: relative; overflow-x: auto; overflow-y: hidden; padding: 4px 0 20px;
+  scroll-behavior: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 0;
+  overscroll-behavior-x: contain; scrollbar-color: var(--gold) var(--surface); touch-action: auto;
 }
-.concert-rail-track { display: flex; align-items: stretch; gap: var(--space-4); width: max-content; min-width: 100%; }
+.concert-rail-track { display: flex; align-items: stretch; gap: var(--space-4); width: max-content; min-width: 100%; padding-inline: var(--rail-inset, 2px); transition-property: none; }
 .concert-rail-card {
-  flex: 0 0 clamp(252px, 29vw, 370px); min-width: 0; display: grid; gap: var(--space-4);
+  flex: 0 0 auto; width: clamp(252px, 29vw, 370px); min-width: 0; display: grid; gap: var(--space-4);
   grid-template-rows: auto minmax(0, 1fr);
   grid-template-columns: minmax(0, 1fr);
   padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-small);
-  background: var(--surface); box-shadow: var(--shadow-1); scroll-snap-align: start; scroll-snap-stop: always;
+  background: var(--surface); box-shadow: var(--shadow-1); scroll-snap-align: center; scroll-snap-stop: normal;
   transition: transform var(--dur-base) var(--ease-spring), border-color var(--dur-base), box-shadow var(--dur-base);
 }
 .concert-rail-card:hover { border-color: var(--gold); box-shadow: var(--interactive-shadow); }
@@ -165,7 +166,7 @@
   .concert-date span { margin: 0; }
   .concert-poster { max-width: 280px; }
   .concert-info h3 { font-size: 1.8rem; }
-  .concert-rail-card { flex-basis: min(78vw, 310px); }
+  .concert-rail-card { width: min(78vw, 310px); }
   .concert-rail-card-info { grid-template-columns: 1fr; gap: var(--space-2); }
 }
 @media (hover: none), (pointer: coarse) {
