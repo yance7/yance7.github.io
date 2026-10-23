@@ -211,7 +211,7 @@ test('poster deadline ignores a real late image load until the user retries', as
     await responseGate.promise
     await route.fulfill({ response })
   })
-  await page.goto('/en/concerts/')
+  await page.goto('/en/concerts/', { waitUntil: 'domcontentloaded' })
   const poster = page.locator('.concert-poster').first()
   await poster.scrollIntoViewIfNeeded()
   await expect(poster).toHaveAttribute('data-poster-state', 'loading')
