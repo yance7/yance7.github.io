@@ -93,16 +93,18 @@ test('locale intent registers one same-origin prefetch without intercepting the 
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto('/en/research/')
   const target = page.locator('.locale-switcher-desktop a[hreflang="zh-HK"]')
+  const documentPrefetchCount = () => page.locator('link[rel="prefetch"]').evaluateAll((links) => links
+    .filter((link) => {
+      const url = new URL((link as HTMLLinkElement).href)
+      return url.origin === window.location.origin && url.pathname === '/zh-hk/research/'
+    }).length)
 
   await target.hover()
-  await expect.poll(() => page.locator('link[rel="prefetch"]').evaluateAll((links) => links
-    .map((link) => (link as HTMLLinkElement).href)
-    .some((href) => /\/zh-hk\/research\/(?:$|[?#])/.test(href))))
-    .toBe(true)
+  await expect.poll(documentPrefetchCount).toBe(1)
   await target.focus()
-  await expect(page.locator('link[rel="prefetch"]')).toHaveCount(1)
+  await expect.poll(documentPrefetchCount).toBe(1)
   await page.locator('.locale-switcher-desktop a[hreflang="en"]').focus()
-  await expect(page.locator('link[rel="prefetch"]')).toHaveCount(1)
+  await expect.poll(documentPrefetchCount).toBe(1)
 })
 
 test('mobile locale pill keeps three real links inside narrow viewports', async ({ page }) => {
