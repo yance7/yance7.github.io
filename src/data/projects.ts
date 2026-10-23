@@ -2,34 +2,34 @@ import type { Project } from './types.ts'
 
 export const projects = [
   {
-    id: 'fresheye', status: 'deployed', action: 'live', updatedAt: '2026-08-08',
+    id: 'fresheye', status: 'deployed', action: 'live', updatedAt: '2026-10-22',
     title: '鲜眸', en: 'FreshEye', domain: 'fresheye.yance.me', tone: 'aqua',
     discipline: 'COMPUTER VISION / WEB PRODUCT',
-    description: '上传鱼眼照片，AI 评估水产品新鲜度，输出等级、置信度与 Grad-CAM 热力图。',
-    value: '让水产品新鲜度评估从实验室走向日常使用。',
+    description: '零安装鱼眼新鲜度辅助筛查工具，提供等级、置信度、Grad-CAM 热力图、四标签报告与 A4 PDF 导出，并支持本地可搜索历史记录。',
+    value: '把鱼眼新鲜度辅助筛查整理成可访问、可复核的网络工具。',
     role: '全栈开发 · 模型训练 · UI 设计',
     stack: ['PyTorch', 'ONNX', 'Vue 3', 'Hugging Face Spaces'],
     href: 'https://fresheye.yance.me',
     github: 'https://github.com/yance7/FreshEye',
     story: {
       label: 'FROM RESEARCH TO PRODUCT',
-      note: '把一次模型实验，继续做成任何人都能直接打开的工具。',
+      note: '把研究流程延伸为可直接访问的鱼眼新鲜度辅助筛查工具。',
       chapters: [
         {
           label: '01 / QUESTION',
           title: '让新鲜度判断走出实验室',
-          detail: '传统评估依赖人工判断或实验室方法，日常场景需要更快、更容易复核的入口。'
+          detail: '建立一个零安装的网页入口，帮助用户查看鱼眼新鲜度筛查结果与解释信息。'
         },
         {
           label: '02 / MODEL',
           title: 'FishFreshNet V2',
-          detail: '99.29% accuracy · 4.095M parameters',
+          detail: '99.29% accuracy · 4.095M parameters · five MFED runs',
           href: '/research/#fishfreshnet-v2'
         },
         {
           label: '03 / DELIVERY',
           title: '从推理结果到可解释报告',
-          detail: '置信度、Grad-CAM 热力图与 PDF 报告，共同构成一次完整的判断流程。'
+          detail: '置信度、Grad-CAM 热力图、四标签报告与 A4 PDF 导出，组成可复核的筛查流程。'
         }
       ],
       sequenceLabel: 'PRODUCT FLOW',

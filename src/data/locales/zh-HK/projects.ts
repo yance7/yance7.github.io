@@ -11,17 +11,17 @@ export const projectsCopy = {
     fresheye: {
       ...base.fresheye!,
       title: '鮮眸',
-      value: '讓魚類新鮮度評估由實驗室走進日常使用。',
-      description: '上載魚眼相片，由 AI 評估魚類新鮮度，輸出等級、信心度及 Grad-CAM 熱力圖。',
+      value: '把魚眼新鮮度輔助篩查整理成可存取、可覆核的網頁工具。',
+      description: '毋須安裝的魚眼新鮮度輔助篩查工具，提供等級、信心度、Grad-CAM 熱力圖、四標籤報告與 A4 PDF 匯出，並支援本地可搜尋歷史記錄。',
       role: '全棧開發 · 模型訓練 · UI 設計',
       discipline: 'COMPUTER VISION / 網頁產品',
       story: {
         label: '由研究到產品',
-        note: '把一次模型實驗，繼續做成任何人都能直接開啟的工具。',
+        note: '把研究流程延伸成可直接存取的魚眼新鮮度輔助篩查工具。',
         chapters: [
-          { label: '01 / QUESTION', title: '讓新鮮度判斷走出實驗室', detail: '傳統評估依賴人工判斷或實驗室方法；日常場景需要更快、更容易覆核的入口。' },
-          { label: '02 / MODEL', title: 'FishFreshNet V2', detail: '99.29% accuracy · 4.095M parameters', href: '/research/#fishfreshnet-v2' },
-          { label: '03 / DELIVERY', title: '由推理結果到可解釋報告', detail: '信心度、Grad-CAM 熱力圖及 PDF 報告，共同構成完整判斷流程。' }
+          { label: '01 / QUESTION', title: '令魚眼篩查更易存取', detail: '毋須安裝的網頁入口，協助使用者檢視新鮮度篩查結果及其解釋。' },
+          { label: '02 / MODEL', title: 'FishFreshNet V2', detail: '99.29% accuracy · 4.095M parameters · 5 次 MFED 運行', href: '/research/#fishfreshnet-v2' },
+          { label: '03 / DELIVERY', title: '由結果到可覆核報告', detail: '信心度、Grad-CAM、四標籤報告及 A4 PDF 匯出，支援結果覆核。' }
         ],
         sequenceLabel: '產品流程', sequence: ['上載', '推理', '信心度', 'Grad-CAM', 'PDF'],
         proof: [{ type: 'deployment', label: '上線產品', value: 'fresheye.yance.me', href: 'https://fresheye.yance.me', external: true }, { type: 'source', label: '原始碼', value: 'GitHub', href: 'https://github.com/yance7/FreshEye', external: true }]
