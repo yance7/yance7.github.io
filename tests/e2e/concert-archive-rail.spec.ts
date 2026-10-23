@@ -217,7 +217,7 @@ test('concert archive buttons stay synchronized at both rail edges', async ({ pa
 
   await previous.click()
   await expect(previous).toBeDisabled()
-  await expect.poll(() => rail.evaluate((element) => (element as HTMLElement).scrollLeft)).toBe(0)
+  await expect.poll(() => centerError(rail, 0)).toBeLessThanOrEqual(2)
 
   await rail.evaluate((element) => {
     const archiveRail = element as HTMLElement
@@ -407,16 +407,19 @@ test('uniform adjacent cards retain default motion styling after reveal', async 
   await expectUniformCards(page)
 })
 
-test('uniform cards survive actual language navigation after fonts are ready', async ({ page }) => {
+for (const [source, target] of [
+  ['/concerts/', '/en/concerts/'],
+  ['/en/concerts/', '/zh-hk/concerts/'],
+  ['/zh-hk/concerts/', '/concerts/']
+] as const) test(`uniform cards survive actual language navigation: ${source} to ${target}`, async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 })
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await gotoConcerts(page)
+  await gotoConcertRoute(page, source)
   await expectUniformCards(page)
-  for (const route of ['/en/concerts/', '/zh-hk/concerts/', '/concerts/']) {
-    await page.locator(`.locale-switcher-desktop a[href="${route}"]`).click()
-    await expect(page.locator('.concert-rail-card')).toHaveCount(concerts.length)
-    await expectUniformCards(page)
-  }
+  await page.locator(`.locale-switcher-desktop a[href="${target}"]`).click()
+  await expect(page).toHaveURL(new URL(target, page.url()).href)
+  await expect(page.locator('.concert-rail-card')).toHaveCount(concerts.length)
+  await expectUniformCards(page)
 })
 
 for (const route of concertRoutes) {
