@@ -13,7 +13,9 @@ export const zhCNMessages = {
   lightbox: { gallery: '演唱会海报大图', close: '关闭灯箱', previous: '上一张', next: '下一张', position: (current, total) => `，第 ${current} 张，共 ${total} 张`, loading: '正在加载图片', failed: '图片加载失败', retry: '重试', posterAlt: '海报', openArchive: '打开档案' },
   footer: { homeLabel: '返回首页', contactsLabel: '联系方式', archive: '个人档案 / 2026', identity: '研究者 / 构建者 / 音乐听众', email: '邮箱', github: 'GitHub' },
   error404: { kicker: '信号丢失', title: '这一页走丢了', copy: '你访问的页面不存在，或者已经被移走。回到主页，重新选一间屋子走进去。', home: '回到首页', research: '去看看研究' },
-  loadError: { title: '页面暂时无法加载', copy: '当前页面资源没有完成加载，请刷新后重试。', retry: '重新加载' },
+  loadError: { loading: '正在加载页面内容', title: '页面暂时无法加载', copy: '当前页面资源没有完成加载，请刷新后重试。', retry: '重新加载' },
+  poster: { loading: '正在加载海报', failed: '海报预览暂不可用', retry: '重试图片', original: '查看原图' },
+  empty: { honors: '这一分类暂时没有记录。', viewAll: '查看全部', works: '作品正在整理中，欢迎稍后回来看看。', concerts: '暂时还没有演唱会记录。', selectedWork: '精选内容正在整理中，可先浏览其他档案。' },
   status: { active: '进行中', published: '已发表', completed: '已完成', deployed: '已部署', 'open-source': '开放源码', planned: '计划中', archived: '已归档' },
   page: {
     home: { kicker: '个人档案 / 北京 · 2026', title: 'SONG NOTES', copy: '这里收录研究、已上线的作品，以及被音乐和现场照亮的生活切片。先从一个真实问题开始，再沿着证据走到可以使用的结果。' },

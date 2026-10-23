@@ -15,7 +15,9 @@ export const zhHKMessages = {
   lightbox: { gallery: '演唱會海報大圖', close: '關閉燈箱', previous: '上一張', next: '下一張', position: (current, total) => `，第 ${current} 張，共 ${total} 張`, loading: '正在載入圖片', failed: '圖片載入失敗', retry: '重試', posterAlt: '海報', openArchive: '開啟檔案' },
   footer: { homeLabel: '返回首頁', contactsLabel: '聯絡方式', archive: '個人檔案 / 2026', identity: '研究者 / 建構者 / 音樂聽眾', email: '電郵', github: 'GitHub' },
   error404: { kicker: '訊號遺失', title: '這一頁走失了', copy: '你訪問的頁面不存在，或者已經被移走。返回主頁，重新選擇一間屋子走進去。', home: '返回首頁', research: '看看研究' },
-  loadError: { title: '頁面暫時無法載入', copy: '目前頁面資源未完成載入，請重新載入後再試。', retry: '重新載入' },
+  loadError: { loading: '正在載入頁面內容', title: '頁面暫時無法載入', copy: '目前頁面資源未完成載入，請重新載入後再試。', retry: '重新載入' },
+  poster: { loading: '正在載入海報', failed: '海報預覽暫不可用', retry: '重試圖片', original: '查看原圖' },
+  empty: { honors: '這一分類暫時沒有記錄。', viewAll: '查看全部', works: '作品正在整理中，歡迎稍後回來看看。', concerts: '暫時還沒有演唱會記錄。', selectedWork: '精選內容正在整理中，可先瀏覽其他檔案。' },
   status: { active: '進行中', published: '已發表', completed: '已完成', deployed: '已部署', 'open-source': '開放原始碼', planned: '計劃中', archived: '已歸檔' },
   page: {
     home: { kicker: '個人檔案 / 北京 · 2026', title: 'SONG NOTES', copy: '這裡收錄研究、已上線的作品，以及被音樂和現場照亮的生活片段。先從一個真實問題開始，再沿着證據走到可以使用的結果。' },

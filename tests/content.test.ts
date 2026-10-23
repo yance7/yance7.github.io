@@ -103,7 +103,7 @@ describe('content contracts', () => {
     const component = readFileSync(resolve(process.cwd(), 'src/components/ConcertArchiveRail.vue'), 'utf8')
     expect(component).not.toContain('carousel-controls')
     expect(component).not.toContain('carouselIndexes')
-    expect(component).toContain('item.poster.file')
+    expect(component).toContain(':poster="item.poster"')
   })
 
   it('derives concert state from a supplied Beijing date', () => {

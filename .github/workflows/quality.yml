@@ -329,8 +329,9 @@ jobs:
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-concert-archive
         run: |
-          npm run test:e2e -- tests/e2e/concert-archive-rail.spec.ts tests/e2e/concert-archive-preservation.spec.ts --project=webkit-desktop --workers=4 --retries=0
+          npm run test:e2e -- tests/e2e/concert-archive-rail.spec.ts tests/e2e/concert-archive-preservation.spec.ts tests/e2e/media-resilience.spec.ts --project=webkit-desktop --workers=4 --retries=0
           PLAYWRIGHT_OUTPUT_DIR=test-results/webkit-desktop-concert-stress npm run test:e2e -- tests/e2e/concert-archive-rail.spec.ts --project=webkit-desktop --workers=1 --grep 'edge centers|reduced-motion resize|fallback works|rapid button|buttons stay synchronized|language navigation|external rail movement' --repeat-each=10 --retries=0
+          PLAYWRIGHT_OUTPUT_DIR=test-results/webkit-desktop-media-stress npm run test:e2e -- tests/e2e/media-resilience.spec.ts --project=webkit-desktop --workers=1 --grep 'slow poster|poster source changes|poster double failure|poster deadline|rapid lightbox|page chunk errors|newer hash' --repeat-each=10 --retries=0
       - name: WebKit mobile ScrollProgress quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-scroll-progress
@@ -376,8 +377,9 @@ jobs:
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-concert-archive
         run: |
-          npm run test:e2e -- tests/e2e/concert-archive-rail.spec.ts tests/e2e/concert-archive-preservation.spec.ts --project=webkit-mobile --workers=4 --retries=0
+          npm run test:e2e -- tests/e2e/concert-archive-rail.spec.ts tests/e2e/concert-archive-preservation.spec.ts tests/e2e/media-resilience.spec.ts --project=webkit-mobile --workers=4 --retries=0
           PLAYWRIGHT_OUTPUT_DIR=test-results/webkit-mobile-concert-stress npm run test:e2e -- tests/e2e/concert-archive-rail.spec.ts --project=webkit-mobile --workers=1 --grep 'edge centers|reduced-motion resize|fallback works|rapid button|buttons stay synchronized|language navigation|external rail movement' --repeat-each=10 --retries=0
+          PLAYWRIGHT_OUTPUT_DIR=test-results/webkit-mobile-media-stress npm run test:e2e -- tests/e2e/media-resilience.spec.ts --project=webkit-mobile --workers=1 --grep 'slow poster|poster source changes|poster double failure|poster deadline|rapid lightbox|page chunk errors|newer hash' --repeat-each=10 --retries=0
       - name: Chromium visual quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/visual

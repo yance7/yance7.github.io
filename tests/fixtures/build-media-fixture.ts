@@ -14,6 +14,7 @@ export default async function buildMediaFixture() {
     base: '/media-fixture/',
     logLevel: 'error',
     plugins: [vue()],
+    resolve: { alias: [{ find: /^\.\.\/data\/locales$/, replacement: resolve(repositoryRoot, 'tests/fixtures/media/emptyLocales.ts') }] },
     build: { outDir: process.env.MEDIA_FIXTURE_ROOT, emptyOutDir: true }
   })
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
+import { computed, nextTick, ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import type { LightboxMeta, NonEmptyArray } from '../data/types'
 import { useModalDialog } from '../composables/useModalDialog'
 import { sharedImagePreloader } from '../utils/imagePreload'
@@ -21,6 +21,9 @@ const emit = defineEmits<{
 const loading = ref(true)
 const loadError = ref(false)
 const retryKey = ref(0)
+const imageRef = ref<HTMLImageElement | null>(null)
+let requestId = 0
+let deadline: ReturnType<typeof setTimeout> | undefined
 const dialogRef = ref<HTMLElement | null>(null)
 const closeButton = ref<{ focus: () => void } | null>(null)
 const isVisible = ref(true)
@@ -31,6 +34,8 @@ const safeIndex = computed(() => clampLightboxIndex(props.index, props.images.le
 
 function closeLightbox() {
   if (!isVisible.value) return
+  clearTimeout(deadline)
+  requestId += 1
   isVisible.value = false
 }
 
@@ -57,21 +62,56 @@ function preloadNeighbors(index: number) {
   })
 }
 
-function onImgLoad() {
-  loading.value = false
-  loadError.value = false
-  preloadNeighbors(safeIndex.value)
+function isCurrentImage(image: HTMLImageElement, attempt: number) {
+  return isVisible.value && image === imageRef.value && attempt === requestId && loading.value
+    && image.getAttribute('src') === props.images[safeIndex.value]
 }
 
-function onImgError() {
+function failImage() {
+  clearTimeout(deadline)
   loading.value = false
   loadError.value = true
 }
 
-function retryImage() {
+async function settleImage(image: HTMLImageElement, attempt: number) {
+  if (!isCurrentImage(image, attempt)) return
+  try {
+    if (!image.naturalWidth) throw new Error('Image has no decoded pixels')
+    await image.decode()
+    if (!isCurrentImage(image, attempt)) return
+    clearTimeout(deadline)
+    loading.value = false
+    loadError.value = false
+    preloadNeighbors(safeIndex.value)
+  } catch {
+    if (isCurrentImage(image, attempt)) failImage()
+  }
+}
+
+function onImgLoad(event: Event) {
+  if (event.currentTarget === imageRef.value) void settleImage(event.currentTarget as HTMLImageElement, requestId)
+}
+
+function onImgError(event: Event) {
+  if (event.currentTarget === imageRef.value && isCurrentImage(event.currentTarget as HTMLImageElement, requestId)) failImage()
+}
+
+function beginRequest() {
+  clearTimeout(deadline)
+  const attempt = ++requestId
   loading.value = true
   loadError.value = false
+  deadline = setTimeout(() => { if (attempt === requestId && isVisible.value) failImage() }, 10000)
+  void nextTick(() => {
+    const image = imageRef.value
+    if (image?.complete && image.currentSrc) void settleImage(image, attempt)
+  })
+  preloadNeighbors(safeIndex.value)
+}
+
+function retryImage() {
   retryKey.value += 1
+  closeButton.value?.focus()
 }
 
 function onKey(e: KeyboardEvent) {
@@ -84,15 +124,13 @@ onMounted(() => {
   window.addEventListener('keydown', onKey)
 })
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
+  requestId += 1
+  clearTimeout(deadline)
   window.removeEventListener('keydown', onKey)
 })
 
-watch(() => [safeIndex.value, props.images[safeIndex.value]], () => {
-  loading.value = true
-  loadError.value = false
-  preloadNeighbors(safeIndex.value)
-}, { immediate: true })
+watch(() => [safeIndex.value, props.images[safeIndex.value], retryKey.value], beginRequest, { immediate: true })
 </script>
 
 <template>
@@ -120,10 +158,11 @@ watch(() => [safeIndex.value, props.images[safeIndex.value]], () => {
 
       <figure class="lb-stage">
         <img
+          ref="imageRef"
           :key="`${images[safeIndex]}-${retryKey}`"
           :src="images[safeIndex]"
           :alt="meta ? `${meta.artist} · ${meta.tour} ${messages.lightbox.posterAlt}` : messages.lightbox.gallery"
-          :class="{ loaded: !loading }"
+          :class="{ loaded: !loading && !loadError }"
           fetchpriority="high"
           decoding="async"
           @load="onImgLoad"

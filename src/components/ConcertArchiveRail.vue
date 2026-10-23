@@ -4,7 +4,8 @@ import type { Concert, LightboxPayload } from '../data/types'
 import type { ConcertLocaleCopy } from '../data/locales/types'
 import { isConcertUpcoming } from '../data/concerts'
 import { useLocale } from '../i18n'
-import { concertPosterPresentation, originalImageUrl, thumbnailFallbackUrl, thumbnailUrl } from '../utils/concertMedia'
+import { originalImageUrl } from '../utils/concertMedia'
+import ConcertPoster from './ConcertPoster.vue'
 import { findNearestCenteredIndex, getCenteredScrollLeft, getRailInset, isRailDestinationPending } from '../utils/horizontalRail'
 
 const props = defineProps<{
@@ -257,48 +258,14 @@ onBeforeUnmount(() => {
           :data-concert-status="statusFor(item)"
           v-reveal="{ delay: Math.min(i, 3) * 60 }"
         >
-          <div
-            class="concert-poster"
-            :data-poster-ratio="concertPosterPresentation(item.poster).kind"
-            :style="{ aspectRatio: concertPosterPresentation(item.poster).aspectRatio }"
-            v-pointer-sheen="{ tilt: 2.5 }"
-          >
-            <picture class="poster-backdrop-layer" aria-hidden="true">
-              <source :srcset="thumbnailUrl(item.poster.file)" type="image/webp">
-              <img
-                class="poster-backdrop"
-                :src="thumbnailFallbackUrl(item.poster.file)"
-                alt=""
-                :width="item.poster.width"
-                :height="item.poster.height"
-                loading="lazy"
-                decoding="async"
-              >
-            </picture>
-            <button
-              class="poster-open"
-              type="button"
-              :aria-label="`${messages.lightbox.openArchive}: ${item.artist} ${item.tour}`"
-              @click="openLightbox(item, $event)"
-            >
-              <picture class="poster-foreground-layer">
-                <source :srcset="thumbnailUrl(item.poster.file)" type="image/webp">
-                <img
-                  class="poster-foreground"
-                  :src="thumbnailFallbackUrl(item.poster.file)"
-                  :data-original-src="originalImageUrl(item.poster.file)"
-                  :alt="`${item.artist} ${item.tour} ${messages.lightbox.posterAlt}`"
-                  :width="item.poster.width"
-                  :height="item.poster.height"
-                  loading="lazy"
-                  decoding="async"
-                >
-              </picture>
-              <span class="poster-hint" aria-hidden="true">
-                <span>{{ section.posterArchive }}</span><b>＋</b>
-              </span>
-            </button>
-          </div>
+          <ConcertPoster
+            :poster="item.poster"
+            :artist="item.artist"
+            :tour="item.tour"
+            :open-label="messages.lightbox.openArchive + ': ' + item.artist + ' ' + item.tour"
+            :hint="section.posterArchive"
+            @open="openLightbox(item, $event)"
+          />
 
           <div class="concert-rail-card-info">
             <time class="concert-date" :datetime="item.date">

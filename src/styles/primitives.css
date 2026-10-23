@@ -202,3 +202,7 @@
 @media (forced-colors: active) {
   .pointer-motion-preference-sentinel { height: 2px; }
 }
+
+.archive-empty { grid-column: 1 / -1; margin: 0; padding: 24px; border: 1px solid var(--line); border-radius: var(--radius-large); background: var(--surface); color: var(--muted); font-size: var(--text-sm); line-height: 1.8; }
+.archive-empty p { margin: 0; }
+.archive-empty .y-button { margin-top: 16px; }
