@@ -120,6 +120,7 @@ describe('resume-synced content contracts', () => {
       expect(forum?.detail).toMatch(/CNN\/ResNet|CNNs? and ResNet/)
       expect(forum?.detail).toMatch(/attention|注意力/i)
       expect(forum?.detail).toMatch(/multimodal|多模態|多模态/i)
+      expect(forum?.detail).toMatch(/smart agriculture|智慧農業|智慧农业/i)
       expect(forum?.detail).toMatch(/FishFreshNet.*V1.*V2/i)
     }
   })

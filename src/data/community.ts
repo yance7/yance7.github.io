@@ -35,7 +35,7 @@ export const activities = [
     featured: false,
     title: '北京市第八十中学学术报告会（第六届 & 第七届）', period: '2025.12 & 2026.06',
     org: 'Beijing No. 80 High School',
-    detail: '连续两届介绍 CNN/ResNet、注意力机制与多模态学习相关研究，并分享 FishFreshNet 从 V1 到 V2 的演进。'
+    detail: '连续两届介绍 CNN/ResNet、注意力机制与多模态学习相关研究，展示深度学习在智慧农业中的应用；另分享 FishFreshNet 从 V1 到 V2 的研究演进。'
   },
   {
     id: 'ap-calculus-assistant',
