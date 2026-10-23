@@ -526,6 +526,8 @@ test('concert edge centers and button movement preserve the document position', 
   const rail = page.locator('.concert-archive-rail')
   const next = page.locator('[data-rail-direction="next"]')
   const previous = page.locator('[data-rail-direction="previous"]')
+  // Keep Playwright's setup scroll immediate so the click only exercises rail movement.
+  await page.addStyleTag({ content: 'html { scroll-behavior: auto !important; }' })
   await next.evaluate(button => button.scrollIntoView({ block: 'center', behavior: 'instant' }))
   await expect.poll(() => centerError(rail, 0)).toBeLessThanOrEqual(2)
   await next.hover()
@@ -539,6 +541,8 @@ test('concert edge centers and button movement preserve the document position', 
       && Math.abs(before.bottom - after.bottom) < .5
       && Math.abs(beforeY - scrollY) < .5
   })).toBe(true)
+  // Let Playwright finish any click setup scrolling before measuring the real interaction.
+  await next.click({ trial: true })
   const initialY = await page.evaluate(() => scrollY)
   await next.click()
   await expect.poll(() => centerError(rail, 1)).toBeLessThanOrEqual(2)
