@@ -1,10 +1,25 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "entry": ["tests/fixtures/media/main.ts", "tests/fixtures/build-media-fixture.ts"],
-  "eslint": { "config": ["eslint.config.js", "config/eslint.config.js"] },
-  "vite": { "config": "config/vite.config.ts" },
-  "vitest": { "config": "config/vitest.config.ts" },
-  "playwright": { "config": "config/playwright.config.ts" },
+  "entry": [
+    "tests/fixtures/media/main.ts",
+    "tests/fixtures/build-media-fixture.ts",
+    "tests/fixtures/media/emptyLocales.ts"
+  ],
+  "eslint": {
+    "config": [
+      "eslint.config.js",
+      "config/eslint.config.js"
+    ]
+  },
+  "vite": {
+    "config": "config/vite.config.ts"
+  },
+  "vitest": {
+    "config": "config/vitest.config.ts"
+  },
+  "playwright": {
+    "config": "config/playwright.config.ts"
+  },
   "ignoreDependencies": [
     "@fontsource-variable/inter",
     "@fontsource-variable/noto-sans-hk",
@@ -15,6 +30,8 @@
     "public/assets/legacy-redirect.js"
   ],
   "ignoreIssues": {
-    "src/data/locales/types.ts": ["types"]
+    "src/data/locales/types.ts": [
+      "types"
+    ]
   }
 }

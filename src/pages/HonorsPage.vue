@@ -7,9 +7,10 @@ import type { HonorLevel } from '../data/types'
 import SectionHeading from '../components/SectionHeading.vue'
 import MetricStrip from '../components/MetricStrip.vue'
 import ArchiveFilter from '../components/ArchiveFilter.vue'
+import YanceButton from '../components/YanceButton.vue'
 
 const activeCategory = ref<'all' | HonorLevel>('all')
-const { locale } = useLocale()
+const { locale, messages } = useLocale()
 const honors = computed(() => getLocalizedHonors(locale.value))
 const categories = computed(() => getLocalizedHonorCategories(locale.value))
 const levelLabel = computed(() => getLocalizedHonorLevelLabels(locale.value))
@@ -85,6 +86,10 @@ function setCategory(category: 'all' | HonorLevel) {
           <span class="honor-level-tag">{{ levelLabel[h.level] }}</span>
         </article>
       </TransitionGroup>
+      <div v-if="!filteredHonors.length" class="archive-empty" role="status">
+        <p>{{ messages.empty.honors }}</p>
+        <YanceButton v-if="activeCategory !== 'all'" variant="quiet" @click="setCategory('all')">{{ messages.empty.viewAll }}</YanceButton>
+      </div>
     </section>
   </div>
 </template>

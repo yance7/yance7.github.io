@@ -6,7 +6,8 @@ import { useLocale } from './i18n'
 import { useTheme } from './composables/useTheme'
 import { useHomeScrollSnap } from './composables/useHomeScrollSnap'
 import { revealForNavigation } from './directives/reveal'
-import { decodeHashTarget, retryAsync } from './utils/navigation'
+import { decodeHashTarget } from './utils/navigation'
+import { loadPageWithDeadline } from './utils/pageLoad'
 import { getPageLoader } from './pageLoaders'
 import { getCenteredScrollLeft } from './utils/horizontalRail'
 
@@ -17,6 +18,7 @@ import SiteFooter from './components/SiteFooter.vue'
 import ImageLightbox from './components/ImageLightbox.vue'
 import ScrollProgress from './components/ScrollProgress.vue'
 import PageLoadError from './components/PageLoadError.vue'
+import PageContentSkeleton from './components/PageContentSkeleton.vue'
 import SitewideCursor from './components/SitewideCursor.vue'
 
 import NotFoundPage from './pages/NotFoundPage.vue'
@@ -35,6 +37,10 @@ type PageLoadState = 'loading' | 'ready' | 'error'
 
 const pageLoader = page ? getPageLoader(page) : undefined
 const pageLoadState = ref<PageLoadState>(pageLoader ? 'loading' : 'ready')
+const showPageSkeleton = ref(false)
+const pageLoadController = new AbortController()
+let skeletonTimer: ReturnType<typeof setTimeout> | undefined
+let disposed = false
 let hashScrolled = false
 let hashScrollCancelled = false
 let hashScrollFrame: number | undefined
@@ -223,6 +229,9 @@ onMounted(() => {
   window.addEventListener('hashchange', handleHashChange)
 })
 onBeforeUnmount(() => {
+  disposed = true
+  pageLoadController.abort()
+  clearTimeout(skeletonTimer)
   window.removeEventListener('hashchange', handleHashChange)
   if (hashScrollFrame !== undefined) window.cancelAnimationFrame(hashScrollFrame)
 })
@@ -234,17 +243,29 @@ watch(pageLoadState, async (state) => {
 
 async function loadPage() {
   if (!pageLoader) throw new Error('Page loader is unavailable')
+  skeletonTimer = setTimeout(() => {
+    if (!disposed && pageLoadState.value === 'loading') showPageSkeleton.value = true
+  }, 150)
   try {
-    return await retryAsync(pageLoader, { retries: 2, delayMs: 160 })
-  } catch (error) {
-    pageLoadState.value = 'error'
-    throw error
+    return await loadPageWithDeadline(pageLoader, { signal: pageLoadController.signal })
+  } catch {
+    if (!disposed) {
+      pageLoadState.value = 'error'
+      const keepInitialHash = !hashScrollCancelled && (!window.location.hash || window.location.hash === initialHash)
+      cancelPendingHashScroll()
+      if (keepInitialHash) restoreInitialHash()
+    }
+    return PageLoadError
+  } finally {
+    clearTimeout(skeletonTimer)
+    if (!disposed) showPageSkeleton.value = false
   }
 }
 
 async function handlePageResolved() {
-  if (pageLoadState.value !== 'loading') return
+  if (disposed || pageLoadState.value !== 'loading') return
   await nextTick()
+  if (disposed || pageLoadState.value !== 'loading') return
   scrollToHashTarget()
   pageLoadState.value = 'ready'
 }
@@ -260,11 +281,7 @@ const heroCopy = computed(() => (isError ? messages.value.error404.copy : meta.v
 const heroCredit = computed(() => (isError || !page ? null : getLocalizedPageMeta(locale.value, page).credit || null))
 
 const currentPage = pageLoader
-  ? defineAsyncComponent({
-      loader: loadPage,
-      errorComponent: PageLoadError,
-      delay: 0
-    })
+  ? defineAsyncComponent(loadPage)
   : NotFoundPage
 function handleLightbox(data: LightboxPayload) { lightbox.value = data }
 function closeLightbox() { lightbox.value = null }
@@ -304,6 +321,7 @@ function moveLightbox(step: number) {
 
       <Suspense @resolve="handlePageResolved">
         <component :is="currentPage" @open-lightbox="handleLightbox" />
+        <template #fallback><PageContentSkeleton v-if="showPageSkeleton" /></template>
       </Suspense>
     </main>
 

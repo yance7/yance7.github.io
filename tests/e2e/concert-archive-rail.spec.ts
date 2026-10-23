@@ -526,6 +526,8 @@ test('concert edge centers and button movement preserve the document position', 
   const rail = page.locator('.concert-archive-rail')
   const next = page.locator('[data-rail-direction="next"]')
   const previous = page.locator('[data-rail-direction="previous"]')
+  // Keep Playwright's setup scroll immediate so the click only exercises rail movement.
+  await page.addStyleTag({ content: 'html { scroll-behavior: auto !important; }' })
   await next.evaluate(button => button.scrollIntoView({ block: 'center', behavior: 'instant' }))
   await expect.poll(() => centerError(rail, 0)).toBeLessThanOrEqual(2)
   await next.hover()
@@ -539,6 +541,8 @@ test('concert edge centers and button movement preserve the document position', 
       && Math.abs(before.bottom - after.bottom) < .5
       && Math.abs(beforeY - scrollY) < .5
   })).toBe(true)
+  // Let Playwright finish any click setup scrolling before measuring the real interaction.
+  await next.click({ trial: true })
   const initialY = await page.evaluate(() => scrollY)
   await next.click()
   await expect.poll(() => centerError(rail, 1)).toBeLessThanOrEqual(2)
@@ -640,7 +644,11 @@ test('concert native vertical wheel over the rail scrolls the page', async ({ pa
   test.skip(isMobile, 'wheel input belongs to desktop devices')
   await page.goto('/concerts/')
   await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
-  await page.locator('.concert-archive-rail').hover()
+  const rail = page.locator('.concert-archive-rail')
+  // Keep Playwright's setup scroll immediate so the wheel assertion starts from a stable position.
+  await page.addStyleTag({ content: 'html { scroll-behavior: auto !important; }' })
+  await rail.scrollIntoViewIfNeeded()
+  await rail.hover()
   await expect.poll(() => page.evaluate(async () => {
     const before = scrollY
     await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))

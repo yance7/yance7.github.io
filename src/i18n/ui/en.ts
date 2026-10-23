@@ -13,7 +13,9 @@ export const enMessages = {
   lightbox: { gallery: 'Concert poster gallery', close: 'Close lightbox', previous: 'Previous image', next: 'Next image', position: (current, total) => ` · image ${current} of ${total}`, loading: 'Loading image', failed: 'Image failed to load', retry: 'Retry', posterAlt: 'poster', openArchive: 'Open archive' },
   footer: { homeLabel: 'Back to home', contactsLabel: 'Contact', archive: 'PERSONAL ARCHIVE / 2026', identity: 'RESEARCHER / BUILDER / MUSIC LISTENER', email: 'Email', github: 'GitHub' },
   error404: { kicker: 'SIGNAL LOST', title: 'This page wandered off', copy: 'The page you requested does not exist or has moved. Return home and choose another room.', home: 'Return home', research: 'Explore research' },
-  loadError: { title: 'This page could not load', copy: 'The page resources did not finish loading. Please try again.', retry: 'Reload page' },
+  loadError: { loading: 'Loading page content', title: 'This page could not load', copy: 'The page resources did not finish loading. Please try again.', retry: 'Reload page' },
+  poster: { loading: 'Loading poster', failed: 'Preview unavailable', retry: 'Retry image', original: 'Open original image' },
+  empty: { honors: 'There are no records in this category yet.', viewAll: 'View all', works: 'Projects are being organized. Please check back later.', concerts: 'There are no concert records yet.', selectedWork: 'Selected work is being organized. Explore the archive for more.' },
   status: { active: 'Active', published: 'Published', completed: 'Completed', deployed: 'Deployed', 'open-source': 'Open source', planned: 'Planned', archived: 'Archived' },
   page: {
     home: { kicker: 'PERSONAL ARCHIVE / BEIJING · 2026', title: 'SONG NOTES', copy: 'A record of research, shipped products, and the life fragments lit by music and live shows. Start with a real question, then follow the evidence toward something usable.' },

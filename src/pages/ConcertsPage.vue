@@ -12,7 +12,7 @@ const emit = defineEmits<{
   'open-lightbox': [payload: LightboxPayload]
 }>()
 
-const { locale } = useLocale()
+const { locale, messages } = useLocale()
 const concertState = computed(() => getLocalizedConcertState(locale.value, new Date()))
 const section = computed(() => getLocalizedConcertSection(locale.value))
 const venueCount = computed(() => concertState.value.venueCount)
@@ -54,7 +54,8 @@ function forwardLightbox(payload: LightboxPayload) {
         <p class="group-mood">{{ section.archive }}</p>
         <span class="group-count">{{ archiveConcerts.length }} {{ section.showUnit }}</span>
       </div>
-      <ConcertArchiveRail :concerts="archiveConcerts" :now="concertState.now" :section="section" @open-lightbox="forwardLightbox" />
+      <ConcertArchiveRail v-if="archiveConcerts.length" :concerts="archiveConcerts" :now="concertState.now" :section="section" @open-lightbox="forwardLightbox" />
+      <p v-else class="archive-empty" role="status">{{ messages.empty.concerts }}</p>
     </section>
   </div>
 </template>

@@ -142,10 +142,13 @@ export interface UiMessages {
     research: string
   }
   loadError: {
+    loading: string
     title: string
     copy: string
     retry: string
   }
+  poster: { loading: string; failed: string; retry: string; original: string }
+  empty: { honors: string; viewAll: string; works: string; concerts: string; selectedWork: string }
   status: Record<string, string>
   page: Record<PageKey, {
     kicker: string

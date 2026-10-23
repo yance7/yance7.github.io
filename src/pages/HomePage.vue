@@ -34,6 +34,7 @@ const selectedActivities = computed(() => community.value.activities.filter((ite
         :copy="homeCopy.selectedCopy"
       />
       <div class="home-focus-grid">
+        <p v-if="!featuredResearch.length && !featuredProjects.length" class="archive-empty" role="status">{{ messages.empty.selectedWork }}</p>
         <a
           v-for="(item, i) in featuredResearch"
           :key="item.id"
