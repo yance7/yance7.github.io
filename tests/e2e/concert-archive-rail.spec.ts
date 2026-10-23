@@ -640,7 +640,11 @@ test('concert native vertical wheel over the rail scrolls the page', async ({ pa
   test.skip(isMobile, 'wheel input belongs to desktop devices')
   await page.goto('/concerts/')
   await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
-  await page.locator('.concert-archive-rail').hover()
+  const rail = page.locator('.concert-archive-rail')
+  // Keep Playwright's setup scroll immediate so the wheel assertion starts from a stable position.
+  await page.addStyleTag({ content: 'html { scroll-behavior: auto !important; }' })
+  await rail.scrollIntoViewIfNeeded()
+  await rail.hover()
   await expect.poll(() => page.evaluate(async () => {
     const before = scrollY
     await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
