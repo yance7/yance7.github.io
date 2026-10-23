@@ -526,8 +526,19 @@ test('concert edge centers and button movement preserve the document position', 
   const rail = page.locator('.concert-archive-rail')
   const next = page.locator('[data-rail-direction="next"]')
   const previous = page.locator('[data-rail-direction="previous"]')
-  await next.scrollIntoViewIfNeeded()
+  await next.evaluate(button => button.scrollIntoView({ block: 'center', behavior: 'instant' }))
   await expect.poll(() => centerError(rail, 0)).toBeLessThanOrEqual(2)
+  await next.hover()
+  await expect.poll(() => next.evaluate(async button => {
+    const before = button.getBoundingClientRect()
+    const beforeY = scrollY
+    await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+    const after = button.getBoundingClientRect()
+    return after.top >= 0 && after.bottom <= innerHeight
+      && Math.abs(before.top - after.top) < .5
+      && Math.abs(before.bottom - after.bottom) < .5
+      && Math.abs(beforeY - scrollY) < .5
+  })).toBe(true)
   const initialY = await page.evaluate(() => scrollY)
   await next.click()
   await expect.poll(() => centerError(rail, 1)).toBeLessThanOrEqual(2)
