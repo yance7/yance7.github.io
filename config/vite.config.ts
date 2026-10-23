@@ -136,13 +136,6 @@ export default defineConfig({
   build: {
     outDir: resolve(rootDir, 'dist'),
     emptyOutDir: true,
-    modulePreload: {
-      // Older WebKit retains failed preloads across reload (WebKit #270357).
-      // Import the entry normally; keep preloading its shared dependencies.
-      resolveDependencies(filename, dependencies, { hostType }) {
-        return hostType === 'js' ? dependencies.filter(dependency => dependency !== filename) : dependencies
-      }
-    },
     manifest: true,
     rollupOptions: {
       input: htmlInputs,

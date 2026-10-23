@@ -3,7 +3,7 @@ import App from './App.vue'
 import reveal from './directives/reveal'
 import magnetic from './directives/magnetic'
 import pointerSheen from './directives/pointerSheen'
-import { preloadPage } from './pageLoaders'
+import { configurePageChunkPreload, preloadPage } from './pageLoaders'
 import { initializeLocale, resolveLocaleFromPath } from './i18n'
 import './styles.css'
 import './theme.css'
@@ -61,6 +61,7 @@ app.directive('reveal', reveal)
 app.directive('magnetic', magnetic)
 app.directive('pointer-sheen', pointerSheen)
 document.documentElement.dataset.fontsReady = 'loading'
+configurePageChunkPreload()
 preloadPage(document.body.dataset.page)
 
 let appMounted = false
