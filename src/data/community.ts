@@ -21,7 +21,7 @@ export const activities = [
     featured: false,
     title: 'Pioneer 全球问题解决研究院', period: '2024.09 — 2024.12',
     org: 'Pioneer Global · 课程：Analyzing AI',
-    detail: '教授评分 A-。完成关于创新作业如何帮助高中生在借助 AI 学习的同时抵制学术不端的报告，探讨学习设计如何支持负责任地使用 AI。'
+    detail: '教授评分 A-。完成关于创新作业如何帮助高中生在借助 AI 学习的同时抵制学术不端的报告；课程探讨科学、技术与社会。'
   },
   {
     id: 'pioneer-research-institute',
@@ -35,7 +35,7 @@ export const activities = [
     featured: false,
     title: '北京市第八十中学学术报告会（第六届 & 第七届）', period: '2025.12 & 2026.06',
     org: 'Beijing No. 80 High School',
-    detail: '连续两届介绍 CNN/ResNet、注意力机制与多模态学习相关研究。'
+    detail: '连续两届介绍 CNN/ResNet、注意力机制与多模态学习相关研究，并分享 FishFreshNet 从 V1 到 V2 的演进。'
   },
   {
     id: 'ap-calculus-assistant',

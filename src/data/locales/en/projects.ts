@@ -12,7 +12,7 @@ export const projectsCopy = {
       ...base.fresheye!,
       title: 'FreshEye',
       value: 'Make fish-eye freshness screening accessible through a reviewable web tool.',
-      description: 'A zero-install aid for fish-eye freshness screening, with a class, confidence, Grad-CAM heatmap, four-label report, A4 PDF export, and searchable local history.',
+      description: 'A zero-install aid for fish-eye freshness screening, with a class, confidence, Grad-CAM heatmap, four-tab report, A4 PDF export, and searchable local history.',
       role: 'Full-stack development · Model training · UI design',
       discipline: 'COMPUTER VISION / WEB PRODUCT',
       story: {
@@ -21,7 +21,7 @@ export const projectsCopy = {
         chapters: [
           { label: '01 / QUESTION', title: 'Make fish-eye screening accessible', detail: 'A zero-install web entry point helps users review a freshness-screening result and its explanation.' },
           { label: '02 / MODEL', title: 'FishFreshNet V2', detail: '99.29% accuracy · 4.095M parameters · five MFED runs', href: '/research/#fishfreshnet-v2' },
-          { label: '03 / DELIVERY', title: 'From result to a reviewable report', detail: 'Confidence, Grad-CAM, a four-label report, and A4 PDF export support result review.' }
+          { label: '03 / DELIVERY', title: 'From result to a reviewable report', detail: 'Confidence, Grad-CAM, a four-tab report, and A4 PDF export support result review.' }
         ],
         sequenceLabel: 'PRODUCT FLOW', sequence: ['Upload', 'Inference', 'Confidence', 'Grad-CAM', 'PDF'],
         proof: [{ type: 'deployment', label: 'LIVE PRODUCT', value: 'fresheye.yance.me', href: 'https://fresheye.yance.me', external: true }, { type: 'source', label: 'SOURCE', value: 'GitHub', href: 'https://github.com/yance7/FreshEye', external: true }]

@@ -74,14 +74,21 @@ test('the English FishFreshNet V2 title and expanded methods fit a narrow viewpo
 })
 
 test('FreshEye project story shows the current model and report flow in all locales', async ({ page }) => {
-  const routes = ['/works/', '/zh-hk/works/', '/en/works/']
-  await page.setViewportSize({ width: 390, height: 844 })
+  const routes = [
+    { research: '/research/', works: '/works/', report: /四个标签页/ },
+    { research: '/zh-hk/research/', works: '/zh-hk/works/', report: /四個分頁/ },
+    { research: '/en/research/', works: '/en/works/', report: /four-tab/i }
+  ] as const
+  await page.setViewportSize({ width: 320, height: 844 })
 
   for (const route of routes) {
-    await page.goto(route)
+    await page.goto(route.research)
+    await expect(page.locator('#fresheye')).toContainText(route.report)
+    await page.goto(route.works)
     const project = page.locator('#project-fresheye')
     await expect(project).toBeVisible()
     await expect(project.locator('.sc-chapter').nth(1)).toContainText('4.095M')
+    await expect(project.locator('.sc-chapter').nth(2)).toContainText(route.report)
     await expect(project.locator('.sc-chapter').nth(2)).toContainText(/A4|A4 PDF/)
     await expect(project.locator('.sc-proof-links')).toContainText('fresheye.yance.me')
   }

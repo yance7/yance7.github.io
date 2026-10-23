@@ -55,6 +55,7 @@ describe('resume-synced content contracts', () => {
       const feeding = localizedResearch.find(({ id }) => id === 'multimodal-feeding')
       const maize = localizedResearch.find(({ id }) => id === 'corn-growth')
       const project = getLocalizedProjects(locale).find(({ id }) => id === 'fresheye')
+      const reportCopy = `${freshEye?.text} ${freshEye?.methodology?.prototype} ${project?.description} ${project?.story.chapters[2]?.detail}`
 
       expect(freshEye?.date).toBe('2026.05 — 2026.09')
       expect(freshEye?.methodology?.method).toContain('Hugging Face Spaces')
@@ -66,7 +67,8 @@ describe('resume-synced content contracts', () => {
       expect(maize?.methodology?.method).toMatch(/0\.5% COS|0\.5% 壳寡糖|0\.5% 殼寡糖/i)
       expect(`${maize?.text} ${maize?.methodology?.question} ${maize?.methodology?.hypothesis} ${maize?.methodology?.result}`)
         .not.toMatch(/usually below 40%|通常低於 40%|通常低于 40%|causal driver|因果驅動|因果驱动/i)
-      expect(project?.story.chapters[2]?.detail).toMatch(/A4|四标签|四標籤|four-label/i)
+      expect(reportCopy).toMatch(locale === 'en' ? /four-tab/i : locale === 'zh-HK' ? /四個分頁/ : /四个标签页/)
+      expect(reportCopy).not.toMatch(/four-label|四标签报告|四標籤報告/i)
       expect(project?.story.chapters[1]?.detail).toContain('4.095M')
     }
   })
@@ -104,13 +106,21 @@ describe('resume-synced content contracts', () => {
       const volunteer = community.activities.find(({ id }) => id === 'low-carbon-volunteer')
       const pioneer = community.activities.find(({ id }) => id === 'pioneer-analyzing-ai')
       const researchInstitute = community.activities.find(({ id }) => id === 'pioneer-research-institute')
+      const forum = community.activities.find(({ id }) => id === 'academic-report-forum')
 
       expect(selfManagement?.note).toMatch(/712/)
       expect(volunteer?.period).toBe('2024.03 — 2026.09')
       expect(pioneer?.title).toMatch(/Institute|學院|學會|学院|研究院/)
       expect(pioneer?.detail).toMatch(/A-|academic dishonesty|學術不誠實|学术不诚实/)
       expect(pioneer?.detail).toMatch(/report|報告|报告/i)
+      expect(pioneer?.detail).toMatch(/innovative assignments|創新作業|创新作业/i)
+      expect(pioneer?.detail).not.toMatch(/responsible|負責任|负责任/i)
+      expect(pioneer?.detail).toMatch(/science, technology, and society|科学、技术与社会|科學、科技與社會/i)
       expect(researchInstitute?.detail).toMatch(/Applying Value-Sensitive Design|將價值敏感設計|将价值敏感设计/)
+      expect(forum?.detail).toMatch(/CNN\/ResNet|CNNs? and ResNet/)
+      expect(forum?.detail).toMatch(/attention|注意力/i)
+      expect(forum?.detail).toMatch(/multimodal|多模態|多模态/i)
+      expect(forum?.detail).toMatch(/FishFreshNet.*V1.*V2/i)
     }
   })
 

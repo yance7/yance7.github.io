@@ -14,10 +14,10 @@ export const researchCopy = {
     ...base,
     fresheye: {
       ...base.fresheye!, title: 'FreshEye：魚類新鮮度評估網頁工具',
-      text: '我把 FishFreshNet V2 轉化為毋須安裝的新鮮度輔助篩查工具：上載魚眼相片後可查看等級、信心度及 Grad-CAM 熱力圖，並匯出四標籤 A4 PDF 報告；工具亦提供本地可搜尋歷史記錄。',
+      text: '我把 FishFreshNet V2 轉化為毋須安裝的新鮮度輔助篩查工具：上載魚眼相片後可查看等級、信心度及 Grad-CAM 熱力圖，並匯出含四個分頁的 A4 PDF 報告；工具亦提供本地可搜尋歷史記錄。',
       org: '個人項目 · Hugging Face Spaces + GitHub Pages',
       metrics: [{ value: '毋須安裝', label: '瀏覽器端' }, { value: 'Grad-CAM', label: '可解釋性' }, { value: 'PDF', label: '報告匯出' }],
-      methodology: { question: '如何把魚眼新鮮度評估整理成易於存取及覆核的輔助篩查流程？', hypothesis: '結合 FishFreshNet V2 分類、Grad-CAM 解釋及報告匯出，可協助使用者覆核篩查結果。', method: 'FishFreshNet V2 + Dockerized FastAPI 後端（Hugging Face Spaces）+ GitHub Pages 響應式前端', prototype: '毋須安裝的網頁工具：上載魚眼相片，查看等級、信心度及 Grad-CAM 熱力圖，並匯出四標籤 A4 PDF 報告。', result: '提供可搜尋的本地歷史記錄，作新鮮度輔助篩查之用，不取代實驗室檢驗。', next: '繼續擴展實際場景驗證。' }
+      methodology: { question: '如何把魚眼新鮮度評估整理成易於存取及覆核的輔助篩查流程？', hypothesis: '結合 FishFreshNet V2 分類、Grad-CAM 解釋及報告匯出，可協助使用者覆核篩查結果。', method: 'FishFreshNet V2 + Dockerized FastAPI 後端（Hugging Face Spaces）+ GitHub Pages 響應式前端', prototype: '毋須安裝的網頁工具：上載魚眼相片，查看等級、信心度及 Grad-CAM 熱力圖，並匯出含四個分頁的 A4 PDF 報告。', result: '提供可搜尋的本地歷史記錄，作新鮮度輔助篩查之用，不取代實驗室檢驗。', next: '繼續擴展實際場景驗證。' }
     },
     'fishfreshnet-v2': {
       ...base['fishfreshnet-v2']!, title: 'FishFreshNet V2：以環形區域注意力進行魚眼新鮮度分類的輕量可解釋框架',

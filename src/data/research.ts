@@ -9,7 +9,7 @@ export const research = [
     status: 'completed',
     title: 'FreshEye：AI 水产品新鲜度评估网页工具',
     org: '个人项目 · Hugging Face Spaces + GitHub Pages',
-    text: '将 FishFreshNet V2 转化为零安装的新鲜度辅助筛查工具：上传鱼眼照片后可查看等级、置信度与 Grad-CAM 热力图，并生成四标签报告与 A4 PDF；工具提供本地可搜索历史记录。',
+    text: '将 FishFreshNet V2 转化为零安装的新鲜度辅助筛查工具：上传鱼眼照片后可查看等级、置信度与 Grad-CAM 热力图，并生成含四个标签页的报告与 A4 PDF；工具提供本地可搜索历史记录。',
     link: 'https://github.com/yance7/FreshEye',
     proof: [
       { type: 'source', label: 'SOURCE', value: 'GitHub', href: 'https://github.com/yance7/FreshEye', external: true },
@@ -24,7 +24,7 @@ export const research = [
       question: '如何将鱼眼新鲜度评估整理成可访问、可复核的辅助筛查流程？',
       hypothesis: '将 FishFreshNet V2 的分类结果与 Grad-CAM 解释和报告导出组合，可帮助用户复核筛查结果。',
       method: 'FishFreshNet V2 + Dockerized FastAPI 后端（Hugging Face Spaces）+ GitHub Pages 响应式前端',
-      prototype: '零安装网页工具：上传鱼眼照片，查看新鲜度等级、置信度与 Grad-CAM 热力图，并导出四标签 A4 PDF 报告。',
+      prototype: '零安装网页工具：上传鱼眼照片，查看新鲜度等级、置信度与 Grad-CAM 热力图，并导出含四个标签页的 A4 PDF 报告。',
       result: '提供可搜索的本地历史记录；该工具用于新鲜度辅助筛查，不替代实验室检验。',
       next: '继续扩展实际场景验证。'
     }

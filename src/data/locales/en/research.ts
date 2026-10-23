@@ -15,14 +15,14 @@ export const researchCopy = {
     fresheye: {
       ...base.fresheye!,
       title: 'FreshEye: A Browser Tool for Fish Freshness Assessment',
-      text: 'I turned FishFreshNet V2 into a zero-install freshness-screening tool: upload a fish-eye image to view its class, confidence, and Grad-CAM heatmap, then export a four-label A4 PDF report. The tool also provides searchable local history.',
+      text: 'I turned FishFreshNet V2 into a zero-install freshness-screening tool: upload a fish-eye image to view its class, confidence, and Grad-CAM heatmap, then export a four-tab A4 PDF report. The tool also provides searchable local history.',
       org: 'Personal project · Hugging Face Spaces + GitHub Pages',
       metrics: [{ value: 'Zero install', label: 'Browser' }, { value: 'Grad-CAM', label: 'Interpretability' }, { value: 'PDF', label: 'Report export' }],
       methodology: {
         question: 'How can a fish-eye image support an accessible, reviewable freshness-screening workflow?',
         hypothesis: 'Combining FishFreshNet V2 classification with Grad-CAM and exportable reports can help users review screening results.',
         method: 'FishFreshNet V2 + Dockerized FastAPI backend on Hugging Face Spaces + responsive GitHub Pages frontend',
-        prototype: 'A zero-install web tool: upload a fish-eye image, review its class, confidence, and Grad-CAM heatmap, then export a four-label A4 PDF report.',
+        prototype: 'A zero-install web tool: upload a fish-eye image, review its class, confidence, and Grad-CAM heatmap, then export a four-tab A4 PDF report.',
         result: 'Provides searchable local history as an aid to freshness screening, not a replacement for laboratory testing.',
         next: 'Expand validation in real-world settings.'
       }

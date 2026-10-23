@@ -5,7 +5,7 @@ export const projects = [
     id: 'fresheye', status: 'deployed', action: 'live', updatedAt: '2026-10-22',
     title: '鲜眸', en: 'FreshEye', domain: 'fresheye.yance.me', tone: 'aqua',
     discipline: 'COMPUTER VISION / WEB PRODUCT',
-    description: '零安装鱼眼新鲜度辅助筛查工具，提供等级、置信度、Grad-CAM 热力图、四标签报告与 A4 PDF 导出，并支持本地可搜索历史记录。',
+    description: '零安装鱼眼新鲜度辅助筛查工具，提供等级、置信度、Grad-CAM 热力图、含四个标签页的报告与 A4 PDF 导出，并支持本地可搜索历史记录。',
     value: '把鱼眼新鲜度辅助筛查整理成可访问、可复核的网络工具。',
     role: '全栈开发 · 模型训练 · UI 设计',
     stack: ['PyTorch', 'ONNX', 'Vue 3', 'Hugging Face Spaces'],
@@ -29,7 +29,7 @@ export const projects = [
         {
           label: '03 / DELIVERY',
           title: '从推理结果到可解释报告',
-          detail: '置信度、Grad-CAM 热力图、四标签报告与 A4 PDF 导出，组成可复核的筛查流程。'
+          detail: '置信度、Grad-CAM 热力图、含四个标签页的报告与 A4 PDF 导出，组成可复核的筛查流程。'
         }
       ],
       sequenceLabel: 'PRODUCT FLOW',
