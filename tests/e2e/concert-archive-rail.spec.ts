@@ -541,6 +541,39 @@ test('concert edge centers and button movement preserve the document position', 
   await expect.poll(() => centerError(rail, 14)).toBeLessThanOrEqual(2)
 })
 
+test('concert external rail movement cancels an unfinished button destination', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.addInitScript(() => {
+    const state = window as typeof window & { __interruptRailReturn?: boolean }
+    const nativeScrollTo = Element.prototype.scrollTo
+    Element.prototype.scrollTo = function (options?: ScrollToOptions | number, y?: number) {
+      if (state.__interruptRailReturn && this.matches('.concert-archive-rail') && typeof options === 'object' && (options.left ?? Infinity) <= 2) {
+        state.__interruptRailReturn = false
+        // Reproduce the observed WebKit return that is still 2px short when
+        // another positioning operation moves the rail before its next RAF.
+        Reflect.apply(nativeScrollTo, this, [{ left: (options.left ?? 0) + 2, behavior: 'instant' }])
+        queueMicrotask(() => Reflect.apply(nativeScrollTo, this, [{ left: this.scrollWidth, behavior: 'instant' }]))
+        return
+      }
+      Reflect.apply(nativeScrollTo, this, typeof options === 'number' ? [options, y ?? 0] : [options])
+    }
+  })
+  await gotoConcerts(page)
+  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
+  const rail = page.locator('.concert-archive-rail')
+  const next = page.locator('[data-rail-direction="next"]')
+  const previous = page.locator('[data-rail-direction="previous"]')
+  await next.scrollIntoViewIfNeeded()
+  await next.click()
+  await expect.poll(() => centerError(rail, 1)).toBeLessThanOrEqual(2)
+  await page.evaluate(() => { (window as typeof window & { __interruptRailReturn?: boolean }).__interruptRailReturn = true })
+  await previous.click()
+  await expect.poll(() => centerError(rail, 15)).toBeLessThanOrEqual(2)
+  await expect(next).toBeDisabled()
+  await previous.click()
+  await expect.poll(() => centerError(rail, 14)).toBeLessThanOrEqual(2)
+})
+
 test('concert rapid button clicks advance the pending destination', async ({ page }) => {
   await page.goto('/concerts/')
   const next = page.locator('[data-rail-direction="next"]')

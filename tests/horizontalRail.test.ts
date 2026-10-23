@@ -1,7 +1,17 @@
 import { describe, expect, it } from 'vitest'
-import { findNearestCenteredIndex, getCenteredScrollLeft, getRailInset } from '../src/utils/horizontalRail'
+import { findNearestCenteredIndex, getCenteredScrollLeft, getRailInset, isRailDestinationPending } from '../src/utils/horizontalRail'
 
 describe('horizontal rail geometry', () => {
+  it('retires reached destinations and movement that interrupts the commanded path', () => {
+    expect(isRailDestinationPending(2, 364, 0)).toBe(true)
+    expect(isRailDestinationPending(5460, 364, 0)).toBe(false)
+    expect(isRailDestinationPending(182, 0, 364)).toBe(true)
+    expect(isRailDestinationPending(182, 364, 0)).toBe(true)
+    expect(isRailDestinationPending(-10, 0, 364)).toBe(false)
+    expect(isRailDestinationPending(400, 364, 0)).toBe(false)
+    expect(isRailDestinationPending(364.5, 0, 364)).toBe(false)
+  })
+
   it('centers first, middle and last cards within the reachable interval', () => {
     expect(getCenteredScrollLeft(500, 1000, 3000)).toBe(0)
     expect(getCenteredScrollLeft(1510.5, 1000, 3000)).toBe(1010.5)

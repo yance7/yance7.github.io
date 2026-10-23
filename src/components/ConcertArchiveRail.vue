@@ -5,7 +5,7 @@ import type { ConcertLocaleCopy } from '../data/locales/types'
 import { isConcertUpcoming } from '../data/concerts'
 import { useLocale } from '../i18n'
 import { concertPosterPresentation, originalImageUrl, thumbnailFallbackUrl, thumbnailUrl } from '../utils/concertMedia'
-import { findNearestCenteredIndex, getCenteredScrollLeft, getRailInset } from '../utils/horizontalRail'
+import { findNearestCenteredIndex, getCenteredScrollLeft, getRailInset, isRailDestinationPending } from '../utils/horizontalRail'
 
 const props = defineProps<{
   concerts: Concert[]
@@ -20,6 +20,7 @@ const { messages } = useLocale()
 let resizeObserver: ResizeObserver | undefined
 let reducedMotionQuery: MediaQueryList | undefined
 let pendingIndex: number | undefined
+let pendingScrollStart = 0
 let visibleIndex = 0
 let layoutFrame: number | undefined
 let controlFrame: number | undefined
@@ -66,7 +67,8 @@ function updateRailControls() {
     return
   }
   const centers = centersFor(cards)
-  if (pendingIndex !== undefined && Math.abs(rail.scrollLeft - getCenteredScrollLeft(centers[pendingIndex]!, rail.clientWidth, maxScrollLeft)) <= 1) pendingIndex = undefined
+  // Keep rapid clicks queued only while movement follows the requested path.
+  if (pendingIndex !== undefined && !isRailDestinationPending(rail.scrollLeft, pendingScrollStart, getCenteredScrollLeft(centers[pendingIndex]!, rail.clientWidth, maxScrollLeft))) pendingIndex = undefined
   visibleIndex = findNearestCenteredIndex(centers, rail.scrollLeft + rail.clientWidth / 2)
   const index = pendingIndex ?? visibleIndex
   railControls.previous = index > 0
@@ -92,6 +94,7 @@ function onRailTarget(event: Event) {
   if (!rail) return
   const index = cardsFor(rail).indexOf((event as CustomEvent<HTMLElement>).detail)
   if (index < 0) return
+  pendingScrollStart = rail.scrollLeft
   pendingIndex = index
   visibleIndex = index
 }
@@ -102,6 +105,7 @@ function scrollRail(direction: -1 | 1) {
   const centers = centersFor(cardsFor(rail))
   if (!centers.length || rail.scrollWidth <= rail.clientWidth + 1) return
   const current = pendingIndex ?? findNearestCenteredIndex(centers, rail.scrollLeft + rail.clientWidth / 2)
+  pendingScrollStart = rail.scrollLeft
   pendingIndex = Math.max(0, Math.min(centers.length - 1, current + direction))
   rail.scrollTo({
     left: getCenteredScrollLeft(centers[pendingIndex]!, rail.clientWidth, rail.scrollWidth - rail.clientWidth),
