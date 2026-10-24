@@ -1,6 +1,15 @@
 import { expect, test, type Page } from '@playwright/test'
 import { resolve, sep } from 'node:path'
 
+type PosterRetryDiagnostics = {
+  armed: boolean
+  events: Array<Record<string, unknown>>
+  mutations: Array<Record<string, unknown>>
+  pictureGeneration: number
+}
+
+type PosterRetryDiagnosticWindow = Window & { __posterRetryDiagnostics?: PosterRetryDiagnostics }
+
 async function gotoMediaFixture(page: Page, query: string) {
   const root = process.env.MEDIA_FIXTURE_ROOT ?? resolve(process.cwd(), 'test-results/media-fixture')
   await page.route('**/media-fixture/**', async route => {
@@ -171,11 +180,81 @@ test('poster WebP failure falls back to a decoded JPEG exactly once', async ({ p
   await expect(poster).toHaveAttribute('data-poster-state', 'ready')
 })
 
-test('poster double failure preserves dimensions and retries the same URLs', async ({ page }) => {
+test('poster double failure preserves dimensions and retries the same URLs', async ({ page }, testInfo) => {
+  await page.addInitScript(() => {
+    const trace: PosterRetryDiagnostics = { armed: false, events: [], mutations: [], pictureGeneration: 0 }
+    const diagnosticWindow = window as PosterRetryDiagnosticWindow
+    diagnosticWindow.__posterRetryDiagnostics = trace
+    let retryButton: HTMLElement | null = null
+
+    const describe = (target: EventTarget | null) => {
+      if (target === document) return '#document'
+      if (target === window) return '#window'
+      if (!(target instanceof Element)) return target?.constructor?.name ?? 'unknown'
+      return `${target.tagName.toLowerCase()}${[...target.classList].map(name => `.${name}`).join('')}`
+    }
+
+    const record = (phase: string, event: Event) => {
+      if (!trace.armed) return
+      retryButton ??= document.querySelector<HTMLElement>('.poster-retry')
+      if (!retryButton) return
+      const pointer = event as PointerEvent
+      const mouse = event as MouseEvent
+      const hasPoint = Number.isFinite(mouse.clientX) && Number.isFinite(mouse.clientY)
+      const poster = retryButton.closest<HTMLElement>('.concert-poster')
+      const rail = document.querySelector<HTMLElement>('#concert-archive-rail')
+      const pointTarget = hasPoint ? document.elementFromPoint(mouse.clientX, mouse.clientY) : null
+      const rect = (element: Element | null) => {
+        if (!element) return null
+        const bounds = element.getBoundingClientRect()
+        return { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height }
+      }
+      const revealAncestors = [...document.querySelectorAll<HTMLElement>('.reveal')]
+        .filter(element => Boolean(poster && element.contains(poster)))
+        .map(element => {
+          const style = getComputedStyle(element)
+          return {
+            immediate: element.dataset.revealImmediate ?? null,
+            transitionDelay: style.transitionDelay,
+            opacity: style.opacity,
+            transform: style.transform,
+            revealed: element.classList.contains('revealed')
+          }
+        })
+
+      trace.events.push({
+        at: performance.now(),
+        type: event.type,
+        phase,
+        target: describe(event.target),
+        composedPath: event.composedPath().map(describe),
+        activeElement: describe(document.activeElement),
+        defaultPrevented: event.defaultPrevented,
+        pointerId: 'pointerId' in event ? pointer.pointerId : null,
+        pointerType: 'pointerType' in event ? pointer.pointerType : null,
+        button: 'button' in event ? mouse.button : null,
+        key: 'key' in event ? (event as KeyboardEvent).key : null,
+        clientX: hasPoint ? mouse.clientX : null,
+        clientY: hasPoint ? mouse.clientY : null,
+        scrollY: window.scrollY,
+        railScrollLeft: rail?.scrollLeft ?? null,
+        retryRect: rect(retryButton),
+        posterRect: rect(poster),
+        pointTarget: hasPoint ? describe(pointTarget) : null,
+        pointTargetIsRetry: pointTarget === retryButton,
+        revealAncestors
+      })
+    }
+
+    for (const type of ['pointerdown', 'mousedown', 'focusin', 'pointerup', 'mouseup', 'click']) {
+      document.addEventListener(type, event => record('capture', event), true)
+      document.addEventListener(type, event => record('bubble', event))
+    }
+  })
   const firstResponse = deferred()
   let failing = true
   const urls: string[] = []
-  await page.route('**/assets/concerts/thumbs/*', async route => {
+  await page.route('**/assets/concerts/thumbs/concert-20261006-fforever.*', async route => {
     urls.push(route.request().url())
     if (failing) {
       await firstResponse.promise
@@ -183,7 +262,9 @@ test('poster double failure preserves dimensions and retries the same URLs', asy
     } else await route.continue()
   })
   await page.goto('/en/concerts/')
-  const poster = page.locator('.concert-poster').first()
+  const poster = page.locator('.concert-poster').filter({
+    has: page.locator('.poster-foreground[data-original-src$="concert-20261006-fforever.jpg"]')
+  }).first()
   await poster.scrollIntoViewIfNeeded()
   const size = () => poster.evaluate(element => ({ width: element.clientWidth, height: element.clientHeight }))
   const initial = await size()
@@ -194,9 +275,78 @@ test('poster double failure preserves dimensions and retries the same URLs', asy
   expect(Math.abs(initial.width - failedSize.width)).toBeLessThanOrEqual(1)
   expect(Math.abs(initial.height - failedSize.height)).toBeLessThanOrEqual(1)
   await expect(poster.getByRole('link', { name: 'Open original image', exact: true })).toHaveAttribute('href', /\/assets\/concerts\/[^/]+\.jpg$/)
+  const failedImage = poster.locator('.poster-foreground')
+  await expect.poll(() => failedImage.evaluate(element => (element as HTMLImageElement).complete)).toBe(true)
+  await expect.poll(() => failedImage.evaluate(element => (element as HTMLImageElement).naturalWidth)).toBe(0)
+
+  await poster.evaluate(element => {
+    const trace = (window as PosterRetryDiagnosticWindow).__posterRetryDiagnostics
+    if (!trace) throw new Error('Poster retry diagnostics were not installed')
+    trace.armed = true
+    trace.pictureGeneration = 0
+    let picture = element.querySelector('.poster-foreground-layer')
+    const revealAncestors = [...document.querySelectorAll<HTMLElement>('.reveal')]
+      .filter(ancestor => ancestor.contains(element))
+    const observer = new MutationObserver(records => {
+      const nextPicture = element.querySelector('.poster-foreground-layer')
+      const pictureReplaced = nextPicture !== picture
+      if (pictureReplaced) {
+        trace.pictureGeneration += 1
+        picture = nextPicture
+      }
+      trace.mutations.push({
+        at: performance.now(),
+        posterState: element.dataset.posterState,
+        pictureReplaced,
+        pictureGeneration: trace.pictureGeneration,
+        changedAttributes: records
+          .filter(record => record.type === 'attributes')
+          .map(record => ({ target: (record.target as Element).className, attribute: record.attributeName })),
+        revealAncestors: revealAncestors.map(ancestor => ({
+          immediate: ancestor.dataset.revealImmediate ?? null,
+          transitionDelay: getComputedStyle(ancestor).transitionDelay,
+          revealed: ancestor.classList.contains('revealed')
+        }))
+      })
+    })
+    observer.observe(element, {
+      attributes: true,
+      childList: true,
+      subtree: true,
+      attributeFilter: ['class', 'data-poster-state', 'data-reveal-immediate', 'style']
+    })
+    for (const ancestor of revealAncestors) {
+      observer.observe(ancestor, {
+        attributes: true,
+        attributeFilter: ['class', 'data-reveal-immediate', 'style']
+      })
+    }
+    trace.mutations.push({ at: performance.now(), marker: 'watching', posterState: element.dataset.posterState })
+  })
+  const initialPictureGeneration = await page.evaluate(() => (
+    (window as PosterRetryDiagnosticWindow).__posterRetryDiagnostics?.pictureGeneration ?? -1
+  ))
+  const failedRequestCount = urls.length
   failing = false
-  await retry.click()
-  await expect(poster).toHaveAttribute('data-poster-state', 'ready')
+  try {
+    await retry.click()
+    await expect.poll(() => page.evaluate(() => (
+      (window as PosterRetryDiagnosticWindow).__posterRetryDiagnostics?.pictureGeneration ?? -1
+    ))).toBeGreaterThan(initialPictureGeneration)
+    await expect.poll(() => urls.length).toBeGreaterThan(failedRequestCount)
+    await expect(poster).toHaveAttribute('data-poster-state', 'ready')
+  } catch (error) {
+    const diagnostics = await page.evaluate(() => JSON.stringify(
+      (window as PosterRetryDiagnosticWindow).__posterRetryDiagnostics ?? {},
+      null,
+      2
+    ))
+    await testInfo.attach('poster-retry-activation-diagnostics.json', {
+      body: diagnostics,
+      contentType: 'application/json'
+    })
+    throw error
+  }
   const readySize = await size()
   expect(Math.abs(initial.width - readySize.width)).toBeLessThanOrEqual(1)
   expect(Math.abs(initial.height - readySize.height)).toBeLessThanOrEqual(1)
