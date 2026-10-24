@@ -181,7 +181,8 @@ test('poster WebP failure falls back to a decoded JPEG exactly once', async ({ p
 })
 
 test('poster double failure preserves dimensions and retries the same URLs', async ({ page }, testInfo) => {
-  await page.addInitScript(() => {
+  const suppressGlobalRevealFocus = process.env.POSTER_RETRY_SUPPRESS_GLOBAL_REVEAL_FOCUS === '1'
+  await page.addInitScript((suppressGlobalRevealFocus: boolean) => {
     const trace: PosterRetryDiagnostics = { armed: false, events: [], mutations: [], pictureGeneration: 0 }
     const diagnosticWindow = window as PosterRetryDiagnosticWindow
     diagnosticWindow.__posterRetryDiagnostics = trace
@@ -248,9 +249,17 @@ test('poster double failure preserves dimensions and retries the same URLs', asy
 
     for (const type of ['pointerdown', 'mousedown', 'focusin', 'pointerup', 'mouseup', 'click']) {
       document.addEventListener(type, event => record('capture', event), true)
-      document.addEventListener(type, event => record('bubble', event))
+      document.addEventListener(type, event => {
+        record('bubble', event)
+        if (
+          type === 'focusin'
+          && suppressGlobalRevealFocus
+          && event.target instanceof Element
+          && event.target.closest('.poster-retry')
+        ) event.stopImmediatePropagation()
+      })
     }
-  })
+  }, suppressGlobalRevealFocus)
   const firstResponse = deferred()
   let failing = true
   const urls: string[] = []
@@ -268,7 +277,7 @@ test('poster double failure preserves dimensions and retries the same URLs', asy
   const attachDiagnostics = async (writeToOutput = false) => {
     const browser = await page.evaluate(() => (window as PosterRetryDiagnosticWindow).__posterRetryDiagnostics ?? null)
     const body = JSON.stringify({ browser, requestedUrls: urls, networkEvents }, null, 2)
-    if (writeToOutput) console.info(`POSTER_RETRY_ACTIVATION_DIAGNOSTICS_BEGIN\n${body}\nPOSTER_RETRY_ACTIVATION_DIAGNOSTICS_END`)
+    if (writeToOutput || process.env.POSTER_RETRY_DIAGNOSTICS_VERBOSE === '1') console.info(`POSTER_RETRY_ACTIVATION_DIAGNOSTICS_BEGIN\n${body}\nPOSTER_RETRY_ACTIVATION_DIAGNOSTICS_END`)
     await testInfo.attach('poster-retry-activation-diagnostics.json', {
       body,
       contentType: 'application/json'
