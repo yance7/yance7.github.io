@@ -19,6 +19,105 @@ function deferred() {
   return { promise, release }
 }
 
+async function startPosterRetryEventCapture(page: Page) {
+  await page.evaluate(() => {
+    type RetryDebug = { events: Array<Record<string, unknown>>, buttonRect: Record<string, number> }
+    const debugWindow = window as typeof window & { __posterRetryDebug?: RetryDebug }
+    const retry = document.querySelector<HTMLButtonElement>('.concert-poster .poster-retry')
+    const poster = retry?.closest<HTMLElement>('.concert-poster')
+    const card = retry?.closest<HTMLElement>('.concert-rail-card')
+    if (!retry || !poster) throw new Error('The poster retry button was not present for event capture')
+
+    const rect = retry.getBoundingClientRect()
+    const debug: RetryDebug = {
+      events: [],
+      buttonRect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom }
+    }
+    debugWindow.__posterRetryDebug = debug
+
+    const describe = (element: Element | null) => element
+      ? `${element.tagName.toLowerCase()}${element.id ? '#' + element.id : ''}${element.getAttribute('class') ? '.' + element.getAttribute('class')!.trim().replace(/\s+/gu, '.') : ''}`
+      : null
+    const record = (event: Event) => {
+      const pointer = event as PointerEvent
+      const hasPoint = typeof pointer.clientX === 'number' && typeof pointer.clientY === 'number'
+      const x = hasPoint ? pointer.clientX : null
+      const y = hasPoint ? pointer.clientY : null
+      const target = event.target instanceof Element ? event.target : null
+      const path = event.composedPath().filter((node): node is Element => node instanceof Element)
+      const isInsidePoster = path.includes(poster)
+      const isNearRetry = x !== null && y !== null
+        && x >= rect.left - 80 && x <= rect.right + 80
+        && y >= rect.top - 80 && y <= rect.bottom + 80
+      if (event.type !== 'scroll' && !isInsidePoster && !isNearRetry) return
+      if (event.type === 'pointermove' && debug.events.filter(entry => entry.type === 'pointermove').length >= 8) return
+
+      const hit = x !== null && y !== null ? document.elementFromPoint(x, y) : null
+      const buttonRect = retry.getBoundingClientRect()
+      const cardStyle = card ? getComputedStyle(card) : null
+      debug.events.push({
+        type: event.type,
+        trusted: event.isTrusted,
+        target: describe(target),
+        path: path.slice(0, 6).map(describe),
+        hitAtPoint: describe(hit),
+        point: x !== null && y !== null ? { x, y } : null,
+        pointerType: 'pointerType' in event ? pointer.pointerType : null,
+        scrollY: window.scrollY,
+        activeElement: describe(document.activeElement),
+        retryConnected: retry.isConnected,
+        retryRect: { left: buttonRect.left, top: buttonRect.top, right: buttonRect.right, bottom: buttonRect.bottom },
+        posterState: poster.dataset.posterState,
+        posterTransform: getComputedStyle(poster).transform,
+        posterTranslate: getComputedStyle(poster).translate,
+        cardRect: card ? (() => {
+          const cardRect = card.getBoundingClientRect()
+          return { left: cardRect.left, top: cardRect.top, right: cardRect.right, bottom: cardRect.bottom }
+        })() : null,
+        cardTransform: cardStyle?.transform ?? null,
+        cardTranslate: cardStyle?.translate ?? null
+      })
+    }
+
+    for (const type of ['pointerover', 'pointermove', 'pointerdown', 'mousedown', 'focusin', 'pointerup', 'mouseup', 'click', 'pointercancel']) {
+      document.addEventListener(type, record, true)
+    }
+    window.addEventListener('scroll', record, true)
+  })
+}
+
+async function attachPosterRetryEventCapture(page: Page, scenario: Awaited<ReturnType<typeof preparePosterRetry>>) {
+  const pageState = await page.evaluate(() => {
+    const debugWindow = window as typeof window & { __posterRetryDebug?: { events: Array<Record<string, unknown>>, buttonRect: Record<string, number> } }
+    const poster = document.querySelector<HTMLElement>('.concert-poster')
+    const retry = poster?.querySelector<HTMLButtonElement>('.poster-retry')
+    const image = poster?.querySelector<HTMLImageElement>('.poster-foreground')
+    const rect = retry?.getBoundingClientRect()
+    return {
+      events: debugWindow.__posterRetryDebug?.events ?? [],
+      initialButtonRect: debugWindow.__posterRetryDebug?.buttonRect ?? null,
+      final: {
+        scrollY: window.scrollY,
+        activeElement: document.activeElement instanceof Element ? document.activeElement.tagName.toLowerCase() + '.' + document.activeElement.getAttribute('class') : null,
+        posterState: poster?.dataset.posterState ?? null,
+        retryConnected: retry?.isConnected ?? false,
+        retryRect: rect ? { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom } : null,
+        imageSource: image?.currentSrc ?? null,
+        imageComplete: image?.complete ?? null,
+        imageNaturalWidth: image?.naturalWidth ?? null
+      }
+    }
+  })
+  await test.info().attach('poster-retry-native-events.json', {
+    body: Buffer.from(JSON.stringify({
+      ...pageState,
+      initialUrls: scenario.initialUrls,
+      retryUrls: scenario.retryUrls
+    }, null, 2), 'utf8'),
+    contentType: 'application/json'
+  })
+}
+
 const posterRetryTarget = '**/assets/concerts/thumbs/concert-20261006-fforever.*'
 
 async function preparePosterRetry(page: Page) {
@@ -71,8 +170,10 @@ async function preparePosterRetry(page: Page) {
 
 async function activatePosterRetry(
   scenario: Awaited<ReturnType<typeof preparePosterRetry>>,
+  page: Page,
   activate: () => Promise<void>
 ) {
+  await startPosterRetryEventCapture(page)
   scenario.allowRetry()
   try {
     await activate()
@@ -87,6 +188,9 @@ async function activatePosterRetry(
     await expect(scenario.poster).toHaveAttribute('data-poster-state', 'loading')
     expect(scenario.retryUrls.every(url => scenario.initialUrls.includes(url))).toBe(true)
     expect([...scenario.initialUrls, ...scenario.retryUrls].every(url => new URL(url).search === '')).toBe(true)
+  } catch (error) {
+    await attachPosterRetryEventCapture(page, scenario)
+    throw error
   } finally {
     scenario.releaseRetry()
   }
@@ -251,25 +355,25 @@ test('poster WebP failure falls back to a decoded JPEG exactly once', async ({ p
 
 test('poster double failure preserves dimensions and retries the same URLs', async ({ page }) => {
   const scenario = await preparePosterRetry(page)
-  await activatePosterRetry(scenario, () => scenario.retry.click())
+  await activatePosterRetry(scenario, page, () => scenario.retry.click())
 })
 
 test('poster retry supports keyboard Enter activation', async ({ page }) => {
   const scenario = await preparePosterRetry(page)
   await scenario.retry.focus()
-  await activatePosterRetry(scenario, () => page.keyboard.press('Enter'))
+  await activatePosterRetry(scenario, page, () => page.keyboard.press('Enter'))
 })
 
 test('poster retry supports keyboard Space activation', async ({ page }) => {
   const scenario = await preparePosterRetry(page)
   await scenario.retry.focus()
-  await activatePosterRetry(scenario, () => page.keyboard.press('Space'))
+  await activatePosterRetry(scenario, page, () => page.keyboard.press('Space'))
 })
 
 test('poster retry supports touch activation', async ({ page }, testInfo) => {
   test.skip(!testInfo.project.use.hasTouch, 'Touch activation is covered by mobile browser projects')
   const scenario = await preparePosterRetry(page)
-  await activatePosterRetry(scenario, () => scenario.retry.tap())
+  await activatePosterRetry(scenario, page, () => scenario.retry.tap())
 })
 
 test('poster deadline ignores a real late image load until the user retries', async ({ page }) => {
