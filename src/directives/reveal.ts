@@ -70,7 +70,13 @@ function revealElement(element: HTMLElement, immediate = false) {
 
 export function revealForNavigation(target: HTMLElement) {
   for (const element of mountedElements) {
-    if (element.contains(target) || target.contains(element)) revealElement(element, true)
+    if (!element.contains(target) && !target.contains(element)) continue
+    if (
+      revealedElements.has(element)
+      && element.classList.contains('revealed')
+      && getComputedStyle(element).opacity === '1'
+    ) continue
+    revealElement(element, true)
   }
 }
 

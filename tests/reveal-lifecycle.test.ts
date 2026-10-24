@@ -3,13 +3,18 @@ import reveal, { revealForNavigation } from '../src/directives/reveal'
 
 class RevealElement {
   dataset: Record<string, string> = {}
+  computedOpacity = '0'
+  boundsReads = 0
   tokens = new Set<string>()
   classList = {
     add: (...tokens: string[]) => tokens.forEach(token => this.tokens.add(token)),
     contains: (token: string) => this.tokens.has(token)
   }
   style = { transitionDelay: '', removeProperty: () => { this.style.transitionDelay = '' } }
-  getBoundingClientRect() { return { top: 2000, bottom: 2100 } }
+  getBoundingClientRect() {
+    this.boundsReads += 1
+    return { top: 2000, bottom: 2100 }
+  }
   contains(target: unknown) { return target === this }
 }
 
@@ -51,6 +56,7 @@ describe('reveal observer lifecycle', () => {
     }
     vi.stubGlobal('IntersectionObserver', Observer)
     vi.stubGlobal('HTMLElement', RevealElement)
+    vi.stubGlobal('getComputedStyle', (element: RevealElement) => ({ opacity: element.computedOpacity }))
     vi.stubGlobal('window', {
       IntersectionObserver: Observer,
       innerHeight: 800,
@@ -166,5 +172,19 @@ describe('reveal observer lifecycle', () => {
     expect(element.dataset.revealImmediate).toBe('true')
     expect(element.style.transitionDelay).toBe('0ms')
     expect(listeners.has('focusin')).toBe(true)
+  })
+
+  it('does not reapply immediate reveal state or flush geometry after the reveal has settled', () => {
+    const element = mount('default', 240)
+    observers[0]!.intersect(element as unknown as HTMLElement)
+    element.computedOpacity = '1'
+    const boundsReadsBeforeFocus = element.boundsReads
+    const transitionDelayBeforeFocus = element.style.transitionDelay
+
+    revealForNavigation(element as unknown as HTMLElement)
+
+    expect(element.dataset.revealImmediate).toBeUndefined()
+    expect(element.style.transitionDelay).toBe(transitionDelayBeforeFocus)
+    expect(element.boundsReads).toBe(boundsReadsBeforeFocus)
   })
 })
