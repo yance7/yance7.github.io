@@ -139,9 +139,9 @@ test('research deployment link lands on the FreshEye case study', async ({ page 
 
 test('research project dates and statuses render the current records', async ({ page }) => {
   await page.goto('/research/')
-  await expect(page.locator('#fresheye .tl-date')).toHaveText('2026.06 — 2026.08')
+  await expect(page.locator('#fresheye .tl-date')).toHaveText('2026.05 — 2026.09')
   await expect(page.locator('#fresheye .status-badge')).toContainText('已完成')
-  await expect(page.locator('#fishfreshnet-v2 .tl-date')).toHaveText('2026.05 — 2026.08')
+  await expect(page.locator('#fishfreshnet-v2 .tl-date')).toHaveText('2026.04 — 2026.06')
   await expect(page.locator('#fishfreshnet-v2 .status-badge')).toContainText('已完成')
   await expect(page.locator('#fishfreshnet-v2 .tl-tag')).not.toContainText('PUBLISHED')
   await expect(page.locator('#fishfreshnet-v2 .tl-doi')).toHaveCount(0)
@@ -250,10 +250,11 @@ test('archive pages omit the visible last updated label', async ({ page }) => {
   }
 })
 
-test('academics pending scores use a compact badge', async ({ page }) => {
+test('academics current AP courses show that no score is available yet', async ({ page }) => {
   await page.goto('/academics/')
-  const content = await page.locator('.ap-row.pending .ap-badge').first().evaluate((element) => getComputedStyle(element, '::after').content)
-  expect(content).toBe('"?"')
+  const pendingRow = page.locator('.ap-row.pending').first()
+  await expect(pendingRow.locator('.ap-main small')).toContainText('当前课程 · 尚无成绩')
+  await expect(pendingRow.locator('.ap-badge')).toHaveText('—')
 })
 
 test('copy citation cleans up its textarea when the legacy copy command throws', async ({ page }) => {

@@ -11,17 +11,17 @@ export const projectsCopy = {
     fresheye: {
       ...base.fresheye!,
       title: 'FreshEye',
-      value: 'Move fish freshness assessment from the lab into daily use.',
-      description: 'A browser product that takes a fish-eye image and returns a freshness class, confidence score, and Grad-CAM heatmap.',
+      value: 'Make fish-eye freshness screening accessible through a reviewable web tool.',
+      description: 'A zero-install aid for fish-eye freshness screening, with a class, confidence, Grad-CAM heatmap, four-tab report, A4 PDF export, and searchable local history.',
       role: 'Full-stack development · Model training · UI design',
       discipline: 'COMPUTER VISION / WEB PRODUCT',
       story: {
         label: 'FROM RESEARCH TO PRODUCT',
-        note: 'I kept pushing one model experiment until it became a tool anyone could open.',
+        note: 'I extended a research workflow into an accessible aid for fish-eye freshness screening.',
         chapters: [
-          { label: '01 / QUESTION', title: 'Move freshness assessment beyond the lab', detail: 'Traditional assessment depends on manual judgment or lab methods; daily use needs a faster, reviewable entry point.' },
-          { label: '02 / MODEL', title: 'FishFreshNet V2', detail: '99.29% accuracy · 4.095M parameters', href: '/research/#fishfreshnet-v2' },
-          { label: '03 / DELIVERY', title: 'From inference to an explainable report', detail: 'Confidence, Grad-CAM heatmaps, and PDF export form one complete decision flow.' }
+          { label: '01 / QUESTION', title: 'Make fish-eye screening accessible', detail: 'A zero-install web entry point helps users review a freshness-screening result and its explanation.' },
+          { label: '02 / MODEL', title: 'FishFreshNet V2', detail: '99.29% accuracy · 4.095M parameters · five MFED runs', href: '/research/#fishfreshnet-v2' },
+          { label: '03 / DELIVERY', title: 'From result to a reviewable report', detail: 'Confidence, Grad-CAM, a four-tab report, and A4 PDF export support result review.' }
         ],
         sequenceLabel: 'PRODUCT FLOW', sequence: ['Upload', 'Inference', 'Confidence', 'Grad-CAM', 'PDF'],
         proof: [{ type: 'deployment', label: 'LIVE PRODUCT', value: 'fresheye.yance.me', href: 'https://fresheye.yance.me', external: true }, { type: 'source', label: 'SOURCE', value: 'GitHub', href: 'https://github.com/yance7/FreshEye', external: true }]

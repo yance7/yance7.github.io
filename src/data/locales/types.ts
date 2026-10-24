@@ -27,12 +27,13 @@ export interface SiteLocaleCopy {
 
 export interface AcademicsLocaleCopy {
   stats: AcademicStat[]
+  satSingle: { label: string; value: string; note: string }
   education: Education[]
   apScores: ApScore[]
   sections: {
     education: { label: string; title: string; accent: string; copy: string }
     scoreboard: { label: string; title: string; accent: string; copy: string }
-    apArchive: { label: string; title: string; accent: string; copy: string; panelLabel: string }
+    apArchive: { label: string; title: string; accent: string; copy: string; panelLabel: string; noScoreLabel: string }
   }
 }
 

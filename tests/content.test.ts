@@ -159,9 +159,9 @@ describe('content contracts', () => {
     expect(projects.every((project) => project.updatedAt && project.status)).toBe(true)
     expect(research.every((item) => item.updatedAt && item.id)).toBe(true)
     expect(pageMetadata.concerts.updatedAt).toBe('2026-09-21')
-    expect(pageMetadata.home.updatedAt).toBe('2026-09-21')
-    expect(pageMetadata.academics.updatedAt).toBe('2026-08-08')
-    expect(pageMetadata.research).toEqual({ updatedAt: '2026-08-08' })
+    expect(pageMetadata.home.updatedAt).toBe('2026-10-22')
+    expect(pageMetadata.academics.updatedAt).toBe('2026-10-22')
+    expect(pageMetadata.research).toEqual({ updatedAt: '2026-10-22' })
   })
 
   it('keeps published FishFreshNet V1 metrics aligned with the paper result', () => {
@@ -173,8 +173,8 @@ describe('content contracts', () => {
   it('keeps current FishFreshNet project dates and publication status accurate', () => {
     const freshEye = research.find((item) => item.id === 'fresheye')
     const v2 = research.find((item) => item.id === 'fishfreshnet-v2')
-    expect(freshEye?.date).toBe('2026.06 — 2026.08')
-    expect(v2?.date).toBe('2026.05 — 2026.08')
+    expect(freshEye?.date).toBe('2026.05 — 2026.09')
+    expect(v2?.date).toBe('2026.04 — 2026.06')
     expect(v2?.status).toBe('completed')
     expect(v2?.paper).toBeUndefined()
   })

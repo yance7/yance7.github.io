@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { resolve, sep } from 'node:path'
+import { concerts } from '../../src/data/concerts'
 
 async function gotoMediaFixture(page: Page, query: string) {
   const root = process.env.MEDIA_FIXTURE_ROOT ?? resolve(process.cwd(), 'test-results/media-fixture')
@@ -172,11 +173,15 @@ test('poster WebP failure falls back to a decoded JPEG exactly once', async ({ p
 })
 
 test('poster double failure preserves dimensions and retries the same URLs', async ({ page }) => {
+  const latestConcert = concerts.reduce((latest, concert) => concert.date > latest.date ? concert : latest)
+  const thumbnailBase = `/assets/concerts/thumbs/${latestConcert.poster.file.replace(/\.[^.]+$/, '')}`
   const firstResponse = deferred()
   let failing = true
   const urls: string[] = []
   await page.route('**/assets/concerts/thumbs/*', async route => {
-    urls.push(route.request().url())
+    const url = new URL(route.request().url())
+    if (!url.pathname.startsWith(thumbnailBase + '.')) return route.continue()
+    urls.push(url.href)
     if (failing) {
       await firstResponse.promise
       await route.fulfill({ status: 404, headers: { 'cache-control': 'no-store' } })
@@ -190,13 +195,22 @@ test('poster double failure preserves dimensions and retries the same URLs', asy
   firstResponse.release()
   const retry = poster.getByRole('button', { name: 'Retry image', exact: true })
   await expect(retry).toBeVisible()
+  const image = poster.locator('.poster-foreground')
+  await expect.poll(() => image.evaluate(element => {
+    const image = element as HTMLImageElement
+    return image.complete && image.naturalWidth === 0
+  })).toBe(true)
   const failedSize = await size()
   expect(Math.abs(initial.width - failedSize.width)).toBeLessThanOrEqual(1)
   expect(Math.abs(initial.height - failedSize.height)).toBeLessThanOrEqual(1)
   await expect(poster.getByRole('link', { name: 'Open original image', exact: true })).toHaveAttribute('href', /\/assets\/concerts\/[^/]+\.jpg$/)
+  const initialPaths = new Set(urls.map(url => new URL(url).pathname))
+  const attemptCountBeforeRetry = urls.length
   failing = false
   await retry.click()
   await expect(poster).toHaveAttribute('data-poster-state', 'ready')
+  expect(urls.length).toBeGreaterThan(attemptCountBeforeRetry)
+  expect(urls.slice(attemptCountBeforeRetry).every(url => initialPaths.has(new URL(url).pathname))).toBe(true)
   const readySize = await size()
   expect(Math.abs(initial.width - readySize.width)).toBeLessThanOrEqual(1)
   expect(Math.abs(initial.height - readySize.height)).toBeLessThanOrEqual(1)

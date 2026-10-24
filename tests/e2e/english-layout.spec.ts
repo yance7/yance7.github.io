@@ -19,7 +19,7 @@ for (const width of [320, 390, 768, 1440]) for (const theme of ['light', 'dark']
     await page.evaluate(() => document.fonts.ready)
     const names = page.locator('.beyond-leadership > span')
     await expect(names).toHaveText([
-      'iHOSA Science and Technology Club', 'Biology Club',
+      'iHOSA Science and Technology Innovation Club', 'Biology Club',
       'Student Institute for Self Management', 'Student Institute for Self Management'
     ])
     await names.first().scrollIntoViewIfNeeded()

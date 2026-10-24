@@ -293,6 +293,8 @@ test('focus reveals a pending home card synchronously and preserves native keybo
 test('native home scrolling reaches the entire natural footer', async ({ page }) => {
   await openHome(page)
   test.skip(!await hasDesktopInput(page), 'Desktop native proximity tail must allow footer access')
+  await expect(page.locator('html')).toHaveClass(/home-scroll-snap/)
+  await expect(page.locator('.site-footer')).toHaveCSS('scroll-snap-align', 'end')
   await page.locator('#home-beyond').evaluate(element => element.scrollIntoView({ behavior: 'instant', block: 'start' }))
   await page.mouse.wheel(0, 1200)
   await page.mouse.wheel(0, 1200)

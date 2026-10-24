@@ -1,6 +1,11 @@
 import { expect, test, type Page } from '@playwright/test'
+import { prepareMainForFullCapture } from './helpers/visual-ready'
 
 const routes = ['index', 'academics', 'honors', 'research', 'works', 'concerts'] as const
+const visualContentContracts: Partial<Record<typeof routes[number], Array<[selector: string, count: number]>>> = {
+  academics: [['.metric-card', 4], ['.ap-row', 12]],
+  research: [['.tl-item', 5], ['.toolchain-group', 3]]
+}
 const viewports = [
   { name: 'mobile', width: 390, height: 844 },
   { name: 'desktop', width: 1440, height: 900 }
@@ -13,6 +18,11 @@ const homeHeroLocales = [
   { name: 'zh-cn', code: 'zh-CN', route: '/' },
   { name: 'zh-hk', code: 'zh-HK', route: '/zh-hk/' },
   { name: 'en', code: 'en', route: '/en/' }
+] as const
+const academicLocales = [
+  { name: 'zh-cn', code: 'zh-CN', route: '/academics/' },
+  { name: 'zh-hk', code: 'zh-HK', route: '/zh-hk/academics/' },
+  { name: 'en', code: 'en', route: '/en/academics/' }
 ] as const
 const englishArchiveHeroRoutes = [
   { name: 'academics', route: '/en/academics/' },
@@ -80,6 +90,12 @@ async function settlePage(page: Page) {
   }))
 }
 
+async function assertMainVisualContentContract(page: Page, route: typeof routes[number]) {
+  for (const [selector, count] of visualContentContracts[route] ?? []) {
+    await expect(page.locator(selector)).toHaveCount(count)
+  }
+}
+
 async function settleHomeHero(page: Page) {
   const hero = page.locator('.home-hero')
   if (!await hero.count()) return
@@ -89,46 +105,6 @@ async function settleHomeHero(page: Page) {
   if (await canvas.count()) {
     await expect(stage).toHaveAttribute('data-particle-state', /settled|paused/)
   }
-}
-
-async function settleImages(page: Page, imageSelector: string) {
-  await expect.poll(() => page.locator(imageSelector).count()).toBeGreaterThan(0)
-  await page.evaluate(async (selector) => {
-    const images = [...document.querySelectorAll<HTMLImageElement>(selector)]
-
-    const waitForLoad = (image: HTMLImageElement) => new Promise<void>((resolve, reject) => {
-      const cleanup = () => {
-        image.removeEventListener('load', handleLoad)
-        image.removeEventListener('error', handleError)
-      }
-      const handleLoad = () => {
-        cleanup()
-        resolve()
-      }
-      const handleError = () => {
-        cleanup()
-        reject(new Error(`Image failed to load: ${image.currentSrc || image.src}`))
-      }
-
-      image.addEventListener('load', handleLoad, { once: true })
-      image.addEventListener('error', handleError, { once: true })
-      if (image.complete) {
-        if (image.naturalWidth > 0) handleLoad()
-        else handleError()
-      }
-    })
-
-    await Promise.all(images.map(async (image) => {
-      if (!image.complete) await waitForLoad(image)
-      if (image.naturalWidth <= 0) {
-        throw new Error(`Image has no natural dimensions: ${image.currentSrc || image.src}`)
-      }
-      await image.decode()
-      if (image.naturalWidth <= 0) {
-        throw new Error(`Image failed to decode: ${image.currentSrc || image.src}`)
-      }
-    }))
-  }, imageSelector)
 }
 
 async function movePointerAway(page: Page) {
@@ -146,7 +122,6 @@ async function resetPointerForVisualCapture(page: Page) {
 }
 
 async function settleStableConcertLayout(page: Page) {
-  await page.locator('main#main').scrollIntoViewIfNeeded()
   await movePointerAway(page)
   await expect.poll(() => page.evaluate(() => new Promise<boolean>((resolve) => {
     const selectors = ['#concert-archive']
@@ -171,25 +146,10 @@ async function settleStableConcertLayout(page: Page) {
 }
 
 async function settleConcertVisualState(page: Page) {
-  await stabilizeVisualContext(page)
-  await page.locator('#concert-archive').scrollIntoViewIfNeeded()
-  const archiveScrollY = await page.evaluate(() => window.scrollY)
-  const railCards = page.locator('#concert-archive-rail .concert-rail-card')
-  await expect.poll(() => railCards.count()).toBeGreaterThan(0)
-  for (let index = 0; index < await railCards.count(); index += 1) {
-    const card = railCards.nth(index)
-    await card.scrollIntoViewIfNeeded()
-    await expect(card).toHaveClass(/revealed/)
-  }
-  await page.locator('#concert-archive-rail').evaluate((rail) => {
-    rail.scrollTo({ left: 0, behavior: 'auto' })
-  })
+  const rail = page.locator('#concert-archive-rail')
+  await expect.poll(() => rail.locator('.concert-rail-card').count()).toBeGreaterThan(0)
+  await rail.evaluate((element) => element.scrollTo({ left: 0, behavior: 'instant' }))
   await expect.poll(() => page.locator('#concert-archive-rail').evaluate((rail) => rail.scrollLeft)).toBe(0)
-  await settleImages(page, '#concert-archive-rail .concert-poster img')
-  // Revealing individual cards may also move the root viewport. Restore the
-  // archive viewpoint so fixed layers occupy the same place in the main capture.
-  await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), archiveScrollY)
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(archiveScrollY)
   await settleStableConcertLayout(page)
 }
 
@@ -222,14 +182,73 @@ async function settleFloatingHeader(page: Page, route: 'research' | 'works') {
   }))
 }
 
-for (const viewport of viewports) {
-  for (const theme of themes) {
-    test(`captures ${theme} ${viewport.name} visual baselines`, async ({ page }, testInfo) => {
-      if (viewport.name === 'desktop') test.setTimeout(60_000)
-      await page.setViewportSize({ width: viewport.width, height: viewport.height })
-      await installTheme(page, theme)
+test('research desktop capture requires all timeline and toolchain content to be revealed', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await installTheme(page, 'light')
+  await page.goto('/research/')
+  await settlePage(page)
+  await prepareMainForFullCapture(page)
+  await assertMainVisualContentContract(page, 'research')
+})
 
-      for (const route of routes) {
+test('academics desktop capture waits for complete score metrics', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await installTheme(page, 'light')
+  await page.goto('/academics/')
+  await settlePage(page)
+  await prepareMainForFullCapture(page)
+  await assertMainVisualContentContract(page, 'academics')
+
+  await expect(page.locator('.metric-strip')).toHaveAttribute('data-metrics-ready', 'true')
+  await expect(page.locator('.metric-card b')).toHaveText(['4.0', '1560', '108', '8.0'])
+})
+
+for (const locale of academicLocales) {
+  for (const viewport of viewports) {
+    for (const theme of themes) {
+      test(`academic metric cards keep layout height when revealed: ${locale.name} ${theme} ${viewport.name}`, async ({ page }) => {
+        await page.setViewportSize({ width: viewport.width, height: viewport.height })
+        await installTheme(page, theme)
+        await page.goto(locale.route)
+        await expect(page.locator('html')).toHaveAttribute('data-locale', locale.code)
+        await settlePage(page)
+
+        const measure = () => page.evaluate(() => {
+          const round = (value: number) => Math.round(value * 100) / 100
+          const strip = document.querySelector<HTMLElement>('.metric-strip')
+          if (!strip) throw new Error('Academic metric strip is missing')
+
+          return {
+            documentHeight: document.documentElement.scrollHeight,
+            stripHeight: round(strip.getBoundingClientRect().height),
+            cardHeights: [...strip.querySelectorAll<HTMLElement>('.metric-card')]
+              .map(card => round(card.getBoundingClientRect().height))
+          }
+        })
+
+        const before = await measure()
+        const reveals = page.locator('main#main .reveal')
+        for (let index = 0; index < await reveals.count(); index += 1) {
+          const target = reveals.nth(index)
+          await target.scrollIntoViewIfNeeded()
+          await expect(target).toHaveClass(/revealed/)
+        }
+        await expect(page.locator('main#main .reveal:not(.revealed)')).toHaveCount(0)
+        await expect(page.locator('.metric-strip')).toHaveAttribute('data-metrics-ready', 'true')
+
+        expect(await measure()).toEqual(before)
+      })
+    }
+  }
+}
+
+for (const route of routes) {
+  for (const viewport of viewports) {
+    for (const theme of themes) {
+      test(`captures ${route} ${theme} ${viewport.name} visual baselines`, async ({ page }, testInfo) => {
+        if (viewport.name === 'desktop') test.setTimeout(60_000)
+        await page.setViewportSize({ width: viewport.width, height: viewport.height })
+        await installTheme(page, theme)
         await page.goto(route === 'index' ? '/' : `/${route}/`)
         if (route === 'concerts') await stabilizeVisualContext(page)
         await settlePage(page)
@@ -252,6 +271,8 @@ for (const viewport of viewports) {
         await expect(page).toHaveScreenshot(`${route}-${theme}-${viewport.name}-viewport.png`, pageScreenshotOptions)
 
         if (route !== 'index' && viewport.name === 'desktop') {
+          await prepareMainForFullCapture(page)
+          await assertMainVisualContentContract(page, route)
           if (route === 'concerts') await settleConcertVisualState(page)
           await expect(page.locator('main#main')).toHaveScreenshot(`${route}-${theme}-desktop-main.png`, componentScreenshotOptions)
         }
@@ -260,21 +281,15 @@ for (const viewport of viewports) {
           // traversing offscreen content for the complete-page capture.
           await page.keyboard.press('End')
           await expect(page.locator('.site-footer')).toBeInViewport()
-          for (const element of await page.locator('main#main .reveal').all()) {
-            await element.scrollIntoViewIfNeeded()
-            await expect(element).toHaveClass(/revealed/)
-          }
-          await expect(page.locator('main#main .reveal:not(.revealed)')).toHaveCount(0)
-          await page.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }))
-          await resetPointerForVisualCapture(page)
+          await prepareMainForFullCapture(page)
           await settleHomeHero(page)
           await expect(page).toHaveScreenshot(`index-${theme}-desktop-full.png`, {
             ...fullPageScreenshotOptions,
             fullPage: true
           })
         }
-      }
-    })
+      })
+    }
   }
 }
 

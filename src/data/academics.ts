@@ -1,12 +1,12 @@
 import type { AcademicStat, ApScore, Education } from './types.ts'
 
-export const academicsUpdatedAt = '2026-08-08'
+export const academicsUpdatedAt = '2026-10-22'
 
 export const stats = [
-  { value: '4.0', label: 'GPA', note: '未加权满分绩点' },
-  { value: '1490', label: 'SAT', note: '数学 800 · 语文 690' },
+  { value: '4.0', label: 'GPA', note: '4.0/4.0 · 未加权' },
+  { value: '1560', label: 'SAT Superscore', note: '阅读与写作 760 · 数学 800' },
   { value: '108', label: 'TOEFL', note: 'R29 · L27 · S23 · W29' },
-  { value: '7.5', label: 'IELTS', note: 'L8 · R9 · W7.5 · S6' }
+  { value: '8.0', label: 'IELTS', note: 'L8.5 · R8.5 · W7.5 · S6.5' }
 ] satisfies AcademicStat[]
 
 /* ---------- 教育履历 ---------- */

@@ -7,7 +7,7 @@ export const honorsCopy = {
   statLabels: {
     all: { label: '项荣誉', note: '2025 — 2026' },
     peak: { label: '领航级', note: 'UKChO · BBO · USACO · TRAE' },
-    excellent: { label: '卓越级', note: 'USABO · 北京科创大赛' },
+    excellent: { label: '卓越级', note: 'BIO-USACN · 北京科创大赛' },
     emerging: { label: '新锐级', note: '国际 · 国家 · 区域' }
   },
   entities: Object.fromEntries(honors.map((item) => [item.id, { title: item.title, org: item.org }])),
