@@ -277,6 +277,87 @@ test('academics desktop capture waits for complete score metrics', async ({ page
   ))).toBe(true)
 })
 
+test('diagnoses content-visibility impact on academic full-page captures', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await installTheme(page, 'light')
+  const measurements: Array<Record<string, unknown>> = []
+
+  const measure = () => page.evaluate(() => {
+    const main = document.querySelector<HTMLElement>('main#main')
+    const metricStrip = main?.querySelector<HTMLElement>('.metric-strip')
+    const cards = [...(main?.querySelectorAll<HTMLElement>('.metric-card') ?? [])]
+    const rect = (element: Element | null | undefined) => {
+      if (!element) return null
+      const bounds = element.getBoundingClientRect()
+      return { top: bounds.top, height: bounds.height }
+    }
+
+    return {
+      pageHeight: document.documentElement.scrollHeight,
+      main: rect(main),
+      metricStrip: rect(metricStrip),
+      metricsReady: metricStrip?.dataset.metricsReady ?? null,
+      cards: cards.map(card => ({
+        ...rect(card),
+        contentVisibility: getComputedStyle(card).contentVisibility
+      }))
+    }
+  })
+
+  for (const mode of ['auto', 'visible'] as const) {
+    await page.goto('/academics/')
+    await settlePage(page)
+    const beforeOverride = await measure()
+
+    if (mode === 'visible') {
+      await page.addStyleTag({ content: 'main#main .metric-card { content-visibility: visible !important }' })
+      await page.evaluate(() => new Promise<void>(resolve => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      }))
+    }
+
+    const afterOverride = await measure()
+    const reveals = page.locator('main#main .reveal')
+    let metricStripEntered: Awaited<ReturnType<typeof measure>> | null = null
+    for (let index = 0; index < await reveals.count(); index += 1) {
+      const target = reveals.nth(index)
+      await target.scrollIntoViewIfNeeded()
+      await expect(target).toHaveClass(/revealed/)
+      await expect.poll(() => target.evaluate(element => {
+        const style = getComputedStyle(element)
+        const transform = new DOMMatrix(style.transform)
+        return style.opacity === '1' && Math.abs(transform.m41) < .5 && Math.abs(transform.m42) < .5
+      })).toBe(true)
+      if (await target.evaluate(element => element.classList.contains('metric-strip'))) {
+        metricStripEntered = await measure()
+      }
+    }
+    await expect(page.locator('main#main .reveal:not(.revealed)')).toHaveCount(0)
+    await expect(page.locator('main#main .metric-strip')).toHaveAttribute('data-metrics-ready', 'true')
+    const afterReveal = await measure()
+
+    await page.evaluate(() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' }))
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0)
+    await page.evaluate(() => new Promise<void>(resolve => {
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+    }))
+    const afterReturn = await measure()
+    const screenshot = await page.screenshot({ ...sharedScreenshotOptions, fullPage: true })
+    await testInfo.attach(`content-visibility-${mode}-academics.png`, {
+      body: screenshot,
+      contentType: 'image/png'
+    })
+    measurements.push({ mode, beforeOverride, afterOverride, metricStripEntered, afterReveal, afterReturn })
+  }
+
+  const report = JSON.stringify(measurements, null, 2)
+  console.info(`CONTENT_VISIBILITY_AB_BEGIN\n${report}\nCONTENT_VISIBILITY_AB_END`)
+  await testInfo.attach('content-visibility-ab-measurements.json', {
+    body: report,
+    contentType: 'application/json'
+  })
+})
+
 for (const route of routes) {
   for (const viewport of viewports) {
     for (const theme of themes) {
