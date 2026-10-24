@@ -34,6 +34,11 @@ on:
         required: false
         default: false
         type: boolean
+      run_poster_focus_ab:
+        description: 'Run ten-round Linux WebKit poster retry focus-handler A/B diagnosis'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -236,7 +241,47 @@ jobs:
           name: linux-visual-snapshots-review
           path: tests/e2e/visual-snapshots/chromium-visual/linux
           if-no-files-found: error
+  poster-focus-ab:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_poster_focus_ab == true }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        suppress_global_focus_reveal: [false, true]
+    env:
+      PLAYWRIGHT_USE_PREVIEW: '1'
+      PLAYWRIGHT_OUTPUT_DIR: test-results/poster-focus-ab-${{ matrix.suppress_global_focus_reveal }}
+      POSTER_RETRY_SUPPRESS_GLOBAL_REVEAL_FOCUS: ${{ matrix.suppress_global_focus_reveal && '1' || '0' }}
+      POSTER_RETRY_DIAGNOSTICS_VERBOSE: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build production preview
+        run: npm run build
+      - name: Smoke test production preview
+        run: npm run smoke
+      - name: Install Playwright WebKit
+        run: npx playwright install --with-deps webkit
+      - name: Compare natural focus with document reveal suppression
+        run: npm run test:e2e -- tests/e2e/media-resilience.spec.ts --project=webkit-desktop --workers=1 --grep 'poster double failure' --repeat-each=10 --retries=0
+      - name: Upload A/B evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: poster-focus-ab-${{ matrix.suppress_global_focus_reveal }}
+          path: test-results/poster-focus-ab-${{ matrix.suppress_global_focus_reveal }}
+          if-no-files-found: error
+          include-hidden-files: true
   audit:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_poster_focus_ab != true }}
     runs-on: ubuntu-latest
     env:
       PLAYWRIGHT_USE_PREVIEW: '1'
