@@ -98,6 +98,13 @@ async function settleMainVisualCaptureContent(page: Page, route: typeof routes[n
   }
   await expect(page.locator('main#main .reveal:not(.revealed)')).toHaveCount(0)
 
+  const metricStrips = page.locator('main#main .metric-strip')
+  for (let index = 0; index < await metricStrips.count(); index += 1) {
+    await expect(metricStrips.nth(index)).toHaveAttribute('data-metrics-ready', 'true')
+  }
+  // Full-main element captures do not repaint offscreen content-visibility subtrees.
+  await page.addStyleTag({ content: 'main#main .metric-card { content-visibility: visible !important }' })
+
   if (route === 'concerts') return
   await page.evaluate(() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' }))
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0)
@@ -254,6 +261,20 @@ test('research desktop capture requires all timeline and toolchain content to be
   await page.goto('/research/')
   await settlePage(page)
   await settleMainVisualCaptureContent(page, 'research')
+})
+
+test('academics desktop capture waits for complete score metrics', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await installTheme(page, 'light')
+  await page.goto('/academics/')
+  await settlePage(page)
+  await settleMainVisualCaptureContent(page, 'academics')
+
+  await expect(page.locator('.metric-strip')).toHaveAttribute('data-metrics-ready', 'true')
+  await expect(page.locator('.metric-card b')).toHaveText(['4.0', '1560', '108', '8.0'])
+  await expect.poll(() => page.locator('.metric-card').evaluateAll(cards => (
+    cards.every(card => getComputedStyle(card).contentVisibility === 'visible')
+  ))).toBe(true)
 })
 
 for (const route of routes) {
