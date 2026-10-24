@@ -68,14 +68,34 @@ function revealElement(element: HTMLElement, immediate = false) {
   disconnectIfIdle()
 }
 
+function isIdentityTransform(transform: string) {
+  if (transform === 'none') return true
+  const matrix = /^matrix(3d)?\(([^)]+)\)$/u.exec(transform)
+  if (!matrix) return false
+  const values = matrix[2]!.split(',').map(value => Number(value.trim()))
+  const identity = matrix[1]
+    ? [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
+    : [1, 0, 0, 1, 0, 0]
+  return values.length === identity.length
+    && values.every((value, index) => Math.abs(value - identity[index]!) < 1e-4)
+}
+
+function isRevealSettled(element: HTMLElement) {
+  if (
+    !revealedElements.has(element)
+    || !element.classList.contains('revealed')
+    || observedElements.has(element)
+    || element.dataset.revealPreparing === 'true'
+  ) return false
+
+  const style = getComputedStyle(element)
+  return style.opacity === '1' && isIdentityTransform(style.transform)
+}
+
 export function revealForNavigation(target: HTMLElement) {
   for (const element of mountedElements) {
     if (!element.contains(target) && !target.contains(element)) continue
-    if (
-      revealedElements.has(element)
-      && element.classList.contains('revealed')
-      && getComputedStyle(element).opacity === '1'
-    ) continue
+    if (isRevealSettled(element)) continue
     revealElement(element, true)
   }
 }
