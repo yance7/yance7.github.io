@@ -1,6 +1,10 @@
 import { expect, test, type Page } from '@playwright/test'
 
 const routes = ['index', 'academics', 'honors', 'research', 'works', 'concerts'] as const
+const visualContentContracts: Partial<Record<typeof routes[number], Array<[selector: string, count: number]>>> = {
+  academics: [['.metric-card', 4], ['.ap-row', 12]],
+  research: [['.tl-item', 5], ['.toolchain-group', 3]]
+}
 const viewports = [
   { name: 'mobile', width: 390, height: 844 },
   { name: 'desktop', width: 1440, height: 900 }
@@ -75,6 +79,28 @@ async function settlePage(page: Page) {
   await page.evaluate(async () => {
     await document.fonts?.ready
   })
+  await page.evaluate(() => new Promise<void>((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+  }))
+}
+
+async function settleMainVisualCaptureContent(page: Page, route: typeof routes[number]) {
+  for (const [selector, count] of visualContentContracts[route] ?? []) {
+    await expect(page.locator(selector)).toHaveCount(count)
+  }
+
+  const reveals = page.locator('main#main .reveal')
+  // Keep each locator anchored to the complete set as .revealed changes.
+  for (let index = 0; index < await reveals.count(); index += 1) {
+    const target = reveals.nth(index)
+    await target.scrollIntoViewIfNeeded()
+    await expect(target).toHaveClass(/revealed/)
+  }
+  await expect(page.locator('main#main .reveal:not(.revealed)')).toHaveCount(0)
+
+  if (route === 'concerts') return
+  await page.evaluate(() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' }))
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0)
   await page.evaluate(() => new Promise<void>((resolve) => {
     requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
   }))
@@ -222,14 +248,21 @@ async function settleFloatingHeader(page: Page, route: 'research' | 'works') {
   }))
 }
 
-for (const viewport of viewports) {
-  for (const theme of themes) {
-    test(`captures ${theme} ${viewport.name} visual baselines`, async ({ page }, testInfo) => {
-      if (viewport.name === 'desktop') test.setTimeout(60_000)
-      await page.setViewportSize({ width: viewport.width, height: viewport.height })
-      await installTheme(page, theme)
+test('research desktop capture requires all timeline and toolchain content to be revealed', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await installTheme(page, 'light')
+  await page.goto('/research/')
+  await settlePage(page)
+  await settleMainVisualCaptureContent(page, 'research')
+})
 
-      for (const route of routes) {
+for (const route of routes) {
+  for (const viewport of viewports) {
+    for (const theme of themes) {
+      test(`captures ${route} ${theme} ${viewport.name} visual baselines`, async ({ page }, testInfo) => {
+        if (viewport.name === 'desktop') test.setTimeout(60_000)
+        await page.setViewportSize({ width: viewport.width, height: viewport.height })
+        await installTheme(page, theme)
         await page.goto(route === 'index' ? '/' : `/${route}/`)
         if (route === 'concerts') await stabilizeVisualContext(page)
         await settlePage(page)
@@ -252,6 +285,7 @@ for (const viewport of viewports) {
         await expect(page).toHaveScreenshot(`${route}-${theme}-${viewport.name}-viewport.png`, pageScreenshotOptions)
 
         if (route !== 'index' && viewport.name === 'desktop') {
+          await settleMainVisualCaptureContent(page, route)
           if (route === 'concerts') await settleConcertVisualState(page)
           await expect(page.locator('main#main')).toHaveScreenshot(`${route}-${theme}-desktop-main.png`, componentScreenshotOptions)
         }
@@ -273,8 +307,8 @@ for (const viewport of viewports) {
             fullPage: true
           })
         }
-      }
-    })
+      })
+    }
   }
 }
 
