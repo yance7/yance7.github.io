@@ -265,10 +265,12 @@ test('poster double failure preserves dimensions and retries the same URLs', asy
   page.on('requestfailed', request => {
     if (isTargetUrl(request.url())) networkEvents.push({ type: 'requestfailed', url: request.url(), errorText: request.failure()?.errorText })
   })
-  const attachDiagnostics = async () => {
+  const attachDiagnostics = async (writeToOutput = false) => {
     const browser = await page.evaluate(() => (window as PosterRetryDiagnosticWindow).__posterRetryDiagnostics ?? null)
+    const body = JSON.stringify({ browser, requestedUrls: urls, networkEvents }, null, 2)
+    if (writeToOutput) console.info(`POSTER_RETRY_ACTIVATION_DIAGNOSTICS_BEGIN\n${body}\nPOSTER_RETRY_ACTIVATION_DIAGNOSTICS_END`)
     await testInfo.attach('poster-retry-activation-diagnostics.json', {
-      body: JSON.stringify({ browser, requestedUrls: urls, networkEvents }, null, 2),
+      body,
       contentType: 'application/json'
     })
   }
@@ -354,7 +356,7 @@ test('poster double failure preserves dimensions and retries the same URLs', asy
     await expect.poll(() => urls.length).toBeGreaterThan(failedRequestCount)
     await expect(poster).toHaveAttribute('data-poster-state', 'ready')
   } catch (error) {
-    await attachDiagnostics()
+    await attachDiagnostics(true)
     throw error
   }
   await attachDiagnostics()
