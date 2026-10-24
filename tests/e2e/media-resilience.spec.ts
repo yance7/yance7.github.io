@@ -254,6 +254,24 @@ test('poster double failure preserves dimensions and retries the same URLs', asy
   const firstResponse = deferred()
   let failing = true
   const urls: string[] = []
+  const networkEvents: Array<{ type: string, url: string, status?: number, errorText?: string }> = []
+  const isTargetUrl = (value: string) => new URL(value).pathname.startsWith('/assets/concerts/thumbs/concert-20261006-fforever.')
+  page.on('request', request => {
+    if (isTargetUrl(request.url())) networkEvents.push({ type: 'request', url: request.url() })
+  })
+  page.on('response', response => {
+    if (isTargetUrl(response.url())) networkEvents.push({ type: 'response', url: response.url(), status: response.status() })
+  })
+  page.on('requestfailed', request => {
+    if (isTargetUrl(request.url())) networkEvents.push({ type: 'requestfailed', url: request.url(), errorText: request.failure()?.errorText })
+  })
+  const attachDiagnostics = async () => {
+    const browser = await page.evaluate(() => (window as PosterRetryDiagnosticWindow).__posterRetryDiagnostics ?? null)
+    await testInfo.attach('poster-retry-activation-diagnostics.json', {
+      body: JSON.stringify({ browser, requestedUrls: urls, networkEvents }, null, 2),
+      contentType: 'application/json'
+    })
+  }
   await page.route('**/assets/concerts/thumbs/concert-20261006-fforever.*', async route => {
     urls.push(route.request().url())
     if (failing) {
@@ -336,17 +354,10 @@ test('poster double failure preserves dimensions and retries the same URLs', asy
     await expect.poll(() => urls.length).toBeGreaterThan(failedRequestCount)
     await expect(poster).toHaveAttribute('data-poster-state', 'ready')
   } catch (error) {
-    const diagnostics = await page.evaluate(() => JSON.stringify(
-      (window as PosterRetryDiagnosticWindow).__posterRetryDiagnostics ?? {},
-      null,
-      2
-    ))
-    await testInfo.attach('poster-retry-activation-diagnostics.json', {
-      body: diagnostics,
-      contentType: 'application/json'
-    })
+    await attachDiagnostics()
     throw error
   }
+  await attachDiagnostics()
   const readySize = await size()
   expect(Math.abs(initial.width - readySize.width)).toBeLessThanOrEqual(1)
   expect(Math.abs(initial.height - readySize.height)).toBeLessThanOrEqual(1)
