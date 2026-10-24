@@ -29,6 +29,12 @@ on:
         default: false
         type: boolean
 
+      run_visual_stress:
+        description: 'Run ten rounds of complete desktop visual captures on Linux'
+        required: false
+        default: false
+        type: boolean
+
 permissions:
   contents: read
 
@@ -390,6 +396,11 @@ jobs:
           else
             npm run test:e2e -- --project=chromium-visual --workers=2 --retries=0
           fi
+      - name: Focused Chromium visual capture stress
+        if: ${{ inputs.run_visual_stress == true && !cancelled() }}
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: test-results/visual-capture-stress
+        run: npm run test:e2e -- tests/e2e/visual-matrix.spec.ts --project=chromium-visual --workers=1 --retries=0 --grep 'captures (index|academics|honors|research|works|concerts) (light|dark) desktop visual baselines' --repeat-each=10
       - name: Firefox compatibility quality
         if: ${{ !cancelled() }}
         env:
