@@ -64,8 +64,8 @@ function isCurrent(image: HTMLImageElement, attempt: number) {
   return mounted && image === imageRef.value && attempt === requestId.value && (state.value === 'idle' || state.value === 'loading')
 }
 
-function failImage(image: HTMLImageElement) {
-  if (!isCurrent(image, requestId.value)) return
+function failImage(image: HTMLImageElement, attempt: number) {
+  if (!isCurrent(image, attempt)) return
   if (!jpegFallback.value) {
     jpegFallback.value = true
     void nextTick(checkCachedImage)
@@ -75,7 +75,7 @@ function failImage(image: HTMLImageElement) {
 async function settleImage(image: HTMLImageElement, attempt: number) {
   if (!isCurrent(image, attempt)) return
   if (!image.naturalWidth) {
-    failImage(image)
+    failImage(image, attempt)
     return
   }
   try {
@@ -85,21 +85,23 @@ async function settleImage(image: HTMLImageElement, attempt: number) {
     showSkeleton.value = false
     clearTimers()
   } catch {
-    if (isCurrent(image, attempt)) failImage(image)
+    failImage(image, attempt)
   }
 }
 
 function checkCachedImage() {
   const image = imageRef.value
-  if (image?.complete && image.currentSrc) void settleImage(image, requestId.value)
+  if (image?.complete && image.currentSrc) void settleImage(image, Number(image.dataset.requestId))
 }
 
 function onImageLoad(event: Event) {
-  if (event.currentTarget === imageRef.value) void settleImage(event.currentTarget as HTMLImageElement, requestId.value)
+  const image = event.currentTarget as HTMLImageElement
+  void settleImage(image, Number(image.dataset.requestId))
 }
 
 function onImageError(event: Event) {
-  if (event.currentTarget === imageRef.value) failImage(event.currentTarget as HTMLImageElement)
+  const image = event.currentTarget as HTMLImageElement
+  failImage(image, Number(image.dataset.requestId))
 }
 
 function onBackdropError(event: Event) {
@@ -173,6 +175,7 @@ onBeforeUnmount(() => {
         <img
           :key="requestId + '-' + (jpegFallback ? 'jpeg' : 'webp')"
           ref="imageRef"
+          :data-request-id="requestId"
           class="poster-foreground"
           :src="thumbnailFallbackUrl(poster.file)"
           :data-original-src="originalImageUrl(poster.file)"
