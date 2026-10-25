@@ -88,6 +88,18 @@ async function settlePage(page: Page) {
   await page.evaluate(() => new Promise<void>((resolve) => {
     requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
   }))
+  const lyricCharacters = page.locator('.hero-title .lyric-char')
+  await expect.poll(() => lyricCharacters.evaluateAll((characters) => characters.every((character) => {
+    const style = getComputedStyle(character)
+    const matrix = style.transform === 'none' ? new DOMMatrixReadOnly() : new DOMMatrixReadOnly(style.transform)
+    return style.opacity === '1'
+      && Math.abs(matrix.a - 1) < .001
+      && Math.abs(matrix.b) < .001
+      && Math.abs(matrix.c) < .001
+      && Math.abs(matrix.d - 1) < .001
+      && Math.abs(matrix.m41) < .5
+      && Math.abs(matrix.m42) < .5
+  }))).toBe(true)
 }
 
 async function assertMainVisualContentContract(page: Page, route: typeof routes[number]) {
