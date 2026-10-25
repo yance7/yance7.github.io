@@ -559,7 +559,6 @@ test('poster retry cancels a mouse press dragged outside after rail movement sta
   })
   scenario.allowRetry()
   await scenario.retry.hover()
-  const initialRequestId = await scenario.poster.getAttribute('data-request-id')
   await page.mouse.down()
   try {
     const pointerId = Number((await pointerDown).text().split(':').pop())
@@ -578,7 +577,10 @@ test('poster retry cancels a mouse press dragged outside after rail movement sta
     }, {
       message: 'The rail must move and activate pointer capture before the mouse is dragged out'
     }).toBe(true)
-    await cancelTarget.hover()
+    await expect(cancelTarget).toBeInViewport()
+    const cancelBounds = await cancelTarget.boundingBox()
+    if (!cancelBounds) throw new Error('The poster error message must remain visible while the rail moves')
+    await page.mouse.move(cancelBounds.x + cancelBounds.width / 2, cancelBounds.y + cancelBounds.height / 2)
   } finally {
     await page.mouse.up()
     scenario.releaseRetry()
@@ -586,7 +588,7 @@ test('poster retry cancels a mouse press dragged outside after rail movement sta
 
   await expect(scenario.poster).toHaveAttribute('data-poster-state', 'error')
   expect(Math.abs(await page.evaluate(() => window.scrollY) - initialScrollY)).toBeLessThanOrEqual(1)
-  expect(await scenario.poster.getAttribute('data-request-id')).toBe(initialRequestId)
+  expect(await scenario.failedLayer.evaluate(element => element.isConnected)).toBe(true)
   expect(scenario.retryUrls).toHaveLength(0)
 })
 
