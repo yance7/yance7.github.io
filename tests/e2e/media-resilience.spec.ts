@@ -365,6 +365,7 @@ test('poster retry keeps its pointer target when native rail scrolling overlaps 
   test.skip(testInfo.project.name === 'webkit-desktop' && process.platform === 'win32', 'Windows WebKit queues wheel input until locator.click completes; Linux CI verifies active overlap')
   await page.emulateMedia({ reducedMotion: 'no-preference' })
   const scenario = await preparePosterRetry(page)
+  let initialScrollLeft = 0
   await activatePosterRetry(scenario, page, async () => {
     const click = scenario.retry.click({ delay: 300 })
     try {
@@ -374,7 +375,7 @@ test('poster retry keeps its pointer target when native rail scrolling overlaps 
       })
 
       const rail = page.locator('#concert-archive-rail')
-      const initialScrollLeft = await rail.evaluate(element => element.scrollLeft)
+      initialScrollLeft = await rail.evaluate(element => element.scrollLeft)
       await page.mouse.wheel(120, 0)
       await expect.poll(() => rail.evaluate(element => element.scrollLeft)).not.toBe(initialScrollLeft)
     } finally {
@@ -397,8 +398,10 @@ test('poster retry keeps its pointer target when native rail scrolling overlaps 
       && Number(event.time) > pointerDownTime
       && Number(event.time) < pointerUpTime)
     expect(railScrollEvents.length).toBeGreaterThan(0)
-    const offsets = railScrollEvents.map(event => Number(event.railScrollLeft))
-    expect(Math.max(...offsets) - Math.min(...offsets)).toBeGreaterThan(1)
+    expect(
+      railScrollEvents.some(event => Math.abs(Number(event.railScrollLeft) - initialScrollLeft) > 1),
+      'A scroll event during the held click must report the wheel-driven change from the pointerdown offset'
+    ).toBe(true)
   })
 })
 
