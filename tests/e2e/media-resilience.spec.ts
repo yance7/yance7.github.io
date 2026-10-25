@@ -406,7 +406,12 @@ test('poster retry keeps its pointer target while the rail scrolls during a trus
   await scenario.retry.scrollIntoViewIfNeeded()
   await waitForStableDocumentScroll(page)
   let initialScrollLeft = 0
-  let observedRailState: { scrollLeft: number, time: number, hasPointerCapture: boolean } | null = null
+  let observedRailState: {
+    scrollLeft: number
+    time: number
+    hasPointerCapture: boolean
+    hitOutsideRetry: boolean
+  } | null = null
   await scenario.retry.evaluate(button => {
     button.addEventListener('pointerdown', event => {
       const pointerId = (event as PointerEvent).pointerId
@@ -440,20 +445,23 @@ test('poster retry keeps its pointer target while the rail scrolls during a trus
           const debug = (window as typeof window & { __posterRetryDebug?: { events: Array<Record<string, unknown>> } }).__posterRetryDebug
           const pointerDown = debug?.events.find(event => event.type === 'pointerdown')
           const pointerId = Number(pointerDown?.pointerId)
+          const point = pointerDown?.point as { x: number, y: number } | null | undefined
           const retry = document.querySelector<HTMLButtonElement>('.concert-poster .poster-retry')
           const rail = document.querySelector<HTMLElement>('#concert-archive-rail')
+          const hitAtPointerDown = point ? document.elementFromPoint(point.x, point.y) : null
           return {
             scrollLeft: rail?.scrollLeft ?? Number.NaN,
             time: performance.now(),
-            hasPointerCapture: Boolean(retry && Number.isFinite(pointerId) && retry.hasPointerCapture(pointerId))
+            hasPointerCapture: Boolean(retry && Number.isFinite(pointerId) && retry.hasPointerCapture(pointerId)),
+            hitOutsideRetry: Boolean(retry && hitAtPointerDown && !retry.contains(hitAtPointerDown))
           }
         })
-        return observedRailState.hasPointerCapture && observedRailState.scrollLeft !== initialScrollLeft
-          ? observedRailState.scrollLeft
-          : initialScrollLeft
+        return observedRailState.hasPointerCapture
+          && observedRailState.scrollLeft !== initialScrollLeft
+          && (process.platform !== 'linux' || observedRailState.hitOutsideRetry)
       },
-        { message: 'Native horizontal wheel input during the held click must move the rail before pointerup' }
-      ).not.toBe(initialScrollLeft)
+        { message: 'Native rail motion must move the active hit point off Retry while pointer capture is held' }
+      ).toBe(true)
     } finally {
       await click
     }
@@ -474,9 +482,8 @@ test('poster retry keeps its pointer target while the rail scrolls during a trus
     expect(observedRailState.hasPointerCapture).toBe(true)
     expect(observedRailState.time).toBeGreaterThan(pointerDownTime)
     expect(observedRailState.time).toBeLessThan(pointerUpTime)
-    const pointerUp = pointerEvents.find(event => event.type === 'pointerup')
+    if (process.platform === 'linux') expect(observedRailState.hitOutsideRetry).toBe(true)
     expect(pointerEvents.every(event => event.target === 'button.poster-retry')).toBe(true)
-    if (process.platform === 'linux') expect(pointerUp?.hitAtPoint).not.toBe('button.poster-retry')
     expect(Math.max(...pointerEvents.map(event => Number(event.scrollY))) - Math.min(...pointerEvents.map(event => Number(event.scrollY)))).toBeLessThanOrEqual(1)
   })
 })
