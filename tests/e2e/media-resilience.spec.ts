@@ -193,6 +193,8 @@ async function preparePosterRetry(page: Page) {
   const failedImage = poster.locator('.poster-foreground')
   await expect.poll(() => failedImage.evaluate(element => (element as HTMLImageElement).complete)).toBe(true)
   await expect.poll(() => failedImage.evaluate(element => (element as HTMLImageElement).naturalWidth)).toBe(0)
+  await expect(failedImage).toHaveAttribute('data-request-id', /^\d+$/)
+  const initialRequestId = Number(await failedImage.getAttribute('data-request-id'))
   const failedLayer = await poster.locator('.poster-foreground-layer').elementHandle()
   if (!failedLayer) throw new Error('The failed poster generation was not present')
   const failedSize = await poster.evaluate(element => ({ width: element.clientWidth, height: element.clientHeight }))
@@ -206,6 +208,7 @@ async function preparePosterRetry(page: Page) {
     retry,
     failedLayer,
     initialSize,
+    initialRequestId,
     initialUrls,
     retryUrls,
     allowRetry: () => { acceptingRetry = true },
@@ -217,9 +220,9 @@ async function activatePosterRetry(
   scenario: Awaited<ReturnType<typeof preparePosterRetry>>,
   page: Page,
   activate: () => Promise<void>,
-  assertPointerClickDelivery = false
+  pointerMode: 'mouse' | 'touch' | null = null
 ) {
-  if (assertPointerClickDelivery) {
+  if (pointerMode) {
     await scenario.retry.scrollIntoViewIfNeeded()
     await expect.poll(() => page.evaluate(() => new Promise<boolean>((resolve) => {
       let previous = window.scrollY
@@ -243,30 +246,30 @@ async function activatePosterRetry(
   scenario.allowRetry()
   try {
     await activate()
-    if (assertPointerClickDelivery) {
-      const pointerEvents = await page.evaluate(() => {
+    if (pointerMode) {
+      const eventLog = await page.evaluate(() => {
         const debug = (window as typeof window & { __posterRetryDebug?: { events: Array<Record<string, unknown>> } }).__posterRetryDebug
-        return (debug?.events ?? [])
-          .filter(event => event.phase === 'capture' && ['pointerdown', 'pointerup', 'click'].includes(String(event.type)))
-          .map(event => ({
-            type: String(event.type),
-            target: event.target == null ? null : String(event.target),
-            scrollY: Number(event.scrollY)
-          }))
+        return debug?.events ?? []
       })
+      const pointerEvents = eventLog.filter(event => event.phase === 'capture' && ['pointerdown', 'pointerup', 'click'].includes(String(event.type)))
+      const mouseEvents = eventLog.filter(event => event.phase === 'capture' && ['mousedown', 'mouseup'].includes(String(event.type)))
       expect(pointerEvents.map(event => event.type)).toEqual(['pointerdown', 'pointerup', 'click'])
       expect(pointerEvents.every(event => event.target === 'button.poster-retry')).toBe(true)
       expect(Math.max(...pointerEvents.map(event => Number(event.scrollY))) - Math.min(...pointerEvents.map(event => Number(event.scrollY)))).toBeLessThanOrEqual(1)
-      const mouseDownBubble = await page.evaluate(() => {
-        const debug = (window as typeof window & { __posterRetryDebug?: { events: Array<Record<string, unknown>> } }).__posterRetryDebug
-        return debug?.events.find(event => event.type === 'mousedown' && event.phase === 'bubble')?.defaultPrevented ?? null
-      })
-      if (mouseDownBubble !== null) expect(mouseDownBubble).toBe(true)
+      expect(mouseEvents.every(event => event.target === 'button.poster-retry')).toBe(true)
+      if (pointerMode === 'mouse') expect(mouseEvents.map(event => event.type)).toEqual(['mousedown', 'mouseup'])
+      const mouseDownBubble = eventLog.find(event => event.type === 'mousedown' && event.phase === 'bubble')?.defaultPrevented ?? null
+      if (pointerMode === 'mouse') expect(mouseDownBubble).toBe(true)
+      else if (mouseDownBubble !== null) expect(mouseDownBubble).toBe(true)
     }
     await expect.poll(
       () => scenario.retryUrls.length,
       { message: 'Retry activation must issue a new target image request before its response is released' }
     ).toBeGreaterThan(0)
+    await expect.poll(
+      () => scenario.poster.locator('.poster-foreground').getAttribute('data-request-id'),
+      { message: 'One retry activation must advance the image request generation exactly once' }
+    ).toBe(String(scenario.initialRequestId + 1))
     await expect.poll(
       () => scenario.failedLayer.evaluate(element => element.isConnected),
       { message: 'Retry activation must replace the failed picture generation before image recovery' }
@@ -288,6 +291,8 @@ async function activatePosterRetry(
   }
 
   await expect(scenario.poster).toHaveAttribute('data-poster-state', 'ready')
+  expect(scenario.retryUrls.slice().sort()).toEqual([...new Set(scenario.initialUrls)].sort())
+  await expect(scenario.poster.locator('.poster-foreground')).toHaveAttribute('data-request-id', String(scenario.initialRequestId + 1))
   const readySize = await scenario.poster.evaluate(element => ({ width: element.clientWidth, height: element.clientHeight }))
   expect(Math.abs(scenario.initialSize.width - readySize.width)).toBeLessThanOrEqual(1)
   expect(Math.abs(scenario.initialSize.height - readySize.height)).toBeLessThanOrEqual(1)
@@ -447,7 +452,7 @@ test('poster WebP failure falls back to a decoded JPEG exactly once', async ({ p
 
 test('poster double failure preserves dimensions and retries the same URLs', async ({ page }) => {
   const scenario = await preparePosterRetry(page)
-  await activatePosterRetry(scenario, page, () => scenario.retry.click(), true)
+  await activatePosterRetry(scenario, page, () => scenario.retry.click(), 'mouse')
 })
 
 test('poster retry supports keyboard Enter activation', async ({ page }) => {
@@ -465,7 +470,7 @@ test('poster retry supports keyboard Space activation', async ({ page }) => {
 test('poster retry supports touch activation', async ({ page }, testInfo) => {
   test.skip(!testInfo.project.use.hasTouch, 'Touch activation is covered by mobile browser projects')
   const scenario = await preparePosterRetry(page)
-  await activatePosterRetry(scenario, page, () => scenario.retry.tap(), true)
+  await activatePosterRetry(scenario, page, () => scenario.retry.tap(), 'touch')
 })
 
 test('poster deadline ignores a real late image load until the user retries', async ({ page }) => {
