@@ -66,7 +66,7 @@ jobs:
       - name: Install WebKit
         run: npx playwright install --with-deps webkit
       - name: Run ten rounds of poster retry activation
-        run: npm run test:e2e -- tests/e2e/media-resilience.spec.ts --project=webkit-desktop --workers=1 --grep 'poster double failure|poster retry keeps its pointer target' --repeat-each=10 --retries=0
+        run: npm run test:e2e -- tests/e2e/media-resilience.spec.ts --project=webkit-desktop --workers=1 --grep 'poster double failure|poster retry keeps its pointer target|poster retry cancels a mouse press dragged outside' --repeat-each=10 --retries=0
       - name: Upload poster retry evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
