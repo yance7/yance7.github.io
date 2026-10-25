@@ -125,6 +125,10 @@ function retryImage() {
   openRef.value?.focus({ preventScroll: true })
 }
 
+function focusRetryButtonWithoutScroll(event: MouseEvent) {
+  (event.currentTarget as HTMLButtonElement).focus({ preventScroll: true })
+}
+
 watch(() => props.poster.file, () => { if (mounted) resetRequest() }, { flush: 'post' })
 
 onMounted(() => {
@@ -194,7 +198,7 @@ onBeforeUnmount(() => {
     <div v-if="showSkeleton" class="poster-skeleton" aria-hidden="true"></div>
     <div v-if="state === 'error'" class="poster-error">
       <p :id="statusId">{{ messages.poster.failed }}</p>
-      <button class="poster-retry" type="button" @click.stop="retryImage">{{ messages.poster.retry }}</button>
+      <button class="poster-retry" type="button" @mousedown.prevent="focusRetryButtonWithoutScroll" @click.stop="retryImage">{{ messages.poster.retry }}</button>
       <a class="poster-original-link" :href="originalImageUrl(poster.file)" target="_blank" rel="noopener noreferrer">{{ messages.poster.original }}</a>
     </div>
   </div>
