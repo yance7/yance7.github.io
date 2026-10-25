@@ -63,6 +63,7 @@ async function startPosterRetryEventCapture(page: Page) {
     const retry = document.querySelector<HTMLButtonElement>('.concert-poster .poster-retry')
     const poster = retry?.closest<HTMLElement>('.concert-poster')
     const card = retry?.closest<HTMLElement>('.concert-rail-card')
+    const rail = document.querySelector<HTMLElement>('#concert-archive-rail')
     if (!retry || !poster) throw new Error('The poster retry button was not present for event capture')
 
     const rect = retry.getBoundingClientRect()
@@ -108,7 +109,7 @@ async function startPosterRetryEventCapture(page: Page) {
         button: 'button' in event ? pointer.button : null,
         isPrimary: 'isPrimary' in event ? pointer.isPrimary : null,
         scrollY: window.scrollY,
-        railScrollLeft: retry.closest<HTMLElement>('.concert-archive-rail')?.scrollLeft ?? null,
+        railScrollLeft: rail?.scrollLeft ?? null,
         activeElement: describe(document.activeElement),
         retryConnected: retry.isConnected,
         retryRect: { left: buttonRect.left, top: buttonRect.top, right: buttonRect.right, bottom: buttonRect.bottom },
@@ -462,7 +463,13 @@ test('poster retry keeps its pointer target while the rail scrolls during a trus
   await scenario.retry.evaluate(button => {
     button.addEventListener('pointerdown', event => {
       const pointerId = (event as PointerEvent).pointerId
+      const rail = button.closest<HTMLElement>('#concert-archive-rail')
+      const thirdCard = rail?.querySelectorAll<HTMLElement>('.concert-rail-card').item(2)
+      if (!rail || !thirdCard) throw new Error('The rail snap target was not present for the active-scroll scenario')
+
       console.info('poster-retry-pointerdown-active-snap')
+      // Start browser-managed smooth snap motion during the trusted pointer hold; WebKit queues a second mouse command behind locator.click.
+      requestAnimationFrame(() => thirdCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }))
       setTimeout(() => {
         const debugWindow = window as typeof window & { __posterRetryDebug?: {
           events: Array<Record<string, unknown>>
@@ -483,11 +490,9 @@ test('poster retry keeps its pointer target while the rail scrolls during a trus
       timeout: 1_000
     })
     const click = scenario.retry.click({ delay: 300 })
-    let wheel: Promise<void> | undefined
     try {
       await pointerDown
       initialScrollLeft = await rail.evaluate(element => element.scrollLeft)
-      wheel = page.mouse.wheel(120, 0)
       await expect.poll(async () => {
         observedRailState = await page.evaluate(() => {
           const debug = (window as typeof window & { __posterRetryDebug?: { events: Array<Record<string, unknown>> } }).__posterRetryDebug
@@ -504,10 +509,9 @@ test('poster retry keeps its pointer target while the rail scrolls during a trus
         return observedRailState.hasPointerCapture
           && observedRailState.scrollLeft !== initialScrollLeft
       },
-        { message: 'Native rail motion must reach the rail while pointer capture is held' }
+        { message: 'The browser snap animation must move the rail while pointer capture is held' }
       ).toBe(true)
     } finally {
-      if (wheel) await wheel
       await click
     }
 
