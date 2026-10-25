@@ -57,6 +57,7 @@ async function startPosterRetryEventCapture(page: Page) {
       const cardStyle = card ? getComputedStyle(card) : null
       debug.events.push({
         type: event.type,
+        time: performance.now(),
         trusted: event.isTrusted,
         target: describe(target),
         path: path.slice(0, 6).map(describe),
@@ -64,6 +65,7 @@ async function startPosterRetryEventCapture(page: Page) {
         point: x !== null && y !== null ? { x, y } : null,
         pointerType: 'pointerType' in event ? pointer.pointerType : null,
         scrollY: window.scrollY,
+        railScrollLeft: retry.closest<HTMLElement>('.concert-archive-rail')?.scrollLeft ?? null,
         activeElement: describe(document.activeElement),
         retryConnected: retry.isConnected,
         retryRect: { left: buttonRect.left, top: buttonRect.top, right: buttonRect.right, bottom: buttonRect.bottom },
@@ -79,7 +81,7 @@ async function startPosterRetryEventCapture(page: Page) {
       })
     }
 
-    for (const type of ['pointerover', 'pointermove', 'pointerdown', 'mousedown', 'focusin', 'pointerup', 'mouseup', 'click', 'pointercancel']) {
+    for (const type of ['pointerover', 'pointermove', 'pointerdown', 'mousedown', 'focusin', 'pointerup', 'mouseup', 'click', 'pointercancel', 'gotpointercapture', 'lostpointercapture']) {
       document.addEventListener(type, record, true)
     }
     window.addEventListener('scroll', record, true)
@@ -356,6 +358,48 @@ test('poster WebP failure falls back to a decoded JPEG exactly once', async ({ p
 test('poster double failure preserves dimensions and retries the same URLs', async ({ page }) => {
   const scenario = await preparePosterRetry(page)
   await activatePosterRetry(scenario, page, () => scenario.retry.click())
+})
+
+test('poster retry keeps its pointer target when native rail scrolling overlaps the click', async ({ page }, testInfo) => {
+  test.skip(!['chromium', 'webkit-desktop'].includes(testInfo.project.name), 'Active rail scroll overlap is checked in desktop Chromium and WebKit')
+  test.skip(testInfo.project.name === 'webkit-desktop' && process.platform === 'win32', 'Windows WebKit queues wheel input until locator.click completes; Linux CI verifies active overlap')
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  const scenario = await preparePosterRetry(page)
+  await activatePosterRetry(scenario, page, async () => {
+    const click = scenario.retry.click({ delay: 300 })
+    try {
+      await page.waitForFunction(() => {
+        const debug = (window as typeof window & { __posterRetryDebug?: { events: Array<Record<string, unknown>> } }).__posterRetryDebug
+        return debug?.events.some(event => event.type === 'pointerdown' && event.target === 'button.poster-retry')
+      })
+
+      const rail = page.locator('#concert-archive-rail')
+      const initialScrollLeft = await rail.evaluate(element => element.scrollLeft)
+      await page.mouse.wheel(120, 0)
+      await expect.poll(() => rail.evaluate(element => element.scrollLeft)).not.toBe(initialScrollLeft)
+    } finally {
+      await click
+    }
+
+    const events = await page.evaluate(() => {
+      const debug = (window as typeof window & { __posterRetryDebug?: { events: Array<Record<string, unknown>> } }).__posterRetryDebug
+      return debug?.events ?? []
+    })
+    const pointerEvents = events.filter(event => ['pointerdown', 'pointerup', 'click'].includes(String(event.type)))
+    expect(pointerEvents.map(event => event.type)).toEqual(['pointerdown', 'pointerup', 'click'])
+    expect(pointerEvents.every(event => event.target === 'button.poster-retry')).toBe(true)
+    expect(events.filter(event => event.type === 'gotpointercapture').map(event => event.target)).toEqual(['button.poster-retry'])
+
+    const pointerDownTime = Number(pointerEvents.find(event => event.type === 'pointerdown')?.time)
+    const pointerUpTime = Number(pointerEvents.find(event => event.type === 'pointerup')?.time)
+    const railScrollEvents = events.filter(event => event.type === 'scroll'
+      && String(event.target).includes('.concert-archive-rail')
+      && Number(event.time) > pointerDownTime
+      && Number(event.time) < pointerUpTime)
+    expect(railScrollEvents.length).toBeGreaterThan(0)
+    const offsets = railScrollEvents.map(event => Number(event.railScrollLeft))
+    expect(Math.max(...offsets) - Math.min(...offsets)).toBeGreaterThan(1)
+  })
 })
 
 test('poster retry supports keyboard Enter activation', async ({ page }) => {

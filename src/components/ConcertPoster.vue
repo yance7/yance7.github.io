@@ -23,6 +23,51 @@ let deadline: ReturnType<typeof setTimeout> | undefined
 let nearViewport = false
 let mounted = false
 let fallbackFrame: number | undefined
+let pendingRetryPointer: {
+  pointerId: number
+  rail: HTMLElement
+  onRailScroll: () => void
+  onPointerEnd: (event: Event) => void
+} | null = null
+
+function clearPendingRetryPointer() {
+  const pending = pendingRetryPointer
+  if (!pending) return
+  pending.rail.removeEventListener('scroll', pending.onRailScroll)
+  document.removeEventListener('pointerup', pending.onPointerEnd, true)
+  document.removeEventListener('pointercancel', pending.onPointerEnd, true)
+  pendingRetryPointer = null
+}
+
+function captureRetryPointerDuringRailScroll(event: PointerEvent) {
+  if (event.pointerType !== 'mouse' || !event.isPrimary || event.button !== 0) return
+  const button = event.currentTarget as HTMLButtonElement
+  const rail = button.closest<HTMLElement>('.concert-archive-rail')
+  if (!rail) return
+
+  clearPendingRetryPointer()
+  const pointerId = event.pointerId
+  const onRailScroll = () => {
+    if (!button.isConnected) {
+      clearPendingRetryPointer()
+      return
+    }
+    try {
+      // Native snap can move the button after pointerdown, changing the click target.
+      button.setPointerCapture(pointerId)
+    } catch {
+      clearPendingRetryPointer()
+    }
+  }
+  const onPointerEnd = (endEvent: Event) => {
+    if ((endEvent as PointerEvent).pointerId === pointerId) clearPendingRetryPointer()
+  }
+
+  pendingRetryPointer = { pointerId, rail, onRailScroll, onPointerEnd }
+  rail.addEventListener('scroll', onRailScroll, { once: true })
+  document.addEventListener('pointerup', onPointerEnd, true)
+  document.addEventListener('pointercancel', onPointerEnd, true)
+}
 
 function updateFallbackVisibility() {
   fallbackFrame = undefined
@@ -144,6 +189,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   mounted = false
+  clearPendingRetryPointer()
   requestId.value += 1
   observer?.disconnect()
   window.removeEventListener('scroll', scheduleFallbackVisibility, true)
@@ -191,7 +237,7 @@ onBeforeUnmount(() => {
     <div v-if="showSkeleton" class="poster-skeleton" aria-hidden="true"></div>
     <div v-if="state === 'error'" class="poster-error">
       <p :id="statusId">{{ messages.poster.failed }}</p>
-      <button class="poster-retry" type="button" @click.stop="retryImage">{{ messages.poster.retry }}</button>
+      <button class="poster-retry" type="button" @pointerdown="captureRetryPointerDuringRailScroll" @click.stop="retryImage">{{ messages.poster.retry }}</button>
       <a class="poster-original-link" :href="originalImageUrl(poster.file)" target="_blank" rel="noopener noreferrer">{{ messages.poster.original }}</a>
     </div>
   </div>
