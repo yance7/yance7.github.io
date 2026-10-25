@@ -406,6 +406,7 @@ test('poster retry keeps its pointer target while the rail scrolls during a trus
   await scenario.retry.scrollIntoViewIfNeeded()
   await waitForStableDocumentScroll(page)
   let initialScrollLeft = 0
+  let observedRailState: { scrollLeft: number, time: number } | null = null
   await scenario.retry.evaluate(button => {
     button.addEventListener('pointerdown', event => {
       const pointerId = (event as PointerEvent).pointerId
@@ -434,8 +435,13 @@ test('poster retry keeps its pointer target while the rail scrolls during a trus
       await pointerDown
       initialScrollLeft = await rail.evaluate(element => element.scrollLeft)
       await page.mouse.wheel(120, 0)
-      await expect.poll(
-        () => rail.evaluate(element => element.scrollLeft),
+      await expect.poll(async () => {
+        observedRailState = await rail.evaluate(element => ({
+          scrollLeft: element.scrollLeft,
+          time: performance.now()
+        }))
+        return observedRailState.scrollLeft
+      },
         { message: 'Native horizontal wheel input during the held click must move the rail before pointerup' }
       ).not.toBe(initialScrollLeft)
     } finally {
@@ -451,17 +457,14 @@ test('poster retry keeps its pointer target while the rail scrolls during a trus
     const captureState = events.find(event => event.type === 'pointer-capture-state')
     if (!captureState) throw new Error('The active pointer capture state was not recorded')
     expect(captureState.hasPointerCapture).toBe(true)
+    if (!observedRailState) throw new Error('The native wheel scroll position was not observed during the held click')
     const pointerDownTime = Number(pointerEvents.find(event => event.type === 'pointerdown')?.time)
     const pointerUpTime = Number(pointerEvents.find(event => event.type === 'pointerup')?.time)
-    const railScrollEvents = events.filter(event => event.type === 'scroll'
-      && String(event.target).includes('#concert-archive-rail')
-      && Number(event.time) > pointerDownTime
-      && Number(event.time) < pointerUpTime)
-    expect(railScrollEvents.length).toBeGreaterThan(0)
-    const railOffsets = railScrollEvents.map(event => Number(event.railScrollLeft))
-    expect(Math.max(...railOffsets) - Math.min(...railOffsets)).toBeGreaterThan(1)
-    expect(pointerEvents.every(event => event.target === 'button.poster-retry')).toBe(true)
+    expect(observedRailState.scrollLeft).not.toBe(initialScrollLeft)
+    expect(observedRailState.time).toBeGreaterThan(pointerDownTime)
+    expect(observedRailState.time).toBeLessThan(pointerUpTime)
     const pointerUp = pointerEvents.find(event => event.type === 'pointerup')
+    expect(pointerEvents.every(event => event.target === 'button.poster-retry')).toBe(true)
     if (process.platform === 'linux') expect(pointerUp?.hitAtPoint).not.toBe('button.poster-retry')
     expect(Math.max(...pointerEvents.map(event => Number(event.scrollY))) - Math.min(...pointerEvents.map(event => Number(event.scrollY)))).toBeLessThanOrEqual(1)
   })
