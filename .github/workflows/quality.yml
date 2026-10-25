@@ -29,7 +29,7 @@ on:
         default: false
         type: boolean
       run_poster_retry_stress:
-        description: 'Run ten rounds of the poster retry during rail snap animation on Linux WebKit'
+        description: 'Run ten rounds of the poster retry during rail movement on Linux WebKit'
         required: false
         default: false
         type: boolean

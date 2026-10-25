@@ -25,18 +25,42 @@ let mounted = false
 let fallbackFrame: number | undefined
 let pendingRetryPointer: {
   pointerId: number
+  button: HTMLButtonElement
+  rail: HTMLElement
+  initialScrollLeft: number
+  frame: number | undefined
   onPointerEnd: (event: Event) => void
 } | null = null
 
 function clearPendingRetryPointer() {
   const pending = pendingRetryPointer
   if (!pending) return
+  if (pending.frame !== undefined) cancelAnimationFrame(pending.frame)
   document.removeEventListener('pointerup', pending.onPointerEnd, true)
   document.removeEventListener('pointercancel', pending.onPointerEnd, true)
   pendingRetryPointer = null
 }
 
-function captureRetryPointerDuringRailScroll(event: PointerEvent) {
+function captureRetryPointerAfterRailMovement(pointerId: number) {
+  const pending = pendingRetryPointer
+  if (!pending || pending.pointerId !== pointerId) return
+  if (!pending.button.isConnected || !pending.rail.isConnected) {
+    clearPendingRetryPointer()
+    return
+  }
+  if (Math.abs(pending.rail.scrollLeft - pending.initialScrollLeft) > 1) {
+    pending.frame = undefined
+    try {
+      pending.button.setPointerCapture(pointerId)
+    } catch {
+      clearPendingRetryPointer()
+    }
+    return
+  }
+  pending.frame = requestAnimationFrame(() => captureRetryPointerAfterRailMovement(pointerId))
+}
+
+function watchRetryRailMovement(event: PointerEvent) {
   if (event.pointerType !== 'mouse' || !event.isPrimary || event.button !== 0) return
   const button = event.currentTarget as HTMLButtonElement
   const rail = button.closest<HTMLElement>('.concert-archive-rail')
@@ -48,15 +72,17 @@ function captureRetryPointerDuringRailScroll(event: PointerEvent) {
     if ((endEvent as PointerEvent).pointerId === pointerId) clearPendingRetryPointer()
   }
 
-  pendingRetryPointer = { pointerId, onPointerEnd }
+  pendingRetryPointer = {
+    pointerId,
+    button,
+    rail,
+    initialScrollLeft: rail.scrollLeft,
+    frame: undefined,
+    onPointerEnd
+  }
   document.addEventListener('pointerup', onPointerEnd, true)
   document.addEventListener('pointercancel', onPointerEnd, true)
-  try {
-    // Capture on pointerdown so WebKit can retain the target before it dispatches a deferred scroll event.
-    button.setPointerCapture(pointerId)
-  } catch {
-    clearPendingRetryPointer()
-  }
+  pendingRetryPointer.frame = requestAnimationFrame(() => captureRetryPointerAfterRailMovement(pointerId))
 }
 
 function updateFallbackVisibility() {
@@ -227,7 +253,7 @@ onBeforeUnmount(() => {
     <div v-if="showSkeleton" class="poster-skeleton" aria-hidden="true"></div>
     <div v-if="state === 'error'" class="poster-error">
       <p :id="statusId">{{ messages.poster.failed }}</p>
-      <button class="poster-retry" type="button" @pointerdown="captureRetryPointerDuringRailScroll" @click.stop="retryImage">{{ messages.poster.retry }}</button>
+      <button class="poster-retry" type="button" @pointerdown="watchRetryRailMovement" @click.stop="retryImage">{{ messages.poster.retry }}</button>
       <a class="poster-original-link" :href="originalImageUrl(poster.file)" target="_blank" rel="noopener noreferrer">{{ messages.poster.original }}</a>
     </div>
   </div>

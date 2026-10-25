@@ -447,9 +447,8 @@ test('poster double failure preserves dimensions and retries the same URLs', asy
   await activatePosterRetry(scenario, page, () => scenario.retry.click())
 })
 
-test('poster retry keeps its pointer target while the rail scrolls during a trusted click', async ({ page }, testInfo) => {
+test('poster retry keeps its pointer target while the rail moves during a trusted click', async ({ page }, testInfo) => {
   test.skip(!['chromium', 'webkit-desktop'].includes(testInfo.project.name), 'Active rail scroll overlap is checked in desktop Chromium and WebKit')
-  test.skip(testInfo.project.name === 'webkit-desktop' && process.platform === 'win32', 'Windows WebKit queues wheel input until locator.click completes; Linux CI verifies active overlap')
   await page.emulateMedia({ reducedMotion: 'no-preference' })
   const scenario = await preparePosterRetry(page)
   await scenario.retry.scrollIntoViewIfNeeded()
@@ -461,38 +460,20 @@ test('poster retry keeps its pointer target while the rail scrolls during a trus
     hasPointerCapture: boolean
   } | null = null
   await scenario.retry.evaluate(button => {
-    button.addEventListener('pointerdown', event => {
-      const pointerId = (event as PointerEvent).pointerId
-      const rail = button.closest<HTMLElement>('#concert-archive-rail')
-      const thirdCard = rail?.querySelectorAll<HTMLElement>('.concert-rail-card').item(2)
-      if (!rail || !thirdCard) throw new Error('The rail snap target was not present for the active-scroll scenario')
-
-      console.info('poster-retry-pointerdown-active-snap')
-      // Start browser-managed smooth snap motion during the trusted pointer hold; WebKit queues a second mouse command behind locator.click.
-      requestAnimationFrame(() => thirdCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }))
-      setTimeout(() => {
-        const debugWindow = window as typeof window & { __posterRetryDebug?: {
-          events: Array<Record<string, unknown>>
-        } }
-        debugWindow.__posterRetryDebug?.events.push({
-          type: 'pointer-capture-state',
-          time: performance.now(),
-          pointerId,
-          hasPointerCapture: button.hasPointerCapture(pointerId)
-        })
-      }, 0)
-    }, { once: true })
+    button.addEventListener('pointerdown', () => console.info('poster-retry-pointerdown-active-snap'), { once: true })
   })
   await activatePosterRetry(scenario, page, async () => {
     const rail = page.locator('#concert-archive-rail')
+    initialScrollLeft = await rail.evaluate(element => element.scrollLeft)
     const pointerDown = page.waitForEvent('console', {
       predicate: message => message.text() === 'poster-retry-pointerdown-active-snap',
       timeout: 1_000
     })
-    const click = scenario.retry.click({ delay: 300 })
+    await scenario.retry.hover()
+    await page.mouse.down()
     try {
       await pointerDown
-      initialScrollLeft = await rail.evaluate(element => element.scrollLeft)
+      await page.mouse.wheel(120, 0)
       await expect.poll(async () => {
         observedRailState = await page.evaluate(() => {
           const debug = (window as typeof window & { __posterRetryDebug?: { events: Array<Record<string, unknown>> } }).__posterRetryDebug
@@ -509,10 +490,10 @@ test('poster retry keeps its pointer target while the rail scrolls during a trus
         return observedRailState.hasPointerCapture
           && observedRailState.scrollLeft !== initialScrollLeft
       },
-        { message: 'The browser snap animation must move the rail while pointer capture is held' }
+        { message: 'The rail position must change while pointer capture is held' }
       ).toBe(true)
     } finally {
-      await click
+      await page.mouse.up()
     }
 
     const events = await page.evaluate(() => {
@@ -521,19 +502,9 @@ test('poster retry keeps its pointer target while the rail scrolls during a trus
     })
     const pointerEvents = events.filter(event => event.phase === 'capture' && ['pointerdown', 'pointerup', 'click'].includes(String(event.type)))
     expect(pointerEvents.map(event => event.type)).toEqual(['pointerdown', 'pointerup', 'click'])
-    const captureState = events.find(event => event.type === 'pointer-capture-state')
-    if (!captureState) throw new Error('The active pointer capture state was not recorded')
-    expect(captureState.hasPointerCapture).toBe(true)
     if (!observedRailState) throw new Error('The native wheel scroll position was not observed during the held click')
     const pointerDownTime = Number(pointerEvents.find(event => event.type === 'pointerdown')?.time)
     const pointerUpTime = Number(pointerEvents.find(event => event.type === 'pointerup')?.time)
-    const railScrollEvents = events.filter(event => event.type === 'scroll'
-      && String(event.target).includes('#concert-archive-rail')
-      && Number(event.time) > pointerDownTime
-      && Number(event.time) < pointerUpTime)
-    expect(railScrollEvents.length).toBeGreaterThan(0)
-    expect(Math.max(...railScrollEvents.map(event => Number(event.railScrollLeft)))
-      - Math.min(...railScrollEvents.map(event => Number(event.railScrollLeft)))).toBeGreaterThan(1)
     expect(observedRailState.scrollLeft).not.toBe(initialScrollLeft)
     expect(observedRailState.hasPointerCapture).toBe(true)
     expect(observedRailState.time).toBeGreaterThan(pointerDownTime)
@@ -553,6 +524,7 @@ test('poster retry cancels a mouse press dragged outside without rail movement',
   const initialScrollLeft = await rail.evaluate(element => element.scrollLeft)
   const cancelTarget = page.getByRole('link', { name: 'Return home: Yance.' })
 
+  scenario.allowRetry()
   await scenario.retry.hover()
   await page.mouse.down()
   try {
