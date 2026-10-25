@@ -53,7 +53,11 @@ async function waitForStableDocumentScroll(page: Page) {
 
 async function startPosterRetryEventCapture(page: Page) {
   await page.evaluate(() => {
-    type RetryDebug = { events: Array<Record<string, unknown>>, buttonRect: Record<string, number> }
+    type RetryDebug = {
+      events: Array<Record<string, unknown>>
+      mutations: Array<Record<string, unknown>>
+      buttonRect: Record<string, number>
+    }
     const debugWindow = window as typeof window & { __posterRetryDebug?: RetryDebug }
     const retry = document.querySelector<HTMLButtonElement>('.concert-poster .poster-retry')
     const poster = retry?.closest<HTMLElement>('.concert-poster')
@@ -63,6 +67,7 @@ async function startPosterRetryEventCapture(page: Page) {
     const rect = retry.getBoundingClientRect()
     const debug: RetryDebug = {
       events: [],
+      mutations: [],
       buttonRect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom }
     }
     debugWindow.__posterRetryDebug = debug
@@ -70,7 +75,7 @@ async function startPosterRetryEventCapture(page: Page) {
     const describe = (element: Element | null) => element
       ? `${element.tagName.toLowerCase()}${element.id ? '#' + element.id : ''}${element.getAttribute('class') ? '.' + element.getAttribute('class')!.trim().replace(/\s+/gu, '.') : ''}`
       : null
-    const record = (event: Event) => {
+    const record = (event: Event, phase: 'capture' | 'bubble') => {
       const pointer = event as PointerEvent
       const hasPoint = typeof pointer.clientX === 'number' && typeof pointer.clientY === 'number'
       const x = hasPoint ? pointer.clientX : null
@@ -89,8 +94,10 @@ async function startPosterRetryEventCapture(page: Page) {
       const cardStyle = card ? getComputedStyle(card) : null
       debug.events.push({
         type: event.type,
+        phase,
         time: performance.now(),
         trusted: event.isTrusted,
+        defaultPrevented: event.defaultPrevented,
         target: describe(target),
         path: path.slice(0, 6).map(describe),
         hitAtPoint: describe(hit),
@@ -105,8 +112,12 @@ async function startPosterRetryEventCapture(page: Page) {
         retryConnected: retry.isConnected,
         retryRect: { left: buttonRect.left, top: buttonRect.top, right: buttonRect.right, bottom: buttonRect.bottom },
         posterState: poster.dataset.posterState,
+        requestId: poster.querySelector<HTMLImageElement>('.poster-foreground')?.getAttribute('data-request-id') ?? null,
         posterTransform: getComputedStyle(poster).transform,
         posterTranslate: getComputedStyle(poster).translate,
+        revealImmediate: card?.dataset.revealImmediate ?? null,
+        revealClass: card?.className ?? null,
+        transitionDelay: card ? getComputedStyle(card).transitionDelay : null,
         cardRect: card ? (() => {
           const cardRect = card.getBoundingClientRect()
           return { left: cardRect.left, top: cardRect.top, right: cardRect.right, bottom: cardRect.bottom }
@@ -117,9 +128,25 @@ async function startPosterRetryEventCapture(page: Page) {
     }
 
     for (const type of ['pointerover', 'pointermove', 'pointerdown', 'mousedown', 'focusin', 'pointerup', 'mouseup', 'click', 'pointercancel', 'gotpointercapture', 'lostpointercapture']) {
-      document.addEventListener(type, record, true)
+      document.addEventListener(type, event => record(event, 'capture'), true)
+      document.addEventListener(type, event => record(event, 'bubble'))
     }
-    window.addEventListener('scroll', record, true)
+    window.addEventListener('scroll', event => record(event, 'capture'), true)
+    const observer = new MutationObserver(records => {
+      for (const mutation of records) {
+        debug.mutations.push({
+          time: performance.now(),
+          type: mutation.type,
+          target: describe(mutation.target instanceof Element ? mutation.target : null),
+          attributeName: mutation.attributeName,
+          posterState: poster.dataset.posterState,
+          requestId: poster.querySelector<HTMLImageElement>('.poster-foreground')?.getAttribute('data-request-id') ?? null,
+          added: [...mutation.addedNodes].map(node => node instanceof Element ? describe(node) : node.nodeName),
+          removed: [...mutation.removedNodes].map(node => node instanceof Element ? describe(node) : node.nodeName)
+        })
+      }
+    })
+    observer.observe(poster, { attributes: true, attributeFilter: ['data-poster-state'], childList: true, subtree: true })
   })
 }
 
@@ -127,6 +154,7 @@ async function attachPosterRetryEventCapture(page: Page, scenario: Awaited<Retur
   const pageState = await page.evaluate(() => {
     const debugWindow = window as typeof window & { __posterRetryDebug?: {
       events: Array<Record<string, unknown>>
+      mutations: Array<Record<string, unknown>>
       buttonRect: Record<string, number>
     } }
     const poster = document.querySelector<HTMLElement>('.concert-poster')
@@ -135,6 +163,7 @@ async function attachPosterRetryEventCapture(page: Page, scenario: Awaited<Retur
     const rect = retry?.getBoundingClientRect()
     return {
       events: debugWindow.__posterRetryDebug?.events ?? [],
+      mutations: debugWindow.__posterRetryDebug?.mutations ?? [],
       initialButtonRect: debugWindow.__posterRetryDebug?.buttonRect ?? null,
       final: {
         scrollY: window.scrollY,
@@ -144,7 +173,8 @@ async function attachPosterRetryEventCapture(page: Page, scenario: Awaited<Retur
         retryRect: rect ? { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom } : null,
         imageSource: image?.currentSrc ?? null,
         imageComplete: image?.complete ?? null,
-        imageNaturalWidth: image?.naturalWidth ?? null
+        imageNaturalWidth: image?.naturalWidth ?? null,
+        requestId: image?.getAttribute('data-request-id') ?? null
       }
     }
   })
@@ -410,7 +440,6 @@ test('poster retry keeps its pointer target while the rail scrolls during a trus
     scrollLeft: number
     time: number
     hasPointerCapture: boolean
-    hitOutsideRetry: boolean
   } | null = null
   await scenario.retry.evaluate(button => {
     button.addEventListener('pointerdown', event => {
@@ -435,7 +464,7 @@ test('poster retry keeps its pointer target while the rail scrolls during a trus
       predicate: message => message.text() === 'poster-retry-pointerdown-active-snap',
       timeout: 1_000
     })
-    const click = scenario.retry.click({ delay: 1_000 })
+    const click = scenario.retry.click({ delay: 300 })
     try {
       await pointerDown
       initialScrollLeft = await rail.evaluate(element => element.scrollLeft)
@@ -445,22 +474,18 @@ test('poster retry keeps its pointer target while the rail scrolls during a trus
           const debug = (window as typeof window & { __posterRetryDebug?: { events: Array<Record<string, unknown>> } }).__posterRetryDebug
           const pointerDown = debug?.events.find(event => event.type === 'pointerdown')
           const pointerId = Number(pointerDown?.pointerId)
-          const point = pointerDown?.point as { x: number, y: number } | null | undefined
           const retry = document.querySelector<HTMLButtonElement>('.concert-poster .poster-retry')
           const rail = document.querySelector<HTMLElement>('#concert-archive-rail')
-          const hitAtPointerDown = point ? document.elementFromPoint(point.x, point.y) : null
           return {
             scrollLeft: rail?.scrollLeft ?? Number.NaN,
             time: performance.now(),
-            hasPointerCapture: Boolean(retry && Number.isFinite(pointerId) && retry.hasPointerCapture(pointerId)),
-            hitOutsideRetry: Boolean(retry && hitAtPointerDown && !retry.contains(hitAtPointerDown))
+            hasPointerCapture: Boolean(retry && Number.isFinite(pointerId) && retry.hasPointerCapture(pointerId))
           }
         })
         return observedRailState.hasPointerCapture
           && observedRailState.scrollLeft !== initialScrollLeft
-          && (process.platform !== 'linux' || observedRailState.hitOutsideRetry)
       },
-        { message: 'Native rail motion must move the active hit point off Retry while pointer capture is held' }
+        { message: 'Native rail motion must reach the rail while pointer capture is held' }
       ).toBe(true)
     } finally {
       await click
@@ -470,7 +495,7 @@ test('poster retry keeps its pointer target while the rail scrolls during a trus
       const debug = (window as typeof window & { __posterRetryDebug?: { events: Array<Record<string, unknown>> } }).__posterRetryDebug
       return debug?.events ?? []
     })
-    const pointerEvents = events.filter(event => ['pointerdown', 'pointerup', 'click'].includes(String(event.type)))
+    const pointerEvents = events.filter(event => event.phase === 'capture' && ['pointerdown', 'pointerup', 'click'].includes(String(event.type)))
     expect(pointerEvents.map(event => event.type)).toEqual(['pointerdown', 'pointerup', 'click'])
     const captureState = events.find(event => event.type === 'pointer-capture-state')
     if (!captureState) throw new Error('The active pointer capture state was not recorded')
@@ -478,11 +503,19 @@ test('poster retry keeps its pointer target while the rail scrolls during a trus
     if (!observedRailState) throw new Error('The native wheel scroll position was not observed during the held click')
     const pointerDownTime = Number(pointerEvents.find(event => event.type === 'pointerdown')?.time)
     const pointerUpTime = Number(pointerEvents.find(event => event.type === 'pointerup')?.time)
+    const railScrollEvents = events.filter(event => event.type === 'scroll'
+      && String(event.target).includes('#concert-archive-rail')
+      && Number(event.time) > pointerDownTime
+      && Number(event.time) < pointerUpTime)
+    expect(railScrollEvents.length).toBeGreaterThan(0)
+    expect(Math.max(...railScrollEvents.map(event => Number(event.railScrollLeft)))
+      - Math.min(...railScrollEvents.map(event => Number(event.railScrollLeft)))).toBeGreaterThan(1)
     expect(observedRailState.scrollLeft).not.toBe(initialScrollLeft)
     expect(observedRailState.hasPointerCapture).toBe(true)
     expect(observedRailState.time).toBeGreaterThan(pointerDownTime)
     expect(observedRailState.time).toBeLessThan(pointerUpTime)
-    if (process.platform === 'linux') expect(observedRailState.hitOutsideRetry).toBe(true)
+    const pointerUp = pointerEvents.find(event => event.type === 'pointerup')
+    if (process.platform === 'linux') expect(pointerUp?.hitAtPoint).not.toBe('button.poster-retry')
     expect(pointerEvents.every(event => event.target === 'button.poster-retry')).toBe(true)
     expect(Math.max(...pointerEvents.map(event => Number(event.scrollY))) - Math.min(...pointerEvents.map(event => Number(event.scrollY)))).toBeLessThanOrEqual(1)
   })
