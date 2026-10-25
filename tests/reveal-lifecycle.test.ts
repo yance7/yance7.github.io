@@ -3,13 +3,19 @@ import reveal, { revealForNavigation } from '../src/directives/reveal'
 
 class RevealElement {
   dataset: Record<string, string> = {}
+  computedOpacity = '0'
+  computedTransform = 'none'
+  boundsReads = 0
   tokens = new Set<string>()
   classList = {
     add: (...tokens: string[]) => tokens.forEach(token => this.tokens.add(token)),
     contains: (token: string) => this.tokens.has(token)
   }
   style = { transitionDelay: '', removeProperty: () => { this.style.transitionDelay = '' } }
-  getBoundingClientRect() { return { top: 2000, bottom: 2100 } }
+  getBoundingClientRect() {
+    this.boundsReads += 1
+    return { top: 2000, bottom: 2100 }
+  }
   contains(target: unknown) { return target === this }
 }
 
@@ -22,7 +28,7 @@ const hooks = reveal as {
 describe('reveal observer lifecycle', () => {
   let elements: RevealElement[]
   let observers: { targets: Set<HTMLElement>, disconnected: boolean, intersect: (element: HTMLElement) => void }[]
-  let listeners: Map<string, () => void>
+  let listeners: Map<string, (event?: unknown) => void>
   let reduced: { matches: boolean, addEventListener: (event: string, handler: () => void) => void, removeEventListener: (event: string) => void }
 
   beforeEach(() => {
@@ -51,6 +57,10 @@ describe('reveal observer lifecycle', () => {
     }
     vi.stubGlobal('IntersectionObserver', Observer)
     vi.stubGlobal('HTMLElement', RevealElement)
+    vi.stubGlobal('getComputedStyle', (element: RevealElement) => ({
+      opacity: element.computedOpacity,
+      transform: element.computedTransform
+    }))
     vi.stubGlobal('window', {
       IntersectionObserver: Observer,
       innerHeight: 800,
@@ -59,13 +69,13 @@ describe('reveal observer lifecycle', () => {
       matchMedia: () => reduced,
       requestAnimationFrame: () => 1,
       cancelAnimationFrame: () => undefined,
-      addEventListener: (event: string, handler: () => void) => listeners.set(event, handler),
+      addEventListener: (event: string, handler: (event?: unknown) => void) => listeners.set(event, handler),
       removeEventListener: (event: string) => listeners.delete(event)
     })
     vi.stubGlobal('document', {
       documentElement: { scrollHeight: 10000, dataset: {} },
       querySelectorAll: () => elements,
-      addEventListener: (event: string, handler: () => void) => listeners.set(event, handler),
+      addEventListener: (event: string, handler: (event?: unknown) => void) => listeners.set(event, handler),
       removeEventListener: (event: string) => listeners.delete(event)
     })
   })
@@ -166,5 +176,64 @@ describe('reveal observer lifecycle', () => {
     expect(element.dataset.revealImmediate).toBe('true')
     expect(element.style.transitionDelay).toBe('0ms')
     expect(listeners.has('focusin')).toBe(true)
+  })
+
+  it.each([
+    'none',
+    'matrix(1, 0, 0, 1, 0, 0)',
+    'matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)'
+  ])('does not reapply immediate reveal state after it settles at transform %s', computedTransform => {
+    const element = mount('default', 240)
+    observers[0]!.intersect(element as unknown as HTMLElement)
+    element.computedOpacity = '1'
+    element.computedTransform = computedTransform
+    const boundsReadsBeforeFocus = element.boundsReads
+    const transitionDelayBeforeFocus = element.style.transitionDelay
+
+    revealForNavigation(element as unknown as HTMLElement)
+
+    expect(element.dataset.revealImmediate).toBeUndefined()
+    expect(element.style.transitionDelay).toBe(transitionDelayBeforeFocus)
+    expect(element.boundsReads).toBe(boundsReadsBeforeFocus)
+  })
+
+  it('keeps settled reveal geometry stable during a primary-pointer focus sequence', () => {
+    const element = mount('default', 240)
+    observers[0]!.intersect(element as unknown as HTMLElement)
+    element.computedOpacity = '1'
+    element.computedTransform = 'none'
+    const boundsReadsBeforePointerFocus = element.boundsReads
+    const transitionDelayBeforePointerFocus = element.style.transitionDelay
+
+    const pointerDown = listeners.get('pointerdown')
+    const focusIn = listeners.get('focusin')
+    const pointerUp = listeners.get('pointerup')
+    expect(focusIn).toBeDefined()
+
+    pointerDown?.({ pointerId: 1, isPrimary: true, button: 0 })
+    focusIn!({ target: element })
+
+    expect(element.dataset.revealImmediate).toBeUndefined()
+    expect(element.style.transitionDelay).toBe(transitionDelayBeforePointerFocus)
+    expect(element.boundsReads).toBe(boundsReadsBeforePointerFocus)
+
+    pointerUp?.({ pointerId: 1, isPrimary: true })
+    focusIn!({ target: element })
+
+    expect(element.boundsReads).toBe(boundsReadsBeforePointerFocus)
+  })
+
+  it('immediately completes an opacity-ready reveal while its transform is still moving', () => {
+    const element = mount('default', 240)
+    observers[0]!.intersect(element as unknown as HTMLElement)
+    element.computedOpacity = '1'
+    element.computedTransform = 'matrix(1, 0, 0, 1, 0, -1)'
+    const boundsReadsBeforeFocus = element.boundsReads
+
+    revealForNavigation(element as unknown as HTMLElement)
+
+    expect(element.dataset.revealImmediate).toBe('true')
+    expect(element.style.transitionDelay).toBe('0ms')
+    expect(element.boundsReads).toBe(boundsReadsBeforeFocus + 1)
   })
 })
