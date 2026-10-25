@@ -28,7 +28,7 @@ const hooks = reveal as {
 describe('reveal observer lifecycle', () => {
   let elements: RevealElement[]
   let observers: { targets: Set<HTMLElement>, disconnected: boolean, intersect: (element: HTMLElement) => void }[]
-  let listeners: Map<string, () => void>
+  let listeners: Map<string, (event?: unknown) => void>
   let reduced: { matches: boolean, addEventListener: (event: string, handler: () => void) => void, removeEventListener: (event: string) => void }
 
   beforeEach(() => {
@@ -69,13 +69,13 @@ describe('reveal observer lifecycle', () => {
       matchMedia: () => reduced,
       requestAnimationFrame: () => 1,
       cancelAnimationFrame: () => undefined,
-      addEventListener: (event: string, handler: () => void) => listeners.set(event, handler),
+      addEventListener: (event: string, handler: (event?: unknown) => void) => listeners.set(event, handler),
       removeEventListener: (event: string) => listeners.delete(event)
     })
     vi.stubGlobal('document', {
       documentElement: { scrollHeight: 10000, dataset: {} },
       querySelectorAll: () => elements,
-      addEventListener: (event: string, handler: () => void) => listeners.set(event, handler),
+      addEventListener: (event: string, handler: (event?: unknown) => void) => listeners.set(event, handler),
       removeEventListener: (event: string) => listeners.delete(event)
     })
   })
@@ -195,6 +195,33 @@ describe('reveal observer lifecycle', () => {
     expect(element.dataset.revealImmediate).toBeUndefined()
     expect(element.style.transitionDelay).toBe(transitionDelayBeforeFocus)
     expect(element.boundsReads).toBe(boundsReadsBeforeFocus)
+  })
+
+  it('keeps settled reveal geometry stable during a primary-pointer focus sequence', () => {
+    const element = mount('default', 240)
+    observers[0]!.intersect(element as unknown as HTMLElement)
+    element.computedOpacity = '1'
+    element.computedTransform = 'none'
+    const boundsReadsBeforePointerFocus = element.boundsReads
+
+    const pointerDown = listeners.get('pointerdown')
+    const focusIn = listeners.get('focusin')
+    const pointerUp = listeners.get('pointerup')
+    expect(pointerDown).toBeDefined()
+    expect(focusIn).toBeDefined()
+    expect(pointerUp).toBeDefined()
+
+    pointerDown!({ pointerId: 1, isPrimary: true, button: 0 })
+    focusIn!({ target: element })
+
+    expect(element.dataset.revealImmediate).toBe('true')
+    expect(element.boundsReads).toBe(boundsReadsBeforePointerFocus + 1)
+
+    const boundsReadsAfterPointerFocus = element.boundsReads
+    pointerUp!({ pointerId: 1, isPrimary: true })
+    focusIn!({ target: element })
+
+    expect(element.boundsReads).toBe(boundsReadsAfterPointerFocus)
   })
 
   it('immediately completes an opacity-ready reveal while its transform is still moving', () => {
