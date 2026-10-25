@@ -203,25 +203,24 @@ describe('reveal observer lifecycle', () => {
     element.computedOpacity = '1'
     element.computedTransform = 'none'
     const boundsReadsBeforePointerFocus = element.boundsReads
+    const transitionDelayBeforePointerFocus = element.style.transitionDelay
 
     const pointerDown = listeners.get('pointerdown')
     const focusIn = listeners.get('focusin')
     const pointerUp = listeners.get('pointerup')
-    expect(pointerDown).toBeDefined()
     expect(focusIn).toBeDefined()
-    expect(pointerUp).toBeDefined()
 
-    pointerDown!({ pointerId: 1, isPrimary: true, button: 0 })
+    pointerDown?.({ pointerId: 1, isPrimary: true, button: 0 })
     focusIn!({ target: element })
 
-    expect(element.dataset.revealImmediate).toBe('true')
-    expect(element.boundsReads).toBe(boundsReadsBeforePointerFocus + 1)
+    expect(element.dataset.revealImmediate).toBeUndefined()
+    expect(element.style.transitionDelay).toBe(transitionDelayBeforePointerFocus)
+    expect(element.boundsReads).toBe(boundsReadsBeforePointerFocus)
 
-    const boundsReadsAfterPointerFocus = element.boundsReads
-    pointerUp!({ pointerId: 1, isPrimary: true })
+    pointerUp?.({ pointerId: 1, isPrimary: true })
     focusIn!({ target: element })
 
-    expect(element.boundsReads).toBe(boundsReadsAfterPointerFocus)
+    expect(element.boundsReads).toBe(boundsReadsBeforePointerFocus)
   })
 
   it('immediately completes an opacity-ready reveal while its transform is still moving', () => {

@@ -7,7 +7,6 @@ const observers = new Map<RevealProfile, IntersectionObserver>()
 const observedElements = new Map<HTMLElement, RevealProfile>()
 const mountedElements = new Set<HTMLElement>()
 const revealedElements = new WeakSet<HTMLElement>()
-const activePrimaryPointers = new Set<number>()
 let bottomResizeObserver: ResizeObserver | null = null
 let motionQuery: MediaQueryList | null = null
 let listening = false
@@ -39,12 +38,7 @@ function disconnectIfIdle() {
   window.removeEventListener('hashchange', handleHashChange)
   window.removeEventListener('popstate', handleRestore)
   window.removeEventListener('pageshow', handleRestore)
-  window.removeEventListener('blur', handlePointerBlur)
-  document.removeEventListener('pointerdown', handlePointerDown, true)
-  document.removeEventListener('pointerup', handlePointerEnd, true)
-  document.removeEventListener('pointercancel', handlePointerEnd, true)
   document.removeEventListener('focusin', handleFocus)
-  activePrimaryPointers.clear()
   motionQuery?.removeEventListener('change', handleMotionChange)
   motionQuery = null
   if (restoreFrame !== undefined) window.cancelAnimationFrame(restoreFrame)
@@ -98,28 +92,16 @@ function isRevealSettled(element: HTMLElement) {
   return style.opacity === '1' && isIdentityTransform(style.transform)
 }
 
-export function revealForNavigation(target: HTMLElement, forceImmediate = false) {
+export function revealForNavigation(target: HTMLElement) {
   for (const element of mountedElements) {
     if (!element.contains(target) && !target.contains(element)) continue
-    if (!forceImmediate && isRevealSettled(element)) continue
+    if (isRevealSettled(element)) continue
     revealElement(element, true)
   }
 }
 
-function handlePointerDown(event: PointerEvent) {
-  if (event.isPrimary && event.button === 0) activePrimaryPointers.add(event.pointerId)
-}
-
-function handlePointerEnd(event: PointerEvent) {
-  activePrimaryPointers.delete(event.pointerId)
-}
-
-function handlePointerBlur() {
-  activePrimaryPointers.clear()
-}
-
 function handleFocus(event: FocusEvent) {
-  if (event.target instanceof HTMLElement) revealForNavigation(event.target, activePrimaryPointers.size > 0)
+  if (event.target instanceof HTMLElement) revealForNavigation(event.target)
 }
 
 function handleHashChange() {
@@ -156,10 +138,6 @@ function startListeners() {
   window.addEventListener('hashchange', handleHashChange)
   window.addEventListener('popstate', handleRestore)
   window.addEventListener('pageshow', handleRestore)
-  window.addEventListener('blur', handlePointerBlur)
-  document.addEventListener('pointerdown', handlePointerDown, true)
-  document.addEventListener('pointerup', handlePointerEnd, true)
-  document.addEventListener('pointercancel', handlePointerEnd, true)
   document.addEventListener('focusin', handleFocus)
   motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
   motionQuery.addEventListener('change', handleMotionChange)
