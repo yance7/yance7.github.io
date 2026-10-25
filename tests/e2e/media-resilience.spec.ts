@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { writeFile } from 'node:fs/promises'
 import { resolve, sep } from 'node:path'
 import { concerts } from '../../src/data/concerts'
 
@@ -109,14 +110,18 @@ async function attachPosterRetryEventCapture(page: Page, scenario: Awaited<Retur
       }
     }
   })
+  const diagnostic = JSON.stringify({
+    ...pageState,
+    initialUrls: scenario.initialUrls,
+    retryUrls: scenario.retryUrls
+  }, null, 2)
+  const diagnosticPath = test.info().outputPath('poster-retry-native-events.json')
+  await writeFile(diagnosticPath, diagnostic, 'utf8')
   await test.info().attach('poster-retry-native-events.json', {
-    body: Buffer.from(JSON.stringify({
-      ...pageState,
-      initialUrls: scenario.initialUrls,
-      retryUrls: scenario.retryUrls
-    }, null, 2), 'utf8'),
+    path: diagnosticPath,
     contentType: 'application/json'
   })
+  return diagnostic
 }
 
 const latestConcert = concerts.reduce((latest, concert) => concert.date > latest.date ? concert : latest)
@@ -191,8 +196,14 @@ async function activatePosterRetry(
     expect(scenario.retryUrls.every(url => scenario.initialUrls.includes(url))).toBe(true)
     expect([...scenario.initialUrls, ...scenario.retryUrls].every(url => new URL(url).search === '')).toBe(true)
   } catch (error) {
-    await attachPosterRetryEventCapture(page, scenario)
-    throw error
+    let diagnostic = 'Event capture failed before diagnostic data could be saved.'
+    try {
+      diagnostic = await attachPosterRetryEventCapture(page, scenario)
+    } catch (captureError) {
+      diagnostic += ` ${String(captureError)}`
+    }
+    const message = error instanceof Error ? error.message : String(error)
+    throw new Error(`${message}\n\nPoster retry native event capture:\n${diagnostic}`, { cause: error })
   } finally {
     scenario.releaseRetry()
   }
