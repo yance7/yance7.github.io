@@ -25,15 +25,12 @@ let mounted = false
 let fallbackFrame: number | undefined
 let pendingRetryPointer: {
   pointerId: number
-  rail: HTMLElement
-  onRailScroll: () => void
   onPointerEnd: (event: Event) => void
 } | null = null
 
 function clearPendingRetryPointer() {
   const pending = pendingRetryPointer
   if (!pending) return
-  pending.rail.removeEventListener('scroll', pending.onRailScroll)
   document.removeEventListener('pointerup', pending.onPointerEnd, true)
   document.removeEventListener('pointercancel', pending.onPointerEnd, true)
   pendingRetryPointer = null
@@ -47,26 +44,19 @@ function captureRetryPointerDuringRailScroll(event: PointerEvent) {
 
   clearPendingRetryPointer()
   const pointerId = event.pointerId
-  const onRailScroll = () => {
-    if (!button.isConnected) {
-      clearPendingRetryPointer()
-      return
-    }
-    try {
-      // Native snap can move the button after pointerdown, changing the click target.
-      button.setPointerCapture(pointerId)
-    } catch {
-      clearPendingRetryPointer()
-    }
-  }
   const onPointerEnd = (endEvent: Event) => {
     if ((endEvent as PointerEvent).pointerId === pointerId) clearPendingRetryPointer()
   }
 
-  pendingRetryPointer = { pointerId, rail, onRailScroll, onPointerEnd }
-  rail.addEventListener('scroll', onRailScroll, { once: true })
+  pendingRetryPointer = { pointerId, onPointerEnd }
   document.addEventListener('pointerup', onPointerEnd, true)
   document.addEventListener('pointercancel', onPointerEnd, true)
+  try {
+    // Capture on pointerdown so WebKit can retain the target before it dispatches a deferred scroll event.
+    button.setPointerCapture(pointerId)
+  } catch {
+    clearPendingRetryPointer()
+  }
 }
 
 function updateFallbackVisibility() {
