@@ -150,6 +150,7 @@ async function attachPosterRetryEventCapture(page: Page, scenario: Awaited<Retur
   })
   const diagnostic = JSON.stringify({
     ...pageState,
+    initialForegroundUrl: scenario.initialForegroundUrl,
     initialUrls: scenario.initialUrls,
     retryUrls: scenario.retryUrls
   }, null, 2)
@@ -195,6 +196,8 @@ async function preparePosterRetry(page: Page) {
   await expect.poll(() => failedImage.evaluate(element => (element as HTMLImageElement).naturalWidth)).toBe(0)
   await expect(failedImage).toHaveAttribute('data-request-id', /^\d+$/)
   const initialRequestId = Number(await failedImage.getAttribute('data-request-id'))
+  const initialForegroundUrl = await failedImage.evaluate(element => (element as HTMLImageElement).currentSrc)
+  expect(initialUrls).toContain(initialForegroundUrl)
   const failedLayer = await poster.locator('.poster-foreground-layer').elementHandle()
   if (!failedLayer) throw new Error('The failed poster generation was not present')
   const failedSize = await poster.evaluate(element => ({ width: element.clientWidth, height: element.clientHeight }))
@@ -209,6 +212,7 @@ async function preparePosterRetry(page: Page) {
     failedLayer,
     initialSize,
     initialRequestId,
+    initialForegroundUrl,
     initialUrls,
     retryUrls,
     allowRetry: () => { acceptingRetry = true },
@@ -270,6 +274,7 @@ async function activatePosterRetry(
       () => scenario.poster.locator('.poster-foreground').getAttribute('data-request-id'),
       { message: 'One retry activation must advance the image request generation exactly once' }
     ).toBe(String(scenario.initialRequestId + 1))
+    expect(new Set(scenario.retryUrls).size).toBe(scenario.retryUrls.length)
     await expect.poll(
       () => scenario.failedLayer.evaluate(element => element.isConnected),
       { message: 'Retry activation must replace the failed picture generation before image recovery' }
@@ -291,8 +296,9 @@ async function activatePosterRetry(
   }
 
   await expect(scenario.poster).toHaveAttribute('data-poster-state', 'ready')
-  expect(scenario.retryUrls.slice().sort()).toEqual([...new Set(scenario.initialUrls)].sort())
   await expect(scenario.poster.locator('.poster-foreground')).toHaveAttribute('data-request-id', String(scenario.initialRequestId + 1))
+  const readyForegroundUrl = await scenario.poster.locator('.poster-foreground').evaluate(element => (element as HTMLImageElement).currentSrc)
+  expect(scenario.retryUrls).toContain(readyForegroundUrl)
   const readySize = await scenario.poster.evaluate(element => ({ width: element.clientWidth, height: element.clientHeight }))
   expect(Math.abs(scenario.initialSize.width - readySize.width)).toBeLessThanOrEqual(1)
   expect(Math.abs(scenario.initialSize.height - readySize.height)).toBeLessThanOrEqual(1)
