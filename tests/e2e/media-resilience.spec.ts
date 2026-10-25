@@ -539,6 +539,57 @@ test('poster retry cancels a mouse press dragged outside without rail movement',
   expect(await rail.evaluate(element => element.scrollLeft)).toBe(initialScrollLeft)
 })
 
+test('poster retry cancels a mouse press dragged outside after rail movement starts', async ({ page }, testInfo) => {
+  test.skip(!['chromium', 'webkit-desktop'].includes(testInfo.project.name), 'Active rail scroll overlap is checked in desktop Chromium and WebKit')
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  const scenario = await preparePosterRetry(page)
+  await scenario.retry.scrollIntoViewIfNeeded()
+  await waitForStableDocumentScroll(page)
+  const rail = page.locator('#concert-archive-rail')
+  const initialScrollLeft = await rail.evaluate(element => element.scrollLeft)
+  const initialScrollY = await page.evaluate(() => window.scrollY)
+  const cancelTarget = scenario.poster.locator('.poster-error p')
+
+  await scenario.retry.evaluate(button => {
+    button.addEventListener('pointerdown', event => console.info(`poster-retry-pointerdown-active-snap-cancel:${(event as PointerEvent).pointerId}`), { once: true })
+  })
+  const pointerDown = page.waitForEvent('console', {
+    predicate: message => message.text().startsWith('poster-retry-pointerdown-active-snap-cancel:'),
+    timeout: 1_000
+  })
+  scenario.allowRetry()
+  await scenario.retry.hover()
+  const initialRequestId = await scenario.poster.getAttribute('data-request-id')
+  await page.mouse.down()
+  try {
+    const pointerId = Number((await pointerDown).text().split(':').pop())
+    expect(Number.isFinite(pointerId)).toBe(true)
+    await page.mouse.wheel(120, 0)
+    await expect.poll(async () => {
+      const state = await page.evaluate(id => {
+        const retry = document.querySelector<HTMLButtonElement>('.concert-poster .poster-retry')
+        const railElement = document.querySelector<HTMLElement>('#concert-archive-rail')
+        return {
+          hasPointerCapture: Boolean(retry && retry.hasPointerCapture(id)),
+          scrollLeft: railElement?.scrollLeft ?? Number.NaN
+        }
+      }, pointerId)
+      return state.hasPointerCapture && state.scrollLeft !== initialScrollLeft
+    }, {
+      message: 'The rail must move and activate pointer capture before the mouse is dragged out'
+    }).toBe(true)
+    await cancelTarget.hover()
+  } finally {
+    await page.mouse.up()
+    scenario.releaseRetry()
+  }
+
+  await expect(scenario.poster).toHaveAttribute('data-poster-state', 'error')
+  expect(Math.abs(await page.evaluate(() => window.scrollY) - initialScrollY)).toBeLessThanOrEqual(1)
+  expect(await scenario.poster.getAttribute('data-request-id')).toBe(initialRequestId)
+  expect(scenario.retryUrls).toHaveLength(0)
+})
+
 test('poster retry supports keyboard Enter activation', async ({ page }) => {
   const scenario = await preparePosterRetry(page)
   await scenario.retry.focus()
