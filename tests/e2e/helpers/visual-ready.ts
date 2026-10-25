@@ -107,6 +107,13 @@ export async function prepareMainForFullCapture(page: Page) {
 
   await waitForMainImages(page)
 
+  const posters = main.locator('.concert-poster')
+  for (let index = 0; index < await posters.count(); index += 1) {
+    const poster = posters.nth(index)
+    await expect(poster).toHaveAttribute('data-poster-state', 'ready')
+    await expect(poster.locator('.poster-error, .poster-skeleton')).toHaveCount(0)
+  }
+
   const rail = page.locator('#concert-archive-rail')
   if (await rail.count()) {
     await rail.evaluate((element) => element.scrollTo({ left: 0, behavior: 'instant' }))

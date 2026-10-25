@@ -215,6 +215,32 @@ test('academics desktop capture waits for complete score metrics', async ({ page
   await expect(page.locator('.metric-card b')).toHaveText(['4.0', '1560', '108', '8.0'])
 })
 
+test('full-page capture rejects a decoded poster that ended in a terminal error', async ({ page }) => {
+  await page.clock.install()
+  let releaseResponse!: () => void
+  const responseGate = new Promise<void>((resolve) => { releaseResponse = resolve })
+  await page.route('**/assets/concerts/thumbs/*.webp', async (route) => {
+    const response = await route.fetch()
+    await responseGate
+    await route.fulfill({ response })
+  })
+
+  try {
+    await page.goto('/en/concerts/', { waitUntil: 'domcontentloaded' })
+    const poster = page.locator('.concert-poster').first()
+    await poster.scrollIntoViewIfNeeded()
+    await expect(poster).toHaveAttribute('data-poster-state', 'loading')
+    await page.clock.fastForward(12_001)
+    await expect(poster).toHaveAttribute('data-poster-state', 'error')
+    releaseResponse()
+    await expect.poll(() => poster.locator('.poster-foreground').evaluate((image) => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0)
+    await expect(poster).toHaveAttribute('data-poster-state', 'error')
+    await expect(prepareMainForFullCapture(page)).rejects.toThrow(/ready/i)
+  } finally {
+    releaseResponse()
+  }
+})
+
 for (const locale of academicLocales) {
   for (const viewport of viewports) {
     for (const theme of themes) {

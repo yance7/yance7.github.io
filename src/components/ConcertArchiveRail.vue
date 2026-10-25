@@ -185,7 +185,6 @@ onMounted(() => {
   reducedMotionQuery.addEventListener('change', syncReducedMotion)
   if (typeof ResizeObserver !== 'undefined') resizeObserver = new ResizeObserver(scheduleLayout)
   const rail = railRef.value
-  rail?.addEventListener('pointerdown', clearPendingTarget, { passive: true })
   rail?.addEventListener('wheel', clearPendingTarget, { passive: true })
   rail?.addEventListener('touchstart', clearPendingTarget, { passive: true })
   window.addEventListener('resize', scheduleLayout)
@@ -198,7 +197,6 @@ onBeforeUnmount(() => {
   mounted = false
   resizeObserver?.disconnect()
   reducedMotionQuery?.removeEventListener('change', syncReducedMotion)
-  railRef.value?.removeEventListener('pointerdown', clearPendingTarget)
   railRef.value?.removeEventListener('wheel', clearPendingTarget)
   railRef.value?.removeEventListener('touchstart', clearPendingTarget)
   window.removeEventListener('resize', scheduleLayout)

@@ -98,7 +98,7 @@ async function startPosterRetryEventCapture(page: Page) {
       })
     }
 
-    for (const type of ['pointerover', 'pointermove', 'pointerdown', 'mousedown', 'focusin', 'pointerup', 'mouseup', 'click', 'pointercancel', 'keydown', 'keyup']) {
+    for (const type of ['pointerover', 'pointermove', 'pointerdown', 'mousedown', 'focusin', 'pointerup', 'mouseup', 'click', 'pointercancel', 'wheel', 'keydown', 'keyup']) {
       document.addEventListener(type, event => record(event, 'capture'), true)
       document.addEventListener(type, event => record(event, 'bubble'))
     }
@@ -224,22 +224,31 @@ async function activatePosterRetry(
   scenario: Awaited<ReturnType<typeof preparePosterRetry>>,
   page: Page,
   activate: () => Promise<void>,
-  pointerMode: 'mouse' | 'touch' | null = null
+  pointerMode: 'mouse' | 'touch' | null = null,
+  allowRailMotion = false
 ) {
   if (pointerMode) {
     await scenario.retry.scrollIntoViewIfNeeded()
     await expect.poll(() => page.evaluate(() => new Promise<boolean>((resolve) => {
       let previous = window.scrollY
+      const rail = document.querySelector<HTMLElement>('#concert-archive-rail')
+      if (!rail) {
+        resolve(false)
+        return
+      }
+      let previousRailScrollLeft = rail.scrollLeft
       let stableFrames = 0
       let checkedFrames = 0
       const check = () => {
         const current = window.scrollY
-        stableFrames = current === previous ? stableFrames + 1 : 0
+        const currentRailScrollLeft = rail.scrollLeft
+        stableFrames = current === previous && currentRailScrollLeft === previousRailScrollLeft ? stableFrames + 1 : 0
         checkedFrames += 1
         if (stableFrames >= 3) resolve(true)
         else if (checkedFrames >= 120) resolve(false)
         else {
           previous = current
+          previousRailScrollLeft = currentRailScrollLeft
           requestAnimationFrame(check)
         }
       }
@@ -260,6 +269,20 @@ async function activatePosterRetry(
       expect(pointerEvents.map(event => event.type)).toEqual(['pointerdown', 'pointerup', 'click'])
       expect(pointerEvents.every(event => event.target === 'button.poster-retry')).toBe(true)
       expect(Math.max(...pointerEvents.map(event => Number(event.scrollY))) - Math.min(...pointerEvents.map(event => Number(event.scrollY)))).toBeLessThanOrEqual(1)
+      if (allowRailMotion) {
+        const pointerDownTime = Number(pointerEvents.find(event => event.type === 'pointerdown')?.time)
+        const pointerUpTime = Number(pointerEvents.find(event => event.type === 'pointerup')?.time)
+        const railScrollEvents = eventLog.filter(event => event.type === 'scroll'
+          && String(event.target).includes('#concert-archive-rail')
+          && Number(event.time) > pointerDownTime
+          && Number(event.time) < pointerUpTime)
+        expect(railScrollEvents.length).toBeGreaterThan(0)
+        const railOffsets = railScrollEvents.map(event => Number(event.railScrollLeft))
+        expect(Math.max(...railOffsets) - Math.min(...railOffsets)).toBeGreaterThan(1)
+      } else {
+        const railOffsetChange = Math.max(...pointerEvents.map(event => Number(event.railScrollLeft))) - Math.min(...pointerEvents.map(event => Number(event.railScrollLeft)))
+        expect(railOffsetChange).toBeLessThanOrEqual(1)
+      }
       expect(mouseEvents.every(event => event.target === 'button.poster-retry')).toBe(true)
       if (pointerMode === 'mouse') expect(mouseEvents.map(event => event.type)).toEqual(['mousedown', 'mouseup'])
       const mouseDownBubble = eventLog.find(event => event.type === 'mousedown' && event.phase === 'bubble')?.defaultPrevented ?? null
@@ -459,6 +482,35 @@ test('poster WebP failure falls back to a decoded JPEG exactly once', async ({ p
 test('poster double failure preserves dimensions and retries the same URLs', async ({ page }) => {
   const scenario = await preparePosterRetry(page)
   await activatePosterRetry(scenario, page, () => scenario.retry.click(), 'mouse')
+})
+
+test('poster retry handles a real click while the native rail snap is moving', async ({ page }, testInfo) => {
+  test.skip(!['chromium', 'webkit-desktop'].includes(testInfo.project.name), 'Active rail snap overlap is checked in desktop Chromium and WebKit')
+  test.skip(testInfo.project.name === 'webkit-desktop' && process.platform === 'win32', 'Windows WebKit queues wheel input until locator.click completes; the Linux CI run verifies active overlap')
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  const scenario = await preparePosterRetry(page)
+  await scenario.retry.evaluate((button) => {
+    button.addEventListener('pointerdown', () => console.info('poster-retry-pointerdown-active-snap'), { once: true })
+  })
+  await activatePosterRetry(scenario, page, async () => {
+    const pointerDown = page.waitForEvent('console', {
+      predicate: message => message.text() === 'poster-retry-pointerdown-active-snap',
+      timeout: 1_000
+    })
+    const click = scenario.retry.click({ delay: 300 })
+    try {
+      await pointerDown
+      const rail = page.locator('#concert-archive-rail')
+      const before = await rail.evaluate(element => element.scrollLeft)
+      await page.mouse.wheel(120, 0)
+      await expect.poll(
+        () => rail.evaluate(element => element.scrollLeft),
+        { message: 'A native horizontal wheel input during the held click must move the rail before pointerup' }
+      ).not.toBe(before)
+    } finally {
+      await click
+    }
+  }, 'mouse', true)
 })
 
 test('poster retry supports keyboard Enter activation', async ({ page }) => {
