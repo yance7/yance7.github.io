@@ -28,15 +28,54 @@ on:
         required: false
         default: false
         type: boolean
+      run_poster_retry_stress:
+        description: 'Run ten rounds of the poster retry during rail movement on Linux WebKit'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
 
 concurrency:
-  group: quality-${{ github.ref }}
+  group: quality-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' && inputs.run_poster_retry_stress == true && 'poster-retry-stress' || 'full' }}
   cancel-in-progress: true
 
 jobs:
+  poster-retry-stress:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_poster_retry_stress == true }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PLAYWRIGHT_USE_PREVIEW: '1'
+      PLAYWRIGHT_OUTPUT_DIR: test-results/poster-retry-stress
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build poster retry target
+        run: npm run build
+      - name: Smoke test poster retry target
+        run: npm run smoke
+      - name: Install WebKit
+        run: npx playwright install --with-deps webkit
+      - name: Run ten rounds of poster retry activation
+        run: npm run test:e2e -- tests/e2e/media-resilience.spec.ts --project=webkit-desktop --workers=1 --grep 'poster double failure|poster retry keeps its pointer target|poster retry cancels a mouse press dragged outside' --repeat-each=10 --retries=0
+      - name: Upload poster retry evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: poster-retry-stress
+          path: test-results/poster-retry-stress
+          if-no-files-found: ignore
+          include-hidden-files: true
+
   home-motion-stress:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_home_motion_stress == true }}
     runs-on: ubuntu-latest
@@ -283,6 +322,10 @@ jobs:
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/chromium
         run: npm run test:e2e -- --project=chromium --workers=4 --retries=0
+      - name: Chromium poster retry active-snap stress
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: test-results/chromium-poster-retry-stress
+        run: npm run test:e2e -- tests/e2e/media-resilience.spec.ts --project=chromium --workers=1 --grep 'poster retry keeps its pointer target' --repeat-each=10 --retries=0
       - name: WebKit desktop ScrollProgress quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-scroll-progress
@@ -331,7 +374,7 @@ jobs:
         run: |
           npm run test:e2e -- tests/e2e/concert-archive-rail.spec.ts tests/e2e/concert-archive-preservation.spec.ts tests/e2e/media-resilience.spec.ts --project=webkit-desktop --workers=4 --retries=0
           PLAYWRIGHT_OUTPUT_DIR=test-results/webkit-desktop-concert-stress npm run test:e2e -- tests/e2e/concert-archive-rail.spec.ts --project=webkit-desktop --workers=1 --grep 'edge centers|reduced-motion resize|fallback works|rapid button|buttons stay synchronized|language navigation|external rail movement' --repeat-each=10 --retries=0
-          PLAYWRIGHT_OUTPUT_DIR=test-results/webkit-desktop-media-stress npm run test:e2e -- tests/e2e/media-resilience.spec.ts --project=webkit-desktop --workers=1 --grep 'slow poster|poster source changes|poster double failure|poster deadline|rapid lightbox|page chunk errors|newer hash' --repeat-each=10 --retries=0
+          PLAYWRIGHT_OUTPUT_DIR=test-results/webkit-desktop-media-stress npm run test:e2e -- tests/e2e/media-resilience.spec.ts --project=webkit-desktop --workers=1 --grep 'slow poster|poster source changes|poster double failure|poster retry keeps its pointer target|poster deadline|rapid lightbox|page chunk errors|newer hash' --repeat-each=10 --retries=0
       - name: WebKit mobile ScrollProgress quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-scroll-progress
