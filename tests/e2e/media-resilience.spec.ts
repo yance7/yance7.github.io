@@ -147,6 +147,7 @@ async function startPosterRetryEventCapture(page: Page) {
           target: describe(mutation.target instanceof Element ? mutation.target : null),
           attributeName: mutation.attributeName,
           posterState: poster.dataset.posterState,
+          requestId: poster.querySelector<HTMLImageElement>('.poster-foreground')?.dataset.requestId ?? null,
           added: [...mutation.addedNodes].map(node => node instanceof Element ? describe(node) : node.nodeName),
           removed: [...mutation.removedNodes].map(node => node instanceof Element ? describe(node) : node.nodeName)
         })
@@ -180,19 +181,24 @@ async function attachPosterRetryEventCapture(page: Page, scenario: Awaited<Retur
         retryConnected: retry?.isConnected ?? false,
         retryRect: rect ? { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom } : null,
         imageSource: image?.currentSrc ?? null,
+        requestId: image?.dataset.requestId ?? null,
         imageComplete: image?.complete ?? null,
         imageNaturalWidth: image?.naturalWidth ?? null
       }
     }
   })
+  const evidence = {
+    ...pageState,
+    initialRequestId: scenario.initialRequestId,
+    initialUrls: scenario.initialUrls,
+    retryUrls: scenario.retryUrls
+  }
+  const serialized = JSON.stringify(evidence, null, 2)
   await test.info().attach('poster-retry-native-events.json', {
-    body: Buffer.from(JSON.stringify({
-      ...pageState,
-      initialUrls: scenario.initialUrls,
-      retryUrls: scenario.retryUrls
-    }, null, 2), 'utf8'),
+    body: Buffer.from(serialized, 'utf8'),
     contentType: 'application/json'
   })
+  console.info(`POSTER_RETRY_NATIVE_EVENTS ${JSON.stringify(evidence)}`)
 }
 
 const posterRetryTarget = '**/assets/concerts/thumbs/concert-20261006-fforever.*'
