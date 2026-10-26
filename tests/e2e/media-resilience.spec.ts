@@ -530,6 +530,31 @@ test('poster retry keeps its pointer target while the rail moves during a truste
   })
 })
 
+test('poster retry keeps its pointer target during vertical document scrolling', async ({ page }, testInfo) => {
+  test.skip(!['chromium', 'webkit-desktop'].includes(testInfo.project.name), 'Vertical document scroll activation is checked in desktop Chromium and WebKit')
+  const scenario = await preparePosterRetry(page)
+  await scenario.retry.scrollIntoViewIfNeeded()
+  await waitForStableDocumentScroll(page)
+
+  await activatePosterRetry(scenario, page, async () => {
+    await scenario.retry.hover()
+    await page.mouse.down()
+    try {
+      const initialScrollY = await page.evaluate(() => window.scrollY)
+      await page.mouse.wheel(0, 120)
+      await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(initialScrollY)
+    } finally {
+      await page.mouse.up()
+    }
+
+    const pointerUpTarget = await page.evaluate(() => {
+      const debug = (window as typeof window & { __posterRetryDebug?: { events: Array<Record<string, unknown>> } }).__posterRetryDebug
+      return debug?.events.find(event => event.phase === 'capture' && event.type === 'pointerup')?.target
+    })
+    expect(pointerUpTarget).toBe('button.poster-retry')
+  })
+})
+
 test('poster retry cancels a mouse press dragged outside without rail movement', async ({ page }) => {
   const scenario = await preparePosterRetry(page)
   await scenario.retry.scrollIntoViewIfNeeded()
