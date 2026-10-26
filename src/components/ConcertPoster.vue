@@ -28,11 +28,8 @@ let fallbackFrame: number | undefined
 let pendingRetryPointer: {
   pointerId: number
   button: HTMLButtonElement
-  rail: HTMLElement
-  initialScrollLeft: number
   initialClientX: number
   initialClientY: number
-  frame: number | undefined
   wasDragged: boolean
   onPointerEnd: (event: Event) => void
 } | null = null
@@ -57,7 +54,6 @@ function suppressCancelledRetryClick(pointerId: number) {
 function clearPendingRetryPointer() {
   const pending = pendingRetryPointer
   if (!pending) return
-  if (pending.frame !== undefined) cancelAnimationFrame(pending.frame)
   document.removeEventListener('pointermove', cancelRetryPointerAfterDrag, true)
   document.removeEventListener('pointerup', pending.onPointerEnd, true)
   document.removeEventListener('pointercancel', pending.onPointerEnd, true)
@@ -70,8 +66,6 @@ function cancelRetryPointerAfterDrag(event: PointerEvent) {
   if (Math.hypot(event.clientX - pending.initialClientX, event.clientY - pending.initialClientY) <= pointerDragTolerance) return
 
   pending.wasDragged = true
-  if (pending.frame !== undefined) cancelAnimationFrame(pending.frame)
-  pending.frame = undefined
   document.removeEventListener('pointermove', cancelRetryPointerAfterDrag, true)
   try {
     if (pending.button.hasPointerCapture(pending.pointerId)) pending.button.releasePointerCapture(pending.pointerId)
@@ -80,30 +74,9 @@ function cancelRetryPointerAfterDrag(event: PointerEvent) {
   }
 }
 
-function captureRetryPointerAfterRailMovement(pointerId: number) {
-  const pending = pendingRetryPointer
-  if (!pending || pending.pointerId !== pointerId) return
-  if (!pending.button.isConnected || !pending.rail.isConnected) {
-    clearPendingRetryPointer()
-    return
-  }
-  if (Math.abs(pending.rail.scrollLeft - pending.initialScrollLeft) > 1) {
-    pending.frame = undefined
-    try {
-      pending.button.setPointerCapture(pointerId)
-    } catch {
-      clearPendingRetryPointer()
-    }
-    return
-  }
-  pending.frame = requestAnimationFrame(() => captureRetryPointerAfterRailMovement(pointerId))
-}
-
-function watchRetryRailMovement(event: PointerEvent) {
+function trackRetryPointerPress(event: PointerEvent) {
   if (event.pointerType !== 'mouse' || !event.isPrimary || event.button !== 0) return
   const button = event.currentTarget as HTMLButtonElement
-  const rail = button.closest<HTMLElement>('.concert-archive-rail')
-  if (!rail) return
 
   clearCancelledRetryClick()
   clearPendingRetryPointer()
@@ -117,18 +90,19 @@ function watchRetryRailMovement(event: PointerEvent) {
   pendingRetryPointer = {
     pointerId,
     button,
-    rail,
-    initialScrollLeft: rail.scrollLeft,
     initialClientX: event.clientX,
     initialClientY: event.clientY,
-    frame: undefined,
     wasDragged: false,
     onPointerEnd
   }
   document.addEventListener('pointermove', cancelRetryPointerAfterDrag, true)
   document.addEventListener('pointerup', onPointerEnd, true)
   document.addEventListener('pointercancel', onPointerEnd, true)
-  pendingRetryPointer.frame = requestAnimationFrame(() => captureRetryPointerAfterRailMovement(pointerId))
+  try {
+    button.setPointerCapture(pointerId)
+  } catch {
+    clearPendingRetryPointer()
+  }
 }
 
 function updateFallbackVisibility() {
@@ -312,7 +286,7 @@ onBeforeUnmount(() => {
     <div v-if="showSkeleton" class="poster-skeleton" aria-hidden="true"></div>
     <div v-if="state === 'error'" class="poster-error">
       <p :id="statusId">{{ messages.poster.failed }}</p>
-      <button class="poster-retry" type="button" @pointerdown="watchRetryRailMovement" @click.stop="handleRetryClick">{{ messages.poster.retry }}</button>
+      <button class="poster-retry" type="button" @pointerdown="trackRetryPointerPress" @click.stop="handleRetryClick">{{ messages.poster.retry }}</button>
       <a class="poster-original-link" :href="originalImageUrl(poster.file)" target="_blank" rel="noopener noreferrer">{{ messages.poster.original }}</a>
     </div>
   </div>
