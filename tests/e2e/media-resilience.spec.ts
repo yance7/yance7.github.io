@@ -147,6 +147,7 @@ async function startPosterRetryEventCapture(page: Page) {
           target: describe(mutation.target instanceof Element ? mutation.target : null),
           attributeName: mutation.attributeName,
           posterState: poster.dataset.posterState,
+          requestId: poster.querySelector<HTMLImageElement>('.poster-foreground')?.dataset.requestId ?? null,
           added: [...mutation.addedNodes].map(node => node instanceof Element ? describe(node) : node.nodeName),
           removed: [...mutation.removedNodes].map(node => node instanceof Element ? describe(node) : node.nodeName)
         })
@@ -180,19 +181,24 @@ async function attachPosterRetryEventCapture(page: Page, scenario: Awaited<Retur
         retryConnected: retry?.isConnected ?? false,
         retryRect: rect ? { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom } : null,
         imageSource: image?.currentSrc ?? null,
+        requestId: image?.dataset.requestId ?? null,
         imageComplete: image?.complete ?? null,
         imageNaturalWidth: image?.naturalWidth ?? null
       }
     }
   })
+  const evidence = {
+    ...pageState,
+    initialRequestId: scenario.initialRequestId,
+    initialUrls: scenario.initialUrls,
+    retryUrls: scenario.retryUrls
+  }
+  const serialized = JSON.stringify(evidence, null, 2)
   await test.info().attach('poster-retry-native-events.json', {
-    body: Buffer.from(JSON.stringify({
-      ...pageState,
-      initialUrls: scenario.initialUrls,
-      retryUrls: scenario.retryUrls
-    }, null, 2), 'utf8'),
+    body: Buffer.from(serialized, 'utf8'),
     contentType: 'application/json'
   })
+  console.info(`POSTER_RETRY_NATIVE_EVENTS ${JSON.stringify(evidence)}`)
 }
 
 const posterRetryTarget = '**/assets/concerts/thumbs/concert-20261006-fforever.*'
@@ -225,6 +231,8 @@ async function preparePosterRetry(page: Page) {
   const failedImage = poster.locator('.poster-foreground')
   await expect.poll(() => failedImage.evaluate(element => (element as HTMLImageElement).complete)).toBe(true)
   await expect.poll(() => failedImage.evaluate(element => (element as HTMLImageElement).naturalWidth)).toBe(0)
+  await expect(failedImage).toHaveAttribute('data-request-id', /^\d+$/)
+  const initialRequestId = Number(await failedImage.getAttribute('data-request-id'))
   const failedLayer = await poster.locator('.poster-foreground-layer').elementHandle()
   if (!failedLayer) throw new Error('The failed poster generation was not present')
   const failedSize = await poster.evaluate(element => ({ width: element.clientWidth, height: element.clientHeight }))
@@ -238,6 +246,7 @@ async function preparePosterRetry(page: Page) {
     retry,
     failedLayer,
     initialSize,
+    initialRequestId,
     initialUrls,
     retryUrls,
     allowRetry: () => { acceptingRetry = true },
@@ -262,11 +271,16 @@ async function activatePosterRetry(
       () => scenario.failedLayer.evaluate(element => element.isConnected),
       { message: 'Retry activation must replace the failed picture generation before image recovery' }
     ).toBe(false)
+    await expect.poll(
+      () => scenario.poster.locator('.poster-foreground').getAttribute('data-request-id'),
+      { message: 'One retry activation must advance the image request generation exactly once' }
+    ).toBe(String(scenario.initialRequestId + 1))
     await expect(scenario.poster).toHaveAttribute('data-poster-state', 'loading')
     expect(scenario.retryUrls.every(url => scenario.initialUrls.includes(url))).toBe(true)
     expect([...scenario.initialUrls, ...scenario.retryUrls].every(url => new URL(url).search === '')).toBe(true)
     scenario.releaseRetry()
     await expect(scenario.poster).toHaveAttribute('data-poster-state', 'ready')
+    await expect(scenario.poster.locator('.poster-foreground')).toHaveAttribute('data-request-id', String(scenario.initialRequestId + 1))
     const readySize = await scenario.poster.evaluate(element => ({ width: element.clientWidth, height: element.clientHeight }))
     expect(Math.abs(scenario.initialSize.width - readySize.width)).toBeLessThanOrEqual(1)
     expect(Math.abs(scenario.initialSize.height - readySize.height)).toBeLessThanOrEqual(1)
@@ -513,6 +527,31 @@ test('poster retry keeps its pointer target while the rail moves during a truste
     if (process.platform === 'linux' && testInfo.project.name === 'webkit-desktop') expect(pointerUp?.hitAtPoint).not.toBe('button.poster-retry')
     expect(pointerEvents.every(event => event.target === 'button.poster-retry')).toBe(true)
     expect(Math.max(...pointerEvents.map(event => Number(event.scrollY))) - Math.min(...pointerEvents.map(event => Number(event.scrollY)))).toBeLessThanOrEqual(1)
+  })
+})
+
+test('poster retry keeps its pointer target during vertical document scrolling', async ({ page }, testInfo) => {
+  test.skip(!['chromium', 'webkit-desktop'].includes(testInfo.project.name), 'Vertical document scroll activation is checked in desktop Chromium and WebKit')
+  const scenario = await preparePosterRetry(page)
+  await scenario.retry.scrollIntoViewIfNeeded()
+  await waitForStableDocumentScroll(page)
+
+  await activatePosterRetry(scenario, page, async () => {
+    await scenario.retry.hover()
+    await page.mouse.down()
+    try {
+      const initialScrollY = await page.evaluate(() => window.scrollY)
+      await page.mouse.wheel(0, 120)
+      await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(initialScrollY)
+    } finally {
+      await page.mouse.up()
+    }
+
+    const pointerUpTarget = await page.evaluate(() => {
+      const debug = (window as typeof window & { __posterRetryDebug?: { events: Array<Record<string, unknown>> } }).__posterRetryDebug
+      return debug?.events.find(event => event.phase === 'capture' && event.type === 'pointerup')?.target
+    })
+    expect(pointerUpTarget).toBe('button.poster-retry')
   })
 })
 

@@ -129,6 +129,7 @@ const selectedActivities = computed(() => community.value.activities.filter((ite
               <strong>{{ item.role }}</strong>
               <span>{{ item.org }}</span>
               <small>{{ item.period }}</small>
+              <small v-if="item.note" class="leadership-note">{{ item.note }}</small>
             </article>
           </div>
         </div>

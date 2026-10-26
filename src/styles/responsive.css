@@ -14,7 +14,7 @@
   .nav-rail a .nav-en { display: none; }
   .nav-rail a .nav-num { display: none; }
   .hero-inner { grid-template-columns: 1fr; }
-  .metric-strip, .metric-strip.large { grid-template-columns: repeat(2, 1fr); }
+  .metric-strip, .metric-strip.large { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 640px) {
@@ -81,7 +81,9 @@
     line-height: 1.28;
   }
   .hero-line { width: 100%; }
-  .metric-strip, .metric-strip.large { grid-template-columns: 1fr 1fr; }
+  .metric-strip, .metric-strip.large { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .metric-strip.large .metric-card { padding-inline: var(--space-4); }
+  .metric-strip.large .metric-card b { font-size: clamp(2.7rem, 12vw, 3.4rem); }
 
   .site-footer { flex-direction: column; align-items: flex-start; gap: var(--space-4); }
   .foot-identity { width: 100%; }

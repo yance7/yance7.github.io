@@ -30,6 +30,16 @@
   font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: var(--tracking-zh-meta);
   color: var(--dim); text-transform: uppercase;
 }
+.scoreboard-note {
+  max-width: 58rem;
+  min-width: 0;
+  margin: var(--space-4) 0 0;
+  color: var(--dim);
+  font-size: var(--type-meta-size);
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.scoreboard-note strong { color: var(--gold-text); font-weight: 600; }
 
 /* ===== 学业 · AP 档案表 ===== */
 .ap-panel {
@@ -72,8 +82,6 @@
   border-style: dashed; color: var(--dim);
   font-size: var(--text-xs); letter-spacing: .1em; font-family: var(--font-technical);
 }
-.ap-row.pending .ap-badge::after { content: '?'; }
-.ap-row.pending .ap-badge > * { display: none; }
 .ap-row.pending:hover .ap-badge { border-color: var(--dim); box-shadow: none; }
 
 @media (hover: hover) and (pointer: fine) {

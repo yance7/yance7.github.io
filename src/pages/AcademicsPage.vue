@@ -43,6 +43,10 @@ const academics = computed(() => getLocalizedAcademics(locale.value))
       />
 
       <MetricStrip :metrics="academics.stats" large />
+      <p class="scoreboard-note">
+        <strong>{{ academics.satSingle.label }}:</strong>
+        {{ academics.satSingle.value }} · {{ academics.satSingle.note }}
+      </p>
     </section>
 
     <section id="sec-ap-archive" class="content">
@@ -66,10 +70,10 @@ const academics = computed(() => getLocalizedAcademics(locale.value))
           <span class="ap-no">{{ String(i + 1).padStart(2, '0') }}</span>
           <div class="ap-main">
             <strong>{{ row.name }}</strong>
-            <small>{{ row.year }}</small>
+            <small>{{ row.year }}<template v-if="row.status === 'pending'"> · {{ academics.sections.apArchive.noScoreLabel }}</template></small>
           </div>
           <span v-if="row.status === 'done'" class="ap-badge">{{ row.score }}</span>
-          <span v-else class="ap-badge"></span>
+          <span v-else class="ap-badge" aria-hidden="true">—</span>
         </div>
       </div>
     </section>

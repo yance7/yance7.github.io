@@ -14,15 +14,15 @@ export const honors = [
   },
   {
     id: 'trae-ai-2026-top-350', date: '2026.07', level: 'peak', title: 'TRAE AI 创造力大赛 · Top 350',
-    org: '约 14,000 份作品'
+    org: '约 14,000 名参赛者'
   },
   {
-    id: 'ukcho-2026-gold', date: '2026.05', level: 'peak', title: '英国化学奥赛 UKChO · 全球金奖',
+    id: 'ukcho-2026-gold', date: '2026.05', level: 'peak', title: '英国化学奥赛 UKChO · 金奖证书',
     org: 'UK Chemistry Olympiad'
   },
   {
-    id: 'usabo-2026-silver', date: '2026.05', level: 'excellent', title: '美国生物奥赛 USABO · 全球银奖',
-    org: 'USA Biology Olympiad'
+    id: 'usabo-2026-silver', date: '2026.05', level: 'excellent', title: 'BIO-USACN 生物竞赛 · 全国银奖',
+    org: 'BioOlympiad Initiative USA-China (BIO-USACN)'
   },
   {
     id: 'ccc-2026-national-bronze', date: '2026.05', level: 'emerging', title: '加拿大化学竞赛 CCC · 全国铜奖',
@@ -41,7 +41,7 @@ export const honors = [
     org: 'iHOSA National Round'
   },
   {
-    id: 'beijing-sti-2026-second', date: '2026.03', level: 'excellent', title: '北京青少年科技创新大赛 · 二等奖',
+    id: 'beijing-sti-2026-second', date: '2026.03', level: 'excellent', title: '北京第45届青少年科技创新大赛 · 二等奖',
     org: 'Beijing Youth Science Creation Competition'
   },
   {
@@ -65,11 +65,11 @@ export const honors = [
 const honorStatMeta = [
   { level: 'all', label: '项荣誉', note: '2025 — 2026' },
   { level: 'peak', label: '领航级', note: 'UKChO · BBO · USACO · TRAE' },
-  { level: 'excellent', label: '卓越级', note: 'USABO · 北京科创大赛' },
+  { level: 'excellent', label: '卓越级', note: 'BIO-USACN · 北京科创大赛' },
   { level: 'emerging', label: '新锐级', note: '国际 · 国家 · 区域' }
 ] satisfies Array<{ level: 'all' | HonorLevel; label: string; note: string }>
 
-export const honorsUpdatedAt = '2026-08-08'
+export const honorsUpdatedAt = '2026-10-22'
 
 export const honorStats = honorStatMeta.map(({ level, label, note }) => ({
   value: String(level === 'all' ? honors.length : honors.filter((honor) => honor.level === level).length),

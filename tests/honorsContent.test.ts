@@ -46,7 +46,7 @@ describe('honors archive content contract', () => {
     }).toEqual({ all: 13, peak: 4, excellent: 2, emerging: 7 })
   })
 
-  it('uses the corrected TRAE record in every locale', () => {
+  it('uses the updated participant-based TRAE record in every locale', () => {
     for (const locale of locales) {
       const trae = getLocalizedHonors(locale).find((honor) => honor.id === 'trae-ai-2026-top-350')
 
@@ -56,19 +56,19 @@ describe('honors archive content contract', () => {
         ['top', '300'].join('-'),
         ['创意', '大赛'].join(''),
         ['創意', '大賽'].join(''),
-        ['参赛', '者'].join(''),
-        ['參賽', '者'].join(''),
-        ['entr', 'ants'].join('')
+        ['14,000', '份作品'].join(' '),
+        ['14,000', '份作品'].join(''),
+        ['sub', 'missions'].join(' ')
       ]
       const copy = `${trae?.title} ${trae?.org}`
       expect(legacyCopy.some((value) => copy.includes(value))).toBe(false)
 
       if (locale === 'zh-CN') {
-        expect(trae).toMatchObject({ title: 'TRAE AI 创造力大赛 · Top 350', org: '约 14,000 份作品' })
+        expect(trae).toMatchObject({ title: 'TRAE AI 创造力大赛 · Top 350', org: '约 14,000 名参赛者' })
       } else if (locale === 'zh-HK') {
-        expect(trae).toMatchObject({ title: 'TRAE AI 創造力大賽 · Top 350', org: '約 14,000 份作品' })
+        expect(trae).toMatchObject({ title: 'TRAE AI 創造力大賽 · Top 350', org: '約 14,000 名參賽者' })
       } else {
-        expect(trae).toMatchObject({ title: 'TRAE AI Creativity Competition · Top 350', org: 'Approximately 14,000 submissions' })
+        expect(trae).toMatchObject({ title: 'TRAE AI Creativity Competition · Top 350', org: 'Approximately 14,000 participants' })
       }
     }
   })

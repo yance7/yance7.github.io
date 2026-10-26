@@ -67,10 +67,10 @@ function collectStrings(value: unknown): string[] {
 describe('English content hygiene', () => {
   it('uses the approved leadership institution names without changing roles or dates', () => {
     expect(getLocalizedCommunity('en').leadership.map(({ role, org, period }) => ({ role, org, period }))).toEqual([
-      { role: 'President', org: 'iHOSA Science and Technology Club', period: '2025.09 — 2026.09' },
+      { role: 'President', org: 'iHOSA Science and Technology Innovation Club', period: '2025.09 — 2026.09' },
       { role: 'Vice President', org: 'Biology Club', period: '2025.09 — 2026.09' },
-      { role: 'Chair', org: 'Student Institute for Self Management', period: '2025.09 — 2026.09' },
-      { role: 'Vice Chair', org: 'Student Institute for Self Management', period: '2024.09 — 2025.09' }
+      { role: 'President', org: 'Student Institute for Self Management', period: '2025.09 — 2026.09' },
+      { role: 'Vice President', org: 'Student Institute for Self Management', period: '2024.09 — 2025.09' }
     ])
   })
 
@@ -147,7 +147,7 @@ describe('English content hygiene', () => {
     }
 
     expect(getLocalizedNavItems('en')[0]).toMatchObject({ desc: 'Personal archive overview' })
-    expect(getLocalizedAcademics('en').sections.apArchive.copy).toContain('Scores of 5 on nine AP exams')
+    expect(getLocalizedAcademics('en').sections.apArchive.copy).toContain('All nine completed AP exams received a 5')
     expect(uiMessages.en.common.proofLinks).toBe('Evidence & links')
     expect(uiMessages.en.actions.enterProject).toBe('View project')
     expect(uiMessages.en.actions.exploreAcademics).toBe('View academic profile')
