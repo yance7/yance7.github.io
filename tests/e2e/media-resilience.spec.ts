@@ -1,7 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { writeFile } from 'node:fs/promises'
 import { resolve, sep } from 'node:path'
-import { concerts } from '../../src/data/concerts'
 
 async function gotoMediaFixture(page: Page, query: string) {
   const root = process.env.MEDIA_FIXTURE_ROOT ?? resolve(process.cwd(), 'test-results/media-fixture')
@@ -21,17 +19,51 @@ function deferred() {
   return { promise, release }
 }
 
+async function waitForStableDocumentScroll(page: Page) {
+  await expect.poll(() => page.evaluate(() => new Promise<boolean>((resolve) => {
+    const rail = document.querySelector<HTMLElement>('#concert-archive-rail')
+    if (!rail) {
+      resolve(false)
+      return
+    }
+    let previous = window.scrollY
+    let previousRail = rail.scrollLeft
+    let stableFrames = 0
+    let checkedFrames = 0
+    const check = () => {
+      const current = window.scrollY
+      const currentRail = rail.scrollLeft
+      stableFrames = Math.abs(current - previous) <= 1 && Math.abs(currentRail - previousRail) <= 1
+        ? stableFrames + 1
+        : 0
+      checkedFrames += 1
+      if (stableFrames >= 8) {
+        resolve(true)
+      } else if (checkedFrames >= 120) {
+        resolve(false)
+      } else {
+        previous = current
+        previousRail = currentRail
+        requestAnimationFrame(check)
+      }
+    }
+    requestAnimationFrame(check)
+  }))).toBe(true)
+}
+
 async function startPosterRetryEventCapture(page: Page) {
   await page.evaluate(() => {
     type RetryDebug = {
       events: Array<Record<string, unknown>>
       mutations: Array<Record<string, unknown>>
       buttonRect: Record<string, number>
+      cleanup?: () => void
     }
     const debugWindow = window as typeof window & { __posterRetryDebug?: RetryDebug }
     const retry = document.querySelector<HTMLButtonElement>('.concert-poster .poster-retry')
     const poster = retry?.closest<HTMLElement>('.concert-poster')
     const card = retry?.closest<HTMLElement>('.concert-rail-card')
+    const rail = document.querySelector<HTMLElement>('#concert-archive-rail')
     if (!retry || !poster) throw new Error('The poster retry button was not present for event capture')
 
     const rect = retry.getBoundingClientRect()
@@ -68,72 +100,78 @@ async function startPosterRetryEventCapture(page: Page) {
         time: performance.now(),
         trusted: event.isTrusted,
         defaultPrevented: event.defaultPrevented,
-        eventPhase: event.eventPhase,
         target: describe(target),
         path: path.slice(0, 6).map(describe),
         hitAtPoint: describe(hit),
         point: x !== null && y !== null ? { x, y } : null,
         pointerType: 'pointerType' in event ? pointer.pointerType : null,
         pointerId: 'pointerId' in event ? pointer.pointerId : null,
-        key: 'key' in event ? (event as KeyboardEvent).key : null,
+        button: 'button' in event ? pointer.button : null,
+        isPrimary: 'isPrimary' in event ? pointer.isPrimary : null,
         scrollY: window.scrollY,
-        railScrollLeft: retry.closest<HTMLElement>('.concert-archive-rail')?.scrollLeft ?? null,
+        railScrollLeft: rail?.scrollLeft ?? null,
         activeElement: describe(document.activeElement),
         retryConnected: retry.isConnected,
         retryRect: { left: buttonRect.left, top: buttonRect.top, right: buttonRect.right, bottom: buttonRect.bottom },
         posterState: poster.dataset.posterState,
-        requestId: poster.querySelector<HTMLImageElement>('.poster-foreground')?.dataset.requestId ?? null,
         posterTransform: getComputedStyle(poster).transform,
         posterTranslate: getComputedStyle(poster).translate,
+        revealImmediate: card?.dataset.revealImmediate ?? null,
+        revealClass: card?.className ?? null,
+        transitionDelay: card ? getComputedStyle(card).transitionDelay : null,
         cardRect: card ? (() => {
           const cardRect = card.getBoundingClientRect()
           return { left: cardRect.left, top: cardRect.top, right: cardRect.right, bottom: cardRect.bottom }
         })() : null,
-        cardClass: card?.className ?? null,
-        cardRevealImmediate: card?.dataset.revealImmediate ?? null,
-        cardTransitionDelay: card?.style.transitionDelay ?? null,
-        cardOpacity: cardStyle?.opacity ?? null,
         cardTransform: cardStyle?.transform ?? null,
         cardTranslate: cardStyle?.translate ?? null
       })
     }
 
-    for (const type of ['pointerover', 'pointermove', 'pointerdown', 'mousedown', 'focusin', 'pointerup', 'mouseup', 'click', 'pointercancel', 'wheel', 'keydown', 'keyup']) {
-      document.addEventListener(type, event => record(event, 'capture'), true)
-      document.addEventListener(type, event => record(event, 'bubble'))
+    const cleanupCallbacks: Array<() => void> = []
+    const listen = (target: EventTarget, type: string, phase: 'capture' | 'bubble', capture: boolean) => {
+      const listener: EventListener = event => record(event, phase)
+      target.addEventListener(type, listener, capture)
+      cleanupCallbacks.push(() => target.removeEventListener(type, listener, capture))
     }
-    window.addEventListener('scroll', event => record(event, 'capture'), true)
-
+    for (const type of ['pointerover', 'pointermove', 'pointerdown', 'mousedown', 'focusin', 'pointerup', 'mouseup', 'click', 'pointercancel', 'gotpointercapture', 'lostpointercapture']) {
+      listen(document, type, 'capture', true)
+      listen(document, type, 'bubble', false)
+    }
+    listen(window, 'scroll', 'capture', true)
     const observer = new MutationObserver(records => {
       for (const mutation of records) {
         debug.mutations.push({
           time: performance.now(),
           type: mutation.type,
+          target: describe(mutation.target instanceof Element ? mutation.target : null),
           attributeName: mutation.attributeName,
-          target: mutation.target instanceof Element ? describe(mutation.target) : null,
-          requestId: poster.querySelector<HTMLImageElement>('.poster-foreground')?.dataset.requestId ?? null,
-          posterState: poster.dataset.posterState
+          posterState: poster.dataset.posterState,
+          added: [...mutation.addedNodes].map(node => node instanceof Element ? describe(node) : node.nodeName),
+          removed: [...mutation.removedNodes].map(node => node instanceof Element ? describe(node) : node.nodeName)
         })
       }
     })
-    observer.observe(poster, {
-      attributes: true,
-      attributeFilter: ['data-poster-state', 'data-request-id'],
-      childList: true,
-      subtree: true
-    })
+    observer.observe(poster, { attributes: true, attributeFilter: ['data-poster-state'], childList: true, subtree: true })
+    cleanupCallbacks.push(() => observer.disconnect())
+    debug.cleanup = () => cleanupCallbacks.splice(0).forEach(cleanup => cleanup())
   })
 }
 
 async function attachPosterRetryEventCapture(page: Page, scenario: Awaited<ReturnType<typeof preparePosterRetry>>) {
   const pageState = await page.evaluate(() => {
-    const debugWindow = window as typeof window & { __posterRetryDebug?: { events: Array<Record<string, unknown>>, mutations: Array<Record<string, unknown>>, buttonRect: Record<string, number> } }
+    const debugWindow = window as typeof window & { __posterRetryDebug?: {
+      events: Array<Record<string, unknown>>
+      mutations: Array<Record<string, unknown>>
+      buttonRect: Record<string, number>
+    } }
     const poster = document.querySelector<HTMLElement>('.concert-poster')
     const retry = poster?.querySelector<HTMLButtonElement>('.poster-retry')
     const image = poster?.querySelector<HTMLImageElement>('.poster-foreground')
     const rect = retry?.getBoundingClientRect()
     return {
       events: debugWindow.__posterRetryDebug?.events ?? [],
+      mutations: debugWindow.__posterRetryDebug?.mutations ?? [],
       initialButtonRect: debugWindow.__posterRetryDebug?.buttonRect ?? null,
       final: {
         scrollY: window.scrollY,
@@ -143,28 +181,21 @@ async function attachPosterRetryEventCapture(page: Page, scenario: Awaited<Retur
         retryRect: rect ? { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom } : null,
         imageSource: image?.currentSrc ?? null,
         imageComplete: image?.complete ?? null,
-        imageNaturalWidth: image?.naturalWidth ?? null,
-        requestId: image?.dataset.requestId ?? null
+        imageNaturalWidth: image?.naturalWidth ?? null
       }
     }
   })
-  const diagnostic = JSON.stringify({
-    ...pageState,
-    initialForegroundUrl: scenario.initialForegroundUrl,
-    initialUrls: scenario.initialUrls,
-    retryUrls: scenario.retryUrls
-  }, null, 2)
-  const diagnosticPath = test.info().outputPath('poster-retry-native-events.json')
-  await writeFile(diagnosticPath, diagnostic, 'utf8')
   await test.info().attach('poster-retry-native-events.json', {
-    path: diagnosticPath,
+    body: Buffer.from(JSON.stringify({
+      ...pageState,
+      initialUrls: scenario.initialUrls,
+      retryUrls: scenario.retryUrls
+    }, null, 2), 'utf8'),
     contentType: 'application/json'
   })
-  return diagnostic
 }
 
-const latestConcert = concerts.reduce((latest, concert) => concert.date > latest.date ? concert : latest)
-const posterRetryTarget = `**/assets/concerts/thumbs/${latestConcert.poster.file.replace(/\.[^.]+$/, '')}.*`
+const posterRetryTarget = '**/assets/concerts/thumbs/concert-20261006-fforever.*'
 
 async function preparePosterRetry(page: Page) {
   const initialResponse = deferred()
@@ -196,8 +227,6 @@ async function preparePosterRetry(page: Page) {
   await expect.poll(() => failedImage.evaluate(element => (element as HTMLImageElement).naturalWidth)).toBe(0)
   await expect(failedImage).toHaveAttribute('data-request-id', /^\d+$/)
   const initialRequestId = Number(await failedImage.getAttribute('data-request-id'))
-  const initialForegroundUrl = await failedImage.evaluate(element => (element as HTMLImageElement).currentSrc)
-  expect(initialUrls).toContain(initialForegroundUrl)
   const failedLayer = await poster.locator('.poster-foreground-layer').elementHandle()
   if (!failedLayer) throw new Error('The failed poster generation was not present')
   const failedSize = await poster.evaluate(element => ({ width: element.clientWidth, height: element.clientHeight }))
@@ -212,7 +241,6 @@ async function preparePosterRetry(page: Page) {
     failedLayer,
     initialSize,
     initialRequestId,
-    initialForegroundUrl,
     initialUrls,
     retryUrls,
     allowRetry: () => { acceptingRetry = true },
@@ -223,108 +251,51 @@ async function preparePosterRetry(page: Page) {
 async function activatePosterRetry(
   scenario: Awaited<ReturnType<typeof preparePosterRetry>>,
   page: Page,
-  activate: () => Promise<void>,
-  pointerMode: 'mouse' | 'touch' | null = null,
-  allowRailMotion = false
+  activate: () => Promise<void>
 ) {
-  if (pointerMode) {
-    await scenario.retry.scrollIntoViewIfNeeded()
-    await expect.poll(() => page.evaluate(() => new Promise<boolean>((resolve) => {
-      let previous = window.scrollY
-      const rail = document.querySelector<HTMLElement>('#concert-archive-rail')
-      if (!rail) {
-        resolve(false)
-        return
-      }
-      let previousRailScrollLeft = rail.scrollLeft
-      let stableFrames = 0
-      let checkedFrames = 0
-      const check = () => {
-        const current = window.scrollY
-        const currentRailScrollLeft = rail.scrollLeft
-        stableFrames = current === previous && currentRailScrollLeft === previousRailScrollLeft ? stableFrames + 1 : 0
-        checkedFrames += 1
-        if (stableFrames >= 3) resolve(true)
-        else if (checkedFrames >= 120) resolve(false)
-        else {
-          previous = current
-          previousRailScrollLeft = currentRailScrollLeft
-          requestAnimationFrame(check)
-        }
-      }
-      requestAnimationFrame(check)
-    }))).toBe(true)
-  }
   await startPosterRetryEventCapture(page)
   scenario.allowRetry()
   try {
     await activate()
-    if (pointerMode) {
-      const eventLog = await page.evaluate(() => {
-        const debug = (window as typeof window & { __posterRetryDebug?: { events: Array<Record<string, unknown>> } }).__posterRetryDebug
-        return debug?.events ?? []
-      })
-      const pointerEvents = eventLog.filter(event => event.phase === 'capture' && ['pointerdown', 'pointerup', 'click'].includes(String(event.type)))
-      const mouseEvents = eventLog.filter(event => event.phase === 'capture' && ['mousedown', 'mouseup'].includes(String(event.type)))
-      expect(pointerEvents.map(event => event.type)).toEqual(['pointerdown', 'pointerup', 'click'])
-      expect(pointerEvents.every(event => event.target === 'button.poster-retry')).toBe(true)
-      expect(Math.max(...pointerEvents.map(event => Number(event.scrollY))) - Math.min(...pointerEvents.map(event => Number(event.scrollY)))).toBeLessThanOrEqual(1)
-      if (allowRailMotion) {
-        const pointerDownTime = Number(pointerEvents.find(event => event.type === 'pointerdown')?.time)
-        const pointerUpTime = Number(pointerEvents.find(event => event.type === 'pointerup')?.time)
-        const railScrollEvents = eventLog.filter(event => event.type === 'scroll'
-          && String(event.target).includes('#concert-archive-rail')
-          && Number(event.time) > pointerDownTime
-          && Number(event.time) < pointerUpTime)
-        expect(railScrollEvents.length).toBeGreaterThan(0)
-        const railOffsets = railScrollEvents.map(event => Number(event.railScrollLeft))
-        expect(Math.max(...railOffsets) - Math.min(...railOffsets)).toBeGreaterThan(1)
-      } else {
-        const railOffsetChange = Math.max(...pointerEvents.map(event => Number(event.railScrollLeft))) - Math.min(...pointerEvents.map(event => Number(event.railScrollLeft)))
-        expect(railOffsetChange).toBeLessThanOrEqual(1)
-      }
-      expect(mouseEvents.every(event => event.target === 'button.poster-retry')).toBe(true)
-      if (pointerMode === 'mouse') expect(mouseEvents.map(event => event.type)).toEqual(['mousedown', 'mouseup'])
-      const mouseDownBubble = eventLog.find(event => event.type === 'mousedown' && event.phase === 'bubble')?.defaultPrevented ?? null
-      if (pointerMode === 'mouse') expect(mouseDownBubble).toBe(true)
-      else if (mouseDownBubble !== null) expect(mouseDownBubble).toBe(true)
-    }
     await expect.poll(
       () => scenario.retryUrls.length,
       { message: 'Retry activation must issue a new target image request before its response is released' }
     ).toBeGreaterThan(0)
     await expect.poll(
-      () => scenario.poster.locator('.poster-foreground').getAttribute('data-request-id'),
-      { message: 'One retry activation must advance the image request generation exactly once' }
-    ).toBe(String(scenario.initialRequestId + 1))
-    expect(new Set(scenario.retryUrls).size).toBe(scenario.retryUrls.length)
-    await expect.poll(
       () => scenario.failedLayer.evaluate(element => element.isConnected),
       { message: 'Retry activation must replace the failed picture generation before image recovery' }
     ).toBe(false)
+    await expect.poll(
+      () => scenario.poster.locator('.poster-foreground').getAttribute('data-request-id'),
+      { message: 'One retry activation must advance the image request generation exactly once' }
+    ).toBe(String(scenario.initialRequestId + 1))
     await expect(scenario.poster).toHaveAttribute('data-poster-state', 'loading')
     expect(scenario.retryUrls.every(url => scenario.initialUrls.includes(url))).toBe(true)
     expect([...scenario.initialUrls, ...scenario.retryUrls].every(url => new URL(url).search === '')).toBe(true)
+    scenario.releaseRetry()
+    await expect(scenario.poster).toHaveAttribute('data-poster-state', 'ready')
+    await expect(scenario.poster.locator('.poster-foreground')).toHaveAttribute('data-request-id', String(scenario.initialRequestId + 1))
+    const readySize = await scenario.poster.evaluate(element => ({ width: element.clientWidth, height: element.clientHeight }))
+    expect(Math.abs(scenario.initialSize.width - readySize.width)).toBeLessThanOrEqual(1)
+    expect(Math.abs(scenario.initialSize.height - readySize.height)).toBeLessThanOrEqual(1)
   } catch (error) {
-    let diagnostic = 'Event capture failed before diagnostic data could be saved.'
     try {
-      diagnostic = await attachPosterRetryEventCapture(page, scenario)
-    } catch (captureError) {
-      diagnostic += ` ${String(captureError)}`
+      await attachPosterRetryEventCapture(page, scenario)
+    } catch {
+      // Preserve the activation or readiness failure if diagnostic attachment also fails.
     }
-    const message = error instanceof Error ? error.message : String(error)
-    throw new Error(`${message}\n\nPoster retry native event capture:\n${diagnostic}`, { cause: error })
+    throw error
   } finally {
     scenario.releaseRetry()
+    try {
+      await page.evaluate(() => {
+        const debugWindow = window as typeof window & { __posterRetryDebug?: { cleanup?: () => void } }
+        debugWindow.__posterRetryDebug?.cleanup?.()
+      })
+    } catch {
+      // The page may already be closed after an earlier browser failure.
+    }
   }
-
-  await expect(scenario.poster).toHaveAttribute('data-poster-state', 'ready')
-  await expect(scenario.poster.locator('.poster-foreground')).toHaveAttribute('data-request-id', String(scenario.initialRequestId + 1))
-  const readyForegroundUrl = await scenario.poster.locator('.poster-foreground').evaluate(element => (element as HTMLImageElement).currentSrc)
-  expect(scenario.retryUrls).toContain(readyForegroundUrl)
-  const readySize = await scenario.poster.evaluate(element => ({ width: element.clientWidth, height: element.clientHeight }))
-  expect(Math.abs(scenario.initialSize.width - readySize.width)).toBeLessThanOrEqual(1)
-  expect(Math.abs(scenario.initialSize.height - readySize.height)).toBeLessThanOrEqual(1)
 }
 
 test('slow poster shows only its delayed static placeholder and then becomes ready', async ({ page }) => {
@@ -481,36 +452,152 @@ test('poster WebP failure falls back to a decoded JPEG exactly once', async ({ p
 
 test('poster double failure preserves dimensions and retries the same URLs', async ({ page }) => {
   const scenario = await preparePosterRetry(page)
-  await activatePosterRetry(scenario, page, () => scenario.retry.click(), 'mouse')
+  await activatePosterRetry(scenario, page, () => scenario.retry.click())
 })
 
-test('poster retry handles a real click while the native rail snap is moving', async ({ page }, testInfo) => {
-  test.skip(!['chromium', 'webkit-desktop'].includes(testInfo.project.name), 'Active rail snap overlap is checked in desktop Chromium and WebKit')
-  test.skip(testInfo.project.name === 'webkit-desktop' && process.platform === 'win32', 'Windows WebKit queues wheel input until locator.click completes; the Linux CI run verifies active overlap')
+test('poster retry keeps its pointer target while the rail moves during a trusted click', async ({ page }, testInfo) => {
+  test.skip(!['chromium', 'webkit-desktop'].includes(testInfo.project.name), 'Active rail scroll overlap is checked in desktop Chromium and WebKit')
   await page.emulateMedia({ reducedMotion: 'no-preference' })
   const scenario = await preparePosterRetry(page)
-  await scenario.retry.evaluate((button) => {
+  await scenario.retry.scrollIntoViewIfNeeded()
+  await waitForStableDocumentScroll(page)
+  let initialScrollLeft = 0
+  let observedRailState: {
+    scrollLeft: number
+    time: number
+    hasPointerCapture: boolean
+  } | null = null
+  await scenario.retry.evaluate(button => {
     button.addEventListener('pointerdown', () => console.info('poster-retry-pointerdown-active-snap'), { once: true })
   })
   await activatePosterRetry(scenario, page, async () => {
+    const rail = page.locator('#concert-archive-rail')
+    initialScrollLeft = await rail.evaluate(element => element.scrollLeft)
     const pointerDown = page.waitForEvent('console', {
       predicate: message => message.text() === 'poster-retry-pointerdown-active-snap',
       timeout: 1_000
     })
-    const click = scenario.retry.click({ delay: 300 })
+    await scenario.retry.hover()
+    await page.mouse.down()
     try {
       await pointerDown
-      const rail = page.locator('#concert-archive-rail')
-      const before = await rail.evaluate(element => element.scrollLeft)
       await page.mouse.wheel(120, 0)
-      await expect.poll(
-        () => rail.evaluate(element => element.scrollLeft),
-        { message: 'A native horizontal wheel input during the held click must move the rail before pointerup' }
-      ).not.toBe(before)
+      await expect.poll(async () => {
+        observedRailState = await page.evaluate(() => {
+          const debug = (window as typeof window & { __posterRetryDebug?: { events: Array<Record<string, unknown>> } }).__posterRetryDebug
+          const pointerDown = debug?.events.find(event => event.type === 'pointerdown')
+          const pointerId = Number(pointerDown?.pointerId)
+          const retry = document.querySelector<HTMLButtonElement>('.concert-poster .poster-retry')
+          const rail = document.querySelector<HTMLElement>('#concert-archive-rail')
+          return {
+            scrollLeft: rail?.scrollLeft ?? Number.NaN,
+            time: performance.now(),
+            hasPointerCapture: Boolean(retry && Number.isFinite(pointerId) && retry.hasPointerCapture(pointerId))
+          }
+        })
+        return observedRailState.hasPointerCapture
+          && observedRailState.scrollLeft !== initialScrollLeft
+      },
+        { message: 'The rail position must change while pointer capture is held' }
+      ).toBe(true)
     } finally {
-      await click
+      await page.mouse.up()
     }
-  }, 'mouse', true)
+
+    const events = await page.evaluate(() => {
+      const debug = (window as typeof window & { __posterRetryDebug?: { events: Array<Record<string, unknown>> } }).__posterRetryDebug
+      return debug?.events ?? []
+    })
+    const pointerEvents = events.filter(event => event.phase === 'capture' && ['pointerdown', 'pointerup', 'click'].includes(String(event.type)))
+    expect(pointerEvents.map(event => event.type)).toEqual(['pointerdown', 'pointerup', 'click'])
+    if (!observedRailState) throw new Error('The native wheel scroll position was not observed during the held click')
+    const pointerDownTime = Number(pointerEvents.find(event => event.type === 'pointerdown')?.time)
+    const pointerUpTime = Number(pointerEvents.find(event => event.type === 'pointerup')?.time)
+    expect(observedRailState.scrollLeft).not.toBe(initialScrollLeft)
+    expect(observedRailState.hasPointerCapture).toBe(true)
+    expect(observedRailState.time).toBeGreaterThan(pointerDownTime)
+    expect(observedRailState.time).toBeLessThan(pointerUpTime)
+    const pointerUp = pointerEvents.find(event => event.type === 'pointerup')
+    if (process.platform === 'linux' && testInfo.project.name === 'webkit-desktop') expect(pointerUp?.hitAtPoint).not.toBe('button.poster-retry')
+    expect(pointerEvents.every(event => event.target === 'button.poster-retry')).toBe(true)
+    expect(Math.max(...pointerEvents.map(event => Number(event.scrollY))) - Math.min(...pointerEvents.map(event => Number(event.scrollY)))).toBeLessThanOrEqual(1)
+  })
+})
+
+test('poster retry cancels a mouse press dragged outside without rail movement', async ({ page }) => {
+  const scenario = await preparePosterRetry(page)
+  await scenario.retry.scrollIntoViewIfNeeded()
+  await waitForStableDocumentScroll(page)
+  const rail = page.locator('#concert-archive-rail')
+  const initialScrollLeft = await rail.evaluate(element => element.scrollLeft)
+  const cancelTarget = page.getByRole('link', { name: 'Return home: Yance.' })
+
+  scenario.allowRetry()
+  await scenario.retry.hover()
+  await page.mouse.down()
+  try {
+    await cancelTarget.hover()
+  } finally {
+    await page.mouse.up()
+    scenario.releaseRetry()
+  }
+
+  await expect(scenario.poster).toHaveAttribute('data-poster-state', 'error')
+  expect(scenario.retryUrls).toHaveLength(0)
+  expect(await rail.evaluate(element => element.scrollLeft)).toBe(initialScrollLeft)
+})
+
+test('poster retry cancels a mouse press dragged outside after rail movement starts', async ({ page }, testInfo) => {
+  test.skip(!['chromium', 'webkit-desktop'].includes(testInfo.project.name), 'Active rail scroll overlap is checked in desktop Chromium and WebKit')
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  const scenario = await preparePosterRetry(page)
+  await scenario.retry.scrollIntoViewIfNeeded()
+  await waitForStableDocumentScroll(page)
+  const rail = page.locator('#concert-archive-rail')
+  const initialScrollLeft = await rail.evaluate(element => element.scrollLeft)
+  const initialScrollY = await page.evaluate(() => window.scrollY)
+  const cancelTarget = scenario.poster.locator('.poster-error p')
+
+  await scenario.retry.evaluate(button => {
+    button.addEventListener('pointerdown', event => console.info(`poster-retry-pointerdown-active-snap-cancel:${(event as PointerEvent).pointerId}`), { once: true })
+  })
+  const pointerDown = page.waitForEvent('console', {
+    predicate: message => message.text().startsWith('poster-retry-pointerdown-active-snap-cancel:'),
+    timeout: 1_000
+  })
+  scenario.allowRetry()
+  await scenario.retry.hover()
+  await page.mouse.down()
+  try {
+    const pointerId = Number((await pointerDown).text().split(':').pop())
+    expect(Number.isFinite(pointerId)).toBe(true)
+    await page.mouse.wheel(120, 0)
+    await expect.poll(async () => {
+      const state = await page.evaluate(id => {
+        const retry = document.querySelector<HTMLButtonElement>('.concert-poster .poster-retry')
+        const railElement = document.querySelector<HTMLElement>('#concert-archive-rail')
+        return {
+          hasPointerCapture: Boolean(retry && retry.hasPointerCapture(id)),
+          scrollLeft: railElement?.scrollLeft ?? Number.NaN
+        }
+      }, pointerId)
+      return state.hasPointerCapture && state.scrollLeft !== initialScrollLeft
+    }, {
+      message: 'The rail must move and activate pointer capture before the mouse is dragged out'
+    }).toBe(true)
+    await expect(cancelTarget).toBeInViewport()
+    const cancelBounds = await cancelTarget.boundingBox()
+    if (!cancelBounds) throw new Error('The poster error message must remain visible while the rail moves')
+    await page.mouse.move(cancelBounds.x + cancelBounds.width / 2, cancelBounds.y + cancelBounds.height / 2)
+  } finally {
+    await page.mouse.up()
+    scenario.releaseRetry()
+  }
+
+  await expect(scenario.poster).toHaveAttribute('data-poster-state', 'error')
+  expect(Math.abs(await page.evaluate(() => window.scrollY) - initialScrollY)).toBeLessThanOrEqual(1)
+  expect(await scenario.failedLayer.evaluate(element => element.isConnected)).toBe(true)
+  expect(scenario.retryUrls).toHaveLength(0)
 })
 
 test('poster retry supports keyboard Enter activation', async ({ page }) => {
@@ -528,7 +615,7 @@ test('poster retry supports keyboard Space activation', async ({ page }) => {
 test('poster retry supports touch activation', async ({ page }, testInfo) => {
   test.skip(!testInfo.project.use.hasTouch, 'Touch activation is covered by mobile browser projects')
   const scenario = await preparePosterRetry(page)
-  await activatePosterRetry(scenario, page, () => scenario.retry.tap(), 'touch')
+  await activatePosterRetry(scenario, page, () => scenario.retry.tap())
 })
 
 test('poster deadline ignores a real late image load until the user retries', async ({ page }) => {

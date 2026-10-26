@@ -24,6 +24,11 @@ const academicLocales = [
   { name: 'zh-hk', code: 'zh-HK', route: '/zh-hk/academics/' },
   { name: 'en', code: 'en', route: '/en/academics/' }
 ] as const
+const researchLocales = [
+  { name: 'zh-cn', code: 'zh-CN', route: '/research/' },
+  { name: 'zh-hk', code: 'zh-HK', route: '/zh-hk/research/' },
+  { name: 'en', code: 'en', route: '/en/research/' }
+] as const
 const englishArchiveHeroRoutes = [
   { name: 'academics', route: '/en/academics/' },
   { name: 'honors', route: '/en/honors/' },
@@ -244,7 +249,7 @@ test('full-page capture rejects a decoded poster that ended in a terminal error'
 for (const locale of academicLocales) {
   for (const viewport of viewports) {
     for (const theme of themes) {
-      test(`academic metric cards keep layout height when revealed: ${locale.name} ${theme} ${viewport.name}`, async ({ page }) => {
+      test(`academic metric cards keep layout height when revealed: ${locale.name} ${theme} ${viewport.name}`, async ({ page }, testInfo) => {
         await page.setViewportSize({ width: viewport.width, height: viewport.height })
         await installTheme(page, theme)
         await page.goto(locale.route)
@@ -265,16 +270,61 @@ for (const locale of academicLocales) {
         })
 
         const before = await measure()
-        const reveals = page.locator('main#main .reveal')
-        for (let index = 0; index < await reveals.count(); index += 1) {
-          const target = reveals.nth(index)
-          await target.scrollIntoViewIfNeeded()
-          await expect(target).toHaveClass(/revealed/)
-        }
-        await expect(page.locator('main#main .reveal:not(.revealed)')).toHaveCount(0)
-        await expect(page.locator('.metric-strip')).toHaveAttribute('data-metrics-ready', 'true')
+        await prepareMainForFullCapture(page)
+        await assertMainVisualContentContract(page, 'academics')
+        await expect(page.locator('.metric-card b')).toHaveText(['4.0', '1560', '108', '8.0'])
 
         expect(await measure()).toEqual(before)
+
+        if (viewport.name === 'desktop') {
+          const snapshotName = locale.name === 'zh-cn'
+            ? `academics-${theme}-desktop-main.png`
+            : `academics-${locale.name}-${theme}-desktop-main.png`
+          await expect(page.locator('main#main')).toHaveScreenshot(snapshotName, componentScreenshotOptions)
+        } else {
+          await page.screenshot({
+            ...sharedScreenshotOptions,
+            path: testInfo.outputPath(`academics-${locale.name}-${theme}-mobile-main-review.png`),
+            fullPage: true
+          })
+        }
+      })
+    }
+  }
+}
+
+for (const locale of researchLocales) {
+  for (const viewport of viewports) {
+    for (const theme of themes) {
+      test(`research full content is capture-ready: ${locale.name} ${theme} ${viewport.name}`, async ({ page }, testInfo) => {
+        if (viewport.name === 'desktop') test.setTimeout(60_000)
+        await page.setViewportSize({ width: viewport.width, height: viewport.height })
+        await installTheme(page, theme)
+        await page.goto(locale.route)
+        await expect(page.locator('html')).toHaveAttribute('data-locale', locale.code)
+        await settlePage(page)
+        await prepareMainForFullCapture(page)
+        await assertMainVisualContentContract(page, 'research')
+        await expect.poll(() => page.locator('.tl-item').evaluateAll((items) => (
+          items.length === 5 && items.every((item) => {
+            const title = item.querySelector<HTMLElement>('.tl-body > h3')?.textContent?.trim()
+            const summary = item.querySelector<HTMLElement>('.tl-body > p')?.textContent?.trim()
+            return Boolean(title && summary)
+          })
+        ))).toBe(true)
+
+        if (viewport.name === 'desktop') {
+          const snapshotName = locale.name === 'zh-cn'
+            ? `research-${theme}-desktop-main.png`
+            : `research-${locale.name}-${theme}-desktop-main.png`
+          await expect(page.locator('main#main')).toHaveScreenshot(snapshotName, componentScreenshotOptions)
+        } else {
+          await page.screenshot({
+            ...sharedScreenshotOptions,
+            path: testInfo.outputPath(`research-${locale.name}-${theme}-mobile-main-review.png`),
+            fullPage: true
+          })
+        }
       })
     }
   }
@@ -308,7 +358,12 @@ for (const route of routes) {
         })
         await expect(page).toHaveScreenshot(`${route}-${theme}-${viewport.name}-viewport.png`, pageScreenshotOptions)
 
-        if (route !== 'index' && viewport.name === 'desktop') {
+        if (
+          route !== 'index'
+          && route !== 'academics'
+          && route !== 'research'
+          && viewport.name === 'desktop'
+        ) {
           await prepareMainForFullCapture(page)
           await assertMainVisualContentContract(page, route)
           if (route === 'concerts') await settleConcertVisualState(page)

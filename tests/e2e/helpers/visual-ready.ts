@@ -18,9 +18,13 @@ async function waitForStableMainLayout(page: Page) {
 
       return JSON.stringify({
         documentHeight: document.documentElement.scrollHeight,
+        scrollY: round(window.scrollY),
         main: rect(main),
         sections: [...main.querySelectorAll<HTMLElement>('section')].map(rect),
-        header: rect(document.querySelector('.site-nav'))
+        header: rect(document.querySelector('.site-nav')),
+        headerState: document.querySelector<HTMLElement>('.site-nav')?.dataset.headerState ?? null,
+        timelineReadingStates: [...main.querySelectorAll<HTMLElement>('.tl-item')]
+          .map((item) => item.dataset.readingState ?? null)
       })
     }
 
@@ -122,6 +126,7 @@ export async function prepareMainForFullCapture(page: Page) {
 
   await page.evaluate(() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' }))
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0)
+  await expect(page.locator('.site-nav')).toHaveAttribute('data-header-state', 'resting')
   await page.mouse.move(-1, -1)
   await expect(page.locator('.sitewide-cursor.is-visible')).toHaveCount(0)
   await expect(main.locator('.reveal:not(.revealed)')).toHaveCount(0)
