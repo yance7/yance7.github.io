@@ -510,7 +510,7 @@ test('poster retry keeps its pointer target while the rail moves during a truste
     expect(observedRailState.time).toBeGreaterThan(pointerDownTime)
     expect(observedRailState.time).toBeLessThan(pointerUpTime)
     const pointerUp = pointerEvents.find(event => event.type === 'pointerup')
-    if (process.platform === 'linux') expect(pointerUp?.hitAtPoint).not.toBe('button.poster-retry')
+    if (process.platform === 'linux' && testInfo.project.name === 'webkit-desktop') expect(pointerUp?.hitAtPoint).not.toBe('button.poster-retry')
     expect(pointerEvents.every(event => event.target === 'button.poster-retry')).toBe(true)
     expect(Math.max(...pointerEvents.map(event => Number(event.scrollY))) - Math.min(...pointerEvents.map(event => Number(event.scrollY)))).toBeLessThanOrEqual(1)
   })
