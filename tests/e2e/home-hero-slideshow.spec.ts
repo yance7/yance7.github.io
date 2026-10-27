@@ -406,6 +406,20 @@ test('manual selection pauses persistently and uses direction by target order wi
   await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', /static|complete/)
 })
 
+test('the first pointer activation of Pause stays paused after the pointer leaves', async ({ page }) => {
+  await page.goto('/')
+  const group = page.locator('.home-hero-slideshow__controls')
+  const play = group.getByRole('button', { name: /^(暂停|播放)照片轮播$/ })
+  await expect(group).toBeVisible()
+  await expectLoadedImage(page)
+  await expect(play).toHaveAccessibleName('暂停照片轮播')
+
+  await play.click({ position: { x: 2, y: 16 } })
+  await expect(play).toHaveAccessibleName('播放照片轮播')
+  await page.mouse.move(1, 1)
+  await expect(play).toHaveAccessibleName('播放照片轮播')
+})
+
 test('keeps only the last manual target selected during an active transition', async ({ page }) => {
   const { group, media } = await openPausedHome(page)
   const dots = group.locator('.home-hero-slideshow__dot-button')

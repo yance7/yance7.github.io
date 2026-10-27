@@ -39,6 +39,7 @@ const scrimStyle = computed(() => ({
 }))
 
 let transitionFrame = 0
+let pointerPlaybackIntent: 'play' | 'pause' | null = null
 
 function photoName(index: number) {
   const photoIndex = (index + 1) as keyof typeof messages.value.photos
@@ -73,9 +74,19 @@ function imageStyle(slide: HomeHeroSlide) {
   }
 }
 
-function togglePlayback() {
-  const isPaused = state.value.userPaused || state.value.focusPaused
-  if (isPaused) controller.play()
+function rememberPointerPlaybackIntent() {
+  pointerPlaybackIntent = state.value.userPaused || state.value.focusPaused ? 'play' : 'pause'
+}
+
+function clearPointerPlaybackIntent() {
+  pointerPlaybackIntent = null
+}
+
+function togglePlayback(event: MouseEvent) {
+  const intent = event.detail > 0 ? pointerPlaybackIntent : null
+  pointerPlaybackIntent = null
+  const action = intent ?? (state.value.userPaused || state.value.focusPaused ? 'play' : 'pause')
+  if (action === 'play') controller.play()
   else controller.pause()
 }
 
@@ -196,7 +207,9 @@ onBeforeUnmount(() => {
             ? messages.play
             : messages.pause"
         :disabled="state.reducedMotion || state.forcedColors"
-        @click="togglePlayback"
+        @pointerdown="rememberPointerPlaybackIntent"
+        @pointercancel="clearPointerPlaybackIntent"
+        @click="togglePlayback($event)"
       >
         <svg v-if="state.userPaused || state.focusPaused || state.reducedMotion || state.forcedColors" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M8 5.5v13L19 12 8 5.5Z" fill="currentColor"></path>
