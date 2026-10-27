@@ -42,7 +42,7 @@ async function mockDocumentVisibility(page: import('@playwright/test').Page) {
   })
 }
 
-test('releases homepage content after the first photo decodes when LCP reports no entries', async ({ page }) => {
+async function suppressLargestContentfulPaintEntries(page: import('@playwright/test').Page) {
   await page.addInitScript(() => {
     const NativePerformanceObserver = window.PerformanceObserver
     class SilentLcpObserver extends NativePerformanceObserver {
@@ -57,10 +57,28 @@ test('releases homepage content after the first photo decodes when LCP reports n
     })
     window.PerformanceObserver = SilentLcpObserver
   })
+}
+
+test('releases homepage content after the first photo decodes when LCP reports no entries', async ({ page }) => {
+  await suppressLargestContentfulPaintEntries(page)
 
   await page.goto('/')
   await expectLoadedImage(page)
   await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready', { timeout: 2500 })
+})
+
+test('starts homepage fonts after hero paint if idle callbacks stay pending', async ({ page }) => {
+  await suppressLargestContentfulPaintEntries(page)
+  await page.addInitScript(() => {
+    window.requestIdleCallback = () => 0
+  })
+  await page.addInitScript((theme) => localStorage.setItem('yance-theme', theme), 'dark')
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  await page.goto('/en/')
+  await expectLoadedImage(page)
+  const root = page.locator('html')
+  await expect(root).toHaveAttribute('data-home-hero-photo-ready', 'true', { timeout: 2500 })
+  await expect(root).toHaveAttribute('data-fonts-ready', 'ready', { timeout: 5000 })
 })
 
 test('requests the first responsive photo at high priority and at most one next photo without duplication', async ({ page, browserName }) => {

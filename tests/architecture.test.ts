@@ -47,7 +47,7 @@ describe('critical rendering contracts', () => {
     expect(app).toContain('<Suspense v-if="pageContentEnabled"')
   })
 
-  it('mounts before scheduling locale font loading in the background', () => {
+  it('mounts before starting homepage fonts after hero paint and keeps other fonts idle-scheduled', () => {
     const main = readFileSync(resolve(process.cwd(), 'src/main.ts'), 'utf8').replace(/\r\n/g, '\n')
 
     expect(main).not.toContain("import './fonts.css'")
@@ -62,6 +62,7 @@ describe('critical rendering contracts', () => {
     const loadFonts = main.slice(main.indexOf('async function loadFonts'), main.indexOf('const app = createApp'))
     expect(loadFonts).not.toContain('mountApp()')
     expect(loadFonts).not.toContain('document.fonts.load(')
+    expect(main).toContain('function startLoadingFonts() { void loadFonts() }')
     expect(main).toContain('function scheduleFonts()')
     expect(main).toContain('const fontLoadTimeout = 2400')
     expect(main).toContain('idleWindow.requestIdleCallback(startLoadingFonts, { timeout: fontLoadTimeout })')
@@ -69,7 +70,8 @@ describe('critical rendering contracts', () => {
     const startup = main.slice(main.indexOf('let appMounted'))
     expect(startup).toContain('mountApp()')
     expect(startup).toContain("document.body.dataset.page === 'home' && !initialHash")
-    expect(startup).toContain("window.addEventListener('home-hero-photo-ready', scheduleFonts, { once: true })")
+    expect(startup).toContain("window.addEventListener('home-hero-photo-ready', startLoadingFonts, { once: true })")
+    expect(startup).toContain("document.documentElement.dataset.homeHeroPhotoReady === 'true') startLoadingFonts()")
     expect(startup.indexOf('mountApp()')).toBeLessThan(startup.indexOf("window.addEventListener('home-hero-photo-ready'"))
     expect(startup).toContain('scheduleFonts()')
   })

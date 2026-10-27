@@ -42,11 +42,12 @@ async function loadFonts() {
 
 const fontLoadTimeout = 2400
 
+function startLoadingFonts() { void loadFonts() }
+
 function scheduleFonts() {
   const idleWindow = window as Window & {
     requestIdleCallback?: (callback: () => void, options?: { timeout?: number }) => number
   }
-  const startLoadingFonts = () => { void loadFonts() }
 
   if (idleWindow.requestIdleCallback) {
     idleWindow.requestIdleCallback(startLoadingFonts, { timeout: fontLoadTimeout })
@@ -73,8 +74,8 @@ function mountApp() {
 
 mountApp()
 if (document.body.dataset.page === 'home' && !initialHash) {
-  if (document.documentElement.dataset.homeHeroPhotoReady === 'true') scheduleFonts()
-  else window.addEventListener('home-hero-photo-ready', scheduleFonts, { once: true })
+  if (document.documentElement.dataset.homeHeroPhotoReady === 'true') startLoadingFonts()
+  else window.addEventListener('home-hero-photo-ready', startLoadingFonts, { once: true })
 } else {
   scheduleFonts()
 }
