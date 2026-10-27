@@ -192,7 +192,11 @@ function scheduleHomeContentFallback() {
       return
     }
     const decoded = typeof photo.decode === 'function' ? photo.decode().catch(() => undefined) : Promise.resolve()
-    void decoded.then(() => window.requestAnimationFrame(() => window.requestAnimationFrame(enableHomeContent)))
+    void decoded.then(() => window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+      if (disposed || pageContentEnabled.value) return
+      clearTimeout(homeContentFallbackTimer)
+      homeContentFallbackTimer = window.setTimeout(enableHomeContent, 250)
+    })))
   }
   const loaded = () => finish(true)
   const failed = () => finish(false)
@@ -289,19 +293,7 @@ onMounted(() => {
     return
   }
 
-  const photo = document.querySelector<HTMLImageElement>('.home-hero-slideshow__image--current')
-  if (photo) {
-    const failed = () => enableHomeContent()
-    if (photo.complete) {
-      if (photo.naturalWidth === 0) {
-        enableHomeContent()
-        return
-      }
-    } else {
-      photo.addEventListener('error', failed, { once: true })
-      homePhotoFallbackCleanup = () => photo.removeEventListener('error', failed)
-    }
-  }
+  scheduleHomeContentFallback()
   try {
     if (!PerformanceObserver.supportedEntryTypes?.includes('largest-contentful-paint')) {
       throw new Error('Largest Contentful Paint observation is unavailable')
@@ -314,11 +306,9 @@ onMounted(() => {
       if (hasHeroPhotoPaint) enableHomeContent()
     })
     homeContentObserver.observe({ type: 'largest-contentful-paint', buffered: true })
-    homeContentFallbackTimer = window.setTimeout(enableHomeContent, 4000)
   } catch {
     homeContentObserver?.disconnect()
     homeContentObserver = null
-    scheduleHomeContentFallback()
   }
 })
 onBeforeUnmount(() => {

@@ -42,6 +42,27 @@ async function mockDocumentVisibility(page: import('@playwright/test').Page) {
   })
 }
 
+test('releases homepage content after the first photo decodes when LCP reports no entries', async ({ page }) => {
+  await page.addInitScript(() => {
+    const NativePerformanceObserver = window.PerformanceObserver
+    class SilentLcpObserver extends NativePerformanceObserver {
+      observe(options: PerformanceObserverInit) {
+        if (options.type === 'largest-contentful-paint') return
+        super.observe(options)
+      }
+    }
+    Object.defineProperty(SilentLcpObserver, 'supportedEntryTypes', {
+      configurable: true,
+      value: NativePerformanceObserver.supportedEntryTypes
+    })
+    window.PerformanceObserver = SilentLcpObserver
+  })
+
+  await page.goto('/')
+  await expectLoadedImage(page)
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready', { timeout: 2500 })
+})
+
 test('requests the first responsive photo at high priority and at most one next photo without duplication', async ({ page, browserName }) => {
   const imageRequests: string[] = []
   const appScripts: string[] = []
