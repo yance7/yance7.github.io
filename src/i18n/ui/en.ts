@@ -18,7 +18,25 @@ export const enMessages = {
   empty: { honors: 'There are no records in this category yet.', viewAll: 'View all', works: 'Projects are being organized. Please check back later.', concerts: 'There are no concert records yet.', selectedWork: 'Selected work is being organized. Explore the archive for more.' },
   status: { active: 'Active', published: 'Published', completed: 'Completed', deployed: 'Deployed', 'open-source': 'Open source', planned: 'Planned', archived: 'Archived' },
   page: {
-    home: { kicker: 'PERSONAL ARCHIVE / BEIJING · 2026', title: 'SONG NOTES', copy: 'A record of research, shipped products, and the life fragments lit by music and live shows. Start with a real question, then follow the evidence toward something usable.' },
+    home: {
+      kicker: 'PERSONAL ARCHIVE / BEIJING · 2026',
+      title: 'SONG NOTES',
+      copy: 'A record of research, shipped products, and the life fragments lit by music and live shows. Start with a real question, then follow the evidence toward something usable.',
+      slideshow: {
+        groupLabel: 'Homepage photo carousel',
+        roleDescription: 'carousel',
+        play: 'Play photo carousel',
+        pause: 'Pause photo carousel',
+        static: 'Photo carousel is paused by your reduced motion preference',
+        showPhoto: (current, total, name) => `Show photo ${current} of ${total}: ${name}`,
+        photos: { 1: 'Campus speech', 2: 'Campus photo', 3: 'Group photo', 4: 'Stage view', 5: 'Concert screen', 6: 'Group photo', 7: 'Performer close-up' },
+        status: {
+          photoShown: (current, total, name) => `Showing photo ${current} of ${total}: ${name}`,
+          photoSelected: (current, total, name) => `Selected photo ${current} of ${total}: ${name}. Photos are hidden in high contrast mode.`,
+          loadFailed: (name) => `${name} could not be loaded. The current photo remains visible.`
+        }
+      }
+    },
     academics: { kicker: 'ACADEMICS', title: 'From here, tomorrow finds its course', copy: 'Coursework, standardized tests, and AP results—evidence of how the work has accumulated.' },
     honors: { kicker: 'HONORS', title: 'Step by step, I keep climbing', copy: 'Awards mark the route; the more useful signal is the habit of continuing upward.' },
     research: { kicker: 'RESEARCH', title: 'You share this imperfect dream with me', copy: 'From smart agriculture to explainable AI, I turn models into tools that people can open and use.' },

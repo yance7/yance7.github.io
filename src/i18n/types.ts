@@ -2,6 +2,21 @@ import type { PageKey } from '../data/pageRegistry.ts'
 
 export type Locale = 'zh-CN' | 'zh-HK' | 'en'
 
+interface HomeHeroSlideshowMessages {
+  groupLabel: string
+  roleDescription: string
+  play: string
+  pause: string
+  static: string
+  showPhoto: (current: number, total: number, name: string) => string
+  photos: Record<1 | 2 | 3 | 4 | 5 | 6 | 7, string>
+  status: {
+    photoShown: (current: number, total: number, name: string) => string
+    photoSelected: (current: number, total: number, name: string) => string
+    loadFailed: (name: string) => string
+  }
+}
+
 export interface LocaleDefinition {
   code: Locale
   htmlLang: string
@@ -154,5 +169,12 @@ export interface UiMessages {
     kicker: string
     title: string
     copy: string
-  }>
+  }> & {
+    home: {
+      kicker: string
+      title: string
+      copy: string
+      slideshow: HomeHeroSlideshowMessages
+    }
+  }
 }

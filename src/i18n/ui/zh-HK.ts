@@ -20,7 +20,25 @@ export const zhHKMessages = {
   empty: { honors: '這一分類暫時沒有記錄。', viewAll: '查看全部', works: '作品正在整理中，歡迎稍後回來看看。', concerts: '暫時還沒有演唱會記錄。', selectedWork: '精選內容正在整理中，可先瀏覽其他檔案。' },
   status: { active: '進行中', published: '已發表', completed: '已完成', deployed: '已部署', 'open-source': '開放原始碼', planned: '計劃中', archived: '已歸檔' },
   page: {
-    home: { kicker: '個人檔案 / 北京 · 2026', title: 'SONG NOTES', copy: '這裡收錄研究、已上線的作品，以及被音樂和現場照亮的生活片段。先從一個真實問題開始，再沿着證據走到可以使用的結果。' },
+    home: {
+      kicker: '個人檔案 / 北京 · 2026',
+      title: 'SONG NOTES',
+      copy: '這裡收錄研究、已上線的作品，以及被音樂和現場照亮的生活片段。先從一個真實問題開始，再沿着證據走到可以使用的結果。',
+      slideshow: {
+        groupLabel: '首頁照片輪播',
+        roleDescription: '輪播',
+        play: '播放照片輪播',
+        pause: '暫停照片輪播',
+        static: '系統偏好減少動態效果，照片輪播已靜止',
+        showPhoto: (current, total, name) => `顯示第 ${current} 張，共 ${total} 張：${name}`,
+        photos: { 1: '校園發言', 2: '校園影像', 3: '合照', 4: '舞台全景', 5: '演出屏幕', 6: '合照', 7: '舞台近景' },
+        status: {
+          photoShown: (current, total, name) => `正在顯示第 ${current} 張，共 ${total} 張：${name}`,
+          photoSelected: (current, total, name) => `已選擇第 ${current} 張，共 ${total} 張：${name}。高對比度模式下照片已隱藏。`,
+          loadFailed: (name) => `${name}暫時無法載入，目前照片保持不變。`
+        }
+      }
+    },
     academics: { kicker: '學業', title: '明日從此的座標', copy: 'GPA、標化考試與 AP 成績，是努力留下的可讀痕跡。' },
     honors: { kicker: '榮譽', title: '一步一步往上爬', copy: '獎項是座標，不是終點；真正重要的是仍然保持向上的慣性。' },
     research: { kicker: '研究', title: '我不完美的夢，你陪着我想', copy: '從智慧農業到可解釋 AI，把論文中的模型推向瀏覽器裡可以操作的產品。' },

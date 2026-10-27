@@ -1,4 +1,5 @@
 import type { HomeHeroParticleScene, HomeHeroParticleTarget } from './homeHeroParticleTypes'
+export { getMimoFontSize } from './homeHeroParticleSizing'
 
 export const MIMO_PARTICLE_SETTINGS = Object.freeze({
   fontFamily: 'Amiri, serif',
@@ -19,13 +20,6 @@ export interface MimoPosition { x: number; y: number }
 
 export function getMimoParticleBudget() {
   return 12000
-}
-
-export function getMimoFontSize(viewportWidth: number, containerWidth: number, textWidthAt100: number, remSize = 16) {
-  const requested = Math.max(6 * remSize, Math.min(14 * remSize, viewportWidth * 0.18))
-  return requested * textWidthAt100 / 100 > containerWidth * 0.92
-    ? Math.max(18, containerWidth * 0.92 / textWidthAt100 * 100)
-    : requested
 }
 
 export function getMimoRepulsion(particle: MimoPosition, pointer: MimoPosition, active: boolean): MimoPosition {

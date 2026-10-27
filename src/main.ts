@@ -62,7 +62,7 @@ app.directive('magnetic', magnetic)
 app.directive('pointer-sheen', pointerSheen)
 document.documentElement.dataset.fontsReady = 'loading'
 configurePageChunkPreload()
-preloadPage(document.body.dataset.page)
+if (document.body.dataset.page !== 'home') preloadPage(document.body.dataset.page)
 
 let appMounted = false
 function mountApp() {
@@ -72,4 +72,9 @@ function mountApp() {
 }
 
 mountApp()
-scheduleFonts()
+if (document.body.dataset.page === 'home' && !initialHash) {
+  if (document.documentElement.dataset.homeHeroPhotoReady === 'true') scheduleFonts()
+  else window.addEventListener('home-hero-photo-ready', scheduleFonts, { once: true })
+} else {
+  scheduleFonts()
+}

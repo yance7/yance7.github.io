@@ -1,5 +1,6 @@
 import { defineConfig, normalizePath, type Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 import { THEME_COLORS } from '../src/themeColors.ts'
@@ -9,6 +10,14 @@ import { getLocalizedSeo } from '../src/data/seo.ts'
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const htmlRoot = resolve(rootDir, 'html-src')
 const THEME_BOOTSTRAP_HASH = 'sha256-qitwqlI10vu96/QuP/2uODumC43vvFpscxk/zXDGK2o='
+const HOME_HERO_PRELOAD_HASH = 'sha256-zxh2PIPyGJ3BMCyeINgDQPxbnSIPCBhq4Y1wioP5Hww='
+const HOME_HERO_IMAGE_SIZES = '(max-width: 760px) calc(100vw - 40px), calc(min(1260px, 100vw) - 10vw)'
+const homeHeroAssetManifest = JSON.parse(readFileSync(resolve(rootDir, 'src/data/homeHeroAssets.json'), 'utf8')) as {
+  slides: Array<{ sources: { webp: Array<{ src: string; width: number }> } }>
+}
+const HOME_HERO_PRELOAD_SRCSET = homeHeroAssetManifest.slides[0]!.sources.webp
+  .map((candidate) => `${candidate.src} ${candidate.width}w`)
+  .join(', ')
 const localePrefixes = ['/en', '/zh-hk']
 
 const htmlInputs = Object.fromEntries(
@@ -26,6 +35,9 @@ function themeTokenPlugin() {
         .replaceAll('__THEME_COLOR_LIGHT__', THEME_COLORS.light)
         .replaceAll('__THEME_COLOR_DARK__', THEME_COLORS.dark)
         .replaceAll('__THEME_BOOTSTRAP_HASH__', THEME_BOOTSTRAP_HASH)
+        .replaceAll('__HOME_HERO_PRELOAD_HASH__', HOME_HERO_PRELOAD_HASH)
+        .replaceAll('__HOME_HERO_PRELOAD_SRCSET__', HOME_HERO_PRELOAD_SRCSET)
+        .replaceAll('__HOME_HERO_PRELOAD_SIZES__', HOME_HERO_IMAGE_SIZES)
     }
   }
 }

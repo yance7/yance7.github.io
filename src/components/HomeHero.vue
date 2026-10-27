@@ -1,18 +1,21 @@
 <script setup lang="ts">
 import '../styles/home-hero.css'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { getLocalizedHomeCopy } from '../data/locales'
 import { useHomeHeroIntro } from '../composables/useHomeHeroIntro'
 import { useLocale } from '../i18n'
 import HomeHeroParticles from './HomeHeroParticles.vue'
+import HomeHeroSlideshow from './HomeHeroSlideshow.vue'
 import HomeHeroTouchFeedback from './HomeHeroTouchFeedback.vue'
 import HomeHeroTypewriter from './HomeHeroTypewriter.vue'
 
+const props = defineProps<{ runtimeEnabled: boolean }>()
 const { locale, messages } = useLocale()
 const home = computed(() => getLocalizedHomeCopy(locale.value))
 const greeting = computed(() => home.value.heroGreeting)
 const statement = computed(() => home.value.heroStatement)
 const { state, animateParticles, isIntroActive, introStartedAt } = useHomeHeroIntro(greeting, statement)
+const visual = ref<HTMLElement | null>(null)
 </script>
 
 <template>
@@ -48,7 +51,19 @@ const { state, animateParticles, isIntroActive, introStartedAt } = useHomeHeroIn
         </div>
       </div>
 
-      <HomeHeroParticles :animate-intro="animateParticles" :intro-started-at="introStartedAt" />
+      <div ref="visual" class="home-hero-visual">
+        <HomeHeroSlideshow
+          :container="visual"
+          :intro-ready="!isIntroActive"
+          :controls-enabled="props.runtimeEnabled"
+          :messages="messages.page.home.slideshow"
+        />
+        <HomeHeroParticles
+          :animate-intro="animateParticles"
+          :intro-started-at="introStartedAt"
+          :runtime-enabled="props.runtimeEnabled"
+        />
+      </div>
     </div>
 
     <HomeHeroTouchFeedback />

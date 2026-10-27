@@ -113,10 +113,23 @@ async function assertMainVisualContentContract(page: Page, route: typeof routes[
   }
 }
 
-async function settleHomeHero(page: Page) {
+async function settleHomeHero(page: Page, pauseSlideshow = false) {
   const hero = page.locator('.home-hero')
   if (!await hero.count()) return
   await expect(hero).toHaveAttribute('data-intro-state', /static|complete/)
+  const media = page.locator('.home-hero-slideshow__media')
+  if (await media.count()) {
+    await expect.poll(() => page.locator('.home-hero-slideshow__image--current')
+      .evaluate((image) => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0)
+    if (pauseSlideshow) {
+      await page.locator('.home-hero-slideshow__dot-button').first().click()
+      await expect(media).toHaveAttribute('data-current-index', '0')
+      await expect(media).toHaveAttribute('data-transitioning', 'false')
+      await page.evaluate(() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' }))
+      await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0)
+      await resetPointerForVisualCapture(page)
+    }
+  }
   const stage = page.locator('.home-hero-particles')
   const canvas = page.locator('.home-hero-particles-canvas')
   if (await canvas.count()) {
@@ -341,7 +354,7 @@ for (const route of routes) {
         if (route === 'concerts') await stabilizeVisualContext(page)
         await settlePage(page)
         await resetPointerForVisualCapture(page)
-        if (route === 'index') await settleHomeHero(page)
+        if (route === 'index') await settleHomeHero(page, true)
         await expect(page.locator('main#main')).toBeVisible()
         await expect(page.locator('.site-footer')).toHaveCount(1)
 
@@ -375,7 +388,7 @@ for (const route of routes) {
           await page.keyboard.press('End')
           await expect(page.locator('.site-footer')).toBeInViewport()
           await prepareMainForFullCapture(page)
-          await settleHomeHero(page)
+          await settleHomeHero(page, true)
           await expect(page).toHaveScreenshot(`index-${theme}-desktop-full.png`, {
             ...fullPageScreenshotOptions,
             fullPage: true
@@ -396,7 +409,7 @@ for (const locale of homeHeroLocales) {
         await expect(page.locator('html')).toHaveAttribute('data-locale', locale.code)
         await settlePage(page)
         await resetPointerForVisualCapture(page)
-        await settleHomeHero(page)
+        await settleHomeHero(page, true)
 
         const hero = page.locator('.home-hero')
         await expect(hero).toBeVisible()
@@ -410,6 +423,41 @@ for (const locale of homeHeroLocales) {
         )
       })
     }
+  }
+}
+
+for (const viewport of viewports) {
+  for (const photoNumber of [1, 2, 3, 4, 5, 6, 7]) {
+    test(`captures home hero photo ${photoNumber} at ${viewport.name} size`, async ({ page }, testInfo) => {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height })
+      await installTheme(page, 'light')
+      await page.goto('/')
+      await expect(page.locator('html')).toHaveAttribute('data-locale', 'zh-CN')
+      await settlePage(page)
+      await resetPointerForVisualCapture(page)
+      await settleHomeHero(page, true)
+
+      const media = page.locator('.home-hero-slideshow__media')
+      await page.locator('.home-hero-slideshow__dot-button').nth(photoNumber - 1).click()
+      await expect(media).toHaveAttribute('data-current-index', String(photoNumber - 1))
+      await expect(media).toHaveAttribute('data-transitioning', 'false')
+      await expect.poll(() => page.locator('.home-hero-slideshow__image--current')
+        .evaluate((image) => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0)
+      await page.evaluate(() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' }))
+      await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0)
+      await resetPointerForVisualCapture(page)
+
+      const heroVisual = page.locator('.home-hero-visual')
+      await expect(heroVisual).toBeVisible()
+      await heroVisual.screenshot({
+        ...sharedScreenshotOptions,
+        path: testInfo.outputPath(`home-hero-photo-${photoNumber}-${viewport.name}-review.png`)
+      })
+      await expect(heroVisual).toHaveScreenshot(
+        `home-hero-photo-${photoNumber}-${viewport.name}.png`,
+        componentScreenshotOptions
+      )
+    })
   }
 }
 

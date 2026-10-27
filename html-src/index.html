@@ -7,7 +7,7 @@
   <meta name="description" content="__META_DESCRIPTION__">
   <meta name="theme-color" content="__THEME_COLOR_LIGHT__">
   <meta name="color-scheme" content="light dark">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' '__THEME_BOOTSTRAP_HASH__'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; media-src 'self'; connect-src 'self'; manifest-src 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' '__THEME_BOOTSTRAP_HASH__' '__HOME_HERO_PRELOAD_HASH__'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; media-src 'self'; connect-src 'self'; manifest-src 'self'">
   <meta name="author" content="Yance Yan">
   <meta property="og:title" content="__OG_TITLE__">
   <meta property="og:description" content="__OG_DESCRIPTION__">
@@ -27,6 +27,7 @@
   <link rel="apple-touch-icon" href="/assets/brand/yance-icon-180.png" sizes="180x180">
   <link rel="manifest" href="/assets/site.webmanifest">
   <script>try { const saved = localStorage.getItem('yance-theme'); const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches; if (saved === 'dark' || (!saved && systemDark)) document.documentElement.dataset.theme = 'dark'; const initialHash = window.location.hash; if (initialHash) { document.documentElement.dataset.initialHash = initialHash; window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}`) } } catch (e) {}</script>
+  <script data-home-hero-preload-srcset="__HOME_HERO_PRELOAD_SRCSET__" data-home-hero-preload-sizes="__HOME_HERO_PRELOAD_SIZES__">try { const bootstrap = document.currentScript; const srcset = bootstrap?.getAttribute('data-home-hero-preload-srcset'); const sizes = bootstrap?.getAttribute('data-home-hero-preload-sizes'); const saveData = navigator.connection?.saveData === true; const forcedColors = window.matchMedia('(forced-colors: active)').matches; if (srcset && sizes && !saveData && !forcedColors) { const preload = document.createElement('link'); preload.rel = 'preload'; preload.as = 'image'; preload.setAttribute('fetchpriority', 'high'); preload.setAttribute('imagesrcset', srcset); preload.setAttribute('imagesizes', sizes); document.head.append(preload) } } catch (e) {}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"Person","name":"Yance Yan","url":"__JSONLD_URL__","sameAs":["https://github.com/yance7"],"jobTitle":"Student Researcher and Builder","inLanguage":"__JSONLD_LANGUAGE__"}</script>
   <script type="module" src="../src/main.ts"></script>
 </head>

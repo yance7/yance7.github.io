@@ -379,7 +379,7 @@ test('@particle-v2 pauses offscreen and resumes without replaying the intro', as
   await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'complete')
 })
 
-test('@particle-v2 recolors every current square without resetting the disturbed glyph', async ({ page }) => {
+test('@particle-v2 keeps warm-white current squares across themes without resetting the disturbed glyph', async ({ page }) => {
   await page.goto('/')
   await waitForSettledHero(page)
   const stage = page.locator('.home-hero-particles')
@@ -430,16 +430,16 @@ test('@particle-v2 recolors every current square without resetting the disturbed
       })
       return { equal: actual.every((value, index) => value === intended[index]), nativeColorsMatch, endpoints, count: points.length }
     }, reference)
-    expect(pixels.equal, 'all actual pixels match the independent theme palette at current positions').toBe(true)
+    expect(pixels.equal, 'all actual pixels match the independent warm-white palette at current positions').toBe(true)
     expect(pixels.count).toBe(reference.points.length)
     expect(pixels.nativeColorsMatch, 'every native point color matches the independent seed blend exactly').toBe(true)
-    expect(pixels.endpoints).toEqual(theme === 'dark' ? [[212, 224, 208, 255], [175, 197, 170, 255]] : [[45, 58, 30, 255], [62, 79, 42, 255]])
+    expect(pixels.endpoints).toEqual([[244, 240, 232, 255], [220, 231, 219, 255]])
   }
   await stage.dispatchEvent('pointerleave', { pointerType: 'mouse', pointerId: 1 })
   await expectRecoveredMark(page)
 })
 
-test('@particle-v2 recolors during gathering without changing the current draw or entrance clock', async ({ page }) => {
+test('@particle-v2 keeps particle color stable during gathering across themes without changing draw or entrance clock', async ({ page }) => {
   await page.addInitScript(() => {
     type Capture = { first: number[]; color: string; frame: string; phase: string }
     const target = window as Window & { gatheringPalette?: { before: Capture; after: Capture } }
@@ -484,7 +484,7 @@ test('@particle-v2 recolors during gathering without changing the current draw o
   expect(evidence.after.first).toEqual(evidence.before.first)
   expect(evidence.after.frame).toBe(evidence.before.frame)
   expect(evidence.after.phase).toBe('gathering')
-  expect(evidence.after.color).not.toBe(evidence.before.color)
+  expect(evidence.after.color).toBe(evidence.before.color)
   await waitForSettledHero(page)
 })
 
@@ -516,7 +516,7 @@ test('keeps a static YANCE mark when data saving is enabled', async ({ page }) =
   await expect(stage.locator('.home-hero-particles-word')).toHaveText('YANCE')
   for (const theme of ['dark', 'light']) {
     await page.evaluate(theme => document.documentElement.setAttribute('data-theme', theme), theme)
-    await expect(stage.locator('.home-hero-particles-word')).toHaveCSS('color', theme === 'dark' ? 'rgb(212, 224, 208)' : 'rgb(45, 58, 30)')
+    await expect(stage.locator('.home-hero-particles-word')).toHaveCSS('color', 'rgb(244, 240, 232)')
   }
 })
 
@@ -1013,7 +1013,8 @@ test('@particle-v2 initializes after a zero-sized stage becomes visible', async 
   })
   await page.goto('/')
   const stage = page.locator('.home-hero-particles')
-  await expect(stage).toHaveAttribute('data-render-mode', 'initializing')
+  await page.waitForFunction(() => document.documentElement.dataset.homeHeroPhotoReady === 'true')
+  await expect(stage).toHaveAttribute('data-render-mode', 'static')
   await page.evaluate(() => document.getElementById('zero-hero')!.remove())
   await expect(stage).toHaveAttribute('data-render-mode', 'canvas')
   await expect(stage).toHaveAttribute('data-particle-state', 'settled', { timeout: 4000 })
