@@ -59,12 +59,13 @@ async function suppressLargestContentfulPaintEntries(page: import('@playwright/t
   })
 }
 
-test('releases homepage content after the first photo decodes when LCP reports no entries', async ({ page }) => {
+test('enables homepage runtime after the first photo decodes when LCP reports no entries', async ({ page }) => {
   await suppressLargestContentfulPaintEntries(page)
 
   await page.goto('/')
   await expectLoadedImage(page)
-  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready', { timeout: 2500 })
+  await expect(page.locator('html')).toHaveAttribute('data-home-hero-photo-ready', 'true', { timeout: 2500 })
+  await expect(page.locator('.home-hero-slideshow__controls')).toBeVisible()
 })
 
 test('starts homepage fonts after hero paint if idle callbacks stay pending', async ({ page }) => {
@@ -150,6 +151,35 @@ test('keeps the preloaded hero photo visible while loader confirmation is pendin
     expect(await image.getAttribute('src')).toContain('hero-01')
     await expect(image).toHaveCSS('will-change', 'auto')
     await expect(image).toHaveCSS('transform', 'none')
+  } finally {
+    releaseRequest()
+  }
+
+  await expectLoadedImage(page)
+})
+
+test('keeps English homepage content ready while the first photo request is pending', async ({ page }) => {
+  await suppressLargestContentfulPaintEntries(page)
+  let releaseRequest!: () => void
+  let photoRequestStarted = false
+  const requestGate = new Promise<void>((resolve) => { releaseRequest = resolve })
+  await page.route('**/assets/home-hero/hero-01-*', async (route) => {
+    photoRequestStarted = true
+    await requestGate
+    await route.continue()
+  })
+
+  try {
+    await page.goto('/en/', { waitUntil: 'domcontentloaded' })
+    await expect.poll(() => photoRequestStarted).toBe(true)
+    await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+    await expect(page.locator('.page-home')).toBeVisible()
+
+    const photoState = await page.evaluate(() => ({
+      ready: document.documentElement.dataset.homeHeroPhotoReady,
+      naturalWidth: document.querySelector<HTMLImageElement>('.home-hero-slideshow__image--current')?.naturalWidth
+    }))
+    expect(photoState).toEqual({ ready: undefined, naturalWidth: 0 })
   } finally {
     releaseRequest()
   }
