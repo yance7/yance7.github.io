@@ -34,7 +34,7 @@ describe('critical rendering contracts', () => {
     expect(localizedPages).not.toContain('__LOCALE_FONT_STYLESHEET__')
   })
 
-  it('keeps home content loading independent from hero runtime readiness', () => {
+  it('defers the home content chunk until the hero can paint with a bounded fallback', () => {
     const main = readFileSync(resolve(process.cwd(), 'src/main.ts'), 'utf8')
     const app = readFileSync(resolve(process.cwd(), 'src/App.vue'), 'utf8')
     const loaders = readFileSync(resolve(process.cwd(), 'src/pageLoaders.ts'), 'utf8')
@@ -43,10 +43,10 @@ describe('critical rendering contracts', () => {
     expect(main).toContain("if (document.body.dataset.page !== 'home') preloadPage(document.body.dataset.page)")
     expect(main.indexOf("if (document.body.dataset.page !== 'home') preloadPage(document.body.dataset.page)"))
       .toBeLessThan(main.indexOf("app.mount('#app')"))
-    expect(app).toContain('const deferHomeHeroRuntime = isHome && !initialHash')
-    expect(app).toContain('const homeHeroRuntimeEnabled = ref(!deferHomeHeroRuntime)')
-    expect(app).toContain('<Suspense @resolve="handlePageResolved">')
-    expect(app).not.toContain('<Suspense v-if=')
+    expect(app).toContain('const deferHomeContent = isHome && !initialHash')
+    expect(app).toContain('const pageContentEnabled = ref(!deferHomeContent)')
+    expect(app).toContain('<Suspense v-if="pageContentEnabled"')
+    expect(app).toContain('const HOME_CONTENT_FALLBACK_MS = 2_000')
   })
 
   it('mounts before starting homepage fonts after hero paint and keeps other fonts idle-scheduled', () => {

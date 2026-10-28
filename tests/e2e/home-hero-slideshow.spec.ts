@@ -158,8 +158,24 @@ test('keeps the preloaded hero photo visible while loader confirmation is pendin
   await expectLoadedImage(page)
 })
 
-test('keeps English homepage content ready while the first photo request is pending', async ({ page }) => {
+test('releases English homepage content on the bounded fallback if the first photo remains pending', async ({ page }) => {
   await suppressLargestContentfulPaintEntries(page)
+  const clockStart = new Date('2024-01-01T00:00:00.000Z')
+  await page.clock.install({ time: clockStart })
+  await page.clock.pauseAt(new Date(clockStart.getTime() + 1_000))
+  await page.addInitScript(() => {
+    const recordedWindow = window as Window & {
+      __homeContentFallbackTimers?: Array<{ delay: number; scheduledAt: number }>
+    }
+    const originalSetTimeout = window.setTimeout.bind(window)
+    recordedWindow.__homeContentFallbackTimers = []
+    window.setTimeout = ((callback: TimerHandler, delay = 0, ...args: unknown[]) => {
+      if (delay === 2_000 || delay === 4_000) {
+        recordedWindow.__homeContentFallbackTimers?.push({ delay, scheduledAt: Date.now() })
+      }
+      return originalSetTimeout(callback, delay, ...args)
+    }) as typeof window.setTimeout
+  })
   let releaseRequest!: () => void
   let photoRequestStarted = false
   const requestGate = new Promise<void>((resolve) => { releaseRequest = resolve })
@@ -172,6 +188,19 @@ test('keeps English homepage content ready while the first photo request is pend
   try {
     await page.goto('/en/', { waitUntil: 'domcontentloaded' })
     await expect.poll(() => photoRequestStarted).toBe(true)
+    await expect(page.locator('.home-hero')).toBeVisible()
+    await expect(page.locator('html')).not.toHaveAttribute('data-home-hero-photo-ready', 'true')
+    const fallbackStart = await page.evaluate(() => {
+      const timers = (window as Window & {
+        __homeContentFallbackTimers?: Array<{ delay: number; scheduledAt: number }>
+      }).__homeContentFallbackTimers
+      return timers?.find(({ delay }) => delay === 2_000 || delay === 4_000)?.scheduledAt ?? null
+    })
+    expect(fallbackStart).not.toBeNull()
+    expect(await page.evaluate(() => Date.now())).toBe(fallbackStart)
+    await page.clock.runFor(1_999)
+    await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'loading')
+    await page.clock.runFor(1)
     await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
     await expect(page.locator('.page-home')).toBeVisible()
 
@@ -179,12 +208,10 @@ test('keeps English homepage content ready while the first photo request is pend
       ready: document.documentElement.dataset.homeHeroPhotoReady,
       naturalWidth: document.querySelector<HTMLImageElement>('.home-hero-slideshow__image--current')?.naturalWidth
     }))
-    expect(photoState).toEqual({ ready: undefined, naturalWidth: 0 })
+    expect(photoState).toEqual({ ready: 'true', naturalWidth: 0 })
   } finally {
     releaseRequest()
   }
-
-  await expectLoadedImage(page)
 })
 
 test('uses the accepted Amiri face for the static glyph while the first photo is pending', async ({ page }) => {
