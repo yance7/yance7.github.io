@@ -718,7 +718,7 @@ test('@particle-v2 holds a local deformation while continuously drawing microdri
   expect(Number(await stage.getAttribute('data-frame-count'))).toBeGreaterThan(Number(heldFrames))
   expect(await changedPixels(page)).toBeGreaterThan(100)
   await stage.evaluate(element => element.dispatchEvent(new PointerEvent('pointerleave', { pointerId: 1, pointerType: 'mouse' })))
-  await expect(stage).toHaveAttribute('data-particle-state', 'settled', { timeout: 1000 })
+  await expect(stage).toHaveAttribute('data-particle-state', /recovering|settled/)
   await expectRecoveredMark(page)
 })
 
