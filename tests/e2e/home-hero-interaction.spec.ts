@@ -431,9 +431,9 @@ test('@particle-v2 repels particles and returns to the drifting glyph after leav
   const recovery = await stage.evaluate((element, startFrame) => new Promise<{ state?: string; frames: number; watchdogExpired: boolean }>((resolve) => {
     const particleStage = element as HTMLElement
     const observer = new MutationObserver(check)
-    let watchdog: number | undefined
+    const watchdog = { timer: 0 }
     function finish(watchdogExpired: boolean) {
-      if (watchdog !== undefined) window.clearTimeout(watchdog)
+      if (watchdog.timer) window.clearTimeout(watchdog.timer)
       observer.disconnect()
       resolve({ state: particleStage.dataset.particleState, frames: Number(particleStage.dataset.frameCount) - startFrame, watchdogExpired })
     }
@@ -446,7 +446,7 @@ test('@particle-v2 repels particles and returns to the drifting glyph after leav
     }
     observer.observe(particleStage, { attributes: true, attributeFilter: ['data-frame-count', 'data-particle-state'] })
     // Fail promptly if rendering stops; the recovery budget itself is frame-based.
-    watchdog = window.setTimeout(() => finish(true), 10_000)
+    watchdog.timer = window.setTimeout(() => finish(true), 10_000)
     check()
   }), releaseFrame)
   expect(recovery.watchdogExpired).toBe(false)
