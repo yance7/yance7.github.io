@@ -21,6 +21,7 @@ const controller = useHomeHeroSlideshow({
   imageSizes: HOME_HERO_IMAGE_SIZES
 })
 const state = controller.state
+const media = ref<HTMLElement | null>(null)
 const transitionActive = ref(false)
 const currentImageFailed = ref(false)
 const announcement = computed(() => {
@@ -39,7 +40,9 @@ const scrimStyle = computed(() => ({
 }))
 
 let transitionFrame = 0
+let cancelTargetReadiness: (() => void) | null = null
 let pointerPlaybackIntent: 'play' | 'pause' | null = null
+const targetImageReadinessDeadlineMs = 10_000
 
 function photoName(index: number) {
   const photoIndex = (index + 1) as keyof typeof messages.value.photos
@@ -99,6 +102,70 @@ function currentImageError() {
   currentImageFailed.value = true
 }
 
+function targetImageError(transactionId: number) {
+  controller.failTransition(transactionId)
+}
+
+function isCurrentTransition(transactionId: number) {
+  return transactionId === state.value.transactionId && state.value.transitioning
+}
+
+function waitForImageDecode(image: HTMLImageElement) {
+  return new Promise<boolean>((resolve) => {
+    let settled = false
+    let timeout: ReturnType<typeof window.setTimeout> | null = null
+    const settle = (decoded: boolean) => {
+      if (settled) return
+      settled = true
+      if (timeout !== null) window.clearTimeout(timeout)
+      if (cancelTargetReadiness === cancel) cancelTargetReadiness = null
+      resolve(decoded)
+    }
+    const cancel = () => settle(false)
+    cancelTargetReadiness = cancel
+    timeout = window.setTimeout(cancel, targetImageReadinessDeadlineMs)
+    try {
+      void image.decode().then(() => settle(true), () => settle(false))
+    } catch {
+      settle(false)
+    }
+  })
+}
+
+async function waitForCurrentTargetImage(image: HTMLImageElement, transactionId: number) {
+  while (isCurrentTransition(transactionId)) {
+    const requestedSource = image.currentSrc || image.src
+    const decoded = await waitForImageDecode(image)
+    if (!isCurrentTransition(transactionId)) return false
+
+    const selectedSource = image.currentSrc || image.src
+    if (requestedSource !== selectedSource) continue
+    return decoded && image.naturalWidth > 0 ? selectedSource : null
+  }
+  return null
+}
+
+async function prepareTargetTransition(image: HTMLImageElement, transactionId: number) {
+  const decodedSource = await waitForCurrentTargetImage(image, transactionId)
+  if (!isCurrentTransition(transactionId)) return
+  if (!decodedSource) {
+    controller.failTransition(transactionId)
+    return
+  }
+
+  transitionFrame = requestAnimationFrame(() => {
+    transitionFrame = 0
+    if (!isCurrentTransition(transactionId)) return
+
+    const selectedSource = image.currentSrc || image.src
+    if (selectedSource !== decodedSource || image.naturalWidth === 0) {
+      void prepareTargetTransition(image, transactionId)
+      return
+    }
+    if (controller.activateTransition(transactionId)) transitionActive.value = true
+  })
+}
+
 watch(() => props.introReady, (introReady) => {
   controller.setEnvironment({ introReady })
 }, { immediate: true })
@@ -108,25 +175,31 @@ watch(() => [state.value.currentIndex, state.value.currentFormat] as const, () =
 })
 
 watch(() => [state.value.transactionId, state.value.transitioning] as const, async ([transactionId, transitioning]) => {
+  cancelTargetReadiness?.()
+  cancelTargetReadiness = null
   if (transitionFrame) cancelAnimationFrame(transitionFrame)
   transitionFrame = 0
   transitionActive.value = false
   if (!transitioning) return
   await nextTick()
   if (transactionId !== state.value.transactionId || !state.value.transitioning) return
-  transitionFrame = requestAnimationFrame(() => {
-    transitionFrame = 0
-    if (transactionId === state.value.transactionId && state.value.transitioning) transitionActive.value = true
-  })
+  const targetImage = media.value?.querySelector<HTMLImageElement>('.home-hero-slideshow__image--target')
+  if (!targetImage) {
+    controller.failTransition(transactionId)
+    return
+  }
+  void prepareTargetTransition(targetImage, transactionId)
 }, { flush: 'post' })
 
 onBeforeUnmount(() => {
+  cancelTargetReadiness?.()
   if (transitionFrame) cancelAnimationFrame(transitionFrame)
 })
 </script>
 
 <template>
   <div
+    ref="media"
     class="home-hero-slideshow__media"
     :class="{ 'is-transitioning': transitionActive }"
     :data-transitioning="transitionActive"
@@ -171,6 +244,7 @@ onBeforeUnmount(() => {
       decoding="async"
       draggable="false"
       @transitionend="transitionEnded($event, state.transactionId)"
+      @error="targetImageError(state.transactionId)"
     >
     <div class="home-hero-slideshow__scrim"></div>
   </div>

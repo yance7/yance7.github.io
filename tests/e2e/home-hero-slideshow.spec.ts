@@ -669,6 +669,70 @@ test('save-data starts with only the small first candidate and waits for an expl
   await expect.poll(() => imageRequests.some((url) => /hero-02-640-[a-f0-9]+\.webp$/.test(url))).toBe(true)
 })
 
+test('waits for the resized target candidate to load before revealing it', async ({ page }) => {
+  let releaseLargeCandidate!: () => void
+  let largeCandidateRequested = false
+  let largeCandidateUrl = ''
+  let loadedSmallCandidateWidth = 0
+  const largeCandidateGate = new Promise<void>((resolve) => { releaseLargeCandidate = resolve })
+  const completedHeroRequests = new Set<string>()
+  page.on('requestfinished', (request) => {
+    const url = request.url()
+    if (url.includes('/assets/home-hero/')) completedHeroRequests.add(url)
+    const width = Number(url.match(/hero-02-(\d+)-/)?.[1] ?? 0)
+    loadedSmallCandidateWidth = Math.max(loadedSmallCandidateWidth, width)
+  })
+  await page.route('**/assets/home-hero/hero-02-*', async (route) => {
+    const url = route.request().url()
+    const width = Number(url.match(/hero-02-(\d+)-/)?.[1] ?? 0)
+    if ((page.viewportSize()?.width ?? 0) > 760 && width > loadedSmallCandidateWidth) {
+      largeCandidateRequested = true
+      largeCandidateUrl = url
+      await largeCandidateGate
+    }
+    await route.continue()
+  })
+
+  await page.clock.install()
+  await page.setViewportSize({ width: 390, height: 844 })
+  try {
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
+    const controls = page.locator('.home-hero-slideshow__controls')
+    const media = page.locator('.home-hero-slideshow__media')
+    await expect(controls).toBeVisible()
+    await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', /static|complete/)
+    await freezeCarouselClock(page)
+    await expect(media).toHaveAttribute('data-current-index', '0')
+    await expectLoadedImage(page)
+    await expect.poll(() => [...completedHeroRequests].some((url) => /hero-02-\d+-[a-f0-9]+\.webp$/.test(url))).toBe(true)
+    expect(loadedSmallCandidateWidth).toBeGreaterThan(0)
+    await expect(media).toHaveAttribute('data-current-index', '0')
+
+    const play = controls.locator('.home-hero-slideshow__play-button')
+    if (await play.getAttribute('aria-label') === '暂停照片轮播') await play.click()
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await controls.locator('.home-hero-slideshow__dot-button').nth(1).click()
+
+    const target = page.locator('.home-hero-slideshow__image--target')
+    await expect.poll(() => largeCandidateRequested).toBe(true)
+    expect(Number(largeCandidateUrl.match(/hero-02-(\d+)-/)?.[1] ?? 0)).toBeGreaterThan(loadedSmallCandidateWidth)
+    await page.clock.runFor(50)
+    await expect(target).toHaveJSProperty('naturalWidth', 0)
+    await expect(media).toHaveAttribute('data-current-index', '0')
+    await expect(media).toHaveAttribute('data-transitioning', 'false')
+    await expect(media).not.toHaveClass(/is-transitioning/)
+
+    releaseLargeCandidate()
+    await expect.poll(() => target.evaluate((element) => (element as HTMLImageElement).naturalWidth)).toBeGreaterThan(0)
+    await target.evaluate((element) => (element as HTMLImageElement).decode())
+    await page.clock.runFor(1_000)
+    await expect(media).toHaveAttribute('data-current-index', '1')
+    await expect.poll(() => page.locator('.home-hero-slideshow__image--current').evaluate((element) => (element as HTMLImageElement).naturalWidth)).toBeGreaterThan(0)
+  } finally {
+    releaseLargeCandidate()
+  }
+})
+
 test('falls back to JPEG after a WebP request fails', async ({ page }) => {
   await page.route('**/assets/home-hero/hero-01-*.webp', (route) => route.abort('failed'))
   await page.goto('/')

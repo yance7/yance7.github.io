@@ -149,6 +149,7 @@ export function createHomeHeroSlideshow(options: HomeHeroSlideshowOptions) {
   let intentGeneration = 0
   let dwellTimer: ReturnType<typeof globalThis.setTimeout> | null = null
   let transitionTimer: ReturnType<typeof globalThis.setTimeout> | null = null
+  let transitionReady = false
   let transitionAnnouncementIndex: number | null = null
   let disposed = false
   let explicitPlayForData = false
@@ -246,11 +247,13 @@ export function createHomeHeroSlideshow(options: HomeHeroSlideshowOptions) {
     return startLoad(index, kind)
   }
 
-  function finishTransition(transactionId: number) {
+  function finishTransition(transactionId: number, allowPending = false) {
     const current = state.value
     if (!current.transitioning || transactionId !== current.transactionId || current.targetIndex === null) return
+    if (!transitionReady && !allowPending) return
 
     clearTransitionTimer()
+    transitionReady = false
     current.currentIndex = current.targetIndex
     current.currentFormat = current.targetFormat
     current.firstImageReady = current.currentFormat !== null
@@ -272,37 +275,66 @@ export function createHomeHeroSlideshow(options: HomeHeroSlideshowOptions) {
     refreshSchedule()
   }
 
+  function activateTransition(transactionId: number) {
+    const current = state.value
+    if (!current.transitioning || transactionId !== current.transactionId || current.targetIndex === null || disposed) return false
+
+    if (current.reducedMotion || current.forcedColors || !current.pageVisible || !current.inViewport) {
+      finishTransition(transactionId, true)
+      return false
+    }
+
+    transitionReady = true
+    clearTransitionTimer()
+    transitionTimer = clock.setTimeout(() => finishTransition(transactionId), transitionMs + 160)
+    return true
+  }
+
+  function failTransition(transactionId: number) {
+    const current = state.value
+    if (!current.transitioning || transactionId !== current.transactionId || current.targetIndex === null) return
+
+    const failedIndex = current.targetIndex
+    const wasAutomatic = transitionAnnouncementIndex === null
+    const queuedIndex = current.queuedIndex
+    formats.delete(failedIndex)
+    clearTransitionTimer()
+    transitionReady = false
+    current.targetIndex = null
+    current.targetFormat = null
+    current.queuedIndex = null
+    current.transitioning = false
+    current.announcement = 'loadFailed'
+    current.announcementIndex = failedIndex
+    transitionAnnouncementIndex = null
+
+    if (queuedIndex !== null && queuedIndex !== current.currentIndex) {
+      void requestManualSelection(queuedIndex)
+      return
+    }
+    if (wasAutomatic && !current.userPaused) {
+      void advanceAutomatically(failedIndex)
+      return
+    }
+    refreshSchedule()
+  }
+
   function beginTransition(index: number, automatic: boolean) {
     const current = state.value
     const format = formats.get(index)
     if (!format || disposed) return
-
-    if (current.reducedMotion) {
-      current.currentIndex = index
-      current.currentFormat = format
-      current.firstImageReady = true
-      current.targetIndex = null
-      current.targetFormat = null
-      current.transitioning = false
-      current.announcement = automatic ? null : 'photoShown'
-      current.announcementIndex = automatic ? null : index
-      transitionAnnouncementIndex = null
-      refreshSchedule()
-      return
-    }
 
     current.targetIndex = index
     current.targetFormat = format
     current.direction = automatic || index > current.currentIndex ? 'forward' : 'backward'
     current.transactionId += 1
     current.transitioning = true
+    transitionReady = false
     current.announcement = null
     current.announcementIndex = null
     transitionAnnouncementIndex = automatic ? null : index
     clearDwellTimer()
-    const transactionId = current.transactionId
     clearTransitionTimer()
-    transitionTimer = clock.setTimeout(() => finishTransition(transactionId), transitionMs + 160)
   }
 
   function refreshSchedule() {
@@ -323,22 +355,27 @@ export function createHomeHeroSlideshow(options: HomeHeroSlideshowOptions) {
     if (!formats.has(nextIndex) && !activeLoad) void ensureLoaded(nextIndex, 'preload')
   }
 
-  async function advanceAutomatically() {
+  async function advanceAutomatically(startIndex = state.value.currentIndex, excludedIndex = state.value.currentIndex) {
     if (!automaticAllowed()) return
     const generation = ++intentGeneration
-    const startIndex = state.value.currentIndex
     let nextIndex = (startIndex + 1) % slides.length
-    let failures = 0
+    let examined = 0
 
-    while (failures < slides.length - 1) {
+    while (examined < slides.length) {
+      if (nextIndex === excludedIndex) {
+        nextIndex = (nextIndex + 1) % slides.length
+        examined += 1
+        continue
+      }
+
       const loaded = await ensureLoaded(nextIndex, 'automatic')
       if (disposed || generation !== intentGeneration || !automaticAllowed()) return
+      examined += 1
       if (loaded) {
         beginTransition(nextIndex, true)
         return
       }
 
-      failures += 1
       nextIndex = (nextIndex + 1) % slides.length
     }
 
@@ -390,7 +427,7 @@ export function createHomeHeroSlideshow(options: HomeHeroSlideshowOptions) {
 
     if (environment.reducedMotion === true) {
       current.userPaused = true
-      if (current.transitioning) finishTransition(current.transactionId)
+      if (current.transitioning && transitionReady) finishTransition(current.transactionId)
       else if (activeLoad?.kind === 'automatic' || activeLoad?.kind === 'preload') cancelActiveLoad()
     } else if (wasReducedMotion && environment.reducedMotion === false) {
       current.userPaused = true
@@ -406,7 +443,7 @@ export function createHomeHeroSlideshow(options: HomeHeroSlideshowOptions) {
       current.userPaused = true
       intentGeneration += 1
       cancelActiveLoad()
-      if (current.transitioning) finishTransition(current.transactionId)
+      if (current.transitioning) finishTransition(current.transactionId, true)
       current.firstImageReady = false
       current.currentFormat = null
       current.announcement = null
@@ -417,7 +454,7 @@ export function createHomeHeroSlideshow(options: HomeHeroSlideshowOptions) {
     if (becameInactive) {
       clearDwellTimer()
       if (activeLoad?.kind === 'preload' || activeLoad?.kind === 'automatic') cancelActiveLoad()
-      if (current.transitioning) finishTransition(current.transactionId)
+      if (current.transitioning && transitionReady) finishTransition(current.transactionId)
     }
 
     if (wasForcedColors && environment.forcedColors === false) {
@@ -510,6 +547,8 @@ export function createHomeHeroSlideshow(options: HomeHeroSlideshowOptions) {
     play,
     pause,
     pauseOnFocus,
+    activateTransition,
+    failTransition,
     finishTransition,
     dispose
   }

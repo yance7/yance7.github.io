@@ -31,6 +31,7 @@ async function waitForTarget(controller: ReturnType<typeof createController>) {
   await flushPromises()
   expect(controller.state.value.transitioning).toBe(true)
   expect(controller.state.value.targetIndex).not.toBeNull()
+  expect(controller.activateTransition(controller.state.value.transactionId)).toBe(true)
 }
 
 function finishCurrentTransition(controller: ReturnType<typeof createController>) {
@@ -76,6 +77,25 @@ describe('home hero slideshow state machine', () => {
       expect(controller.state.value.currentIndex).toBe((transition + 1) % 7)
     }
 
+    controller.dispose()
+  })
+
+  it('waits for target readiness before starting the transition deadline', async () => {
+    const controller = createController()
+    await flushPromises()
+    controller.select(1)
+    await flushPromises()
+    const transactionId = controller.state.value.transactionId
+
+    await vi.advanceTimersByTimeAsync(1_200)
+    expect(controller.state.value.currentIndex).toBe(0)
+    expect(controller.state.value.transitioning).toBe(true)
+
+    expect(controller.activateTransition(transactionId)).toBe(true)
+    await vi.advanceTimersByTimeAsync(859)
+    expect(controller.state.value.currentIndex).toBe(0)
+    await vi.advanceTimersByTimeAsync(1)
+    expect(controller.state.value.currentIndex).toBe(1)
     controller.dispose()
   })
 
@@ -193,11 +213,15 @@ describe('home hero slideshow state machine', () => {
     await flushPromises()
     controller.select(6)
     await flushPromises()
+    expect(controller.state.value.currentIndex).toBe(0)
+    expect(controller.state.value.targetIndex).toBe(6)
+    expect(controller.activateTransition(controller.state.value.transactionId)).toBe(false)
     expect(controller.state.value.currentIndex).toBe(6)
     expect(controller.state.value.transitioning).toBe(false)
 
     controller.select(0)
     await flushPromises()
+    expect(controller.activateTransition(controller.state.value.transactionId)).toBe(false)
     expect(controller.state.value.currentIndex).toBe(0)
     expect(controller.state.value.transitioning).toBe(false)
 
@@ -324,6 +348,7 @@ describe('home hero slideshow state machine', () => {
     secondTarget.resolve('jpeg')
     await flushPromises()
     expect(controller.state.value.targetIndex).toBe(2)
+    expect(controller.activateTransition(controller.state.value.transactionId)).toBe(true)
     finishCurrentTransition(controller)
     expect(controller.state.value.currentIndex).toBe(2)
     expect(controller.state.value.currentFormat).toBe('jpeg')
@@ -344,6 +369,52 @@ describe('home hero slideshow state machine', () => {
     controller.select(2)
     await flushPromises()
     expect(loadImage.mock.calls.filter(([index]) => index === 2)).toHaveLength(2)
+    controller.dispose()
+  })
+
+  it('preserves the visible photo after a target candidate fails and retries on explicit selection', async () => {
+    const loadImage = vi.fn(async (_index: number) => 'webp' as const)
+    const controller = createController(loadImage)
+    await flushPromises()
+
+    controller.select(2)
+    await flushPromises()
+    const transactionId = controller.state.value.transactionId
+    expect(controller.state.value.targetIndex).toBe(2)
+    controller.failTransition(transactionId)
+
+    expect(controller.state.value.currentIndex).toBe(0)
+    expect(controller.state.value.targetIndex).toBeNull()
+    expect(controller.state.value.announcement).toBe('loadFailed')
+
+    controller.select(2)
+    await flushPromises()
+    expect(loadImage.mock.calls.filter(([index]) => index === 2)).toHaveLength(2)
+    expect(controller.state.value.targetIndex).toBe(2)
+    controller.dispose()
+  })
+
+  it('skips the current slide when automatically recovering from a target candidate failure', async () => {
+    const attempts = new Map<number, number>()
+    const controller = createController(async (index) => {
+      attempts.set(index, (attempts.get(index) ?? 0) + 1)
+      return (index === 0 || index === 1) && attempts.get(index) === 1 ? 'webp' : null
+    })
+    await flushPromises()
+    await vi.advanceTimersByTimeAsync(6_000)
+    await waitForTarget(controller)
+    const transactionId = controller.state.value.transactionId
+    expect(controller.state.value.targetIndex).toBe(1)
+
+    controller.failTransition(transactionId)
+    for (let flush = 0; flush < 10 && !controller.state.value.autoStopped && controller.state.value.targetIndex === null; flush += 1) {
+      await flushPromises()
+    }
+
+    expect(controller.state.value.currentIndex).toBe(0)
+    expect(controller.state.value.targetIndex).toBeNull()
+    expect(controller.state.value.autoStopped).toBe(true)
+    expect(attempts.get(0)).toBe(1)
     controller.dispose()
   })
 
