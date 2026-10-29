@@ -627,9 +627,18 @@ test('keeps touch feedback local to the Hero without adding a custom cursor', as
   await page.goto('/')
 
   await expect(page.locator('.sitewide-cursor')).toHaveCount(0)
-  await page.locator('.home-hero-particles').tap()
-  await expect(page.locator('.home-hero-touch-ripple')).toHaveAttribute('data-active', 'true')
-  await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-last-input', 'touch')
+  const stage = page.locator('.home-hero-particles')
+  const ripple = page.locator('.home-hero-touch-ripple')
+
+  // Touch feedback is available before the photo-gated particle runtime starts.
+  await stage.tap()
+  await expect(ripple).toHaveAttribute('data-active', 'true')
+
+  // Verify particle input only after its engine is ready to accept gestures.
+  await waitForSettledHero(page)
+  await stage.tap()
+  await expect(ripple).toHaveAttribute('data-active', 'true')
+  await expect(stage).toHaveAttribute('data-last-input', 'touch')
 })
 
 test('does not show touch feedback for input outside the Hero', async ({ page }) => {
