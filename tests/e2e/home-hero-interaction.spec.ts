@@ -22,6 +22,10 @@ type HeroPixelWindow = Window & {
   heroCompletedRenders?: number[]
   heroBaselineP95?: number
   heroObservedCanvas?: HTMLCanvasElement
+  heroObservedContext?: CanvasRenderingContext2D
+  heroCaptureInstalls?: number
+  heroCaptureClears?: number
+  heroPreviousBatchSize?: number
   heroCapturedDeformation?: boolean
 }
 
@@ -36,6 +40,8 @@ async function savePixels(page: import('@playwright/test').Page) {
     target.heroHomePoints = reference.points
     if (target.heroObservedCanvas !== canvas) {
       target.heroObservedCanvas = canvas
+      target.heroObservedContext = context
+      target.heroCaptureInstalls = (target.heroCaptureInstalls ?? 0) + 1
       // Cache the actual native drawing state when it is assigned, rather than
       // crossing the Canvas API again for every observed rectangle.
       const colorDescriptor = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillStyle')!
@@ -62,6 +68,8 @@ async function savePixels(page: import('@playwright/test').Page) {
       context.clearRect = (...args) => { contextClear(...args) }
       function contextClear(...args: Parameters<typeof clear>) {
         Reflect.apply(clear, context, args)
+        target.heroPreviousBatchSize = target.heroPoints?.length ?? 0
+        target.heroCaptureClears = (target.heroCaptureClears ?? 0) + 1
         target.heroPoints = []
       }
       const fill = context.fillRect
@@ -100,7 +108,8 @@ async function savePixels(page: import('@playwright/test').Page) {
     }
     return Number(canvas.parentElement!.dataset.frameCount)
   }, reference)
-  await expect.poll(() => canvasLocator.evaluate((element, { expected, startingFrame }) => {
+  try {
+    await expect.poll(() => canvasLocator.evaluate((element, { expected, startingFrame }) => {
     const canvas = element as HTMLCanvasElement
     const stage = canvas.parentElement!
     const target = window as HeroPixelWindow
@@ -114,7 +123,29 @@ async function savePixels(page: import('@playwright/test').Page) {
       renderedPoints,
       frameCount
     }
-  }, { expected: reference.points.length, startingFrame })).toMatchObject({ ready: true })
+    }, { expected: reference.points.length, startingFrame })).toMatchObject({ ready: true })
+  } catch (error) {
+    const evidence = await canvasLocator.evaluate((element, { expected, startingFrame }) => {
+      const canvas = element as HTMLCanvasElement
+      const stage = canvas.parentElement!
+      const target = window as HeroPixelWindow
+      const bounds = stage.getBoundingClientRect()
+      const context = canvas.getContext('2d')
+      const measure = document.createElement('canvas').getContext('2d')!
+      measure.font = '400 100px Amiri, serif'
+      return { expected, startingFrame, frameCount: Number(stage.dataset.frameCount),
+        particleCount: Number(stage.dataset.particleCount), renderedPoints: target.heroPoints?.length ?? 0,
+        renderMode: stage.dataset.renderMode, particleState: stage.dataset.particleState,
+        animationRunning: stage.dataset.animationRunning, bounds: { width: bounds.width, height: bounds.height },
+        border: { left: stage.clientLeft, top: stage.clientTop }, canvas: { width: canvas.width, height: canvas.height },
+        dpr: devicePixelRatio, fontStatus: document.fonts.status, fontReady: document.fonts.check('400 100px Amiri', 'YANCE'),
+        fontWidth: measure.measureText('YANCE').width, visibility: document.visibilityState, focused: document.hasFocus(),
+        sameCanvas: target.heroObservedCanvas === canvas, sameContext: target.heroObservedContext === context,
+        installs: target.heroCaptureInstalls, clears: target.heroCaptureClears, previousBatchSize: target.heroPreviousBatchSize }
+    }, { expected: reference.points.length, startingFrame })
+    await test.info().attach('particle-capture-diagnostics', { body: JSON.stringify(evidence, null, 2), contentType: 'application/json' })
+    throw error
+  }
   await canvasLocator.evaluate((element, expected) => {
     const canvas = element as HTMLCanvasElement
     const target = window as HeroPixelWindow
