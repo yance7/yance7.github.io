@@ -1137,6 +1137,33 @@ test('@particle-v2 starts a full gathering after delayed display-font readiness'
   expect(Number(await stage.getAttribute('data-moving-particle-count'))).toBeLessThan(initialMovingCount)
 })
 
+test('@particle-v2 waits for the bundled Amiri face when font matching initially returns empty', async ({ page }) => {
+  await page.addInitScript(() => {
+    const nativeLoad = document.fonts.load.bind(document.fonts)
+    document.fonts.load = (font, text) => text === 'YANCE' ? Promise.resolve([]) : nativeLoad(font, text)
+    const NativeFontFace = window.FontFace
+    let release!: () => void
+    const gate = new Promise<void>(resolve => { release = resolve })
+    const target = window as Window & { releaseHeroFace?: () => void; heroFaceRequested?: boolean }
+    target.releaseHeroFace = release
+    window.FontFace = class extends NativeFontFace {
+      async load() {
+        target.heroFaceRequested = true
+        await gate
+        return super.load()
+      }
+    }
+  })
+  await page.goto('/')
+  const stage = page.locator('.home-hero-particles')
+  await expect.poll(() => page.evaluate(() => (window as Window & { heroFaceRequested?: boolean }).heroFaceRequested)).toBe(true)
+  await expect(stage).toHaveAttribute('data-render-mode', 'initializing')
+  await page.evaluate(() => (window as Window & { releaseHeroFace?: () => void }).releaseHeroFace!())
+  await expect(stage).toHaveAttribute('data-render-mode', 'canvas')
+  const reference = await stage.evaluate(readMimoReferenceGlyph)
+  expect(reference.points).toHaveLength(Number(await stage.getAttribute('data-particle-count')))
+})
+
 test('@particle-v2 clears a continuously drawn held shape when scrolling changes geometry', async ({ page }) => {
   await page.goto('/')
   await waitForSettledHero(page)

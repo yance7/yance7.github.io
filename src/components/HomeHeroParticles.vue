@@ -2,6 +2,8 @@
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { MimoParticleEngine as HomeHeroParticleEngine } from '../utils/mimoParticleModel'
 import { getMimoFontSize } from '../utils/homeHeroParticleSizing'
+import { createHeroGlyphFontLoader } from '../utils/homeHeroGlyphFont'
+import amiriFontUrl from '@fontsource/amiri/files/amiri-latin-400-normal.woff2?url'
 import type { HomeHeroGlyphLayout } from '../utils/homeHeroParticleTypes'
 import type { HomeHeroParticleRenderer, HomeHeroParticleColors } from '../utils/homeHeroParticleRenderer'
 
@@ -13,6 +15,7 @@ const renderMode = ref(props.runtimeEnabled ? 'initializing' : 'static')
 const particleState = ref(props.runtimeEnabled ? 'initializing' : 'static')
 const glyphFontFamily = 'Amiri, serif'
 const glyphFontWeight = '400'
+const ensureGlyphFont = createHeroGlyphFontLoader(document.fonts, () => new FontFace('Amiri', `url("${amiriFontUrl}")`, { weight: '400', style: 'normal' }))
 const particleCount = ref(0)
 const sourceParticleCount = ref(0)
 const inkArea = ref(0)
@@ -161,7 +164,7 @@ async function rebuild(force = false) {
     staticMode()
     const revision = generation
     await fitStaticGlyph(width, height, revision)
-    await document.fonts.load(`${style.fontWeight} 100px ${style.fontFamily}`, 'YANCE').catch(() => [])
+    await ensureGlyphFont().catch(() => undefined)
     await fitStaticGlyph(width, height, revision)
     return
   }
@@ -176,7 +179,7 @@ async function rebuild(force = false) {
   if (disposed || revision !== generation || !canRenderCanvas() || !canvas.value) return
   try {
     // Generate the mask only after the locally bundled Amiri regular face loads.
-    await document.fonts.load(`${style.fontWeight} 100px ${style.fontFamily}`, 'YANCE')
+    await ensureGlyphFont()
     if (disposed || revision !== generation || !canRenderCanvas() || !canvas.value) return
     const [{ MimoParticleEngine, createMimoTextMask, createMimoParticleScene }, { HomeHeroParticleRenderer: ParticleRenderer }] = await Promise.all([
       import('../utils/mimoParticleModel'),
