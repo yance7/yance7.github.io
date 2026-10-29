@@ -27,6 +27,7 @@ type HeroPixelWindow = Window & {
   heroCaptureClears?: number
   heroPreviousBatchSize?: number
   heroCapturedDeformation?: boolean
+  heroPointerLeaveFrame?: number
 }
 
 async function savePixels(page: import('@playwright/test').Page) {
@@ -416,8 +417,41 @@ test('@particle-v2 repels particles and returns to the drifting glyph after leav
   await expect(stage).toHaveAttribute('data-particle-state', 'disturbed')
   expect(await changedPixels(page)).toBeGreaterThan(100)
 
+  await stage.evaluate((element) => {
+    const particleStage = element as HTMLElement
+    particleStage.addEventListener('pointerleave', () => {
+      ;(window as HeroPixelWindow).heroPointerLeaveFrame = Number(particleStage.dataset.frameCount)
+    }, { once: true })
+  })
   await page.mouse.move(-10, -10)
-  await expect(stage).toHaveAttribute('data-particle-state', 'settled', { timeout: 1500 })
+  const releaseFrame = Number(await page.evaluate(() => (window as HeroPixelWindow).heroPointerLeaveFrame))
+  expect(releaseFrame).toBeGreaterThan(0)
+
+  // Recovery is frame-based; WebKit's frame cadence varies under CI load.
+  const recovery = await stage.evaluate((element, startFrame) => new Promise<{ state?: string; frames: number; watchdogExpired: boolean }>((resolve) => {
+    const particleStage = element as HTMLElement
+    const observer = new MutationObserver(check)
+    let watchdog: number | undefined
+    function finish(watchdogExpired: boolean) {
+      if (watchdog !== undefined) window.clearTimeout(watchdog)
+      observer.disconnect()
+      resolve({ state: particleStage.dataset.particleState, frames: Number(particleStage.dataset.frameCount) - startFrame, watchdogExpired })
+    }
+    function check() {
+      const state = particleStage.dataset.particleState
+      const frames = Number(particleStage.dataset.frameCount) - startFrame
+      if (state === 'settled' || frames >= 9) {
+        finish(false)
+      }
+    }
+    observer.observe(particleStage, { attributes: true, attributeFilter: ['data-frame-count', 'data-particle-state'] })
+    // Fail promptly if rendering stops; the recovery budget itself is frame-based.
+    watchdog = window.setTimeout(() => finish(true), 10_000)
+    check()
+  }), releaseFrame)
+  expect(recovery.watchdogExpired).toBe(false)
+  expect(recovery.state).toBe('settled')
+  expect(recovery.frames).toBeLessThanOrEqual(9)
   await expect(stage).toHaveAttribute('data-moving-particle-count', '0')
   await expectRecoveredMark(page)
 })
