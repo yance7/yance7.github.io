@@ -51,6 +51,7 @@ let hashScrollFrame: number | undefined
 let homeContentObserver: PerformanceObserver | null = null
 let homeContentFallbackTimer: ReturnType<typeof setTimeout> | undefined
 let homePhotoFallbackCleanup: (() => void) | null = null
+let homeContentPaintFrame: number | undefined
 let hashScrollAttempts = 0
 let pendingHashTarget: HTMLElement | undefined
 const hashScrollMaxAttempts = 120
@@ -159,6 +160,10 @@ function handleHashChange() {
 
 function enableHomeContent() {
   if (disposed || pageContentEnabled.value) return
+  if (homeContentPaintFrame !== undefined) {
+    window.cancelAnimationFrame(homeContentPaintFrame)
+    homeContentPaintFrame = undefined
+  }
   homeContentObserver?.disconnect()
   homeContentObserver = null
   homePhotoFallbackCleanup?.()
@@ -168,6 +173,16 @@ function enableHomeContent() {
   pageContentEnabled.value = true
   document.documentElement.dataset.homeHeroPhotoReady = 'true'
   window.dispatchEvent(new Event('home-hero-photo-ready'))
+}
+
+function scheduleHomeContentAfterHeroPaint() {
+  if (disposed || pageContentEnabled.value || homeContentPaintFrame !== undefined) return
+  homeContentPaintFrame = window.requestAnimationFrame(() => {
+    homeContentPaintFrame = window.requestAnimationFrame(() => {
+      homeContentPaintFrame = undefined
+      enableHomeContent()
+    })
+  })
 }
 
 function scheduleHomeContentFallback() {
@@ -304,7 +319,7 @@ onMounted(() => {
         const candidate = (entry as PerformanceEntry & { element?: Element | null }).element
         return candidate?.classList.contains('home-hero-slideshow__image') === true
       })
-      if (hasHeroPhotoPaint) enableHomeContent()
+      if (hasHeroPhotoPaint) scheduleHomeContentAfterHeroPaint()
     })
     homeContentObserver.observe({ type: 'largest-contentful-paint', buffered: true })
   } catch {
@@ -317,6 +332,7 @@ onBeforeUnmount(() => {
   pageLoadController.abort()
   clearTimeout(skeletonTimer)
   clearTimeout(homeContentFallbackTimer)
+  if (homeContentPaintFrame !== undefined) window.cancelAnimationFrame(homeContentPaintFrame)
   homeContentObserver?.disconnect()
   homePhotoFallbackCleanup?.()
   homePhotoFallbackCleanup = null
