@@ -28,7 +28,8 @@ type HeroPixelWindow = Window & {
 async function savePixels(page: import('@playwright/test').Page) {
   const reference = await page.locator('.home-hero-particles').evaluate(readMimoReferenceGlyph)
   expect(reference.points.length).toBeGreaterThan(0)
-  await page.locator('.home-hero-particles-canvas').evaluate(async (element, reference) => {
+  const canvasLocator = page.locator('.home-hero-particles-canvas')
+  const startingFrame = await canvasLocator.evaluate((element, reference) => {
     const canvas = element as HTMLCanvasElement
     const target = window as HeroPixelWindow
     const context = canvas.getContext('2d')!
@@ -97,9 +98,22 @@ async function savePixels(page: import('@playwright/test').Page) {
         }
       }
     }
-    await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+    if (reference.points.length !== Number(canvas.parentElement!.dataset.particleCount)) throw new Error('Particle reference count does not match the rendered scene')
+    return Number(canvas.parentElement!.dataset.frameCount)
+  }, reference)
+  await expect.poll(() => canvasLocator.evaluate((element, { expected, startingFrame }) => {
+    const canvas = element as HTMLCanvasElement
+    const stage = canvas.parentElement!
+    const target = window as HeroPixelWindow
+    return Number(stage.dataset.frameCount) > startingFrame
+      && target.heroPoints?.length === expected
+  }, { expected: reference.points.length, startingFrame })).toBe(true)
+  await canvasLocator.evaluate((element, expected) => {
+    const canvas = element as HTMLCanvasElement
+    const target = window as HeroPixelWindow
+    const context = canvas.getContext('2d')!
     target.heroBaseline = context.getImageData(0, 0, canvas.width, canvas.height).data
-    if (target.heroPoints?.length !== reference.points.length || reference.points.length !== Number(canvas.parentElement!.dataset.particleCount)) throw new Error('Incomplete particle frame at capture')
+    if (target.heroPoints?.length !== expected) throw new Error('Incomplete particle frame at capture')
     target.heroPeak = 0
     target.heroPeakDisplacement = 0
     target.heroCapturedDeformation = false
@@ -109,7 +123,7 @@ async function savePixels(page: import('@playwright/test').Page) {
     target.heroRecoveryFrames = undefined
     target.heroRecoveryIntervals = []
     target.heroCompletedRenders = []
-  }, reference)
+  }, reference.points.length)
   await page.locator('.home-hero-particles').evaluate(element => new Promise<void>(resolve => {
     const targetFrame = Number((element as HTMLElement).dataset.frameCount) + 12
     const observer = new MutationObserver(check)
