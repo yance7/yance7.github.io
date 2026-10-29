@@ -4,6 +4,9 @@ import { readMimoReferenceGlyph } from './helpers/mimo-reference'
 
 async function ready(page: Page) {
   await page.goto('/')
+  // The lazy route loader has a 15-second deadline; do not start particle
+  // assertions while the app still reports that its page is loading.
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready', { timeout: 15_000 })
   await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-render-mode', 'canvas')
   await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-particle-state', 'settled', { timeout: 8000 })
 }
@@ -256,6 +259,10 @@ test('MiMo tracks repeated pen gestures and matching window releases', async ({ 
     await frames(page)
     await expect(stage).toHaveAttribute('data-particle-state', 'disturbed')
     await gesture(page, end)
+    // Recovery blends once per rendered frame; the separate pixel test also
+    // enforces its wall-clock bound when the browser has normal refresh.
+    const releasedFrame = Number(await stage.getAttribute('data-frame-count'))
+    await expect.poll(async () => Number(await stage.getAttribute('data-frame-count'))).toBeGreaterThanOrEqual(releasedFrame + 9)
     await expect(stage).toHaveAttribute('data-particle-state', 'settled', { timeout: 1500 })
   }
 })

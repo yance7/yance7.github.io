@@ -26,37 +26,8 @@ type HeroPixelWindow = Window & {
   heroCaptureInstalls?: number
   heroCaptureClears?: number
   heroPreviousBatchSize?: number
-  heroMaskSamples?: { time: number; font: string; width: number; canvasWidth: number; canvasHeight: number; fonts: string; ready: boolean }[]
-  heroFontLoads?: { time: number; font: string; status: string; faces: { family: string; status: string }[] }[]
   heroCapturedDeformation?: boolean
 }
-
-test.beforeEach(async ({ page }, testInfo) => {
-  if (!/holds a local deformation|retains real deformation|uses frame-based recovery|consumes one touch stream|recovers when a second stationary finger|clears a continuously drawn held shape/.test(testInfo.title)) return
-  await page.addInitScript(() => {
-    const nativeLoad = document.fonts.load.bind(document.fonts)
-    document.fonts.load = async (font, text) => {
-      const faces = await nativeLoad(font, text)
-      if (text === 'YANCE') {
-        const target = window as HeroPixelWindow
-        ;(target.heroFontLoads ??= []).push({ time: performance.now(), font, status: document.fonts.status,
-          faces: faces.map(face => ({ family: face.family, status: face.status })) })
-      }
-      return faces
-    }
-    const nativeFillText = CanvasRenderingContext2D.prototype.fillText
-    CanvasRenderingContext2D.prototype.fillText = function (text, x, y, maxWidth) {
-      if (text === 'YANCE') {
-        const target = window as HeroPixelWindow
-        ;(target.heroMaskSamples ??= []).push({ time: performance.now(), font: this.font,
-          width: this.measureText(text).width, canvasWidth: this.canvas.width, canvasHeight: this.canvas.height,
-          fonts: document.fonts.status, ready: document.fonts.check(this.font, text) })
-      }
-      if (maxWidth === undefined) nativeFillText.call(this, text, x, y)
-      else nativeFillText.call(this, text, x, y, maxWidth)
-    }
-  })
-})
 
 async function savePixels(page: import('@playwright/test').Page) {
   const reference = await page.locator('.home-hero-particles').evaluate(readMimoReferenceGlyph)
@@ -170,8 +141,7 @@ async function savePixels(page: import('@playwright/test').Page) {
         dpr: devicePixelRatio, fontStatus: document.fonts.status, fontReady: document.fonts.check('400 100px Amiri', 'YANCE'),
         fontWidth: measure.measureText('YANCE').width, visibility: document.visibilityState, focused: document.hasFocus(),
         sameCanvas: target.heroObservedCanvas === canvas, sameContext: target.heroObservedContext === context,
-        installs: target.heroCaptureInstalls, clears: target.heroCaptureClears, previousBatchSize: target.heroPreviousBatchSize,
-        maskSamples: target.heroMaskSamples, fontLoads: target.heroFontLoads }
+        installs: target.heroCaptureInstalls, clears: target.heroCaptureClears, previousBatchSize: target.heroPreviousBatchSize }
     }, { expected: reference.points.length, startingFrame })
     await test.info().attach('particle-capture-diagnostics', { body: JSON.stringify(evidence, null, 2), contentType: 'application/json' })
     throw error
