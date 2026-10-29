@@ -192,7 +192,24 @@ for (const route of ['/', '/zh-hk/', '/en/']) {
     expect(result.count).toBeGreaterThan(100)
     expect(result.count).toBeLessThanOrEqual(12000)
     expect(result.count / result.source).toBeGreaterThanOrEqual(.9)
-    expect((await stage.evaluate(readMimoReferenceGlyph)).points).toHaveLength(result.count)
+    const reference = await stage.evaluate(readMimoReferenceGlyph)
+    if (reference.points.length !== result.count) {
+      const state = await stage.evaluate(element => {
+        const stage = element as HTMLElement
+        const bounds = stage.getBoundingClientRect()
+        const context = document.createElement('canvas').getContext('2d')!
+        context.font = '400 100px Amiri, serif'
+        return { width: bounds.width, height: bounds.height, border: stage.clientLeft,
+          canvasWidth: stage.querySelector('canvas')!.width, canvasHeight: stage.querySelector('canvas')!.height,
+          count: Number(stage.dataset.particleCount), frameCount: Number(stage.dataset.frameCount),
+          fontStatus: document.fonts.status, fontReady: document.fonts.check('400 100px Amiri', 'YANCE'),
+          fontWidth: context.measureText('YANCE').width, viewport: { width: innerWidth, height: innerHeight }, dpr: devicePixelRatio }
+      })
+      await test.info().attach('mimo-reference-diagnostics', { body: JSON.stringify({ result, reference: {
+        width: reference.width, height: reference.height, count: reference.points.length, ratio: reference.ratio
+      }, state }, null, 2), contentType: 'application/json' })
+    }
+    expect(reference.points).toHaveLength(result.count)
     expect(result.ratio).toBe(result.expectedRatio)
     expect(result.width).toBe(result.expectedWidth)
     expect(result.height).toBe(result.expectedHeight)
