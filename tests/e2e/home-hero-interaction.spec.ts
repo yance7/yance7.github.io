@@ -624,15 +624,38 @@ test('keeps the shared sitewide cursor and clear CTA feedback', async ({ page })
 
 test('keeps touch feedback local to the Hero without adding a custom cursor', async ({ page }) => {
   test.skip(!await page.evaluate(() => window.matchMedia('(pointer: coarse)').matches))
-  await page.goto('/')
-
-  await expect(page.locator('.sitewide-cursor')).toHaveCount(0)
   const stage = page.locator('.home-hero-particles')
   const ripple = page.locator('.home-hero-touch-ripple')
+  let releasePhoto!: () => void
+  let photoRequestStarted = false
+  const photoGate = new Promise<void>((resolve) => { releasePhoto = resolve })
+  await page.route('**/assets/home-hero/hero-01-*', async (route) => {
+    photoRequestStarted = true
+    await photoGate
+    await route.continue()
+  })
+  await page.addInitScript(() => {
+    const target = window as Window & { heroPhotoReadyAtTouch?: boolean }
+    document.addEventListener('pointerdown', (event) => {
+      const element = event.target
+      if (event.pointerType !== 'touch' || !(element instanceof Element) || !element.closest('.home-hero')) return
+      target.heroPhotoReadyAtTouch = document.documentElement.dataset.homeHeroPhotoReady === 'true'
+    }, true)
+  })
 
-  // Touch feedback is available before the photo-gated particle runtime starts.
-  await stage.tap()
-  await expect(ripple).toHaveAttribute('data-active', 'true')
+  try {
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
+    await expect.poll(() => photoRequestStarted).toBe(true)
+    await expect(page.locator('.sitewide-cursor')).toHaveCount(0)
+    await expect(page.locator('html')).not.toHaveAttribute('data-home-hero-photo-ready', 'true')
+
+    // Touch feedback remains available while the photo-gated runtime is held back.
+    await stage.tap()
+    await expect.poll(() => page.evaluate(() => (window as Window & { heroPhotoReadyAtTouch?: boolean }).heroPhotoReadyAtTouch)).toBe(false)
+    await expect(ripple).toHaveAttribute('data-active', 'true')
+  } finally {
+    releasePhoto()
+  }
 
   // Verify particle input only after its engine is ready to accept gestures.
   await waitForSettledHero(page)
