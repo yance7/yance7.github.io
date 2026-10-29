@@ -98,22 +98,32 @@ async function savePixels(page: import('@playwright/test').Page) {
         }
       }
     }
-    if (reference.points.length !== Number(canvas.parentElement!.dataset.particleCount)) throw new Error('Particle reference count does not match the rendered scene')
     return Number(canvas.parentElement!.dataset.frameCount)
   }, reference)
   await expect.poll(() => canvasLocator.evaluate((element, { expected, startingFrame }) => {
     const canvas = element as HTMLCanvasElement
     const stage = canvas.parentElement!
     const target = window as HeroPixelWindow
-    return Number(stage.dataset.frameCount) > startingFrame
-      && target.heroPoints?.length === expected
-  }, { expected: reference.points.length, startingFrame })).toBe(true)
+    const particleCount = Number(stage.dataset.particleCount)
+    const renderedPoints = target.heroPoints?.length ?? 0
+    const frameCount = Number(stage.dataset.frameCount)
+    return {
+      ready: frameCount > startingFrame && particleCount === expected && renderedPoints === expected,
+      expected,
+      particleCount,
+      renderedPoints,
+      frameCount
+    }
+  }, { expected: reference.points.length, startingFrame })).toMatchObject({ ready: true })
   await canvasLocator.evaluate((element, expected) => {
     const canvas = element as HTMLCanvasElement
     const target = window as HeroPixelWindow
     const context = canvas.getContext('2d')!
     target.heroBaseline = context.getImageData(0, 0, canvas.width, canvas.height).data
-    if (target.heroPoints?.length !== expected) throw new Error('Incomplete particle frame at capture')
+    const particleCount = Number(canvas.parentElement!.dataset.particleCount)
+    if (target.heroPoints?.length !== expected || particleCount !== expected) {
+      throw new Error(`Incomplete particle frame at capture: expected ${expected}, scene ${particleCount}, drawn ${target.heroPoints?.length ?? 0}`)
+    }
     target.heroPeak = 0
     target.heroPeakDisplacement = 0
     target.heroCapturedDeformation = false
