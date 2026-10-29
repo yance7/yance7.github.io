@@ -26,6 +26,7 @@ type HeroPixelWindow = Window & {
   heroCaptureInstalls?: number
   heroCaptureClears?: number
   heroPreviousBatchSize?: number
+  heroMaskSamples?: { time: number; font: string; width: number; canvasWidth: number; canvasHeight: number; fonts: string; ready: boolean }[]
   heroCapturedDeformation?: boolean
 }
 
@@ -141,7 +142,8 @@ async function savePixels(page: import('@playwright/test').Page) {
         dpr: devicePixelRatio, fontStatus: document.fonts.status, fontReady: document.fonts.check('400 100px Amiri', 'YANCE'),
         fontWidth: measure.measureText('YANCE').width, visibility: document.visibilityState, focused: document.hasFocus(),
         sameCanvas: target.heroObservedCanvas === canvas, sameContext: target.heroObservedContext === context,
-        installs: target.heroCaptureInstalls, clears: target.heroCaptureClears, previousBatchSize: target.heroPreviousBatchSize }
+        installs: target.heroCaptureInstalls, clears: target.heroCaptureClears, previousBatchSize: target.heroPreviousBatchSize,
+        maskSamples: target.heroMaskSamples }
     }, { expected: reference.points.length, startingFrame })
     await test.info().attach('particle-capture-diagnostics', { body: JSON.stringify(evidence, null, 2), contentType: 'application/json' })
     throw error
@@ -754,6 +756,19 @@ test('@particle-v2 continues microdrift frames after the intro and recovery', as
 })
 
 test('@particle-v2 holds a local deformation while continuously drawing microdrift', async ({ page }) => {
+  await page.addInitScript(() => {
+    const nativeFillText = CanvasRenderingContext2D.prototype.fillText
+    CanvasRenderingContext2D.prototype.fillText = function (text, x, y, maxWidth) {
+      if (text === 'YANCE') {
+        const target = window as HeroPixelWindow
+        ;(target.heroMaskSamples ??= []).push({ time: performance.now(), font: this.font,
+          width: this.measureText(text).width, canvasWidth: this.canvas.width, canvasHeight: this.canvas.height,
+          fonts: document.fonts.status, ready: document.fonts.check(this.font, text) })
+      }
+      if (maxWidth === undefined) nativeFillText.call(this, text, x, y)
+      else nativeFillText.call(this, text, x, y, maxWidth)
+    }
+  })
   await page.goto('/')
   await waitForSettledHero(page)
   const stage = page.locator('.home-hero-particles')
