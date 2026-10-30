@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 const assetRoot = resolve(process.cwd(), 'public/assets')
 const repositoryRoot = resolve(process.cwd())
 const sourceDirectories = ['.github', 'config', 'html-src', 'public', 'scripts', 'src', 'tests']
-const sourceDocuments = ['README.md', 'docs/asset-rights.md', 'docs/concert-poster-sources.md']
+const sourceDocuments = ['AGENTS.md', 'README.md', 'docs/asset-rights.md', 'docs/concert-poster-sources.md']
 const imageRoots = [
   'images/home-hero/',
   'images/concerts/originals/',
