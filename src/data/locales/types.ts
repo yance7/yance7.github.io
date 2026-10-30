@@ -48,7 +48,7 @@ export interface HonorsLocaleCopy {
   }
 }
 
-export type ResearchCopy = Pick<ResearchItem, 'title' | 'text' | 'tag' | 'org' | 'metrics' | 'methodology' | 'proof'>
+export type ResearchCopy = Pick<ResearchItem, 'title' | 'text' | 'tag' | 'org' | 'metrics' | 'methodology' | 'proof' | 'materialRequest'>
 
 export interface ResearchLocaleCopy {
   entities: Record<string, ResearchCopy>

@@ -109,7 +109,6 @@ doi={10.1109/ICIPAI70034.2026.11605650}
     title: '基于多模态特征融合与通道注意力的鱼类摄食强度评估',
     org: '国家数字渔业创新中心 · 英才计划',
     text: '基于 MRS-FFIA 的 7,611 对音频与图像样本，融合 Mel 语谱图和图像，以 CNN6 / ResNet34 双分支与 SE-Block 分类鱼类摄食强度。',
-    link: '',
     metrics: [
       { value: '91.82%', label: '准确率' },
       { value: '7611', label: '多模态样本对' },
@@ -134,7 +133,6 @@ doi={10.1109/ICIPAI70034.2026.11605650}
     title: '不同外源增强剂对玉米生长的影响与机制研究',
     org: '国际会议论文 · ICBB 2026（第八届生物技术与生物医学国际会议）',
     text: '通过四种盆栽处理研究外源增强剂与玉米生长的关系，并使用 16S rRNA 测序和随机森林分析根际微生物数据。',
-    link: '',
     paper: {
       href: 'https://www.bio-conferences.org/articles/bioconf/abs/2026/30/bioconf_icbb2026_02029/bioconf_icbb2026_02029.html',
       doi: '10.1051/bioconf/202623702029',

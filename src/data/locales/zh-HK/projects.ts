@@ -27,6 +27,25 @@ export const projectsCopy = {
         proof: [{ type: 'deployment', label: '上線產品', value: 'fresheye.yance.me', href: 'https://fresheye.yance.me', external: true }, { type: 'source', label: '原始碼', value: 'GitHub', href: 'https://github.com/yance7/FreshEye', external: true }]
       }
     },
+    'trusted-garden': {
+      ...base['trusted-garden']!,
+      title: 'Trusted Garden',
+      value: '透過視角切換、天氣狀態及場景漫遊，探索 3D 農場參考場景。',
+      description: '以 Three.js、TypeScript 和 Vite 建構的 3D 農場參考場景，可切換鏡頭視角、檢視天氣狀態並在場景中漫遊。模型與貼圖由同一網站提供，資訊面板的讀數為模擬展示值。',
+      role: '個人專案 · 三維場景與網頁互動',
+      discipline: '3D WEB / INTERACTIVE SCENE',
+      story: {
+        label: '3D 農場參考場景',
+        note: '透過視角、天氣狀態和漫遊探索數碼農場場景。',
+        chapters: [
+          { label: '01 / SCENE', title: '建構 3D 農場場景', detail: '使用 Three.js、TypeScript 和 Vite 建構參考場景，模型與貼圖由同一網站交付。' },
+          { label: '02 / INTERACTION', title: '切換視角與天氣', detail: '切換鏡頭視角、檢視天氣狀態，也可以在場景中漫遊。' },
+          { label: '03 / READOUT', title: '查看模擬數值', detail: '資訊面板中的控制台數值為模擬展示值。' }
+        ],
+        sequenceLabel: '場景探索', sequence: ['場景', '視角', '天氣', '漫遊'],
+        proof: []
+      }
+    },
     'ap-microeconomics-notes': {
       ...base['ap-microeconomics-notes']!,
       title: 'AP Micro 講義',

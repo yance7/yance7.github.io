@@ -6,7 +6,7 @@ export const siteCopy = {
     academics: { kicker: 'ACADEMICS', title: 'From here, tomorrow finds its course', copy: 'Coursework, standardized tests, and AP results—evidence of how the work has accumulated.', credit: { artist: 'JJ Lin', song: '明日坐标', album: '明日坐标' } },
     honors: { kicker: 'HONORS', title: 'Step by step, I keep climbing', copy: 'Awards mark the route; the more useful signal is the habit of continuing upward.', credit: { artist: 'Jay Chou', song: '蜗牛', album: 'Fantasy Plus' } },
     research: { kicker: 'RESEARCH', title: 'You share this imperfect dream with me', copy: 'From smart agriculture to explainable AI, I turn models into tools that people can open and use.', credit: { artist: 'TFBOYS', song: '不完美小孩', album: '我们的时光' } },
-    works: { kicker: 'WORKS', title: 'Little by little, I learned that effort can lead to success', copy: 'Two evolving project worlds showing how ideas leave the page and become products or open learning resources.', credit: { artist: 'Silence Wang', song: '慢慢懂', album: '慢慢懂' } },
+    works: { kicker: 'WORKS', title: 'Little by little, I learned that effort can lead to success', copy: 'Three evolving project worlds showing how ideas leave the page and become products or open learning resources.', credit: { artist: 'Silence Wang', song: '慢慢懂', album: '慢慢懂' } },
     concerts: { kicker: 'CONCERTS', title: 'Fate brought us together beyond this restless world', copy: 'Concerts, posters, and the nights when light and a shared chorus changed the scale of the world.', credit: { artist: 'G.E.M.', song: '光年之外', album: '' } }
   },
   nav: {
@@ -21,7 +21,7 @@ export const siteCopy = {
     academics: { no: '01', label: 'Academics', icon: '✦', desc: 'Coursework, standardized tests, and AP results—the readable record of sustained work.', accent: 'aqua' },
     honors: { no: '02', label: 'Honors', icon: '❖', desc: 'Awards mark the route; the useful signal is the habit of continuing upward.', accent: 'violet' },
     research: { no: '03', label: 'Research', icon: '◉', desc: 'From smart agriculture to explainable AI, turning models into tools people can use.', accent: 'gold' },
-    works: { no: '04', label: 'Works', icon: '♬', desc: 'Two evolving project worlds showing how ideas leave the page and become products or open learning resources.', accent: 'aqua' },
+    works: { no: '04', label: 'Works', icon: '♬', desc: 'Three evolving project worlds showing how ideas leave the page and become products or open learning resources.', accent: 'aqua' },
     concerts: { no: '05', label: 'Concerts', icon: '♪', desc: 'Live shows and posters: the personal archive beyond the lab.', accent: 'gold' }
   },
   home: {

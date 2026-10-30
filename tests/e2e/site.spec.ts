@@ -629,9 +629,9 @@ test('rapid control clicks settle without duplicate or stale state', async ({ pa
 test('Works wordmarks keep typography on hover', async ({ page }) => {
   await page.goto('/works/')
   const showcases = page.locator('.showcase')
-  await expect(showcases).toHaveCount(2)
+  await expect(showcases).toHaveCount(3)
 
-  for (let index = 0; index < 2; index += 1) {
+  for (const [wordmarkIndex, projectIndex] of [0, 2].entries()) {
     const before = await page.locator('.sc-wordmark').evaluateAll((elements) =>
       elements.map((element) => {
         const style = getComputedStyle(element)
@@ -642,9 +642,10 @@ test('Works wordmarks keep typography on hover', async ({ page }) => {
         }
       })
     )
-    const chineseSize = await showcases.nth(index).locator('.sc-identity h3 > span').evaluate((element) => getComputedStyle(element).fontSize)
-    expect(before[index]?.fontSize).toBe(chineseSize)
-    const box = await showcases.nth(index).boundingBox()
+    const project = showcases.nth(projectIndex)
+    const chineseSize = await project.locator('.sc-identity h3 > span').evaluate((element) => getComputedStyle(element).fontSize)
+    expect(before[wordmarkIndex]?.fontSize).toBe(chineseSize)
+    const box = await project.boundingBox()
     expect(box).not.toBeNull()
     await page.mouse.move((box?.x ?? 0) + (box?.width ?? 0) / 2, (box?.y ?? 0) + (box?.height ?? 0) / 2)
     await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())))

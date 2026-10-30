@@ -42,6 +42,11 @@ interface ResearchPaper {
   href: string
 }
 
+export interface MaterialRequest {
+  label: string
+  href: string
+}
+
 export interface ResearchItem {
   id: string
   date: string
@@ -56,6 +61,7 @@ export interface ResearchItem {
   link?: string
   citation?: string
   proof?: ProofLink[]
+  materialRequest?: MaterialRequest
   updatedAt: string
 }
 
