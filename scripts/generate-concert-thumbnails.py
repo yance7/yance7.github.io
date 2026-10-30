@@ -4,8 +4,9 @@ from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE_DIR = ROOT / 'public' / 'assets' / 'concerts'
-OUTPUT_DIR = SOURCE_DIR / 'thumbs'
+IMAGE_ROOT = ROOT / 'public' / 'assets' / 'images'
+SOURCE_DIR = IMAGE_ROOT / 'concerts' / 'originals'
+OUTPUT_DIR = IMAGE_ROOT / 'concerts' / 'thumbs'
 MAX_SIZE = (640, 640)
 
 

@@ -26,7 +26,7 @@ describe('home hero slide assets', () => {
 
       for (const [format, candidates] of Object.entries(slide.sources)) {
         for (const candidate of candidates) {
-          expect(candidate.src).toMatch(new RegExp(`^/assets/home-hero/${slide.id}-\\d+-[a-f0-9]{16}\\.${format === 'jpeg' ? 'jpg' : 'webp'}$`))
+          expect(candidate.src).toMatch(new RegExp(`^/assets/images/home-hero/${slide.id}-\\d+-[a-f0-9]{16}\\.${format === 'jpeg' ? 'jpg' : 'webp'}$`))
           expect(candidate.src).not.toMatch(/downloads|users[\\/]/i)
           expect(candidate.width).toBeLessThanOrEqual(slide.width)
           expect(candidate.height).toBeGreaterThan(0)

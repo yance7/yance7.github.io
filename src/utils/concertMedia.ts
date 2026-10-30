@@ -1,15 +1,15 @@
 import type { ConcertPoster } from '../data/types'
 
 export function originalImageUrl(name: string) {
-  return `/assets/concerts/${name}`
+  return `/assets/images/concerts/originals/${name}`
 }
 
 export function thumbnailUrl(name: string) {
-  return `/assets/concerts/thumbs/${name.replace(/\.[^.]+$/, '.webp')}`
+  return `/assets/images/concerts/thumbs/${name.replace(/\.[^.]+$/, '.webp')}`
 }
 
 export function thumbnailFallbackUrl(name: string) {
-  return `/assets/concerts/thumbs/${name.replace(/\.[^.]+$/, '.jpg')}`
+  return `/assets/images/concerts/thumbs/${name.replace(/\.[^.]+$/, '.jpg')}`
 }
 
 type ConcertPosterRatio = 'tall' | 'portrait' | 'landscape'

@@ -14,7 +14,7 @@ from PIL import Image, ImageCms, ImageOps
 
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTPUT_DIR = ROOT / 'public' / 'assets' / 'home-hero'
+OUTPUT_DIR = ROOT / 'public' / 'assets' / 'images' / 'home-hero'
 MANIFEST_PATH = ROOT / 'src' / 'data' / 'homeHeroAssets.json'
 SOURCE_FILES = (
     ('hero-01', '图片1.png'),
@@ -121,7 +121,7 @@ def _build_slide(source_path: Path, slide_id: str) -> tuple[dict[str, Any], dict
             digest = sha256(encoded)
             extension = 'webp' if format_name == 'webp' else 'jpg'
             filename = f'{slide_id}-{width}-{digest[:16]}.{extension}'
-            public_path = f'/assets/home-hero/{filename}'
+            public_path = f'/assets/images/home-hero/{filename}'
             candidates[format_name].append({
                 'src': public_path,
                 'width': width,
@@ -154,7 +154,7 @@ def _read_manifest() -> dict[str, Any]:
 def _verify_candidate(slide: dict[str, Any], format_name: str, candidate: dict[str, Any]) -> Path:
     relative_src = candidate.get('src')
     expected_extension = 'webp' if format_name == 'webp' else 'jpg'
-    if not isinstance(relative_src, str) or not relative_src.startswith('/assets/home-hero/'):
+    if not isinstance(relative_src, str) or not relative_src.startswith('/assets/images/home-hero/'):
         raise AssetError(f"{slide.get('id')}: 候选资源路径无效: {relative_src!r}")
     if 'downloads' in relative_src.lower() or '\\' in relative_src:
         raise AssetError(f'{slide.get("id")}: 候选资源路径包含本机信息')
@@ -249,7 +249,7 @@ def _previous_generated_paths() -> set[Path]:
         for candidates in slide.get('sources', {}).values():
             for candidate in candidates:
                 src = candidate.get('src', '')
-                if isinstance(src, str) and src.startswith('/assets/home-hero/') and '\\' not in src:
+                if isinstance(src, str) and src.startswith('/assets/images/home-hero/') and '\\' not in src:
                     paths.add((ROOT / 'public' / src.lstrip('/')).resolve())
     return paths
 

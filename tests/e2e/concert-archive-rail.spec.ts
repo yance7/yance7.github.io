@@ -66,15 +66,15 @@ test('concert archive renders every show in one reverse-chronological horizontal
 test('concert archive keeps original posters out of the initial request set', async ({ page }) => {
   const originalRequests: string[] = []
   page.on('request', (request) => {
-    if (request.url().match(/\/assets\/concerts\/[^/]+\.jpg$/)) originalRequests.push(request.url())
+    if (request.url().match(/\/assets\/images\/concerts\/originals\/[^/]+\.jpg$/)) originalRequests.push(request.url())
   })
 
   await gotoConcerts(page)
   const firstCard = page.locator('.concert-rail-card').first()
   await expect(firstCard).toBeVisible()
   expect(originalRequests).toEqual([])
-  await expect(firstCard.locator('.poster-foreground')).toHaveAttribute('src', /\/assets\/concerts\/thumbs\/[^/]+\.jpg$/)
-  await expect(firstCard.locator('.poster-backdrop')).toHaveAttribute('src', /\/assets\/concerts\/thumbs\/[^/]+\.jpg$/)
+  await expect(firstCard.locator('.poster-foreground')).toHaveAttribute('src', /\/assets\/images\/concerts\/thumbs\/[^/]+\.jpg$/)
+  await expect(firstCard.locator('.poster-backdrop')).toHaveAttribute('src', /\/assets\/images\/concerts\/thumbs\/[^/]+\.jpg$/)
 
   const opener = firstCard.locator('.poster-open')
   await opener.scrollIntoViewIfNeeded()

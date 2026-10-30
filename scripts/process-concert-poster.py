@@ -6,7 +6,7 @@ from PIL import Image, ImageCms, ImageOps
 
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_OUTPUT_DIR = ROOT / 'public' / 'assets' / 'concerts'
+DEFAULT_OUTPUT_DIR = ROOT / 'public' / 'assets' / 'images' / 'concerts' / 'originals'
 DEFAULT_THUMB_EDGE = 640
 DEFAULT_MAX_EDGE = 2560
 DEFAULT_JPEG_QUALITY = 88
@@ -49,7 +49,7 @@ def process_poster(
         raise ValueError(f'Original output must be a JPEG: {output}')
 
     output.parent.mkdir(parents=True, exist_ok=True)
-    thumbnail = output.parent / 'thumbs' / f'{output.stem}.webp'
+    thumbnail = output.parent.parent / 'thumbs' / f'{output.stem}.webp'
     thumbnail.parent.mkdir(parents=True, exist_ok=True)
 
     with Image.open(source) as opened:

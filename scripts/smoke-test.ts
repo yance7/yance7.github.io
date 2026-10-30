@@ -68,9 +68,9 @@ function assertHtmlContract(path: string, locale: Locale, pageKey?: (typeof page
   assert(html.includes(`data-locale="${locale}"`), `${path} 缺少 data-locale=${locale}`)
   assert(html.includes(`<html lang="${localeRegistry[locale].htmlLang}"`), `${path} lang 属性不正确`)
   assert(!html.includes('data-locale-font-preload'), `${path} 不应在主脚本前预加载字体样式表`)
-  assert(html.includes('href="/assets/brand/favicon-32.png" sizes="32x32" type="image/png"'), `${path} 缺少 32px favicon`)
-  assert(html.includes('href="/assets/brand/favicon-16.png" sizes="16x16" type="image/png"'), `${path} 缺少 16px favicon`)
-  assert(html.includes('rel="apple-touch-icon" href="/assets/brand/yance-icon-180.png" sizes="180x180"'), `${path} 缺少 Apple Touch Icon`)
+  assert(html.includes('href="/assets/images/brand/favicon-32.png" sizes="32x32" type="image/png"'), `${path} 缺少 32px favicon`)
+  assert(html.includes('href="/assets/images/brand/favicon-16.png" sizes="16x16" type="image/png"'), `${path} 缺少 16px favicon`)
+  assert(html.includes('rel="apple-touch-icon" href="/assets/images/brand/yance-icon-180.png" sizes="180x180"'), `${path} 缺少 Apple Touch Icon`)
   assert(html.includes('rel="manifest" href="/assets/site.webmanifest"'), `${path} 缺少 web manifest`)
 
   if (!pageKey) return
@@ -119,29 +119,29 @@ for (const locale of locales) {
 }
 
 for (const asset of [
-  'assets/og-card.png',
-  'assets/og-home.png',
-  'assets/og-academics.png',
-  'assets/og-honors.png',
-  'assets/og-research.png',
-  'assets/og-works.png',
-  'assets/og-concerts.png',
-  'assets/brand/favicon-16.png',
-  'assets/brand/favicon-32.png',
-  'assets/brand/yance-icon-180.png',
-  'assets/brand/yance-icon-192.png',
-  'assets/brand/yance-icon-512.png',
-  'assets/brand/yance-mark-48.webp',
-  'assets/brand/yance-mark-64.webp',
-  'assets/brand/yance-mark-96.webp',
-  'assets/brand/yance-mark-128.webp',
-  'assets/brand/yance-mark-256.webp',
-  'assets/brand/yance-mark-fallback.png',
+  'assets/images/social/og-card.png',
+  'assets/images/social/og-home.png',
+  'assets/images/social/og-academics.png',
+  'assets/images/social/og-honors.png',
+  'assets/images/social/og-research.png',
+  'assets/images/social/og-works.png',
+  'assets/images/social/og-concerts.png',
+  'assets/images/brand/favicon-16.png',
+  'assets/images/brand/favicon-32.png',
+  'assets/images/brand/yance-icon-180.png',
+  'assets/images/brand/yance-icon-192.png',
+  'assets/images/brand/yance-icon-512.png',
+  'assets/images/brand/yance-mark-48.webp',
+  'assets/images/brand/yance-mark-64.webp',
+  'assets/images/brand/yance-mark-96.webp',
+  'assets/images/brand/yance-mark-128.webp',
+  'assets/images/brand/yance-mark-256.webp',
+  'assets/images/brand/yance-mark-fallback.png',
   'assets/site.webmanifest',
   'assets/legacy-redirect.js',
-  'assets/case/fresheye-og-cover.png',
-  'assets/concerts',
-  'assets/concerts/thumbs',
+  'assets/images/case-studies/fresheye-og-cover.png',
+  'assets/images/concerts/originals',
+  'assets/images/concerts/thumbs',
   'CNAME',
   'robots.txt',
   'sitemap.xml'
@@ -162,8 +162,8 @@ assert((sitemap.match(/<xhtml:link/g) ?? []).length === localizedSitemapEntries.
 assert(!sitemap.includes('/404.html'), 'sitemap 不应包含 404')
 assert(!sitemap.includes('.html'), 'sitemap 只应包含正式目录 URL')
 
-const concertOriginals = readdirSync(join(dist, 'assets/concerts')).filter((file) => /\.(?:jpe?g|png|webp)$/i.test(file))
-const concertThumbs = readdirSync(join(dist, 'assets/concerts/thumbs')).filter((file) => /\.(?:webp|avif)$/i.test(file))
+const concertOriginals = readdirSync(join(dist, 'assets/images/concerts/originals')).filter((file) => /\.(?:jpe?g|png|webp)$/i.test(file))
+const concertThumbs = readdirSync(join(dist, 'assets/images/concerts/thumbs')).filter((file) => /\.(?:webp|avif)$/i.test(file))
 assert(concertOriginals.length > 0, 'Concert 原图产物为空')
 assert(concertThumbs.length > 0, 'Concert 缩略图产物为空')
 assert(read('CNAME').trim() === 'yance.me', 'CNAME 产物不正确')

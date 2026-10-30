@@ -663,7 +663,7 @@ test('keeps touch feedback local to the Hero without adding a custom cursor', as
   let releasePhoto!: () => void
   let photoRequestStarted = false
   const photoGate = new Promise<void>((resolve) => { releasePhoto = resolve })
-  await page.route('**/assets/home-hero/hero-01-*', async (route) => {
+  await page.route('**/assets/images/home-hero/hero-01-*', async (route) => {
     photoRequestStarted = true
     await photoGate
     await route.continue()

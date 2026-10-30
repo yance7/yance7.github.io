@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/assets/brand/yance-mark-128.webp" alt="Yance brand mark" width="96" />
+  <img src="public/assets/images/brand/yance-mark-128.webp" alt="Yance brand mark" width="96" />
 </p>
 
 <h1 align="center">Yance · Personal Archive</h1>
@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <img src="public/assets/og-card.png" alt="Yance Personal Archive preview" />
+  <img src="public/assets/images/social/og-card.png" alt="Yance Personal Archive preview" />
 </p>
 
 ## 快速导航

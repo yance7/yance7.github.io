@@ -1,6 +1,5 @@
 import { execFileSync, spawnSync } from 'node:child_process'
-import { readFileSync } from 'node:fs'
-import { copyFileSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
@@ -84,6 +83,41 @@ describe('media release contracts', () => {
     const processor = readFileSync(resolve(root, 'scripts/process-concert-poster.py'), 'utf8')
     expect(processor).toContain("outputMode='RGB'")
     expect(processor).not.toContain("output_mode='RGB'")
+  })
+
+  it('writes poster thumbnails beside originals under the image taxonomy', () => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'yance-concert-poster-'))
+    const sourcePath = join(fixtureRoot, 'source.png')
+    const concertRoot = join(fixtureRoot, 'public', 'assets', 'images', 'concerts')
+    const processorPath = resolve(root, 'scripts/process-concert-poster.py')
+    const fixtureScript = `
+from importlib.util import module_from_spec, spec_from_file_location
+import sys
+from pathlib import Path
+
+from PIL import Image
+
+
+sys.dont_write_bytecode = True
+source = Path(${JSON.stringify(sourcePath)})
+Image.new('RGB', (8, 8), (12, 34, 56)).save(source)
+spec = spec_from_file_location('process_concert_poster', ${JSON.stringify(processorPath)})
+processor = module_from_spec(spec)
+spec.loader.exec_module(processor)
+processor.DEFAULT_OUTPUT_DIR = Path(${JSON.stringify(join(concertRoot, 'originals'))})
+sys.argv = ['process-concert-poster.py', '--source', str(source), '--output-name', 'probe.jpg']
+processor.main()
+`
+
+    try {
+      execFileSync('python', ['-c', fixtureScript], { cwd: root, encoding: 'utf8' })
+
+      expect(existsSync(join(concertRoot, 'originals', 'probe.jpg'))).toBe(true)
+      expect(existsSync(join(concertRoot, 'thumbs', 'probe.webp'))).toBe(true)
+      expect(existsSync(join(concertRoot, 'originals', 'thumbs', 'probe.webp'))).toBe(false)
+    } finally {
+      rmSync(fixtureRoot, { recursive: true, force: true })
+    }
   })
 
   it('publishes notices for bundled fonts and the optional system MiSans fallback', () => {

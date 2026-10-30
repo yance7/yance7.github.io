@@ -201,7 +201,7 @@ async function attachPosterRetryEventCapture(page: Page, scenario: Awaited<Retur
   console.info(`POSTER_RETRY_NATIVE_EVENTS ${JSON.stringify(evidence)}`)
 }
 
-const posterRetryTarget = '**/assets/concerts/thumbs/concert-20261006-fforever.*'
+const posterRetryTarget = '**/assets/images/concerts/thumbs/concert-20261006-fforever.*'
 
 async function preparePosterRetry(page: Page) {
   const initialResponse = deferred()
@@ -238,7 +238,7 @@ async function preparePosterRetry(page: Page) {
   const failedSize = await poster.evaluate(element => ({ width: element.clientWidth, height: element.clientHeight }))
   expect(Math.abs(initialSize.width - failedSize.width)).toBeLessThanOrEqual(1)
   expect(Math.abs(initialSize.height - failedSize.height)).toBeLessThanOrEqual(1)
-  await expect(poster.getByRole('link', { name: 'Open original image', exact: true })).toHaveAttribute('href', /\/assets\/concerts\/[^/]+\.jpg$/)
+  await expect(poster.getByRole('link', { name: 'Open original image', exact: true })).toHaveAttribute('href', /\/assets\/images\/concerts\/originals\/[^/]+\.jpg$/)
   expect(initialUrls.length).toBeGreaterThan(0)
 
   return {
@@ -308,7 +308,7 @@ test('slow poster shows only its delayed static placeholder and then becomes rea
   await page.clock.install({ time: new Date('2026-10-22T00:00:00Z') })
   await page.clock.pauseAt(new Date('2026-10-22T00:00:01Z'))
   const gate = deferred()
-  await page.route('**/assets/concerts/thumbs/*.webp', async route => {
+  await page.route('**/assets/images/concerts/thumbs/*.webp', async route => {
     const response = await route.fetch()
     await gate.promise
     await route.fulfill({ response })
@@ -389,7 +389,7 @@ test('poster source changes reject a previous image decode completion', async ({
 test('native lazy poster fallback works without IntersectionObserver', async ({ page }) => {
   await page.addInitScript(() => { Object.defineProperty(window, 'IntersectionObserver', { value: undefined, configurable: true }) })
   const originals: string[] = []
-  page.on('request', request => { if (/\/assets\/concerts\/[^/]+\.jpg$/.test(request.url())) originals.push(request.url()) })
+  page.on('request', request => { if (/\/assets\/images\/concerts\/originals\/[^/]+\.jpg$/.test(request.url())) originals.push(request.url()) })
   await gotoMediaFixture(page, 'view=rail&count=16')
   const first = page.locator('.concert-poster').first()
   await expect(first).toHaveAttribute('data-poster-state', 'ready')
@@ -417,9 +417,9 @@ test('a decoded poster remount becomes ready after a native cache warmup', async
 
 test('rapid lightbox navigation rejects the previous pending image result', async ({ page }) => {
   const gate = deferred()
-  await page.route('**/assets/concerts/fixture-*.jpg', async route => {
+  await page.route('**/assets/images/concerts/originals/fixture-*.jpg', async route => {
     if (route.request().url().endsWith('fixture-first.jpg')) await gate.promise
-    await route.fulfill({ path: resolve(process.cwd(), 'public/assets/concerts/concert-20251108-kpl-finals.jpg') })
+    await route.fulfill({ path: resolve(process.cwd(), 'public/assets/images/concerts/originals/concert-20251108-kpl-finals.jpg') })
   })
   try {
     await gotoMediaFixture(page, 'view=lightbox')
@@ -429,7 +429,7 @@ test('rapid lightbox navigation rejects the previous pending image result', asyn
     await expect(dialog.locator('.lb-meta-index')).toHaveText('2 / 2')
     await expect(dialog.locator('.lb-stage img')).toHaveClass(/loaded/)
     gate.release()
-    await expect(dialog.locator('.lb-stage img')).toHaveAttribute('src', '/assets/concerts/fixture-second.jpg')
+    await expect(dialog.locator('.lb-stage img')).toHaveAttribute('src', '/assets/images/concerts/originals/fixture-second.jpg')
     await expect(dialog.locator('.lb-stage img')).toHaveClass(/loaded/)
     await expect(dialog.getByRole('alert')).toHaveCount(0)
     await page.keyboard.press('Escape')
@@ -441,7 +441,7 @@ test('rapid lightbox navigation rejects the previous pending image result', asyn
 
 test('poster WebP failure falls back to a decoded JPEG exactly once', async ({ page }) => {
   const requests = new Map<string, number>()
-  await page.route('**/assets/concerts/thumbs/*.webp', async route => {
+  await page.route('**/assets/images/concerts/thumbs/*.webp', async route => {
     const url = route.request().url()
     requests.set(url, (requests.get(url) ?? 0) + 1)
     await route.fulfill({ status: 404, headers: { 'cache-control': 'no-store' } })
@@ -652,7 +652,7 @@ test('poster retry supports touch activation', async ({ page }, testInfo) => {
 test('poster deadline ignores a real late image load until the user retries', async ({ page }) => {
   await page.clock.install()
   const responseGate = deferred()
-  await page.route('**/assets/concerts/thumbs/*.webp', async route => {
+  await page.route('**/assets/images/concerts/thumbs/*.webp', async route => {
     const response = await route.fetch()
     await responseGate.promise
     await route.fulfill({ response })
@@ -673,7 +673,7 @@ test('poster deadline ignores a real late image load until the user retries', as
 test('lightbox deadline keeps its caption and rejects a late result until retry', async ({ page }) => {
   await page.clock.install()
   const responseGate = deferred()
-  await page.route('**/assets/concerts/*.jpg', async route => {
+  await page.route('**/assets/images/concerts/originals/*.jpg', async route => {
     const response = await route.fetch()
     await responseGate.promise
     await route.fulfill({ response })

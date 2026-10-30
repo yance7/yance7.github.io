@@ -91,11 +91,11 @@ test('requests the first responsive photo at high priority and at most one next 
   if (cdp) {
     await cdp.send('Network.enable')
     cdp.on('Network.requestWillBeSent', (event) => {
-      if (event.request.url.includes('/assets/home-hero/')) priorities.set(event.request.url, event.request.initialPriority)
+      if (event.request.url.includes('/assets/images/home-hero/')) priorities.set(event.request.url, event.request.initialPriority)
     })
   }
   page.on('request', (request) => {
-    if (request.resourceType() === 'image' && request.url().includes('/assets/home-hero/')) {
+    if (request.resourceType() === 'image' && request.url().includes('/assets/images/home-hero/')) {
       imageRequests.push(request.url())
       requestOrder.push('hero-image')
     }
@@ -137,7 +137,7 @@ test('requests the first responsive photo at high priority and at most one next 
 test('keeps the preloaded hero photo visible while loader confirmation is pending', async ({ page }) => {
   let releaseRequest!: () => void
   const requestGate = new Promise<void>((resolve) => { releaseRequest = resolve })
-  await page.route('**/assets/home-hero/hero-01-*', async (route) => {
+  await page.route('**/assets/images/home-hero/hero-01-*', async (route) => {
     await requestGate
     await route.continue()
   })
@@ -179,7 +179,7 @@ test('releases English homepage content on the bounded fallback if the first pho
   let releaseRequest!: () => void
   let photoRequestStarted = false
   const requestGate = new Promise<void>((resolve) => { releaseRequest = resolve })
-  await page.route('**/assets/home-hero/hero-01-*', async (route) => {
+  await page.route('**/assets/images/home-hero/hero-01-*', async (route) => {
     photoRequestStarted = true
     await requestGate
     await route.continue()
@@ -218,7 +218,7 @@ test('uses the accepted Amiri face for the static glyph while the first photo is
   let releaseRequest!: () => void
   const requestGate = new Promise<void>((resolve) => { releaseRequest = resolve })
   let photoRequestStarted = false
-  await page.route('**/assets/home-hero/hero-01-*', async (route) => {
+  await page.route('**/assets/images/home-hero/hero-01-*', async (route) => {
     photoRequestStarted = true
     await requestGate
     await route.continue()
@@ -249,7 +249,7 @@ test('selects the crop-sized 896px candidate on a high-density mobile viewport',
   const page = await context.newPage()
   const imageRequests: string[] = []
   page.on('request', (request) => {
-    if (request.resourceType() === 'image' && request.url().includes('/assets/home-hero/')) imageRequests.push(request.url())
+    if (request.resourceType() === 'image' && request.url().includes('/assets/images/home-hero/')) imageRequests.push(request.url())
   })
 
   try {
@@ -409,7 +409,7 @@ test('skips the document-level photo preload and keeps the 640px candidate with 
     Object.defineProperty(navigator, 'connection', { configurable: true, value: connection })
   })
   page.on('request', (request) => {
-    if (request.resourceType() === 'image' && request.url().includes('/assets/home-hero/')) imageRequests.push(request.url())
+    if (request.resourceType() === 'image' && request.url().includes('/assets/images/home-hero/')) imageRequests.push(request.url())
   })
 
   await page.goto('/')
@@ -632,7 +632,7 @@ test('honors reduced motion and forced colors without hiding YANCE or claiming p
   await expect(play).toBeDisabled()
   const requests: string[] = []
   page.on('request', (request) => {
-    if (request.resourceType() === 'image' && request.url().includes('/assets/home-hero/')) requests.push(request.url())
+    if (request.resourceType() === 'image' && request.url().includes('/assets/images/home-hero/')) requests.push(request.url())
   })
   const selectedDot = group.locator('.home-hero-slideshow__dot-button').nth(3)
   await expect(selectedDot).toBeEnabled()
@@ -651,7 +651,7 @@ test('carousel controls pass a scoped axe accessibility scan', async ({ page }) 
 test('save-data starts with only the small first candidate and waits for an explicit play', async ({ page }) => {
   const imageRequests: string[] = []
   page.on('request', (request) => {
-    if (request.resourceType() === 'image' && request.url().includes('/assets/home-hero/')) imageRequests.push(request.url())
+    if (request.resourceType() === 'image' && request.url().includes('/assets/images/home-hero/')) imageRequests.push(request.url())
   })
   await page.addInitScript(() => {
     const connection = new EventTarget() as EventTarget & { saveData: boolean }
@@ -678,11 +678,11 @@ test('waits for the resized target candidate to load before revealing it', async
   const completedHeroRequests = new Set<string>()
   page.on('requestfinished', (request) => {
     const url = request.url()
-    if (url.includes('/assets/home-hero/')) completedHeroRequests.add(url)
+    if (url.includes('/assets/images/home-hero/')) completedHeroRequests.add(url)
     const width = Number(url.match(/hero-02-(\d+)-/)?.[1] ?? 0)
     loadedSmallCandidateWidth = Math.max(loadedSmallCandidateWidth, width)
   })
-  await page.route('**/assets/home-hero/hero-02-*', async (route) => {
+  await page.route('**/assets/images/home-hero/hero-02-*', async (route) => {
     const url = route.request().url()
     const width = Number(url.match(/hero-02-(\d+)-/)?.[1] ?? 0)
     if ((page.viewportSize()?.width ?? 0) > 760 && width > loadedSmallCandidateWidth) {
@@ -734,7 +734,7 @@ test('waits for the resized target candidate to load before revealing it', async
 })
 
 test('falls back to JPEG after a WebP request fails', async ({ page }) => {
-  await page.route('**/assets/home-hero/hero-01-*.webp', (route) => route.abort('failed'))
+  await page.route('**/assets/images/home-hero/hero-01-*.webp', (route) => route.abort('failed'))
   await page.goto('/')
   await expect.poll(() => page.locator('.home-hero-slideshow__image--current').getAttribute('srcset')).toContain('.jpg')
   await expect.poll(() => page.locator('.home-hero-slideshow__image--current').evaluate((element) => (element as HTMLImageElement).naturalWidth)).toBeGreaterThan(0)
@@ -742,7 +742,7 @@ test('falls back to JPEG after a WebP request fails', async ({ page }) => {
 })
 
 test('keeps the current photo and announces a manual failure, then retries on the next explicit selection', async ({ page }) => {
-  const failedPath = '**/assets/home-hero/hero-03-*'
+  const failedPath = '**/assets/images/home-hero/hero-03-*'
   await page.route(failedPath, (route) => route.abort('failed'))
   const { group, media } = await openPausedHome(page)
   await group.locator('.home-hero-slideshow__dot-button').nth(2).click()
