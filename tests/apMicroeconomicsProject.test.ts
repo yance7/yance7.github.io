@@ -60,6 +60,7 @@ describe('AP Microeconomics Notes project archive', () => {
     expect(pageRegistry.works.sectionIds).toEqual([
       'works-overview',
       'project-fresheye',
+      'project-trusted-garden',
       'project-ap-microeconomics-notes'
     ])
     expect(uiMessages['zh-CN'].actions.viewOnGitHub).toBe('在 GitHub 查看')
