@@ -154,7 +154,7 @@ test('brand mark links header and footer back to the localized home page', async
   await expect(headerBrand.locator('.brand-mark')).toHaveAttribute('aria-hidden', 'true')
   await expect(headerBrand.locator('.brand-mark-image')).toBeVisible()
   await expect(headerBrand.locator('.brand-mark picture source[type="image/webp"]')).toHaveAttribute('srcset', /yance-mark-96\.webp[\s\S]*yance-mark-128\.webp/)
-  await expect(headerBrand.locator('.brand-mark-image')).toHaveAttribute('src', '/assets/brand/yance-mark-fallback.png')
+  await expect(headerBrand.locator('.brand-mark-image')).toHaveAttribute('src', '/assets/images/brand/yance-mark-fallback.png')
   await expect(headerBrand.locator('.brand-mark-svg')).toHaveCount(0)
   await expect(headerBrand.locator('[data-brand-part]')).toHaveCount(0)
 
@@ -170,7 +170,7 @@ test('brand mark links header and footer back to the localized home page', async
   await expect(footerBrand).toBeVisible()
   await expect(footerBrand).toHaveAttribute('href', '/en/')
   await expect(footerBrand.locator('.brand-mark-image')).toBeVisible()
-  await expect(footerBrand.locator('.brand-mark-image')).toHaveAttribute('src', '/assets/brand/yance-mark-fallback.png')
+  await expect(footerBrand.locator('.brand-mark-image')).toHaveAttribute('src', '/assets/images/brand/yance-mark-fallback.png')
 })
 
 test('shared navigation mark keeps its identity across light and dark themes', async ({ page }) => {
@@ -273,15 +273,15 @@ test('canonical brand icons are wired for browser shells and PWA metadata', asyn
 
   await expect(page.locator('link[rel="icon"][sizes="16x16"]')).toHaveAttribute(
     'href',
-    '/assets/brand/favicon-16.png'
+    '/assets/images/brand/favicon-16.png'
   )
   await expect(page.locator('link[rel="icon"][sizes="32x32"]')).toHaveAttribute(
     'href',
-    '/assets/brand/favicon-32.png'
+    '/assets/images/brand/favicon-32.png'
   )
   await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute(
     'href',
-    '/assets/brand/yance-icon-180.png'
+    '/assets/images/brand/yance-icon-180.png'
   )
 
   const manifest = await page.evaluate(async () => {
@@ -289,8 +289,8 @@ test('canonical brand icons are wired for browser shells and PWA metadata', asyn
     return response.json() as Promise<{ icons: Array<{ src: string; purpose: string; sizes: string; type: string }> }>
   })
   expect(manifest.icons).toEqual([
-    { src: '/assets/brand/yance-icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-    { src: '/assets/brand/yance-icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+    { src: '/assets/images/brand/yance-icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+    { src: '/assets/images/brand/yance-icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
   ])
 })
 

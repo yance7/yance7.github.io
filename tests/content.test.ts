@@ -34,7 +34,7 @@ describe('content contracts', () => {
   })
 
   it('keeps concert media URLs rooted and thumbnail-safe', () => {
-    expect(thumbnailUrl('concert-202511-kpl-finals.jpg')).toBe('/assets/concerts/thumbs/concert-202511-kpl-finals.webp')
+    expect(thumbnailUrl('concert-202511-kpl-finals.jpg')).toBe('/assets/images/concerts/thumbs/concert-202511-kpl-finals.webp')
     expect(concerts.every((concert) => concert.id && concert.poster.file)).toBe(true)
   })
 
@@ -58,9 +58,9 @@ describe('content contracts', () => {
     expect([...posterFiles].every((file) => /^[a-z0-9]+(?:-[a-z0-9]+)*\.jpg$/.test(file))).toBe(true)
 
     for (const concert of concerts) {
-      const posterPath = resolve(process.cwd(), 'public/assets/concerts', concert.poster.file)
-      const thumbnailPath = resolve(process.cwd(), 'public/assets/concerts/thumbs', concert.poster.file.replace(/\.jpg$/, '.webp'))
-      const thumbnailFallbackPath = resolve(process.cwd(), 'public/assets/concerts/thumbs', concert.poster.file)
+      const posterPath = resolve(process.cwd(), 'public/assets/images/concerts/originals', concert.poster.file)
+      const thumbnailPath = resolve(process.cwd(), 'public/assets/images/concerts/thumbs', concert.poster.file.replace(/\.jpg$/, '.webp'))
+      const thumbnailFallbackPath = resolve(process.cwd(), 'public/assets/images/concerts/thumbs', concert.poster.file)
       expect(existsSync(posterPath)).toBe(true)
       expect(existsSync(thumbnailPath)).toBe(true)
       expect(existsSync(thumbnailFallbackPath)).toBe(true)

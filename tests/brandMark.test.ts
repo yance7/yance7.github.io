@@ -28,7 +28,7 @@ describe('brand mark release contracts', () => {
       'yance-mark-256.webp',
       'yance-mark-fallback.png'
     ]) {
-      expect(existsSync(resolve(root, `public/assets/brand/${asset}`))).toBe(true)
+      expect(existsSync(resolve(root, `public/assets/images/brand/${asset}`))).toBe(true)
     }
   })
 
@@ -43,9 +43,9 @@ describe('brand mark release contracts', () => {
     expect(component).toContain("tone?: 'brand' | 'mono'")
     expect(component).toContain('<picture>')
     expect(component).toContain('class="brand-mark-image"')
-    expect(component).toContain('/assets/brand/yance-mark-96.webp')
-    expect(component).toContain('/assets/brand/yance-mark-128.webp')
-    expect(component).toContain('/assets/brand/yance-mark-fallback.png')
+    expect(component).toContain('/assets/images/brand/yance-mark-96.webp')
+    expect(component).toContain('/assets/images/brand/yance-mark-128.webp')
+    expect(component).toContain('/assets/images/brand/yance-mark-fallback.png')
     expect(component).toContain('width="128"')
     expect(component).toContain('height="128"')
     expect(component).not.toContain('<svg')
@@ -58,10 +58,11 @@ describe('brand mark release contracts', () => {
     expect(componentStyles).toContain('.brand-mark-footer')
     expect(header).toContain('<BrandMark variant="header" />')
     expect(footer).toContain('<BrandMark variant="footer" />')
-    expect(header).not.toContain('/assets/brand/yance-mark-96.webp')
+    expect(header).not.toContain('/assets/images/brand/yance-mark-96.webp')
     expect(footer).toContain('<div class="foot-meta">')
     expect(footer).not.toContain('<strong>Yance.</strong>')
     expect(generator).toContain("SOURCE = ROOT / 'design-assets' / 'yance-brand-master.png'")
+    expect(generator).toContain("OUTPUT = ROOT / 'public' / 'assets' / 'images' / 'brand'")
     expect(generator).toContain("parser.add_argument('--check'")
     expect(generator).toContain('committed files match the selected master source')
     expect(generator).toContain("ICON_SIZES = (16, 32, 180, 192, 512)")
@@ -93,14 +94,14 @@ describe('brand mark release contracts', () => {
 
     for (const page of ['index', 'academics', 'honors', 'research', 'works', 'concerts', '404']) {
       const html = readFileSync(resolve(root, `html-src/${page}.html`), 'utf8')
-      expect(html).toContain('/assets/brand/favicon-16.png')
-      expect(html).toContain('/assets/brand/favicon-32.png')
-      expect(html).toContain('/assets/brand/yance-icon-180.png')
+      expect(html).toContain('/assets/images/brand/favicon-16.png')
+      expect(html).toContain('/assets/images/brand/favicon-32.png')
+      expect(html).toContain('/assets/images/brand/yance-icon-180.png')
       expect(html).toContain('/assets/site.webmanifest')
     }
 
-    expect(manifest).toContain('"src": "/assets/brand/yance-icon-192.png"')
-    expect(manifest).toContain('"src": "/assets/brand/yance-icon-512.png"')
+    expect(manifest).toContain('"src": "/assets/images/brand/yance-icon-192.png"')
+    expect(manifest).toContain('"src": "/assets/images/brand/yance-icon-512.png"')
     expect(manifest).toContain('"purpose": "any maskable"')
   })
 })

@@ -237,7 +237,7 @@ test('full-page capture rejects a decoded poster that ended in a terminal error'
   await page.clock.install()
   let releaseResponse!: () => void
   const responseGate = new Promise<void>((resolve) => { releaseResponse = resolve })
-  await page.route('**/assets/concerts/thumbs/*.webp', async (route) => {
+  await page.route('**/assets/images/concerts/thumbs/*.webp', async (route) => {
     const response = await route.fetch()
     await responseGate
     await route.fulfill({ response })

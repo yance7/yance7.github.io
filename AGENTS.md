@@ -12,7 +12,7 @@
   - `utils/` — navigation, media, and preload helpers
 - `config/` — Vite, TypeScript, lint, test, and Lighthouse configuration; npm scripts select these files explicitly.
 - `html-src/` — source HTML entry points consumed by `config/vite.config.ts`; edit here, never root `*.html`.
-- `public/assets/` — static media (concert posters in `public/assets/concerts/`, case-study visuals in `public/assets/case/`).
+- `public/assets/` — static media (concert posters in `public/assets/images/concerts/originals/`, case-study visuals in `public/assets/images/case-studies/`).
 - `html-src/` is the HTML source; `dist/` is the generated GitHub Pages artifact and is ignored by Git.
 - `public/` — Vite-native static assets and deployment metadata (`CNAME`, `robots.txt`, `sitemap.xml`).
 - `scripts/requirements.txt` — pinned Python dependencies for media and audit tools.

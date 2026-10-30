@@ -22,7 +22,7 @@ const railConcerts = computed(() => getLocalizedConcerts(locale.value).slice(0, 
 const posterIndex = ref(0)
 const posterShown = ref(true)
 const selectedPoster = computed(() => getLocalizedConcerts(locale.value)[posterIndex.value]!)
-const lightbox = ref<LightboxPayload | null>(view === 'lightbox' ? { images: ['/assets/concerts/fixture-first.jpg', '/assets/concerts/fixture-second.jpg'] as NonEmptyArray<string>, index: 0, meta: { artist: 'Fixture artist', tour: 'Fixture tour' } } : null)
+const lightbox = ref<LightboxPayload | null>(view === 'lightbox' ? { images: ['/assets/images/concerts/originals/fixture-first.jpg', '/assets/images/concerts/originals/fixture-second.jpg'] as NonEmptyArray<string>, index: 0, meta: { artist: 'Fixture artist', tour: 'Fixture tour' } } : null)
 const views = { works: WorksPage, honors: HonorsPage, concerts: ConcertsPage, home: HomePage }
 const selectedPage = views[view as keyof typeof views]
 function moveImage(direction: number) {

@@ -6,7 +6,7 @@ const registry = {
     sitemapPath: '',
     changefreq: 'weekly',
     priority: '1.0',
-    ogImage: 'assets/og-home.png',
+    ogImage: 'assets/images/social/og-home.png',
     sectionIds: ['selected-work', 'home-worlds', 'home-beyond']
   },
   academics: {
@@ -16,7 +16,7 @@ const registry = {
     sitemapPath: 'academics/',
     changefreq: 'monthly',
     priority: '0.8',
-    ogImage: 'assets/og-academics.png',
+    ogImage: 'assets/images/social/og-academics.png',
     sectionIds: ['sec-education', 'sec-scoreboard', 'sec-ap-archive']
   },
   honors: {
@@ -26,7 +26,7 @@ const registry = {
     sitemapPath: 'honors/',
     changefreq: 'monthly',
     priority: '0.8',
-    ogImage: 'assets/og-honors.png',
+    ogImage: 'assets/images/social/og-honors.png',
     sectionIds: ['sec-milestones', 'sec-honors-archive']
   },
   research: {
@@ -36,7 +36,7 @@ const registry = {
     sitemapPath: 'research/',
     changefreq: 'monthly',
     priority: '0.9',
-    ogImage: 'assets/og-research.png',
+    ogImage: 'assets/images/social/og-research.png',
     sectionIds: ['sec-research-timeline', 'sec-toolchain']
   },
   works: {
@@ -46,7 +46,7 @@ const registry = {
     sitemapPath: 'works/',
     changefreq: 'monthly',
     priority: '0.9',
-    ogImage: 'assets/og-works.png',
+    ogImage: 'assets/images/social/og-works.png',
     sectionIds: ['works-overview', 'project-fresheye', 'project-ap-microeconomics-notes']
   },
   concerts: {
@@ -56,7 +56,7 @@ const registry = {
     sitemapPath: 'concerts/',
     changefreq: 'monthly',
     priority: '0.7',
-    ogImage: 'assets/og-concerts.png',
+    ogImage: 'assets/images/social/og-concerts.png',
     sectionIds: ['concerts-overview', 'concert-archive']
   }
 } as const

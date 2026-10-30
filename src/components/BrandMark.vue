@@ -26,13 +26,13 @@ const isHeader = computed(() => props.variant === 'header')
       <source
         type="image/webp"
         srcset="
-          /assets/brand/yance-mark-96.webp 1x,
-          /assets/brand/yance-mark-128.webp 2x
+          /assets/images/brand/yance-mark-96.webp 1x,
+          /assets/images/brand/yance-mark-128.webp 2x
         "
       >
       <img
         class="brand-mark-image"
-        src="/assets/brand/yance-mark-fallback.png"
+        src="/assets/images/brand/yance-mark-fallback.png"
         width="128"
         height="128"
         alt=""
