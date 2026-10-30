@@ -49,7 +49,7 @@ def process_poster(
         raise ValueError(f'Original output must be a JPEG: {output}')
 
     output.parent.mkdir(parents=True, exist_ok=True)
-    thumbnail = output.parent / 'thumbs' / f'{output.stem}.webp'
+    thumbnail = output.parent.parent / 'thumbs' / f'{output.stem}.webp'
     thumbnail.parent.mkdir(parents=True, exist_ok=True)
 
     with Image.open(source) as opened:
