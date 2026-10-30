@@ -53,17 +53,18 @@ for (const locale of locales) {
 }
 
 for (const locale of projectLocales) {
-  test(`Works keeps the AP dossier as the second repository project: ${locale.name}`, async ({ page }) => {
+  test(`Works keeps the AP dossier as the third repository project: ${locale.name}`, async ({ page }) => {
     await page.goto(locale.path)
     await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
 
     const showcases = page.locator('.showcase')
-    await expect(showcases).toHaveCount(2)
+    await expect(showcases).toHaveCount(3)
     await expect(showcases.nth(0)).toHaveAttribute('data-project', 'fresheye')
-    await expect(showcases.nth(1)).toHaveAttribute('data-project', 'ap-microeconomics-notes')
+    await expect(showcases.nth(1)).toHaveAttribute('data-project', 'trusted-garden')
+    await expect(showcases.nth(2)).toHaveAttribute('data-project', 'ap-microeconomics-notes')
 
     const ap = page.locator('#project-ap-microeconomics-notes')
-    await expect(ap.locator('.sc-index')).toHaveText('02')
+    await expect(ap.locator('.sc-index')).toHaveText('03')
     await expect(ap.locator('.sc-identity h3 > span')).toHaveText(locale.title)
     await expect(ap.locator('.sc-actions .y-button').first()).toContainText(locale.action)
     await expect(ap.locator('.sc-actions .y-button')).toHaveCount(1)
@@ -72,12 +73,12 @@ for (const locale of projectLocales) {
   })
 }
 
-test('home selected work keeps FreshEye only while the Works world reports two projects', async ({ page }) => {
+test('home selected work keeps FreshEye only while the Works world reports three projects', async ({ page }) => {
   await page.goto('/')
   await expect(page.locator('#selected-work .focus-product')).toHaveCount(1)
   await expect(page.locator('#selected-work')).toContainText('鲜眸')
   await expect(page.locator('#selected-work')).not.toContainText('AP Microeconomics')
-  await expect(page.locator('#home-worlds .world-card[href="/works/"]')).toContainText('2 个持续构建的小世界')
+  await expect(page.locator('#home-worlds .world-card[href="/works/"]')).toContainText('3 个持续构建的小世界')
 })
 
 for (const locale of locales) {

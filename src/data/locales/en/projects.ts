@@ -27,6 +27,25 @@ export const projectsCopy = {
         proof: [{ type: 'deployment', label: 'LIVE PRODUCT', value: 'fresheye.yance.me', href: 'https://fresheye.yance.me', external: true }, { type: 'source', label: 'SOURCE', value: 'GitHub', href: 'https://github.com/yance7/FreshEye', external: true }]
       }
     },
+    'trusted-garden': {
+      ...base['trusted-garden']!,
+      title: 'Trusted Garden',
+      value: 'Explore a 3D farm reference scene through view changes, weather states, and roaming.',
+      description: 'A 3D farm reference scene built with Three.js, TypeScript, and Vite, with camera view changes, weather states, and scene roaming. Models and textures are delivered from the same site; console readouts are simulated display values.',
+      role: 'Personal project · 3D scene and web interaction',
+      discipline: '3D WEB / INTERACTIVE SCENE',
+      story: {
+        label: '3D FARM REFERENCE SCENE',
+        note: 'Explore a digital farm scene through camera views, weather states, and roaming.',
+        chapters: [
+          { label: '01 / SCENE', title: 'Build a 3D farm scene', detail: 'A Three.js, TypeScript, and Vite reference scene with models and textures delivered from the same site.' },
+          { label: '02 / INTERACTION', title: 'Change views and weather', detail: 'Switch camera views, inspect weather states, and roam through the scene.' },
+          { label: '03 / READOUT', title: 'Read simulated values', detail: 'Console readouts in the information panel are simulated display values.' }
+        ],
+        sequenceLabel: 'SCENE EXPLORATION', sequence: ['Scene', 'Views', 'Weather', 'Roam'],
+        proof: []
+      }
+    },
     'ap-microeconomics-notes': {
       ...base['ap-microeconomics-notes']!,
       title: 'AP Micro Notes',

@@ -41,6 +41,47 @@ export const projects = [
     }
   },
   {
+    id: 'trusted-garden',
+    status: 'deployed',
+    action: 'live',
+    updatedAt: '2026-10-30',
+    title: 'Trusted Garden',
+    en: 'Trusted Garden',
+    domain: 'trusted-garden.yance.me',
+    tone: 'violet',
+    discipline: '3D WEB / INTERACTIVE SCENE',
+    description: '使用 Three.js、TypeScript 与 Vite 构建的 3D 农场参考场景，可切换摄像机视角、查看天气状态并在场景中漫游。模型与纹理由同一站点提供，信息面板中的读数为模拟展示值。',
+    value: '通过视角切换、天气状态与场景漫游，探索 3D 农场参考场景。',
+    role: '个人项目 · 三维场景与网页交互',
+    stack: ['Three.js', 'TypeScript', 'Vite', 'glTF'],
+    href: 'https://trusted-garden.yance.me/',
+    github: 'https://github.com/yance7/trusted-garden',
+    story: {
+      label: '3D 农场参考场景',
+      note: '通过视角、天气状态和漫游探索数字农场场景。',
+      chapters: [
+        {
+          label: '01 / SCENE',
+          title: '搭建 3D 农场场景',
+          detail: '使用 Three.js、TypeScript 与 Vite 构建参考场景，模型与纹理由同一站点交付。'
+        },
+        {
+          label: '02 / INTERACTION',
+          title: '切换视角与天气',
+          detail: '切换摄像机视角、查看天气状态，也可以在场景中漫游。'
+        },
+        {
+          label: '03 / READOUT',
+          title: '查看模拟数值',
+          detail: '信息面板中的控制台数值为模拟展示值。'
+        }
+      ],
+      sequenceLabel: '场景探索',
+      sequence: ['场景', '视角', '天气', '漫游'],
+      proof: []
+    }
+  },
+  {
     id: 'ap-microeconomics-notes',
     status: 'open-source',
     action: 'repository',

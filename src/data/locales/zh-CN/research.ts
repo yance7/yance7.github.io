@@ -11,6 +11,11 @@ const entities = Object.fromEntries(research.map((item) => [item.id, {
   proof: item.proof
 }])) as Record<string, ResearchCopy>
 
+entities['multimodal-feeding']!.materialRequest = {
+  label: '代码未公开，可邮件索取',
+  href: 'mailto:yance777@outlook.com'
+}
+
 export const researchCopy = {
   entities,
   methods: researchMethods.map((item) => ({ ...item })),

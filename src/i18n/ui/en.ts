@@ -40,7 +40,7 @@ export const enMessages = {
     academics: { kicker: 'ACADEMICS', title: 'From here, tomorrow finds its course', copy: 'Coursework, standardized tests, and AP results—evidence of how the work has accumulated.' },
     honors: { kicker: 'HONORS', title: 'Step by step, I keep climbing', copy: 'Awards mark the route; the more useful signal is the habit of continuing upward.' },
     research: { kicker: 'RESEARCH', title: 'You share this imperfect dream with me', copy: 'From smart agriculture to explainable AI, I turn models into tools that people can open and use.' },
-    works: { kicker: 'WORKS', title: 'Little by little, I learned that effort can lead to success', copy: 'Two evolving project worlds showing how ideas leave the page and become products or open learning resources.' },
+    works: { kicker: 'WORKS', title: 'Little by little, I learned that effort can lead to success', copy: 'Three evolving project worlds showing how ideas leave the page and become products or open learning resources.' },
     concerts: { kicker: 'CONCERTS', title: 'Fate brought us together beyond this restless world', copy: 'Concerts, posters, and the nights when light and a shared chorus changed the scale of the world.' }
   }
 } satisfies UiMessages

@@ -93,6 +93,7 @@ describe('stable registry and localized content contracts', () => {
     expect(pageRegistry.works.sectionIds).toEqual([
       'works-overview',
       'project-fresheye',
+      'project-trusted-garden',
       'project-ap-microeconomics-notes'
     ])
     expect('nav' in pageRegistry.research).toBe(false)

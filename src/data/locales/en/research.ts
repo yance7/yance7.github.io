@@ -70,7 +70,8 @@ export const researchCopy = {
         prototype: 'Research with the National Innovation Center for Digital Fishery and the Project of National Science Talent Program.',
         result: 'Test accuracy was 91.82%, 9.25 percentage points above audio-only and 3.78 percentage points above image-only.',
         next: 'Expand the dataset and refine fusion strategies'
-      }
+      },
+      materialRequest: { label: 'Code is not public; available on request by email.', href: 'mailto:yance777@outlook.com' }
     },
     'corn-growth': {
       ...base['corn-growth']!,

@@ -13,9 +13,9 @@ function projectStrings(project: ReturnType<typeof getLocalizedProjects>[number]
 
 describe('AP Microeconomics Notes project archive', () => {
   it('keeps the ordered repository dossier contract explicit', () => {
-    expect(projects.map(({ id }) => id)).toEqual(['fresheye', 'ap-microeconomics-notes'])
+    expect(projects.map(({ id }) => id)).toEqual(['fresheye', 'trusted-garden', 'ap-microeconomics-notes'])
 
-    const ap = projects[1]
+    const ap = projects.find(({ id }) => id === 'ap-microeconomics-notes')
     expect(ap).toMatchObject({
       id: 'ap-microeconomics-notes',
       status: 'open-source',
@@ -60,6 +60,7 @@ describe('AP Microeconomics Notes project archive', () => {
     expect(pageRegistry.works.sectionIds).toEqual([
       'works-overview',
       'project-fresheye',
+      'project-trusted-garden',
       'project-ap-microeconomics-notes'
     ])
     expect(uiMessages['zh-CN'].actions.viewOnGitHub).toBe('在 GitHub 查看')
@@ -67,9 +68,9 @@ describe('AP Microeconomics Notes project archive', () => {
     expect(uiMessages.en.actions.viewOnGitHub).toBe('View on GitHub')
 
     const expectedWorldDescriptions = {
-      'zh-CN': '2 个持续构建的小世界，记录想法如何离开纸面，成为可以使用或继续生长的成果。',
-      'zh-HK': '兩個持續建構的小世界，記錄想法如何離開紙面，成為可以使用或繼續成長的成果。',
-      en: 'Two evolving project worlds showing how ideas leave the page and become products or open learning resources.'
+      'zh-CN': '3 个持续构建的小世界，记录想法如何离开纸面，成为可以使用或继续生长的成果。',
+      'zh-HK': '3 個持續建構的小世界，記錄想法如何離開紙面，成為可以使用或繼續成長的成果。',
+      en: 'Three evolving project worlds showing how ideas leave the page and become products or open learning resources.'
     }
 
     for (const locale of locales) {

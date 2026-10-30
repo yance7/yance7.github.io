@@ -38,7 +38,8 @@ export const researchCopy = {
       text: '我融合音訊 Mel 語譜圖與影像，透過 CNN6 / ResNet34 雙分支及 SE-Block 通道注意力分類魚類攝食強度。',
       org: '國家數字漁業創新中心 · 國家英才計劃項目',
       metrics: [{ value: '91.82%', label: '準確率' }, { value: '7,611', label: 'MRS-FFIA 樣本對' }, { value: '+9.25 個百分點', label: '高於音訊單模態' }, { value: '+3.78 個百分點', label: '高於圖像單模態' }],
-      methodology: { question: '如何利用多模態資訊評估魚類攝食強度？', hypothesis: '融合音訊及影像特徵可用於分類魚類攝食強度。', method: 'MRS-FFIA 的 7,611 對音訊與影像樣本；Mel 語譜圖 + 影像，CNN6 / ResNet34 雙分支 + SE-Block，分類為 none、weak、moderate、strong。', prototype: '國家數字漁業創新中心及國家英才計劃項目中的研究。', result: '測試準確率 91.82%；比音訊單模態高 9.25 個百分點，比圖像單模態高 3.78 個百分點。', next: '擴充數據集並優化融合策略' }
+      methodology: { question: '如何利用多模態資訊評估魚類攝食強度？', hypothesis: '融合音訊及影像特徵可用於分類魚類攝食強度。', method: 'MRS-FFIA 的 7,611 對音訊與影像樣本；Mel 語譜圖 + 影像，CNN6 / ResNet34 雙分支 + SE-Block，分類為 none、weak、moderate、strong。', prototype: '國家數字漁業創新中心及國家英才計劃項目中的研究。', result: '測試準確率 91.82%；比音訊單模態高 9.25 個百分點，比圖像單模態高 3.78 個百分點。', next: '擴充數據集並優化融合策略' },
+      materialRequest: { label: '程式碼未公開，可電郵索取', href: 'mailto:yance777@outlook.com' }
     },
     'corn-growth': {
       ...base['corn-growth']!, title: '不同外源增強劑對玉米生長的影響及其作用機制',
