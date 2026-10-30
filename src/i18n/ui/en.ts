@@ -29,7 +29,7 @@ export const enMessages = {
         pause: 'Pause photo carousel',
         static: 'Photo carousel is paused by your reduced motion preference',
         showPhoto: (current, total, name) => `Show photo ${current} of ${total}: ${name}`,
-        photos: { 1: 'Campus speech', 2: 'Campus photo', 3: 'Group photo', 4: 'Stage view', 5: 'Concert screen', 6: 'Group photo', 7: 'Performer close-up' },
+        photos: { 1: 'Campus speech', 2: 'Campus photo', 3: 'Group photo', 4: 'Stage view', 5: 'Concert screen', 6: 'Group photo', 7: 'Performer close-up', 8: 'Autumn campus group photo', 9: 'Campus event', 10: 'KPL grand finals ticket', 11: 'Records and drinks', 12: 'Live concert', 13: 'Panda' },
         status: {
           photoShown: (current, total, name) => `Showing photo ${current} of ${total}: ${name}`,
           photoSelected: (current, total, name) => `Selected photo ${current} of ${total}: ${name}. Photos are hidden in high contrast mode.`,

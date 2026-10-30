@@ -9,10 +9,10 @@ const root = resolve(process.cwd())
 const candidateWidths = [640, 896, 1280, 2240]
 
 describe('home hero slide assets', () => {
-  it('publishes exactly seven stable slides in the approved order', () => {
-    const ids = ['hero-01', 'hero-02', 'hero-03', 'hero-04', 'hero-05', 'hero-06', 'hero-07']
+  it('publishes exactly thirteen stable slides in the approved order', () => {
+    const ids = Array.from({ length: 13 }, (_, index) => `hero-${String(index + 1).padStart(2, '0')}`)
 
-    expect(homeHeroSlides).toHaveLength(7)
+    expect(homeHeroSlides).toHaveLength(13)
     expect(homeHeroSlides.map((slide) => slide.id)).toEqual(ids)
     expect(assetManifest.slides.map((slide) => slide.id)).toEqual(ids)
   })
@@ -20,8 +20,9 @@ describe('home hero slide assets', () => {
   it('provides matching hashed WebP and JPEG candidates at all requested widths', () => {
     for (const [index, slide] of homeHeroSlides.entries()) {
       const manifestSlide = assetManifest.slides[index]!
-      expect(slide.sources.webp.map((candidate) => candidate.width)).toEqual(candidateWidths)
-      expect(slide.sources.jpeg.map((candidate) => candidate.width)).toEqual(candidateWidths)
+      const expectedWidths = [...new Set(candidateWidths.map((width) => Math.min(width, slide.width)))]
+      expect(slide.sources.webp.map((candidate) => candidate.width)).toEqual(expectedWidths)
+      expect(slide.sources.jpeg.map((candidate) => candidate.width)).toEqual(expectedWidths)
       expect(slide.sources).toEqual(manifestSlide.sources)
 
       for (const [format, candidates] of Object.entries(slide.sources)) {
@@ -56,7 +57,7 @@ describe('home hero slide assets', () => {
 
       expect(slide.scrim).toBeGreaterThanOrEqual(0.3)
       expect(slide.scrim).toBeLessThanOrEqual(0.38)
-      expect(slide.labelKey).toMatch(/^page\.home\.slideshow\.photos\.[1-7]$/)
+      expect(slide.labelKey).toMatch(/^page\.home\.slideshow\.photos\.(?:[1-9]|1[0-3])$/)
     }
   })
 

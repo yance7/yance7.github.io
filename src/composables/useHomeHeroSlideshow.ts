@@ -13,6 +13,7 @@ export interface HomeHeroSlideshowState {
   targetIndex: number | null
   queuedIndex: number | null
   transitioning: boolean
+  transitionStarted: boolean
   transactionId: number
   direction: HomeHeroDirection
   currentFormat: HomeHeroLoadFormat | null
@@ -103,7 +104,7 @@ const defaultClock: HomeHeroSlideshowClock = {
   clearTimeout: (timer) => globalThis.clearTimeout(timer)
 }
 
-const defaultDwellMs = 6000
+const defaultDwellMs = 3000
 const defaultTransitionMs = 700
 const defaultLoadDeadlineMs = 10000
 
@@ -119,6 +120,7 @@ export function createHomeHeroSlideshow(options: HomeHeroSlideshowOptions) {
     targetIndex: null,
     queuedIndex: null,
     transitioning: false,
+    transitionStarted: false,
     transactionId: 0,
     direction: 'forward',
     currentFormat: null,
@@ -142,6 +144,12 @@ export function createHomeHeroSlideshow(options: HomeHeroSlideshowOptions) {
   const targetSlide: ComputedRef<HomeHeroSlide | null> = computed(() => {
     const index = state.value.targetIndex
     return index === null ? null : slides[index] ?? null
+  })
+  const displayIndicatorIndex = computed(() => {
+    const current = state.value
+    return current.transitionStarted && current.targetIndex !== null
+      ? current.targetIndex
+      : current.currentIndex
   })
 
   let activeLoad: ActiveLoad | null = null
@@ -260,6 +268,7 @@ export function createHomeHeroSlideshow(options: HomeHeroSlideshowOptions) {
     current.targetIndex = null
     current.targetFormat = null
     current.transitioning = false
+    current.transitionStarted = false
     if (transitionAnnouncementIndex !== null) {
       current.announcement = 'photoShown'
       current.announcementIndex = transitionAnnouncementIndex
@@ -285,6 +294,7 @@ export function createHomeHeroSlideshow(options: HomeHeroSlideshowOptions) {
     }
 
     transitionReady = true
+    current.transitionStarted = true
     clearTransitionTimer()
     transitionTimer = clock.setTimeout(() => finishTransition(transactionId), transitionMs + 160)
     return true
@@ -304,6 +314,7 @@ export function createHomeHeroSlideshow(options: HomeHeroSlideshowOptions) {
     current.targetFormat = null
     current.queuedIndex = null
     current.transitioning = false
+    current.transitionStarted = false
     current.announcement = 'loadFailed'
     current.announcementIndex = failedIndex
     transitionAnnouncementIndex = null
@@ -329,6 +340,7 @@ export function createHomeHeroSlideshow(options: HomeHeroSlideshowOptions) {
     current.direction = automatic || index > current.currentIndex ? 'forward' : 'backward'
     current.transactionId += 1
     current.transitioning = true
+    current.transitionStarted = false
     transitionReady = false
     current.announcement = null
     current.announcementIndex = null
@@ -482,6 +494,7 @@ export function createHomeHeroSlideshow(options: HomeHeroSlideshowOptions) {
       current.targetFormat = null
       current.queuedIndex = null
       current.transitioning = false
+      current.transitionStarted = false
       current.announcement = 'photoSelected'
       current.announcementIndex = index
       return
@@ -540,6 +553,7 @@ export function createHomeHeroSlideshow(options: HomeHeroSlideshowOptions) {
     state: readonly(state) as Readonly<Ref<HomeHeroSlideshowState>>,
     currentSlide,
     targetSlide,
+    displayIndicatorIndex,
     get dwellMs() { return dwellMs },
     get transitionMs() { return transitionMs },
     setEnvironment,

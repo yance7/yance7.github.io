@@ -265,7 +265,7 @@ onBeforeUnmount(() => {
           class="home-hero-slideshow__dot-button"
           type="button"
           :aria-label="photoButtonLabel(index)"
-          :aria-current="index === state.currentIndex ? 'true' : undefined"
+          :aria-current="index === controller.displayIndicatorIndex.value ? 'true' : undefined"
           @click="controller.select(index)"
         >
           <span class="home-hero-slideshow__dot" aria-hidden="true"></span>
