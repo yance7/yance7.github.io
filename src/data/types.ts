@@ -42,7 +42,7 @@ interface ResearchPaper {
   href: string
 }
 
-export interface MaterialRequest {
+interface MaterialRequest {
   label: string
   href: string
 }

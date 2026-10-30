@@ -128,7 +128,7 @@ describe('resume-synced content contracts', () => {
   it('marks synchronized content with the actual update date', () => {
     expect(pageMetadata.academics.updatedAt).toBe('2026-10-22')
     expect(pageMetadata.honors.updatedAt).toBe('2026-10-22')
-    expect(pageMetadata.research.updatedAt).toBe('2026-10-22')
-    expect(pageMetadata.works.updatedAt).toBe('2026-10-22')
+    expect(pageMetadata.research.updatedAt).toBe('2026-10-30')
+    expect(pageMetadata.works.updatedAt).toBe('2026-10-30')
   })
 })

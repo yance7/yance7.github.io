@@ -103,7 +103,7 @@ doi={10.1109/ICIPAI70034.2026.11605650}
   {
     id: 'multimodal-feeding',
     date: '2025.07 — 2025.12',
-    updatedAt: '2026-10-22',
+    updatedAt: '2026-10-30',
     tag: 'MULTIMODAL',
     status: 'completed',
     title: '基于多模态特征融合与通道注意力的鱼类摄食强度评估',
