@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { readdirSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
@@ -27,10 +28,26 @@ describe('security and privacy release policy', () => {
     for (const entry of entries) {
       const html = readFileSync(resolve(root, 'html-src', entry), 'utf8')
       expect(html, entry).toContain("script-src 'self' '__THEME_BOOTSTRAP_HASH__'")
+      if (entry === 'index.html') expect(html, entry).toContain("'__HOME_HERO_PRELOAD_HASH__'")
+      else expect(html, entry).not.toContain('__HOME_HERO_PRELOAD_HASH__')
       expect(html, entry).toContain("object-src 'none'")
       expect(html, entry).toMatch(/localStorage\.getItem\('yance-theme'\)/)
       expect(html, entry).not.toMatch(/<script\b[^>]*\bsrc\s*=\s*["']https?:\/\//i)
       expect(html, entry).not.toMatch(/analytics|tracker|gtag|plausible|umami/i)
     }
+  })
+
+  it('keeps the theme and homepage preload inline script hashes synchronized with the CSP', () => {
+    const homepage = readFileSync(resolve(root, 'html-src/index.html'), 'utf8')
+    const viteConfig = readFileSync(resolve(root, 'config/vite.config.ts'), 'utf8')
+    const themeScript = homepage.match(/<script>([\s\S]*?)<\/script>/)?.[1]
+    const preloadScript = homepage.match(/<script data-home-hero-preload-srcset="[^"]+" data-home-hero-preload-sizes="[^"]+">([\s\S]*?)<\/script>/)?.[1]
+
+    expect(themeScript).toBeDefined()
+    expect(preloadScript).toBeDefined()
+    const themeHash = createHash('sha256').update(themeScript!).digest('base64')
+    const preloadHash = createHash('sha256').update(preloadScript!).digest('base64')
+    expect(viteConfig).toContain(`const THEME_BOOTSTRAP_HASH = 'sha256-${themeHash}'`)
+    expect(viteConfig).toContain(`const HOME_HERO_PRELOAD_HASH = 'sha256-${preloadHash}'`)
   })
 })

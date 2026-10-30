@@ -18,7 +18,25 @@ export const zhCNMessages = {
   empty: { honors: '这一分类暂时没有记录。', viewAll: '查看全部', works: '作品正在整理中，欢迎稍后回来看看。', concerts: '暂时还没有演唱会记录。', selectedWork: '精选内容正在整理中，可先浏览其他档案。' },
   status: { active: '进行中', published: '已发表', completed: '已完成', deployed: '已部署', 'open-source': '开放源码', planned: '计划中', archived: '已归档' },
   page: {
-    home: { kicker: '个人档案 / 北京 · 2026', title: 'SONG NOTES', copy: '这里收录研究、已上线的作品，以及被音乐和现场照亮的生活切片。先从一个真实问题开始，再沿着证据走到可以使用的结果。' },
+    home: {
+      kicker: '个人档案 / 北京 · 2026',
+      title: 'SONG NOTES',
+      copy: '这里收录研究、已上线的作品，以及被音乐和现场照亮的生活切片。先从一个真实问题开始，再沿着证据走到可以使用的结果。',
+      slideshow: {
+        groupLabel: '首页照片轮播',
+        roleDescription: '轮播',
+        play: '播放照片轮播',
+        pause: '暂停照片轮播',
+        static: '系统偏好减少动态效果，照片轮播已静止',
+        showPhoto: (current, total, name) => `显示第 ${current} 张，共 ${total} 张：${name}`,
+        photos: { 1: '校园发言', 2: '校园影像', 3: '合影', 4: '舞台全景', 5: '演出屏幕', 6: '合影', 7: '舞台近景' },
+        status: {
+          photoShown: (current, total, name) => `正在显示第 ${current} 张，共 ${total} 张：${name}`,
+          photoSelected: (current, total, name) => `已选择第 ${current} 张，共 ${total} 张：${name}。高对比度模式下照片已隐藏。`,
+          loadFailed: (name) => `${name}暂时无法加载，当前照片保持不变。`
+        }
+      }
+    },
     academics: { kicker: '学业', title: '明日从此的坐标', copy: '绩点、标化与 AP 成绩，是努力留下的可读痕迹。' },
     honors: { kicker: '荣誉', title: '一步一步往上爬', copy: '奖项是坐标，不是终点；真正重要的是仍然保持向上的惯性。' },
     research: { kicker: '研究', title: '我不完美的梦，你陪着我想', copy: '从智慧农业到可解释 AI，把论文里的模型推向浏览器里能点开的产品。' },

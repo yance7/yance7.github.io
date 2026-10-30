@@ -98,7 +98,11 @@ test.afterEach(async ({ page }, testInfo) => {
 
 async function openHome(page: Page, path = '/') {
   await page.goto(path)
-  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+  const shell = page.locator('.site-shell')
+  // The app permits 15 seconds for a page chunk to resolve; don't let the
+  // default five-second assertion expire just before a photo-gated page is ready.
+  await expect(shell).toHaveAttribute('data-page-load-state', /^(?:ready|error)$/, { timeout: 16_000 })
+  await expect(shell).toHaveAttribute('data-page-load-state', 'ready')
   const assertion: { startedAt: number, finishedAt?: number, observation?: FontReadinessObservation } = {
     startedAt: Date.now()
   }

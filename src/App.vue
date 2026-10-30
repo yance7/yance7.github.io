@@ -29,6 +29,10 @@ const page = (() => {
   const candidate = document.body.dataset.page
   return isPageKey(candidate) ? candidate : undefined
 })()
+const initialHash = document.documentElement.dataset.initialHash || window.location.hash
+const isHome = page === 'home'
+const deferHomeContent = isHome && !initialHash
+const pageContentEnabled = ref(!deferHomeContent)
 const { initTheme } = useTheme()
 const { locale, messages } = useLocale()
 
@@ -44,10 +48,14 @@ let disposed = false
 let hashScrolled = false
 let hashScrollCancelled = false
 let hashScrollFrame: number | undefined
+let homeContentObserver: PerformanceObserver | null = null
+let homeContentFallbackTimer: ReturnType<typeof setTimeout> | undefined
+let homePhotoFallbackCleanup: (() => void) | null = null
+let homeContentPaintFrame: number | undefined
 let hashScrollAttempts = 0
 let pendingHashTarget: HTMLElement | undefined
 const hashScrollMaxAttempts = 120
-const initialHash = document.documentElement.dataset.initialHash || window.location.hash
+const HOME_CONTENT_FALLBACK_MS = 2_000
 
 function clearInitialHashMarker() {
   delete document.documentElement.dataset.initialHash
@@ -150,6 +158,74 @@ function handleHashChange() {
   if (window.location.hash !== initialHash) cancelPendingHashScroll()
 }
 
+function enableHomeContent() {
+  if (disposed || pageContentEnabled.value) return
+  if (homeContentPaintFrame !== undefined) {
+    window.cancelAnimationFrame(homeContentPaintFrame)
+    homeContentPaintFrame = undefined
+  }
+  homeContentObserver?.disconnect()
+  homeContentObserver = null
+  homePhotoFallbackCleanup?.()
+  homePhotoFallbackCleanup = null
+  clearTimeout(homeContentFallbackTimer)
+  homeContentFallbackTimer = undefined
+  pageContentEnabled.value = true
+  document.documentElement.dataset.homeHeroPhotoReady = 'true'
+  window.dispatchEvent(new Event('home-hero-photo-ready'))
+}
+
+function scheduleHomeContentAfterHeroPaint() {
+  if (disposed || pageContentEnabled.value || homeContentPaintFrame !== undefined) return
+  homeContentPaintFrame = window.requestAnimationFrame(() => {
+    homeContentPaintFrame = window.requestAnimationFrame(() => {
+      homeContentPaintFrame = undefined
+      enableHomeContent()
+    })
+  })
+}
+
+function scheduleHomeContentFallback() {
+  homeContentFallbackTimer = window.setTimeout(enableHomeContent, HOME_CONTENT_FALLBACK_MS)
+  const photo = document.querySelector<HTMLImageElement>('.home-hero-slideshow__image--current')
+  if (!photo) {
+    window.requestAnimationFrame(() => window.requestAnimationFrame(enableHomeContent))
+    return
+  }
+
+  let settled = false
+  const cleanup = () => {
+    photo.removeEventListener('load', loaded)
+    photo.removeEventListener('error', failed)
+  }
+  const finish = (decode: boolean) => {
+    if (settled) return
+    settled = true
+    cleanup()
+    homePhotoFallbackCleanup = null
+    if (!decode) {
+      enableHomeContent()
+      return
+    }
+    const decoded = typeof photo.decode === 'function' ? photo.decode().catch(() => undefined) : Promise.resolve()
+    void decoded.then(() => window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+      if (disposed || pageContentEnabled.value) return
+      clearTimeout(homeContentFallbackTimer)
+      homeContentFallbackTimer = window.setTimeout(enableHomeContent, 250)
+    })))
+  }
+  const loaded = () => finish(true)
+  const failed = () => finish(false)
+  photo.addEventListener('load', loaded)
+  photo.addEventListener('error', failed)
+  homePhotoFallbackCleanup = cleanup
+
+  if (photo.complete) {
+    if (photo.naturalWidth > 0) loaded()
+    else failed()
+  }
+}
+
 function scheduleHashScroll() {
   if (hashScrollFrame !== undefined) return
   if (hashScrollAttempts >= hashScrollMaxAttempts) {
@@ -227,11 +303,39 @@ function scrollToHashTarget(force = false) {
 onMounted(() => {
   initTheme()
   window.addEventListener('hashchange', handleHashChange)
+  if (!deferHomeContent) return
+  if (window.matchMedia('(forced-colors: active)').matches) {
+    enableHomeContent()
+    return
+  }
+
+  scheduleHomeContentFallback()
+  try {
+    if (!PerformanceObserver.supportedEntryTypes?.includes('largest-contentful-paint')) {
+      throw new Error('Largest Contentful Paint observation is unavailable')
+    }
+    homeContentObserver = new PerformanceObserver((entries) => {
+      const hasHeroPhotoPaint = entries.getEntries().some((entry) => {
+        const candidate = (entry as PerformanceEntry & { element?: Element | null }).element
+        return candidate?.classList.contains('home-hero-slideshow__image') === true
+      })
+      if (hasHeroPhotoPaint) scheduleHomeContentAfterHeroPaint()
+    })
+    homeContentObserver.observe({ type: 'largest-contentful-paint', buffered: true })
+  } catch {
+    homeContentObserver?.disconnect()
+    homeContentObserver = null
+  }
 })
 onBeforeUnmount(() => {
   disposed = true
   pageLoadController.abort()
   clearTimeout(skeletonTimer)
+  clearTimeout(homeContentFallbackTimer)
+  if (homeContentPaintFrame !== undefined) window.cancelAnimationFrame(homeContentPaintFrame)
+  homeContentObserver?.disconnect()
+  homePhotoFallbackCleanup?.()
+  homePhotoFallbackCleanup = null
   window.removeEventListener('hashchange', handleHashChange)
   if (hashScrollFrame !== undefined) window.cancelAnimationFrame(hashScrollFrame)
 })
@@ -270,7 +374,6 @@ async function handlePageResolved() {
   pageLoadState.value = 'ready'
 }
 
-const isHome = page === 'home'
 useHomeScrollSnap(isHome, computed(() => pageLoadState.value === 'ready'))
 const isError = !page
 const meta = computed(() => page ? getLocalizedPageMeta(locale.value, page) : messages.value.page.home)
@@ -307,6 +410,7 @@ function moveLightbox(step: number) {
 
       <HomeHero
         v-if="isHome"
+        :runtime-enabled="pageContentEnabled"
       />
 
       <ArchiveHero
@@ -319,7 +423,7 @@ function moveLightbox(step: number) {
         :credit="heroCredit"
       />
 
-      <Suspense @resolve="handlePageResolved">
+      <Suspense v-if="pageContentEnabled" @resolve="handlePageResolved">
         <component :is="currentPage" @open-lightbox="handleLightbox" />
         <template #fallback><PageContentSkeleton v-if="showPageSkeleton" /></template>
       </Suspense>

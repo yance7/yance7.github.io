@@ -4,6 +4,9 @@ import { readMimoReferenceGlyph } from './helpers/mimo-reference'
 
 async function ready(page: Page) {
   await page.goto('/')
+  // The lazy route loader has a 15-second deadline; do not start particle
+  // assertions while the app still reports that its page is loading.
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready', { timeout: 15_000 })
   await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-render-mode', 'canvas')
   await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-particle-state', 'settled', { timeout: 8000 })
 }
@@ -192,7 +195,24 @@ for (const route of ['/', '/zh-hk/', '/en/']) {
     expect(result.count).toBeGreaterThan(100)
     expect(result.count).toBeLessThanOrEqual(12000)
     expect(result.count / result.source).toBeGreaterThanOrEqual(.9)
-    expect((await stage.evaluate(readMimoReferenceGlyph)).points).toHaveLength(result.count)
+    const reference = await stage.evaluate(readMimoReferenceGlyph)
+    if (reference.points.length !== result.count) {
+      const state = await stage.evaluate(element => {
+        const stage = element as HTMLElement
+        const bounds = stage.getBoundingClientRect()
+        const context = document.createElement('canvas').getContext('2d')!
+        context.font = '400 100px Amiri, serif'
+        return { width: bounds.width, height: bounds.height, border: stage.clientLeft,
+          canvasWidth: stage.querySelector('canvas')!.width, canvasHeight: stage.querySelector('canvas')!.height,
+          count: Number(stage.dataset.particleCount), frameCount: Number(stage.dataset.frameCount),
+          fontStatus: document.fonts.status, fontReady: document.fonts.check('400 100px Amiri', 'YANCE'),
+          fontWidth: context.measureText('YANCE').width, viewport: { width: innerWidth, height: innerHeight }, dpr: devicePixelRatio }
+      })
+      await test.info().attach('mimo-reference-diagnostics', { body: JSON.stringify({ result, reference: {
+        width: reference.width, height: reference.height, count: reference.points.length, ratio: reference.ratio
+      }, state }, null, 2), contentType: 'application/json' })
+    }
+    expect(reference.points).toHaveLength(result.count)
     expect(result.ratio).toBe(result.expectedRatio)
     expect(result.width).toBe(result.expectedWidth)
     expect(result.height).toBe(result.expectedHeight)
@@ -239,6 +259,10 @@ test('MiMo tracks repeated pen gestures and matching window releases', async ({ 
     await frames(page)
     await expect(stage).toHaveAttribute('data-particle-state', 'disturbed')
     await gesture(page, end)
+    // Recovery blends once per rendered frame; the separate pixel test also
+    // enforces its wall-clock bound when the browser has normal refresh.
+    const releasedFrame = Number(await stage.getAttribute('data-frame-count'))
+    await expect.poll(async () => Number(await stage.getAttribute('data-frame-count'))).toBeGreaterThanOrEqual(releasedFrame + 9)
     await expect(stage).toHaveAttribute('data-particle-state', 'settled', { timeout: 1500 })
   }
 })

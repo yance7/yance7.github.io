@@ -1,16 +1,21 @@
 <script setup lang="ts">
-import '@fontsource/amiri/latin-400.css'
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { MimoParticleEngine as HomeHeroParticleEngine, createMimoTextMask as createHomeHeroTextMask, createMimoParticleScene, getMimoFontSize, MIMO_PARTICLE_SETTINGS } from '../utils/mimoParticleModel'
+import type { MimoParticleEngine as HomeHeroParticleEngine } from '../utils/mimoParticleModel'
+import { getMimoFontSize } from '../utils/homeHeroParticleSizing'
+import { createHeroGlyphFontLoader } from '../utils/homeHeroGlyphFont'
+import amiriFontUrl from '@fontsource/amiri/files/amiri-latin-400-normal.woff2?url'
 import type { HomeHeroGlyphLayout } from '../utils/homeHeroParticleTypes'
-import { HomeHeroParticleRenderer, type HomeHeroParticleColors } from '../utils/homeHeroParticleRenderer'
+import type { HomeHeroParticleRenderer, HomeHeroParticleColors } from '../utils/homeHeroParticleRenderer'
 
-const props = defineProps<{ animateIntro: boolean; introStartedAt: number | null }>()
+const props = defineProps<{ animateIntro: boolean; introStartedAt: number | null; runtimeEnabled: boolean }>()
 const stage = ref<HTMLElement | null>(null)
 const canvas = ref<HTMLCanvasElement | null>(null)
 const fallbackText = ref<SVGTextElement | null>(null)
-const renderMode = ref('initializing')
-const particleState = ref('initializing')
+const renderMode = ref(props.runtimeEnabled ? 'initializing' : 'static')
+const particleState = ref(props.runtimeEnabled ? 'initializing' : 'static')
+const glyphFontFamily = 'Amiri, serif'
+const glyphFontWeight = '400'
+const ensureGlyphFont = createHeroGlyphFontLoader(document.fonts, () => new FontFace('Amiri', `url("${amiriFontUrl}")`, { weight: '400', style: 'normal' }))
 const particleCount = ref(0)
 const sourceParticleCount = ref(0)
 const inkArea = ref(0)
@@ -26,7 +31,7 @@ const peakActive = ref(0)
 const peakCandidates = ref(0)
 const fallbackSize = ref({ width: 1080, height: 430 })
 const glyphLayout = ref<HomeHeroGlyphLayout>({ fontSize: 220, x: 175, baseline: 290, bounds: { left: 175, top: 130, width: 730, height: 170 } })
-const glyphFont = ref({ family: '', weight: '400' })
+const glyphFont = ref({ family: glyphFontFamily, weight: glyphFontWeight })
 
 let engine: HomeHeroParticleEngine | null = null
 let renderer: HomeHeroParticleRenderer | null = null
@@ -143,20 +148,23 @@ async function fitStaticGlyph(width: number, height: number, revision = generati
 }
 
 async function rebuild(force = false) {
+  if (!props.runtimeEnabled) return
   const bounds = stage.value?.getBoundingClientRect()
   if (!bounds || disposed) return
   const width = Math.floor(bounds.width - stage.value!.clientLeft * 2)
   const height = Math.floor(bounds.height - stage.value!.clientTop * 2)
   if (width < 1 || height < 1) return
   fallbackSize.value = { width, height }
-  const style = { fontFamily: MIMO_PARTICLE_SETTINGS.fontFamily, fontWeight: MIMO_PARTICLE_SETTINGS.fontWeight }
+  const style = { fontFamily: glyphFontFamily, fontWeight: glyphFontWeight }
   glyphFont.value = { family: style.fontFamily, weight: style.fontWeight }
   gridStep.value = 2
+  await import('@fontsource/amiri/latin-400.css')
+  if (disposed || !props.runtimeEnabled) return
   if (!canRenderCanvas()) {
     staticMode()
     const revision = generation
     await fitStaticGlyph(width, height, revision)
-    await document.fonts.load(`${style.fontWeight} 100px ${style.fontFamily}`, 'YANCE').catch(() => [])
+    await ensureGlyphFont().catch(() => undefined)
     await fitStaticGlyph(width, height, revision)
     return
   }
@@ -171,15 +179,20 @@ async function rebuild(force = false) {
   if (disposed || revision !== generation || !canRenderCanvas() || !canvas.value) return
   try {
     // Generate the mask only after the locally bundled Amiri regular face loads.
-    await document.fonts.load(`${style.fontWeight} 100px ${style.fontFamily}`, 'YANCE')
+    await ensureGlyphFont()
     if (disposed || revision !== generation || !canRenderCanvas() || !canvas.value) return
-    const mask = createHomeHeroTextMask(width, height, style.fontFamily, style.fontWeight)
+    const [{ MimoParticleEngine, createMimoTextMask, createMimoParticleScene }, { HomeHeroParticleRenderer: ParticleRenderer }] = await Promise.all([
+      import('../utils/mimoParticleModel'),
+      import('../utils/homeHeroParticleRenderer')
+    ])
+    if (disposed || revision !== generation || !canRenderCanvas() || !canvas.value) return
+    const mask = createMimoTextMask(width, height, style.fontFamily, style.fontWeight)
     glyphLayout.value = mask.layout
     const scene = createMimoParticleScene({ width, height, ...mask })
     if (scene.particles.length < 40) throw new Error('HomeHero text mask is incomplete')
     const at = performance.now() / 1000
-    engine = new HomeHeroParticleEngine(scene, { startedAt: at, mobile: width <= 760 })
-    renderer = new HomeHeroParticleRenderer(canvas.value, { scene, pixelRatio: ratio, colors: colors() })
+    engine = new MimoParticleEngine(scene, { startedAt: at, mobile: width <= 760 })
+    renderer = new ParticleRenderer(canvas.value, { scene, pixelRatio: ratio, colors: colors() })
     dimensionsKey = key
     gridStep.value = step
     pixelRatio.value = ratio
@@ -293,7 +306,7 @@ function focus() {
 function pageShow(event: PageTransitionEvent) {
   pageVisible = document.visibilityState === 'visible'
   focused = true
-  if (event.persisted) void rebuild(true)
+  if (event.persisted && props.runtimeEnabled) void rebuild(true)
   else updatePausedState()
 }
 function scroll() {
@@ -316,7 +329,7 @@ function scroll() {
   visible = bounds.bottom > 0 && bounds.top < innerHeight
   updatePausedState()
 }
-function resize() { void rebuild() }
+function resize() { if (props.runtimeEnabled) void rebuild() }
 function currentPreferenceKey() {
   return `${motionMedia?.matches}:${forcedMedia?.matches}:${connection?.saveData}`
 }
@@ -324,7 +337,7 @@ function preference() {
   const key = currentPreferenceKey()
   if (key === preferenceKey) return
   preferenceKey = key
-  void rebuild(true)
+  if (props.runtimeEnabled) void rebuild(true)
 }
 function fontsLoaded() {
   if (renderMode.value !== 'canvas') void fitStaticGlyph(fallbackSize.value.width, fallbackSize.value.height)
@@ -335,7 +348,8 @@ function theme() {
   renderer.drawActive(dynamicParticles())
 }
 
-watch(() => props.introStartedAt, () => { if (!engine && allowed()) void rebuild() })
+watch(() => props.runtimeEnabled, (enabled) => { if (enabled) void rebuild() }, { flush: 'post' })
+watch(() => props.introStartedAt, () => { if (props.runtimeEnabled && !engine && allowed()) void rebuild() })
 onMounted(() => {
   motionMedia = matchMedia('(prefers-reduced-motion: reduce)')
   forcedMedia = matchMedia('(forced-colors: active)')
@@ -370,7 +384,7 @@ onMounted(() => {
   }
   themeObserver = new MutationObserver(theme)
   themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
-  void rebuild()
+  if (props.runtimeEnabled) void rebuild()
 })
 onBeforeUnmount(() => {
   disposed = true

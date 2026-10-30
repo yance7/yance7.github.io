@@ -34,17 +34,22 @@ describe('critical rendering contracts', () => {
     expect(localizedPages).not.toContain('__LOCALE_FONT_STYLESHEET__')
   })
 
-  it('starts the current page chunk before mounting the Vue shell', () => {
+  it('defers the home content chunk until the hero can paint with a bounded fallback', () => {
     const main = readFileSync(resolve(process.cwd(), 'src/main.ts'), 'utf8')
+    const app = readFileSync(resolve(process.cwd(), 'src/App.vue'), 'utf8')
     const loaders = readFileSync(resolve(process.cwd(), 'src/pageLoaders.ts'), 'utf8')
 
     expect(loaders).toContain('export function preloadPage(')
-    expect(main).toContain('preloadPage(document.body.dataset.page)')
-    expect(main.indexOf('preloadPage(document.body.dataset.page)'))
+    expect(main).toContain("if (document.body.dataset.page !== 'home') preloadPage(document.body.dataset.page)")
+    expect(main.indexOf("if (document.body.dataset.page !== 'home') preloadPage(document.body.dataset.page)"))
       .toBeLessThan(main.indexOf("app.mount('#app')"))
+    expect(app).toContain('const deferHomeContent = isHome && !initialHash')
+    expect(app).toContain('const pageContentEnabled = ref(!deferHomeContent)')
+    expect(app).toContain('<Suspense v-if="pageContentEnabled"')
+    expect(app).toContain('const HOME_CONTENT_FALLBACK_MS = 2_000')
   })
 
-  it('mounts before scheduling locale font loading in the background', () => {
+  it('mounts before starting homepage fonts after hero paint and keeps other fonts idle-scheduled', () => {
     const main = readFileSync(resolve(process.cwd(), 'src/main.ts'), 'utf8').replace(/\r\n/g, '\n')
 
     expect(main).not.toContain("import './fonts.css'")
@@ -59,12 +64,18 @@ describe('critical rendering contracts', () => {
     const loadFonts = main.slice(main.indexOf('async function loadFonts'), main.indexOf('const app = createApp'))
     expect(loadFonts).not.toContain('mountApp()')
     expect(loadFonts).not.toContain('document.fonts.load(')
+    expect(main).toContain('function startLoadingFonts() { void loadFonts() }')
     expect(main).toContain('function scheduleFonts()')
     expect(main).toContain('const fontLoadTimeout = 2400')
     expect(main).toContain('idleWindow.requestIdleCallback(startLoadingFonts, { timeout: fontLoadTimeout })')
     expect(main).toContain('window.setTimeout(startLoadingFonts, fontLoadTimeout)')
     const startup = main.slice(main.indexOf('let appMounted'))
-    expect(startup).toContain('mountApp()\nscheduleFonts()')
+    expect(startup).toContain('mountApp()')
+    expect(startup).toContain("document.body.dataset.page === 'home' && !initialHash")
+    expect(startup).toContain("window.addEventListener('home-hero-photo-ready', startLoadingFonts, { once: true })")
+    expect(startup).toContain("document.documentElement.dataset.homeHeroPhotoReady === 'true') startLoadingFonts()")
+    expect(startup.indexOf('mountApp()')).toBeLessThan(startup.indexOf("window.addEventListener('home-hero-photo-ready'"))
+    expect(startup).toContain('scheduleFonts()')
   })
 
 
@@ -175,6 +186,23 @@ describe('decoded image loading', () => {
     expect(image.onload).toBeNull()
     expect(image.onerror).toBeNull()
     expect(image.src).toBe('')
+  })
+
+  it('can disable the same-format srcset retry when the caller has a real format fallback', async () => {
+    const image: PreloadImage = { src: '', srcset: '', sizes: '', decoding: 'auto', onload: null, onerror: null }
+    const request = loadImage({
+      src: '/hero-01-640.webp',
+      srcset: '/hero-01-640.webp 640w, /hero-01-1280.webp 1280w',
+      sizes: '100vw',
+      retrySrcsetWithDirectSource: false,
+      image
+    })
+
+    image.onerror?.(new Event('error'))
+
+    expect(await request).toBe(false)
+    expect(image.src).toBe('/hero-01-640.webp')
+    expect(image.srcset).toContain('1280w')
   })
 })
 

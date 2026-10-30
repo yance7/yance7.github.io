@@ -3,6 +3,7 @@ export interface PreloadImage {
   srcset?: string
   sizes?: string
   decoding?: 'async' | 'sync' | 'auto'
+  fetchPriority?: 'high' | 'low' | 'auto'
   onload: ((event: Event) => unknown) | null
   onerror: ((event: Event) => unknown) | null
   decode?: () => Promise<void>
@@ -23,6 +24,8 @@ export interface ImageLoadOptions {
   src: string
   srcset?: string
   sizes?: string
+  fetchPriority?: 'high' | 'low' | 'auto'
+  retrySrcsetWithDirectSource?: boolean
   timeoutMs?: number
   image?: PreloadImage
   signal?: AbortSignal
@@ -43,6 +46,8 @@ export function loadImage(
     src,
     srcset,
     sizes,
+    fetchPriority,
+    retrySrcsetWithDirectSource = true,
     timeoutMs = defaultTimeoutMs
   } = options
   const image = options.image ?? createImage()
@@ -88,7 +93,7 @@ export function loadImage(
 
     options.signal?.addEventListener('abort', onAbort, { once: true })
 
-    function retryWithoutSourceSet() {
+    function retryWithDirectSource() {
       fallbackAttempted = true
       image.removeAttribute?.('srcset')
       image.removeAttribute?.('sizes')
@@ -98,6 +103,7 @@ export function loadImage(
     }
 
     image.decoding = 'async'
+    if (fetchPriority) image.fetchPriority = fetchPriority
     if (srcset) image.srcset = srcset
     if (sizes) image.sizes = sizes
     image.onload = () => {
@@ -115,8 +121,8 @@ export function loadImage(
       void decode.then(() => finish(true), () => finish(false))
     }
     image.onerror = () => {
-      if (srcset && !fallbackAttempted) {
-        retryWithoutSourceSet()
+      if (srcset && retrySrcsetWithDirectSource && !fallbackAttempted) {
+        retryWithDirectSource()
         return
       }
       finish(false)

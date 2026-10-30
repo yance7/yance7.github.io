@@ -42,11 +42,12 @@ async function loadFonts() {
 
 const fontLoadTimeout = 2400
 
+function startLoadingFonts() { void loadFonts() }
+
 function scheduleFonts() {
   const idleWindow = window as Window & {
     requestIdleCallback?: (callback: () => void, options?: { timeout?: number }) => number
   }
-  const startLoadingFonts = () => { void loadFonts() }
 
   if (idleWindow.requestIdleCallback) {
     idleWindow.requestIdleCallback(startLoadingFonts, { timeout: fontLoadTimeout })
@@ -62,7 +63,7 @@ app.directive('magnetic', magnetic)
 app.directive('pointer-sheen', pointerSheen)
 document.documentElement.dataset.fontsReady = 'loading'
 configurePageChunkPreload()
-preloadPage(document.body.dataset.page)
+if (document.body.dataset.page !== 'home') preloadPage(document.body.dataset.page)
 
 let appMounted = false
 function mountApp() {
@@ -72,4 +73,9 @@ function mountApp() {
 }
 
 mountApp()
-scheduleFonts()
+if (document.body.dataset.page === 'home' && !initialHash) {
+  if (document.documentElement.dataset.homeHeroPhotoReady === 'true') startLoadingFonts()
+  else window.addEventListener('home-hero-photo-ready', startLoadingFonts, { once: true })
+} else {
+  scheduleFonts()
+}

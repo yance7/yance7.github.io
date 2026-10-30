@@ -19,6 +19,7 @@ function startTouchRipple(event: PointerEvent) {
   if (!hero || !hasCoarsePointer.value || event.pointerType !== 'touch') return
   const bounds = hero.getBoundingClientRect()
   const target = event.target instanceof Node ? event.target : null
+  if (target instanceof Element && target.closest('[data-home-hero-control]')) return
   const inside = Boolean(target && hero.contains(target))
     && event.clientX >= bounds.left
     && event.clientX <= bounds.right
