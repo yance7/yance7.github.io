@@ -5,7 +5,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 WIDTH, HEIGHT = 1200, 630
 ROOT = Path(__file__).resolve().parents[1]
-ASSET_ROOT = ROOT / 'public' / 'assets'
+ASSET_ROOT = ROOT / 'public' / 'assets' / 'images'
 
 
 def font(size, bold=False, serif=False):
@@ -112,7 +112,7 @@ def render_card(slug, kicker, title, subtitle, detail, accent, image=None, colla
     else:
         draw_metric_panel(draw, 735, 270, [('ARCHIVE', slug.upper(), gold), ('STATUS', 'ONLINE', aqua), ('YEAR', '2026', ink)], ink, gold, aqua)
 
-    output = ASSET_ROOT / f'og-{slug}.png'
+    output = ASSET_ROOT / 'social' / f'og-{slug}.png'
     output.parent.mkdir(parents=True, exist_ok=True)
     base.convert('RGB').save(output, format='PNG', optimize=True)
     return output
@@ -135,7 +135,7 @@ def main():
             subtitle,
             detail,
             accent,
-            image='case/fresheye-og-cover.png' if slug == 'works' else None,
+            image='case-studies/fresheye-og-cover.png' if slug == 'works' else None,
             collage=slug == 'concerts',
         )
     render_card('card', 'PERSONAL ARCHIVE / 2026', 'Yance.', 'RESEARCHER · BUILDER · MUSIC LISTENER', 'DEEP LEARNING / SMART AGRICULTURE / PRODUCTS', (121, 217, 201))

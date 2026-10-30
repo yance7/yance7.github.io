@@ -12,6 +12,6 @@ describe('concert poster presentation', () => {
   })
 
   it('derives a JPEG fallback beside the WebP thumbnail', () => {
-    expect(thumbnailFallbackUrl('concert-202511-kpl-finals.jpg')).toBe('/assets/concerts/thumbs/concert-202511-kpl-finals.jpg')
+    expect(thumbnailFallbackUrl('concert-202511-kpl-finals.jpg')).toBe('/assets/images/concerts/thumbs/concert-202511-kpl-finals.jpg')
   })
 })

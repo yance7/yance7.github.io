@@ -20,4 +20,4 @@
 | 2026-09-27 | 周深 | `concert-20260927-zhou-shen.jpg` | 站点所有者提供；公开宣传海报 | 待确认 |
 | 2026-10-06 | FFOREVER | `concert-20261006-fforever.jpg` | 站点所有者提供；公开宣传海报 | 待确认 |
 
-处理后的原图位于 `public/assets/concerts/`，缩略图使用相同 stem 和 `.webp` 后缀。发布前仍需运行 `npm run audit:assets`，并由人工确认版权和再利用许可。
+处理后的原图位于 `public/assets/images/concerts/originals/`，缩略图使用相同 stem 和 `.webp` 后缀。发布前仍需运行 `npm run audit:assets`，并由人工确认版权和再利用许可。

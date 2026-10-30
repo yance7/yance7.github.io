@@ -7,7 +7,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'design-assets' / 'yance-brand-master.png'
-OUTPUT = ROOT / 'public' / 'assets' / 'brand'
+OUTPUT = ROOT / 'public' / 'assets' / 'images' / 'brand'
 
 FULL_SIZES = (256, 128, 96, 64, 48)
 ICON_SIZES = (16, 32, 180, 192, 512)
