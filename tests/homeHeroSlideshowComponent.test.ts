@@ -40,6 +40,7 @@ describe('home hero slideshow component contract', () => {
     expect(mediaMarkup).not.toContain('<button')
     expect(controlsMarkup).toContain('role="group"')
     expect(controlsMarkup).toContain('type="button"')
+    expect(controlsMarkup).toContain('index === controller.displayIndicatorIndex.value')
     expect(controlsMarkup).toContain('aria-current')
     expect(controlsMarkup).toContain('aria-live="polite"')
   })

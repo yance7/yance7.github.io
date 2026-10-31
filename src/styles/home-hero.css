@@ -533,6 +533,7 @@ html[data-theme='dark'] .home-hero-visual > .home-hero-particles {
 .home-hero-slideshow__dots {
   display: flex;
   align-items: center;
+  gap: 2px;
 }
 
 .home-hero-slideshow__dot-button,
@@ -590,7 +591,18 @@ html[data-theme='dark'] .home-hero-visual > .home-hero-particles {
 @media (max-width: 760px) {
   .home-hero-slideshow__media { border-radius: 21px; }
   .home-hero-slideshow__image { object-position: var(--home-hero-position-mobile, 50% 50%); }
-  .home-hero-slideshow__panel { right: 12px; bottom: 12px; gap: 8px; }
+  .home-hero-slideshow__panel {
+    right: 12px;
+    bottom: 12px;
+    gap: 4px;
+    padding: 5px;
+    border-radius: 20px;
+  }
+  .home-hero-slideshow__dots {
+    display: grid;
+    grid-template-columns: repeat(7, 28px);
+    gap: 2px;
+  }
   .home-hero-slideshow__dot-button,
   .home-hero-slideshow__play-button { width: 28px; height: 28px; }
 }

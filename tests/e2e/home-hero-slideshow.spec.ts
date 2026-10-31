@@ -2,9 +2,9 @@ import { expect, test } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 
 const locales = [
-  { route: '/', group: '首页照片轮播', second: '显示第 2 张，共 7 张：校园影像' },
-  { route: '/zh-hk/', group: '首頁照片輪播', second: '顯示第 2 張，共 7 張：校園影像' },
-  { route: '/en/', group: 'Homepage photo carousel', second: 'Show photo 2 of 7: Campus photo' }
+  { route: '/', group: '首页照片轮播', second: '显示第 2 张，共 13 张：校园影像' },
+  { route: '/zh-hk/', group: '首頁照片輪播', second: '顯示第 2 張，共 13 張：校園影像' },
+  { route: '/en/', group: 'Homepage photo carousel', second: 'Show photo 2 of 13: Campus photo' }
 ] as const
 
 async function expectLoadedImage(page: import('@playwright/test').Page) {
@@ -108,7 +108,7 @@ test('requests the first responsive photo at high priority and at most one next 
   await page.goto('/')
   const image = await expectLoadedImage(page)
 
-  const ids = [...new Set(imageRequests.map((url) => url.match(/hero-0[1-7]/)?.[0]).filter(Boolean))]
+  const ids = [...new Set(imageRequests.map((url) => url.match(/hero-(?:0[1-9]|1[0-3])/)?.[0]).filter(Boolean))]
   expect(ids).toContain('hero-01')
   expect(ids.length).toBeLessThanOrEqual(2)
   expect(ids.every((id) => id === 'hero-01' || id === 'hero-02')).toBe(true)
@@ -420,13 +420,13 @@ test('skips the document-level photo preload and keeps the 640px candidate with 
   expect(imageRequests[0]).toContain('hero-01-640-')
 })
 
-test('exposes seven localized photo buttons outside the decorative subtree', async ({ page }) => {
+test('exposes thirteen localized photo buttons outside the decorative subtree', async ({ page }) => {
   for (const locale of locales) {
     const { group } = await openPausedHome(page, locale.route)
     await expect(group).toHaveAttribute('role', 'group')
     await expect(group).toHaveAttribute('aria-roledescription', /.+/)
     await expect(group).toHaveAccessibleName(locale.group)
-    await expect(group.locator('.home-hero-slideshow__dot-button')).toHaveCount(7)
+    await expect(group.locator('.home-hero-slideshow__dot-button')).toHaveCount(13)
     await expect(group.locator('.home-hero-slideshow__dot-button').nth(1)).toHaveAccessibleName(locale.second)
     expect(await group.evaluate((element) => element.closest('[aria-hidden="true"]') !== null)).toBe(false)
     await expect(group.locator('.home-hero-slideshow__dot-button[aria-current="true"]')).toHaveCount(1)
@@ -512,7 +512,7 @@ test('pauses while hovered and resumes with a full dwell after pointer exit', as
   await page.mouse.move(1, 1)
   await expect(media).toHaveAttribute('data-hovered', 'false')
 
-  await page.clock.fastForward(5_999)
+  await page.clock.fastForward(2_999)
   expect(await media.getAttribute('data-target-index')).toBeNull()
   await page.clock.fastForward(1)
   await expect(media).toHaveAttribute('data-target-index', '1')
@@ -548,7 +548,7 @@ test('does not catch up while hidden or offscreen and restarts a full dwell on r
 
   await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
   await expect(media).toHaveAttribute('data-in-viewport', 'true')
-  await page.clock.fastForward(5_999)
+  await page.clock.fastForward(2_999)
   expect(await media.getAttribute('data-target-index')).toBeNull()
   await page.clock.fastForward(1)
   await expect(media).toHaveAttribute('data-target-index', '1')
@@ -556,7 +556,7 @@ test('does not catch up while hidden or offscreen and restarts a full dwell on r
   await expect(media).toHaveAttribute('data-current-index', '1')
 })
 
-test('advances from 1 to 2 and wraps from 7 to 1 in the same forward direction', async ({ page }) => {
+test('advances from 1 to 2 and wraps from 13 to 1 in the same forward direction', async ({ page }) => {
   const { group, media } = await openPausedHome(page)
   const canvas = await page.locator('.home-hero-particles-canvas').elementHandle()
   const play = group.locator('.home-hero-slideshow__play-button')
@@ -568,8 +568,8 @@ test('advances from 1 to 2 and wraps from 7 to 1 in the same forward direction',
   await expect(media).toHaveAttribute('data-direction', 'forward')
   await expect(media).toHaveAttribute('data-current-index', '1')
 
-  await group.locator('.home-hero-slideshow__dot-button').nth(6).click()
-  await expect(media).toHaveAttribute('data-current-index', '6')
+  await group.locator('.home-hero-slideshow__dot-button').nth(12).click()
+  await expect(media).toHaveAttribute('data-current-index', '12')
   await page.mouse.move(1, 1)
   await play.focus()
   await play.press('Enter')
@@ -588,6 +588,12 @@ test('supports keyboard focus pause and explicit restart while focus remains in 
   await expect(second).toHaveCSS('outline-style', 'solid')
   await second.press('Enter')
   await expect(media).toHaveAttribute('data-current-index', '1')
+
+  const last = group.locator('.home-hero-slideshow__dot-button').nth(12)
+  await last.focus()
+  await expect(last).toBeFocused()
+  await last.press('Space')
+  await expect(media).toHaveAttribute('data-current-index', '12')
 
   const play = group.locator('.home-hero-slideshow__play-button')
   await play.focus()
@@ -725,6 +731,10 @@ test('waits for the resized target candidate to load before revealing it', async
     releaseLargeCandidate()
     await expect.poll(() => target.evaluate((element) => (element as HTMLImageElement).naturalWidth)).toBeGreaterThan(0)
     await target.evaluate((element) => (element as HTMLImageElement).decode())
+    await page.clock.runFor(16)
+    await expect(media).toHaveClass(/is-transitioning/)
+    await expect(controls.locator('.home-hero-slideshow__dot-button').nth(1)).toHaveAttribute('aria-current', 'true')
+    await expect(media).toHaveAttribute('data-current-index', '0')
     await page.clock.runFor(1_000)
     await expect(media).toHaveAttribute('data-current-index', '1')
     await expect.poll(() => page.locator('.home-hero-slideshow__image--current').evaluate((element) => (element as HTMLImageElement).naturalWidth)).toBeGreaterThan(0)
@@ -763,11 +773,19 @@ test('keeps carousel controls inside 320px and 390px cards without page overflow
       const stage = document.querySelector('.home-hero-particles')!.getBoundingClientRect()
       const controls = document.querySelector('.home-hero-slideshow__panel')!.getBoundingClientRect()
       const buttons = [...document.querySelectorAll<HTMLElement>('.home-hero-slideshow__dot-button, .home-hero-slideshow__play-button')]
+      const dots = [...document.querySelectorAll<HTMLElement>('.home-hero-slideshow__dot-button')]
+      const dotBounds = dots.map((dot) => dot.getBoundingClientRect())
+      const rowTops = [...new Set(dotBounds.map((bounds) => Math.round(bounds.top * 10) / 10))].sort((a, b) => a - b)
+      const play = document.querySelector<HTMLElement>('.home-hero-slideshow__play-button')!.getBoundingClientRect()
       return {
         viewport: window.innerWidth,
         document: document.documentElement.scrollWidth,
         stage: { left: stage.left, right: stage.right, bottom: stage.bottom, height: stage.height },
-        controls: { left: controls.left, right: controls.right, bottom: controls.bottom },
+        controls: { left: controls.left, right: controls.right, bottom: controls.bottom, height: controls.height },
+        rowCounts: rowTops.map((top) => dotBounds.filter((bounds) => Math.round(bounds.top * 10) / 10 === top).length),
+        dotsRight: Math.max(...dotBounds.map((bounds) => bounds.right)),
+        play: { left: play.left, centerY: play.top + play.height / 2 },
+        controlsCenterY: controls.top + controls.height / 2,
         minButton: Math.min(...buttons.map((button) => {
           const bounds = button.getBoundingClientRect()
           return Math.min(bounds.width, bounds.height)
@@ -779,9 +797,16 @@ test('keeps carousel controls inside 320px and 390px cards without page overflow
     expect(layout.controls.left).toBeGreaterThanOrEqual(layout.stage.left)
     expect(layout.controls.right).toBeLessThanOrEqual(layout.stage.right)
     expect(layout.controls.bottom).toBeLessThanOrEqual(layout.stage.bottom)
-    expect(layout.minButton).toBeGreaterThanOrEqual(24)
+    expect(layout.minButton).toBeGreaterThanOrEqual(28)
     expect(layout.touchAction).toContain('pan-y')
-    await expect(group.locator('.home-hero-slideshow__dot-button')).toHaveCount(7)
+    expect(layout.rowCounts).toEqual(width <= 760 ? [7, 6] : [13])
+    expect(layout.play.left).toBeGreaterThan(layout.dotsRight)
+    if (width <= 760) {
+      expect(layout.controls.height).toBeGreaterThanOrEqual(68)
+      expect(layout.controls.height).toBeLessThanOrEqual(80)
+      expect(Math.abs(layout.play.centerY - layout.controlsCenterY)).toBeLessThanOrEqual(1)
+    }
+    await expect(group.locator('.home-hero-slideshow__dot-button')).toHaveCount(13)
   }
 })
 
@@ -817,7 +842,7 @@ test('touching slideshow controls pauses without a particle ripple', async ({ pa
 
   await page.evaluate(() => window.dispatchEvent(new PointerEvent('pointerup', { pointerId: 93, pointerType: 'touch' })))
   await expect(media).toHaveAttribute('data-touch-active', 'false')
-  await page.clock.fastForward(5_999)
+  await page.clock.fastForward(2_999)
   await page.clock.fastForward(1)
   await expect(media).toHaveAttribute('data-target-index', '1')
   await page.clock.fastForward(860)

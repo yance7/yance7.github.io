@@ -29,7 +29,7 @@ export const zhCNMessages = {
         pause: '暂停照片轮播',
         static: '系统偏好减少动态效果，照片轮播已静止',
         showPhoto: (current, total, name) => `显示第 ${current} 张，共 ${total} 张：${name}`,
-        photos: { 1: '校园发言', 2: '校园影像', 3: '合影', 4: '舞台全景', 5: '演出屏幕', 6: '合影', 7: '舞台近景' },
+        photos: { 1: '校园发言', 2: '校园影像', 3: '合影', 4: '舞台全景', 5: '演出屏幕', 6: '合影', 7: '舞台近景', 8: '秋日校园合照', 9: '校园活动', 10: 'KPL 总决赛门票', 11: '唱片与饮品', 12: '演唱会现场', 13: '熊猫' },
         status: {
           photoShown: (current, total, name) => `正在显示第 ${current} 张，共 ${total} 张：${name}`,
           photoSelected: (current, total, name) => `已选择第 ${current} 张，共 ${total} 张：${name}。高对比度模式下照片已隐藏。`,

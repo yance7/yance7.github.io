@@ -31,7 +31,7 @@ export const zhHKMessages = {
         pause: '暫停照片輪播',
         static: '系統偏好減少動態效果，照片輪播已靜止',
         showPhoto: (current, total, name) => `顯示第 ${current} 張，共 ${total} 張：${name}`,
-        photos: { 1: '校園發言', 2: '校園影像', 3: '合照', 4: '舞台全景', 5: '演出屏幕', 6: '合照', 7: '舞台近景' },
+        photos: { 1: '校園發言', 2: '校園影像', 3: '合照', 4: '舞台全景', 5: '演出屏幕', 6: '合照', 7: '舞台近景', 8: '秋日校園合照', 9: '校園活動', 10: 'KPL 總決賽門票', 11: '唱片與飲品', 12: '演唱會現場', 13: '熊貓' },
         status: {
           photoShown: (current, total, name) => `正在顯示第 ${current} 張，共 ${total} 張：${name}`,
           photoSelected: (current, total, name) => `已選擇第 ${current} 張，共 ${total} 張：${name}。高對比度模式下照片已隱藏。`,
