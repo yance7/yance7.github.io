@@ -1,6 +1,7 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
 import { resolve, sep } from 'node:path'
 import { concerts } from '../../src/data/concerts'
+import { findNextRailDestinationIndex, getRailDestinations } from '../../src/utils/horizontalRail'
 
 const archiveIds = [
   'fforever-2026-10-06',
@@ -217,7 +218,7 @@ test('concert archive buttons stay synchronized at both rail edges', async ({ pa
 
   await previous.click()
   await expect(previous).toBeDisabled()
-  await expect.poll(() => centerError(rail, 0)).toBeLessThanOrEqual(2)
+  await expect.poll(() => edgeGap(rail, 0, 'start')).toBeLessThanOrEqual(4)
 
   await rail.evaluate((element) => {
     const archiveRail = element as HTMLElement
@@ -230,6 +231,52 @@ test('concert archive buttons stay synchronized at both rail edges', async ({ pa
   await previous.click()
   await expect(next).toBeEnabled()
   await expect.poll(() => rail.evaluate((element) => (element as HTMLElement).scrollLeft)).toBeLessThan(endScrollLeft)
+})
+
+test('concert edge centers use safe edges and actual endpoint button states', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await gotoConcerts(page)
+
+  const rail = page.locator('.concert-archive-rail')
+  const cards = rail.locator('.concert-rail-card')
+  const previous = page.locator('[data-rail-direction="previous"]')
+  const next = page.locator('[data-rail-direction="next"]')
+  await expect(rail).toHaveAttribute('data-rail-ready', 'true')
+
+  await expect.poll(() => edgeGap(rail, 0, 'start')).toBeGreaterThanOrEqual(0)
+  await expect.poll(() => edgeGap(rail, 0, 'start')).toBeLessThanOrEqual(4)
+  await expect(previous).toBeDisabled()
+  await expect(next).toBeEnabled()
+  await expect(cards.first()).toHaveCSS('scroll-snap-align', 'start')
+  await expect(cards.nth(1)).toHaveCSS('scroll-snap-align', 'center')
+  await expect(cards.last()).toHaveCSS('scroll-snap-align', 'end')
+
+  await rail.evaluate((element) => {
+    const scroller = element as HTMLElement
+    scroller.scrollLeft = scroller.scrollWidth
+  })
+  await expect.poll(() => edgeGap(rail, -1, 'end')).toBeGreaterThanOrEqual(0)
+  await expect.poll(() => edgeGap(rail, -1, 'end')).toBeLessThanOrEqual(4)
+  await expect(next).toBeDisabled()
+  await expect(previous).toBeEnabled()
+})
+
+test('concert edge centers preserve keyboard focus and reduced-motion snapping', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await gotoConcerts(page)
+
+  const rail = page.locator('.concert-archive-rail')
+  const next = page.locator('[data-rail-direction="next"]')
+  await expect(rail).toHaveCSS('scroll-snap-type', /x mandatory/)
+  await expect(rail).toHaveCSS('scroll-behavior', 'auto')
+
+  await next.focus()
+  await expect(next).toBeFocused()
+  const firstReachableIndex = await nextDestinationIndex(rail, 1)
+  expect(firstReachableIndex).toBeGreaterThan(0)
+  await next.press('Enter')
+  await expect.poll(() => centerError(rail, firstReachableIndex)).toBeLessThanOrEqual(2)
+  await expect(next).toBeFocused()
 })
 
 test('concert archive buttons use instant scrolling when motion is reduced', async ({ page }) => {
@@ -248,7 +295,7 @@ test('concert archive buttons use instant scrolling when motion is reduced', asy
 
   const rail = page.locator('.concert-archive-rail')
   await expect(rail).toHaveCSS('scroll-behavior', 'auto')
-  await expect(rail).toHaveCSS('scroll-snap-type', 'none')
+  await expect(rail).toHaveCSS('scroll-snap-type', /x mandatory/)
 
   const next = page.locator('.concert-rail-controls button[data-rail-direction="next"]')
   await expect(page.locator('.site-shell[data-page-load-state="ready"]')).toBeVisible()
@@ -454,41 +501,113 @@ async function centerError(rail: Locator, index: number) {
   }, index)
 }
 
-test('concert hash centers a fully visible off-center poster', async ({ page }) => {
-  await page.setViewportSize({ width: 1200, height: 900 })
+async function stableRailGeometry(rail: Locator, index: number) {
+  return rail.evaluate(async (element, cardIndex) => {
+    const scroller = element as HTMLElement
+    let previous = ''
+    let stableFrames = 0
+    for (let frame = 0; frame < 120 && stableFrames < 12; frame += 1) {
+      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
+      const card = scroller.querySelectorAll<HTMLElement>('.concert-rail-card')[cardIndex]!
+      const rect = card.getBoundingClientRect()
+      const current = JSON.stringify([scroller.scrollLeft, scroller.clientWidth, rect.left, rect.right])
+      stableFrames = current === previous ? stableFrames + 1 : 0
+      previous = current
+    }
+
+    const card = scroller.querySelectorAll<HTMLElement>('.concert-rail-card')[cardIndex]!
+    return {
+      stableFrames,
+      scrollLeft: scroller.scrollLeft,
+      railWidth: scroller.clientWidth,
+      centerError: Math.abs(card.offsetLeft + card.offsetWidth / 2 - scroller.scrollLeft - scroller.clientWidth / 2)
+    }
+  }, index)
+}
+
+async function nextDestinationIndex(rail: Locator, direction: 1 | -1, pendingIndex?: number) {
+  const geometry = await rail.evaluate(element => {
+    const scroller = element as HTMLElement
+    return {
+      cards: [...scroller.querySelectorAll<HTMLElement>('.concert-rail-card')].map(card => ({
+        offsetLeft: card.offsetLeft,
+        offsetWidth: card.offsetWidth
+      })),
+      viewportWidth: scroller.clientWidth,
+      maxScrollLeft: scroller.scrollWidth - scroller.clientWidth,
+      scrollLeft: scroller.scrollLeft
+    }
+  })
+  const destinations = getRailDestinations(geometry.cards, geometry.viewportWidth, geometry.maxScrollLeft)
+  return findNextRailDestinationIndex(destinations, geometry.scrollLeft, direction, pendingIndex)
+}
+
+async function destinationAfterNextPresses(rail: Locator, pressCount: number) {
+  let pendingIndex: number | undefined
+  for (let press = 0; press < pressCount; press += 1) {
+    const nextIndex = await nextDestinationIndex(rail, 1, pendingIndex)
+    if (nextIndex <= 0) throw new Error('Expected each next button press to have a reachable destination')
+    pendingIndex = nextIndex
+  }
+  return pendingIndex!
+}
+
+async function edgeGap(rail: Locator, index: number, edge: 'start' | 'end') {
+  return rail.evaluate((element, target) => {
+    const scroller = element as HTMLElement
+    const cards = scroller.querySelectorAll<HTMLElement>('.concert-rail-card')
+    const card = cards[target.index < 0 ? cards.length + target.index : target.index]!
+    const cardRect = card.getBoundingClientRect()
+    const scrollerRect = scroller.getBoundingClientRect()
+    const start = scrollerRect.left + scroller.clientLeft
+    const end = start + scroller.clientWidth
+    return target.edge === 'start' ? cardRect.left - start : end - cardRect.right
+  }, { index, edge })
+}
+
+test('concert hash uses the shared destination for a visible middle poster', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.addInitScript(() => {
-    const state = globalThis as typeof globalThis & { __holdCenterLayout?: boolean }
-    state.__holdCenterLayout = true
-    const nativeDataset = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'dataset')!.get!
-    Object.defineProperty(HTMLElement.prototype, 'dataset', {
-      configurable: true,
-      get() {
-        const dataset = nativeDataset.call(this) as DOMStringMap
-        if (!this.matches('.concert-archive-rail')) return dataset
-        return new Proxy(dataset, { get(target, key) {
-          return key === 'railReady' && state.__holdCenterLayout ? undefined : Reflect.get(target, key)
-        } })
-      }
-    })
+    const state = window as typeof window & { __railTargetIds?: string[] }
+    state.__railTargetIds = []
+    document.addEventListener('rail-target', (event) => {
+      const target = (event as CustomEvent<HTMLElement>).detail
+      if (target?.dataset.anchorId) state.__railTargetIds?.push(target.dataset.anchorId)
+    }, true)
   })
-  await page.goto('/concerts/#concert-zhou-shen-2026-09-27')
+  const targetId = 'concert-zhou-shen-2026-09-27'
+  await page.goto(`/concerts/#${targetId}`)
   await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
   const rail = page.locator('.concert-archive-rail')
-  await expect(rail).toHaveAttribute('data-rail-ready', 'true')
-  await rail.evaluate(element => {
-    const card = element.querySelectorAll<HTMLElement>('.concert-rail-card')[1]!
-    element.scrollTo({ left: card.offsetLeft + card.offsetWidth / 2 - element.clientWidth / 2 + 30, behavior: 'instant' })
-  })
-  const target = rail.locator('.concert-rail-card').nth(1)
-  expect(await target.evaluate(element => {
-    const box = element.getBoundingClientRect()
-    const bounds = element.closest('.concert-archive-rail')!.getBoundingClientRect()
-    return box.left >= bounds.left && box.right <= bounds.right
-  })).toBe(true)
-  expect(await centerError(rail, 1)).toBeGreaterThan(20)
-  await page.evaluate(() => { (globalThis as typeof globalThis & { __holdCenterLayout?: boolean }).__holdCenterLayout = false })
+  await expect.poll(() => page.evaluate((id) => (
+    (window as typeof window & { __railTargetIds?: string[] }).__railTargetIds?.includes(id) ?? false
+  ), targetId)).toBe(true)
   await expect.poll(() => centerError(rail, 1)).toBeLessThanOrEqual(2)
+})
+
+test('concert hash for the second poster survives a narrow resize', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop-to-mobile resize is covered by desktop browser projects')
+  await page.setViewportSize({ width: 1200, height: 900 })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  const targetId = 'concert-zhou-shen-2026-09-27'
+  await page.goto(`/concerts/#${targetId}`)
+
+  const rail = page.locator('.concert-archive-rail')
+  const target = rail.locator(`[data-anchor-id="${targetId}"]`)
+  await expect(page.locator('.site-shell[data-page-load-state="ready"]')).toBeVisible()
+  await expect(rail).toHaveAttribute('data-rail-ready', 'true')
+  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
+  await expect(target).toHaveAttribute('data-hash-target', 'true')
+  await page.evaluate(() => document.fonts.ready)
+  const desktop = await stableRailGeometry(rail, 1)
+  expect(desktop.stableFrames).toBe(12)
+  expect(desktop.centerError).toBeLessThanOrEqual(2)
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  const mobile = await stableRailGeometry(rail, 1)
+  expect(mobile.stableFrames).toBe(12)
+  expect(mobile.centerError).toBeLessThanOrEqual(2)
+  await expect(target).toHaveAttribute('data-hash-target', 'true')
 })
 
 test('concert resize fallback works without ResizeObserver', async ({ page }) => {
@@ -529,7 +648,7 @@ test('concert edge centers and button movement preserve the document position', 
   // Keep Playwright's setup scroll immediate so the click only exercises rail movement.
   await page.addStyleTag({ content: 'html { scroll-behavior: auto !important; }' })
   await next.evaluate(button => button.scrollIntoView({ block: 'center', behavior: 'instant' }))
-  await expect.poll(() => centerError(rail, 0)).toBeLessThanOrEqual(2)
+  await expect.poll(() => edgeGap(rail, 0, 'start')).toBeLessThanOrEqual(4)
   await next.hover()
   await expect.poll(() => next.evaluate(async button => {
     const before = button.getBoundingClientRect()
@@ -544,16 +663,20 @@ test('concert edge centers and button movement preserve the document position', 
   // Let Playwright finish any click setup scrolling before measuring the real interaction.
   await next.click({ trial: true })
   const initialY = await page.evaluate(() => scrollY)
+  const firstReachableIndex = await nextDestinationIndex(rail, 1)
+  expect(firstReachableIndex).toBeGreaterThan(0)
   await next.click()
-  await expect.poll(() => centerError(rail, 1)).toBeLessThanOrEqual(2)
+  await expect.poll(() => centerError(rail, firstReachableIndex)).toBeLessThanOrEqual(2)
   expect(Math.abs(await page.evaluate(() => scrollY) - initialY)).toBeLessThanOrEqual(2)
   await previous.click()
-  await expect.poll(() => centerError(rail, 0)).toBeLessThanOrEqual(2)
+  await expect.poll(() => edgeGap(rail, 0, 'start')).toBeLessThanOrEqual(4)
   await rail.evaluate(element => element.scrollTo({ left: element.scrollWidth, behavior: 'instant' }))
-  await expect.poll(() => centerError(rail, 15)).toBeLessThanOrEqual(2)
+  await expect.poll(() => edgeGap(rail, -1, 'end')).toBeLessThanOrEqual(4)
   await expect(next).toBeDisabled()
+  const previousReachableIndex = await nextDestinationIndex(rail, -1)
+  expect(previousReachableIndex).toBeLessThan(await rail.locator('.concert-rail-card').count() - 1)
   await previous.click()
-  await expect.poll(() => centerError(rail, 14)).toBeLessThanOrEqual(2)
+  await expect.poll(() => centerError(rail, previousReachableIndex)).toBeLessThanOrEqual(2)
 })
 
 test('concert external rail movement cancels an unfinished button destination', async ({ page }) => {
@@ -579,33 +702,39 @@ test('concert external rail movement cancels an unfinished button destination', 
   const next = page.locator('[data-rail-direction="next"]')
   const previous = page.locator('[data-rail-direction="previous"]')
   await next.scrollIntoViewIfNeeded()
+  const firstReachableIndex = await nextDestinationIndex(rail, 1)
   await next.click()
-  await expect.poll(() => centerError(rail, 1)).toBeLessThanOrEqual(2)
+  await expect.poll(() => centerError(rail, firstReachableIndex)).toBeLessThanOrEqual(2)
   await page.evaluate(() => { (window as typeof window & { __interruptRailReturn?: boolean }).__interruptRailReturn = true })
   await previous.click()
-  await expect.poll(() => centerError(rail, 15)).toBeLessThanOrEqual(2)
+  await expect.poll(() => edgeGap(rail, -1, 'end')).toBeLessThanOrEqual(4)
   await expect(next).toBeDisabled()
+  const previousReachableIndex = await nextDestinationIndex(rail, -1)
+  expect(previousReachableIndex).toBeLessThan(await rail.locator('.concert-rail-card').count() - 1)
   await previous.click()
-  await expect.poll(() => centerError(rail, 14)).toBeLessThanOrEqual(2)
+  await expect.poll(() => centerError(rail, previousReachableIndex)).toBeLessThanOrEqual(2)
 })
 
 test('concert rapid button clicks advance the pending destination', async ({ page }) => {
   await page.goto('/concerts/')
+  const rail = page.locator('.concert-archive-rail')
   const next = page.locator('[data-rail-direction="next"]')
   await next.scrollIntoViewIfNeeded()
+  const expectedIndex = await destinationAfterNextPresses(rail, 3)
   await next.click({ clickCount: 3 })
-  await expect.poll(() => centerError(page.locator('.concert-archive-rail'), 3)).toBeLessThanOrEqual(2)
+  await expect.poll(() => centerError(rail, expectedIndex)).toBeLessThanOrEqual(2)
 })
 
 test('concert resize keeps the same centered poster', async ({ page }) => {
   await page.goto('/concerts/')
+  const rail = page.locator('.concert-archive-rail')
   const next = page.locator('[data-rail-direction="next"]')
   await next.scrollIntoViewIfNeeded()
+  const expectedIndex = await destinationAfterNextPresses(rail, 3)
   await next.click({ clickCount: 3 })
-  const rail = page.locator('.concert-archive-rail')
-  await expect.poll(() => centerError(rail, 3)).toBeLessThanOrEqual(2)
+  await expect.poll(() => centerError(rail, expectedIndex)).toBeLessThanOrEqual(2)
   await page.setViewportSize({ width: 900, height: 800 })
-  await expect.poll(() => centerError(rail, 3)).toBeLessThanOrEqual(2)
+  await expect.poll(() => centerError(rail, expectedIndex)).toBeLessThanOrEqual(2)
 })
 
 test('concert reduced-motion resize keeps a deep-linked poster centered', async ({ page }) => {
@@ -671,20 +800,20 @@ for (const count of [0, 1, 2]) {
     expect(await rail.evaluate(element => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(1)
     await expect(page.locator('[data-rail-direction="previous"]')).toBeDisabled()
     await expect(page.locator('[data-rail-direction="next"]')).toBeDisabled()
-    if (count === 1) await expect.poll(() => centerError(rail, 0)).toBeLessThanOrEqual(2)
+    if (count === 1) await expect.poll(() => edgeGap(rail, 0, 'start')).toBeLessThanOrEqual(4)
   })
 }
 
-test('concert narrow two-card rail preserves natural overflow and edge centers', async ({ page }) => {
+test('concert narrow two-card rail preserves natural overflow and edge alignment', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await gotoConcertFixture(page, 2)
   const rail = page.locator('.concert-archive-rail')
   expect(await rail.evaluate(element => element.scrollWidth - element.clientWidth)).toBeGreaterThan(1)
-  await expect.poll(() => centerError(rail, 0)).toBeLessThanOrEqual(2)
+  await expect.poll(() => edgeGap(rail, 0, 'start')).toBeLessThanOrEqual(4)
   const next = page.locator('[data-rail-direction="next"]')
   await next.click()
-  await expect.poll(() => centerError(rail, 1)).toBeLessThanOrEqual(2)
+  await expect.poll(() => edgeGap(rail, -1, 'end')).toBeLessThanOrEqual(4)
   await expect(next).toBeDisabled()
 })
 

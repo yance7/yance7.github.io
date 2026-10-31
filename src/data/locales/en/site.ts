@@ -7,7 +7,7 @@ export const siteCopy = {
     honors: { kicker: 'HONORS', title: 'Step by step, I keep climbing', documentTitle: 'Honors · Yance', contentUpdatedAt: '2026-10-23', copy: 'Awards mark the route; the more useful signal is the habit of continuing upward.', credit: { artist: 'Jay Chou', song: '蜗牛', album: 'Fantasy Plus' } },
     research: { kicker: 'RESEARCH', title: 'You share this imperfect dream with me', documentTitle: 'Research · Yance', copy: 'From smart agriculture to explainable AI, I turn models into tools that people can open and use.', credit: { artist: 'TFBOYS', song: '不完美小孩', album: '我们的时光' } },
     works: { kicker: 'WORKS', title: 'Little by little, I learned that effort can lead to success', documentTitle: 'Works · Yance', copy: 'Three evolving project worlds showing how ideas leave the page and become products or open learning resources.', credit: { artist: 'Silence Wang', song: '慢慢懂', album: '慢慢懂' } },
-    concerts: { kicker: 'CONCERTS', title: 'Fate brought us together beyond this restless world', documentTitle: 'Concerts · Yance', contentUpdatedAt: '2026-09-22', copy: 'Concerts, posters, and the nights when light and a shared chorus changed the scale of the world.', credit: { artist: 'G.E.M.', song: '光年之外', album: '' } }
+    concerts: { kicker: 'CONCERTS', title: 'Fate brought us together beyond this restless world', documentTitle: 'Concerts · Yance', contentUpdatedAt: '2026-10-31', copy: 'Concerts, posters, and the nights when light and a shared chorus changed the scale of the world.', credit: { artist: 'G.E.M.', song: '光年之外', album: '' } }
   },
   nav: {
     home: { label: 'Home', desc: 'Personal archive overview' },

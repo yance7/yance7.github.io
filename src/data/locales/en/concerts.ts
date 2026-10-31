@@ -15,13 +15,13 @@ export const concertsCopy = {
     'huangzihongfan-2026-03-14': { artist: 'Vio Huang', tour: 'OPEN WORLD Live', venue: 'National Stadium' },
     'zhangjie-2026-04-19': { artist: 'Jason Zhang', tour: '未·Live — Bound for 1982', venue: 'National Stadium' },
     'mayday-2026-05-15': { artist: 'Mayday', tour: '5525 + 2 Back to That Day', venue: 'National Stadium' },
-    'jd-summer-2026-05-31': { artist: 'JD 618 Summer Concert', tour: 'JD 618 Summer Concert', venue: 'Beijing Workers Stadium' },
+    'jd-summer-2026-05-31': { artist: '618 Summer Concert', tour: '618 Summer Concert', venue: 'Beijing Workers Stadium' },
     'zhoujielun-2026-06-26': { artist: 'Jay Chou', tour: 'Dragon Fist · Beijing Carnival 2026', venue: 'National Stadium' },
     'xuezhiqian-2026-07-26': { artist: 'Joker Xue', tour: 'King of Beasts Live', venue: 'National Stadium' },
     'wangsulong-2026-08-19': { artist: 'Silence Wang', tour: 'Tomorrow World Live', venue: 'National Stadium' },
     'wangsulong-2026-08-30': { artist: 'Silence Wang', tour: 'Tomorrow World Live', venue: 'National Stadium' },
     'zhou-shen-2026-09-27': { artist: 'Zhou Shen', tour: '2026 Shenshen’s Concert Tour', venue: 'National Stadium' },
-    'fforever-2026-10-06': { artist: 'FFOREVER', tour: 'City of Stars · Beijing Limited Concert', venue: 'National Stadium' }
+    'fforever-2026-10-06': { artist: 'FFOREVER', tour: '“City of Stars” · Galactic Coronation', venue: 'National Stadium' }
   },
   moods: { '2024': 'The first time I entered the National Stadium, the world went quiet when the lights came up.', '2025': 'Five shows from spring to winter—five nights that reset the scale of the world.' },
   currentYearMood: (attended, upcoming) => `${attended} attended, ${upcoming} upcoming.`,

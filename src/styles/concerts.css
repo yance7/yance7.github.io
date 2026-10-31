@@ -27,18 +27,20 @@
 .concert-archive-rail {
   transition-property: none;
   position: relative; overflow-x: auto; overflow-y: hidden; padding: 4px 0 20px;
-  scroll-behavior: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 0;
+  scroll-behavior: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 3px;
   overscroll-behavior-x: contain; scrollbar-color: var(--gold) var(--surface); touch-action: auto;
 }
-.concert-rail-track { display: flex; align-items: stretch; gap: var(--space-4); width: max-content; min-width: 100%; padding-inline: var(--rail-inset, 2px); transition-property: none; }
+.concert-rail-track { display: flex; align-items: stretch; gap: var(--space-4); width: max-content; min-width: 100%; padding-inline: 3px; transition-property: none; }
 .concert-rail-card {
-  flex: 0 0 auto; width: clamp(252px, 29vw, 370px); min-width: 0; display: grid; gap: var(--space-4);
+  flex: 0 0 auto; width: clamp(252px, 29vw, 370px); min-width: 0; display: grid; gap: 12px;
   grid-template-rows: auto minmax(0, 1fr);
   grid-template-columns: minmax(0, 1fr);
-  padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-small);
+  padding: 12px; border: 1px solid var(--line); border-radius: var(--radius-small);
   background: var(--surface); box-shadow: var(--shadow-1); scroll-snap-align: center; scroll-snap-stop: normal;
   transition: transform var(--dur-base) var(--ease-spring), border-color var(--dur-base), box-shadow var(--dur-base);
 }
+.concert-rail-card:first-child { scroll-snap-align: start; }
+.concert-rail-card:last-child { scroll-snap-align: end; }
 .concert-rail-card:hover { border-color: var(--gold); box-shadow: var(--interactive-shadow); }
 .concert-rail-card .concert-poster { width: 100%; max-width: none; align-self: start; }
 .concert-rail-card-info { display: grid; grid-template-columns: auto 1fr; gap: var(--space-3); align-items: start; align-content: start; }
@@ -186,7 +188,7 @@
   .poster-fade-leave-active { transition: none !important; }
   .poster-fade-enter-from,
   .poster-fade-leave-to { opacity: 1; transform: none; }
-  .concert-archive-rail { scroll-behavior: auto; scroll-snap-type: none; }
+  .concert-archive-rail { scroll-behavior: auto; }
   .concert-rail-card,
   .concert-rail-controls button { transition: none; }
   .concert-poster,

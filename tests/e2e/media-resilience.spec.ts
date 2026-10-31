@@ -587,7 +587,7 @@ test('poster retry cancels a mouse press dragged outside after rail movement sta
   const rail = page.locator('#concert-archive-rail')
   const initialScrollLeft = await rail.evaluate(element => element.scrollLeft)
   const initialScrollY = await page.evaluate(() => window.scrollY)
-  const cancelTarget = scenario.poster.locator('.poster-error p')
+  const cancelTarget = page.locator('[data-rail-direction="next"]')
 
   await scenario.retry.evaluate(button => {
     button.addEventListener('pointerdown', event => console.info(`poster-retry-pointerdown-active-snap-cancel:${(event as PointerEvent).pointerId}`), { once: true })

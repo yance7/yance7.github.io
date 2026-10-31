@@ -78,9 +78,9 @@ describe('content contracts', () => {
       },
       fforever: {
         date: '2026-10-06',
-        zhCN: { artist: 'FFOREVER', tour: '「恒星之城」银河加冕 · 北京限定场演唱会', venue: '鸟巢' },
-        zhHK: { artist: 'FFOREVER', tour: '「恆星之城」銀河加冕 · 北京限定場演唱會', venue: '鳥巢' },
-        en: { artist: 'FFOREVER', tour: 'City of Stars · Beijing Limited Concert', venue: 'National Stadium' }
+        zhCN: { artist: 'FFOREVER', tour: '「恒星之城」银河加冕', venue: '鸟巢' },
+        zhHK: { artist: 'FFOREVER', tour: '「恆星之城」銀河加冕', venue: '鳥巢' },
+        en: { artist: 'FFOREVER', tour: '“City of Stars” · Galactic Coronation', venue: 'National Stadium' }
       }
     } as const
 
@@ -96,7 +96,21 @@ describe('content contracts', () => {
       expect(englishConcertsCopy.entities[englishId]).toEqual(details.en)
     }
 
-    expect(concerts.find((concert) => concert.id === 'jd-summer-2026-05-31')?.date).toBe('2026-05-31')
+    const jdSummer = concerts.find((concert) => concert.id === 'jd-summer-2026-05-31')
+    expect(jdSummer).toMatchObject({
+      id: 'jd-summer-2026-05-31',
+      date: '2026-05-31',
+      poster: { file: 'concert-20260531-jd-618-summer.jpg', width: 1247, height: 2560 }
+    })
+    expect(simplifiedChineseConcertsCopy.entities['jd-summer-2026-05-31']).toMatchObject({
+      artist: '618夏日歌会', tour: '618夏日歌会'
+    })
+    expect(traditionalChineseConcertsCopy.entities['jd-summer-2026-05-31']).toMatchObject({
+      artist: '618夏日歌會', tour: '618夏日歌會'
+    })
+    expect(englishConcertsCopy.entities['jd-summer-2026-05-31']).toMatchObject({
+      artist: '618 Summer Concert', tour: '618 Summer Concert'
+    })
   })
 
   it('removes carousel presentation from the single-poster rail', () => {
@@ -158,7 +172,9 @@ describe('content contracts', () => {
   it('keeps content metadata and project/research contracts populated', () => {
     expect(projects.every((project) => project.updatedAt && project.status)).toBe(true)
     expect(research.every((item) => item.updatedAt && item.id)).toBe(true)
-    expect(pageMetadata['zh-CN'].concerts.updatedAt).toBe('2026-09-22')
+    expect(pageMetadata['zh-CN'].concerts.updatedAt).toBe('2026-10-31')
+    expect(pageMetadata['zh-HK'].concerts.updatedAt).toBe('2026-10-31')
+    expect(pageMetadata.en.concerts.updatedAt).toBe('2026-10-31')
     expect(pageMetadata['zh-CN'].home.updatedAt).toBe('2026-10-31')
     expect(pageMetadata['zh-CN'].academics.updatedAt).toBe('2026-10-23')
     expect(pageMetadata['zh-CN'].honors.updatedAt).toBe('2026-10-23')
