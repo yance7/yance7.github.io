@@ -28,8 +28,15 @@ export function getRailDestinations(
   })
 }
 
-export function findNearestDestinationIndex(destinations: readonly number[], scrollLeft: number) {
+export function findNearestDestinationIndex(destinations: readonly number[], scrollLeft: number, preferredIndex?: number) {
   if (!destinations.length) return -1
+
+  const preferredDestination = preferredIndex === undefined ? undefined : destinations[preferredIndex]
+  if (preferredIndex !== undefined
+    && preferredDestination !== undefined
+    && Math.abs(preferredDestination - scrollLeft) <= endpointTolerance) {
+    return preferredIndex
+  }
 
   const first = destinations[0]!
   const lastIndex = destinations.length - 1

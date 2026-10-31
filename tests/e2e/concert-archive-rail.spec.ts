@@ -610,6 +610,43 @@ test('concert hash for the second poster survives a narrow resize', async ({ pag
   await expect(target).toHaveAttribute('data-hash-target', 'true')
 })
 
+test('concert hash keeps the second poster through resize when wide targets share the start', async ({ page, isMobile, browserName }) => {
+  test.skip(isMobile || browserName !== 'webkit', 'this near-coincident edge geometry is a desktop WebKit regression')
+  await page.setViewportSize({ width: 1238, height: 900 })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  const targetId = 'concert-zhou-shen-2026-09-27'
+  await page.goto(`/concerts/#${targetId}`)
+
+  const rail = page.locator('.concert-archive-rail')
+  const target = rail.locator(`[data-anchor-id="${targetId}"]`)
+  await expect(page.locator('.site-shell[data-page-load-state="ready"]')).toBeVisible()
+  await expect(rail).toHaveAttribute('data-rail-ready', 'true')
+  await expect(target).toHaveAttribute('data-hash-target', 'true')
+  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
+
+  const wide = await rail.evaluate(element => {
+    const scroller = element as HTMLElement
+    return {
+      cards: [...scroller.querySelectorAll<HTMLElement>('.concert-rail-card')].map(card => ({
+        offsetLeft: card.offsetLeft,
+        offsetWidth: card.offsetWidth
+      })),
+      viewportWidth: scroller.clientWidth,
+      maxScrollLeft: scroller.scrollWidth - scroller.clientWidth,
+      scrollLeft: scroller.scrollLeft
+    }
+  })
+  const wideDestinations = getRailDestinations(wide.cards, wide.viewportWidth, wide.maxScrollLeft)
+  expect(Math.abs(wideDestinations[0]! - wideDestinations[1]!)).toBeLessThanOrEqual(1)
+  expect(wide.scrollLeft).toBeLessThanOrEqual(1)
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  const mobile = await stableRailGeometry(rail, 1)
+  expect(mobile.stableFrames).toBe(12)
+  expect(mobile.centerError).toBeLessThanOrEqual(2)
+  await expect(target).toHaveAttribute('data-hash-target', 'true')
+})
+
 test('concert resize fallback works without ResizeObserver', async ({ page }) => {
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))

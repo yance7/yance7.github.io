@@ -37,6 +37,15 @@ describe('horizontal rail geometry', () => {
     expect(findNearestDestinationIndex(destinations, 135)).toBe(2)
   })
 
+  it('preserves a selected card while its near-duplicate target remains at the current position', () => {
+    const destinations = [0, 0.5, 90, 180, 300, 300]
+
+    expect(findNearestDestinationIndex(destinations, 0, 1)).toBe(1)
+    expect(findNearestDestinationIndex(destinations, 300, 4)).toBe(4)
+    expect(findNearestDestinationIndex(destinations, 90, 1)).toBe(2)
+    expect(findNearestDestinationIndex(destinations, 0)).toBe(0)
+  })
+
   it('keeps a distinct one-pixel target separate from the first endpoint', () => {
     expect(findNearestDestinationIndex([0, 1, 365], 1)).toBe(1)
   })

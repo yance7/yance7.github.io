@@ -74,7 +74,7 @@ function updateRailControls() {
     const pendingDestination = destinations[pendingIndex]
     if (pendingDestination === undefined || !isRailDestinationPending(rail.scrollLeft, pendingScrollStart, pendingDestination)) pendingIndex = undefined
   }
-  visibleIndex = findNearestDestinationIndex(destinations, rail.scrollLeft)
+  visibleIndex = findNearestDestinationIndex(destinations, rail.scrollLeft, visibleIndex)
   railControls.previous = rail.scrollLeft > 1
   railControls.next = rail.scrollLeft < maxScrollLeft - 1
 }
