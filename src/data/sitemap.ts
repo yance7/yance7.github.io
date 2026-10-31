@@ -1,11 +1,11 @@
 import { pageMetadata } from './pageMetadata.ts'
+import type { LocalizedPageMetadata } from './pageMetadata.ts'
 import { getLocalizedSeo, localizedSitemapEntries, SITE_ORIGIN } from './seo.ts'
 import type { LocalizedSitemapEntry } from './seo.ts'
-import type { PageKey, PageMetadata } from './types.ts'
 
 export function serializeSitemap(
   entries: readonly LocalizedSitemapEntry[] = localizedSitemapEntries,
-  metadata: Record<PageKey, PageMetadata> = pageMetadata
+  metadata: LocalizedPageMetadata = pageMetadata
 ) {
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
@@ -15,7 +15,7 @@ export function serializeSitemap(
       return [
         '  <url>',
         `    <loc>${SITE_ORIGIN}/${path}</loc>`,
-        `    <lastmod>${metadata[key].updatedAt}</lastmod>`,
+        `    <lastmod>${metadata[locale][key].updatedAt}</lastmod>`,
         `    <changefreq>${changefreq}</changefreq>`,
         `    <priority>${priority}</priority>`,
         ...seo.alternates.map((alternate) => `    <xhtml:link rel="alternate" hreflang="${alternate.hreflang}" href="${alternate.href}" />`),
