@@ -15,13 +15,13 @@ export const concertsCopy = {
     'huangzihongfan-2026-03-14': { artist: '黃子弘凡', tour: 'OPEN WORLD 開放世界', venue: '鳥巢' },
     'zhangjie-2026-04-19': { artist: '張杰', tour: '未·Live — 開往1982', venue: '鳥巢' },
     'mayday-2026-05-15': { artist: '五月天', tour: '5525 + 2 回到那一天', venue: '鳥巢' },
-    'jd-summer-2026-05-31': { artist: '京東 618 夏日歌會', tour: 'JD 618 Summer Concert', venue: '北京工人體育場' },
+    'jd-summer-2026-05-31': { artist: '618夏日歌會', tour: '618夏日歌會', venue: '北京工人體育場' },
     'zhoujielun-2026-06-26': { artist: '周杰倫', tour: '龍拳 · 北京嘉年華 2026', venue: '鳥巢' },
     'xuezhiqian-2026-07-26': { artist: '薛之謙', tour: '萬獸之王演唱會', venue: '鳥巢' },
     'wangsulong-2026-08-19': { artist: '汪蘇瀧', tour: '明日世界演唱會', venue: '鳥巢' },
     'wangsulong-2026-08-30': { artist: '汪蘇瀧', tour: '明日世界演唱會', venue: '鳥巢' },
     'zhou-shen-2026-09-27': { artist: '周深', tour: '2026「深深的」巡迴演唱會', venue: '鳥巢' },
-    'fforever-2026-10-06': { artist: 'FFOREVER', tour: '「恆星之城」銀河加冕 · 北京限定場演唱會', venue: '鳥巢' }
+    'fforever-2026-10-06': { artist: 'FFOREVER', tour: '「恆星之城」銀河加冕', venue: '鳥巢' }
   },
   moods: { '2024': '第一次走進鳥巢，燈光亮起的瞬間，世界安靜了。', '2025': '從春到冬，五場現場，五次被音樂重新定義的夜晚。' },
   currentYearMood: (attended, upcoming) => `${attended} 場已赴約，${upcoming} 場待相見。`,

@@ -9,7 +9,6 @@ import { revealForNavigation } from './directives/reveal'
 import { decodeHashTarget } from './utils/navigation'
 import { loadPageWithDeadline } from './utils/pageLoad'
 import { getPageLoader } from './pageLoaders'
-import { getCenteredScrollLeft } from './utils/horizontalRail'
 
 import SiteHeader from './components/SiteHeader.vue'
 import ArchiveHero from './components/ArchiveHero.vue'
@@ -100,9 +99,8 @@ function scrollTargetVertically(target: HTMLElement) {
 }
 
 function scrollTargetHorizontally(target: HTMLElement, scroller: HTMLElement) {
-  if (scroller.dataset.horizontalAlign === 'center') {
+  if (scroller.dataset.horizontalAlign === 'card') {
     scroller.dispatchEvent(new CustomEvent('rail-target', { detail: target }))
-    scroller.scrollLeft = getCenteredScrollLeft(target.offsetLeft + target.offsetWidth / 2, scroller.clientWidth, scroller.scrollWidth - scroller.clientWidth)
     return
   }
   const targetRect = target.getBoundingClientRect()
@@ -120,7 +118,7 @@ function findHashTarget(id: string) {
 }
 
 function horizontalLayoutIsReady(scroller: HTMLElement) {
-  if (scroller.dataset.horizontalAlign === 'center') return scroller.dataset.railReady === 'true'
+  if (scroller.dataset.horizontalAlign === 'card') return scroller.dataset.railReady === 'true'
   if (!scroller.hasAttribute('data-horizontal-scroll')) return true
   const anchorCount = scroller.querySelectorAll('[data-anchor-id]').length
   return anchorCount <= 1 || scroller.scrollWidth > scroller.clientWidth
@@ -132,9 +130,6 @@ function isHashTargetVisible(target: HTMLElement, horizontalScroller: HTMLElemen
   if (!horizontalScroller) return isVerticallyVisible
 
   const scrollerRect = horizontalScroller.getBoundingClientRect()
-  if (horizontalScroller.dataset.horizontalAlign === 'center' && horizontalScroller.scrollWidth > horizontalScroller.clientWidth + 1) {
-    return isVerticallyVisible && Math.abs(target.offsetLeft + target.offsetWidth / 2 - horizontalScroller.scrollLeft - horizontalScroller.clientWidth / 2) <= 2
-  }
   return isVerticallyVisible
     && targetRect.left >= scrollerRect.left
     && targetRect.right <= scrollerRect.right
@@ -277,7 +272,7 @@ function scrollToHashTarget(force = false) {
     const targetRect = target.getBoundingClientRect()
     const scrollerRect = horizontalScroller.getBoundingClientRect()
     const isHorizontallyVisible = targetRect.left >= scrollerRect.left && targetRect.right <= scrollerRect.right
-    if (isHorizontallyVisible && horizontalScroller.dataset.horizontalAlign !== 'center') scrollTargetVertically(target)
+    if (isHorizontallyVisible && horizontalScroller.dataset.horizontalAlign !== 'card') scrollTargetVertically(target)
     else {
       scrollTargetHorizontally(target, horizontalScroller)
       scrollTargetVertically(target)
