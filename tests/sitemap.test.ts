@@ -1,15 +1,17 @@
 import { describe, expect, it } from 'vitest'
 import { pageMetadata, derivePageMetadata } from '../src/data/pageMetadata'
+import type { PageContentDates } from '../src/data/pageMetadata'
 import { serializeSitemap } from '../src/data/sitemap'
 import { getLocalizedSeo, localizedSitemapEntries, SITE_ORIGIN } from '../src/data/seo'
 
 const contentDates = {
+  home: '2026-08-01',
   academics: '2026-10-22',
   honors: '2026-10-22',
   research: '2026-10-30',
   works: '2026-10-30',
   concerts: '2026-09-21'
-} as const
+} satisfies PageContentDates
 
 function urlBlocks(xml: string) {
   return [...xml.matchAll(/<url>([\s\S]*?)<\/url>/g)].map((match) => match[1] ?? '')
@@ -18,7 +20,7 @@ function urlBlocks(xml: string) {
 describe('page content dates', () => {
   it('preserves source dates and derives home from its substantive page summaries', () => {
     expect(pageMetadata).toEqual({
-      home: { updatedAt: '2026-10-30' },
+      home: { updatedAt: '2026-10-31' },
       academics: { updatedAt: '2026-10-22' },
       honors: { updatedAt: '2026-10-22' },
       research: { updatedAt: '2026-10-30' },

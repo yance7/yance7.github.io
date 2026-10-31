@@ -40,16 +40,16 @@ export default defineConfig({
         isMobile: false,
         hasTouch: false
       },
-      testMatch: /(?:site|locale|scroll-progress|footer|ui-primitives|english-layout|adaptive-header|works-showcase|concert-archive-rail|concert-archive-preservation|media-resilience|research-layout|resume-content-sync|motion-system|home-scroll-motion|home-hero-layout|home-hero-interaction|home-hero-slideshow|mimo-alignment|sitewide-cursor|page-urls|site-typography)\.spec\.ts/
+      testMatch: /(?:site|locale|scroll-progress|footer|ui-primitives|english-layout|adaptive-header|works-showcase|concert-archive-rail|concert-archive-preservation|media-resilience|research-layout|resume-content-sync|motion-system|home-scroll-motion|home-hero-layout|home-hero-interaction|home-hero-slideshow|mimo-alignment|sitewide-cursor|page-urls|site-typography|seo-metadata)\.spec\.ts/
     },
     {
       name: 'webkit-mobile',
       use: { ...devices['iPhone 13'], browserName: 'webkit' },
-      testMatch: /(?:site|locale|scroll-progress|footer|ui-primitives|english-layout|adaptive-header|works-showcase|concert-archive-rail|concert-archive-preservation|media-resilience|research-layout|resume-content-sync|motion-system|home-scroll-motion|home-hero-layout|home-hero-interaction|home-hero-slideshow|mimo-alignment|sitewide-cursor|page-urls|site-typography)\.spec\.ts/
+      testMatch: /(?:site|locale|scroll-progress|footer|ui-primitives|english-layout|adaptive-header|works-showcase|concert-archive-rail|concert-archive-preservation|media-resilience|research-layout|resume-content-sync|motion-system|home-scroll-motion|home-hero-layout|home-hero-interaction|home-hero-slideshow|mimo-alignment|sitewide-cursor|page-urls|site-typography|seo-metadata)\.spec\.ts/
     },
     { name: 'chromium-visual', use: { ...devices['Desktop Chrome'] }, testMatch: /visual-matrix\.spec\.ts/ },
-    { name: 'firefox-desktop-smoke', use: { ...devices['Desktop Firefox'] }, testMatch: /(?:compatibility|english-layout|concert-archive-rail|concert-archive-preservation|media-resilience|resume-content-sync|home-scroll-motion|home-hero-layout|home-hero-interaction|home-hero-slideshow|mimo-alignment|sitewide-cursor|page-urls|site-typography)\.spec\.ts/ },
-    { name: 'chromium-android-smoke', use: { ...devices['Pixel 5'] }, testMatch: /(?:compatibility|english-layout|concert-archive-rail|concert-archive-preservation|media-resilience|resume-content-sync|home-scroll-motion|home-hero-interaction|home-hero-slideshow|mimo-alignment|sitewide-cursor|page-urls|site-typography)\.spec\.ts/ }
+    { name: 'firefox-desktop-smoke', use: { ...devices['Desktop Firefox'] }, testMatch: /(?:compatibility|english-layout|concert-archive-rail|concert-archive-preservation|media-resilience|resume-content-sync|home-scroll-motion|home-hero-layout|home-hero-interaction|home-hero-slideshow|mimo-alignment|sitewide-cursor|page-urls|site-typography|seo-metadata)\.spec\.ts/ },
+    { name: 'chromium-android-smoke', use: { ...devices['Pixel 5'] }, testMatch: /(?:compatibility|english-layout|concert-archive-rail|concert-archive-preservation|media-resilience|resume-content-sync|home-scroll-motion|home-hero-interaction|home-hero-slideshow|mimo-alignment|sitewide-cursor|page-urls|site-typography|seo-metadata)\.spec\.ts/ }
   ],
   webServer: {
     cwd: repositoryRoot,

@@ -1,11 +1,12 @@
 import { academicsUpdatedAt } from './academics.ts'
 import { concertsUpdatedAt } from './concerts.ts'
 import { honorsUpdatedAt } from './honors.ts'
+import { homeHeroContentUpdatedAt } from './homeHeroSlides.ts'
 import { projects } from './projects.ts'
 import { research } from './research.ts'
 import type { PageKey, PageMetadata } from './types.ts'
 
-export type PageContentDates = Record<Exclude<PageKey, 'home'>, string>
+export type PageContentDates = Record<PageKey, string>
 
 function latestUpdatedAt(items: readonly { updatedAt: string }[]) {
   const [first, ...remaining] = items.map(({ updatedAt }) => updatedAt)
@@ -14,9 +15,9 @@ function latestUpdatedAt(items: readonly { updatedAt: string }[]) {
 }
 
 export function derivePageMetadata(contentDates: PageContentDates): Record<PageKey, PageMetadata> {
-  const [first, ...remaining] = Object.values(contentDates)
-  if (!first) throw new Error('Cannot derive the home date without page content dates')
-  const homeUpdatedAt = remaining.reduce((latest, updatedAt) => updatedAt > latest ? updatedAt : latest, first)
+  if (!contentDates.home) throw new Error('Cannot derive the home date without home content')
+  const homeUpdatedAt = Object.values(contentDates)
+    .reduce((latest, updatedAt) => updatedAt > latest ? updatedAt : latest, contentDates.home)
 
   return {
     home: { updatedAt: homeUpdatedAt },
@@ -29,6 +30,7 @@ export function derivePageMetadata(contentDates: PageContentDates): Record<PageK
 }
 
 export const pageMetadata = derivePageMetadata({
+  home: homeHeroContentUpdatedAt,
   academics: academicsUpdatedAt,
   honors: honorsUpdatedAt,
   research: latestUpdatedAt(research),
