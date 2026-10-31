@@ -15,6 +15,7 @@ const renderMode = ref(props.runtimeEnabled ? 'initializing' : 'static')
 const particleState = ref(props.runtimeEnabled ? 'initializing' : 'static')
 const glyphFontFamily = 'Amiri, serif'
 const glyphFontWeight = '400'
+const RAF_CLOCK_DRIFT_LIMIT_MS = 100
 const ensureGlyphFont = createHeroGlyphFontLoader(document.fonts, () => new FontFace('Amiri', `url("${amiriFontUrl}")`, { weight: '400', style: 'normal' }))
 const particleCount = ref(0)
 const sourceParticleCount = ref(0)
@@ -37,6 +38,7 @@ let engine: HomeHeroParticleEngine | null = null
 let renderer: HomeHeroParticleRenderer | null = null
 let frameId = 0
 let frameFallback = 0
+let staleFrameClock = false
 let generation = 0
 let disposed = false
 let visible = true
@@ -75,11 +77,19 @@ function clearFrame() {
   frameFallback = 0
 }
 function schedule() {
-  if (frameId || frameFallback || !running()) return
+  if (!running()) return
+  if (!engine?.active.size) {
+    staleFrameClock = false
+    if (frameFallback) {
+      window.clearTimeout(frameFallback)
+      frameFallback = 0
+    }
+  }
+  if (frameId || frameFallback) return
   frameId = requestAnimationFrame(animate)
-  // Foreground WebKit can temporarily stop delivering animation callbacks.
-  // Keep recovery moving with one bounded fallback, cancelled by the next frame.
-  frameFallback = window.setTimeout(animate, 250)
+  // Only use the timer after a stale RAF clock is observed, and only while
+  // particles are active. This leaves deliberate RAF pauses synchronous.
+  if (staleFrameClock && engine?.active.size) frameFallback = window.setTimeout(() => animate(), 250)
 }
 function clearScene() {
   clearFrame()
@@ -112,7 +122,7 @@ function updateState() {
   particleState.value = engine?.phase ?? renderMode.value
   animationRunning.value = engine?.needsFrame ?? false
 }
-function animate() {
+function animate(frameTimestamp?: number) {
   clearFrame()
   // A browser can update the query without delivering its change event (for
   // example during native pinch emulation). Never leave a stale dynamic canvas.
@@ -123,9 +133,12 @@ function animate() {
   }
   if (!running() || !engine || !renderer) return
   const start = performance.now()
-  // Use the same monotonic clock as input and lifecycle updates. A stale RAF
-  // timestamp must not rewind entrance or drift when WebKit resumes callbacks.
-  const at = start / 1000
+  // RAF timestamps can lag far behind event timestamps after WebKit resumes.
+  // Keep normal frame cadence, but recover against the live monotonic clock
+  // when the callback timestamp is materially stale.
+  const frameIsStale = frameTimestamp === undefined || !Number.isFinite(frameTimestamp) || Math.abs(start - frameTimestamp) > RAF_CLOCK_DRIFT_LIMIT_MS
+  if (frameTimestamp !== undefined) staleFrameClock = frameIsStale && Boolean(engine.active.size)
+  const at = (frameIsStale ? start : frameTimestamp!) / 1000
   engine.advanceTo(at)
   physicsMs.value = performance.now() - start
   const renderStart = performance.now()
@@ -133,6 +146,7 @@ function animate() {
   renderMs.value = performance.now() - renderStart
   frameCount.value += 1
   updateState()
+  if (!engine.active.size) staleFrameClock = false
   if (engine.needsFrame) schedule()
 }
 
