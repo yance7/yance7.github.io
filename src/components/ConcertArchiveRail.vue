@@ -6,7 +6,7 @@ import { isConcertUpcoming } from '../data/concerts'
 import { useLocale } from '../i18n'
 import { originalImageUrl } from '../utils/concertMedia'
 import ConcertPoster from './ConcertPoster.vue'
-import { findNearestCenteredIndex, getCenteredScrollLeft, getRailInset, isRailDestinationPending } from '../utils/horizontalRail'
+import { findNearestDestinationIndex, findNextRailDestinationIndex, getRailDestinations, isRailDestinationPending } from '../utils/horizontalRail'
 
 const props = defineProps<{
   concerts: Concert[]
@@ -29,6 +29,7 @@ let hasLayout = false
 let needsAlignment = false
 let layoutWidth = 0
 let layoutCardWidth = 0
+let layoutScrollWidth = 0
 let mounted = false
 
 function formatConcertDate(date: string) {
@@ -52,8 +53,8 @@ function cardsFor(rail: HTMLElement) {
   return [...rail.querySelectorAll<HTMLElement>('.concert-rail-card')]
 }
 
-function centersFor(cards: HTMLElement[]) {
-  return cards.map(card => card.offsetLeft + card.offsetWidth / 2)
+function destinationsFor(rail: HTMLElement, cards = cardsFor(rail)) {
+  return getRailDestinations(cards, rail.clientWidth, Math.max(0, rail.scrollWidth - rail.clientWidth))
 }
 
 function updateRailControls() {
@@ -67,13 +68,15 @@ function updateRailControls() {
     pendingIndex = undefined
     return
   }
-  const centers = centersFor(cards)
+  const destinations = destinationsFor(rail, cards)
   // Keep rapid clicks queued only while movement follows the requested path.
-  if (pendingIndex !== undefined && !isRailDestinationPending(rail.scrollLeft, pendingScrollStart, getCenteredScrollLeft(centers[pendingIndex]!, rail.clientWidth, maxScrollLeft))) pendingIndex = undefined
-  visibleIndex = findNearestCenteredIndex(centers, rail.scrollLeft + rail.clientWidth / 2)
-  const index = pendingIndex ?? visibleIndex
-  railControls.previous = index > 0
-  railControls.next = index < cards.length - 1
+  if (pendingIndex !== undefined) {
+    const pendingDestination = destinations[pendingIndex]
+    if (pendingDestination === undefined || !isRailDestinationPending(rail.scrollLeft, pendingScrollStart, pendingDestination)) pendingIndex = undefined
+  }
+  visibleIndex = findNearestDestinationIndex(destinations, rail.scrollLeft)
+  railControls.previous = rail.scrollLeft > 1
+  railControls.next = rail.scrollLeft < maxScrollLeft - 1
 }
 
 function onRailScroll() {
@@ -93,23 +96,35 @@ function clearPendingTarget() {
 function onRailTarget(event: Event) {
   const rail = railRef.value
   if (!rail) return
-  const index = cardsFor(rail).indexOf((event as CustomEvent<HTMLElement>).detail)
+  const cards = cardsFor(rail)
+  const index = cards.indexOf((event as CustomEvent<HTMLElement>).detail)
   if (index < 0) return
+  const destination = destinationsFor(rail, cards)[index]
+  if (destination === undefined) return
   pendingScrollStart = rail.scrollLeft
   pendingIndex = index
   visibleIndex = index
+  rail.scrollTo({ left: destination, behavior: 'auto' })
+  updateRailControls()
 }
 
 function scrollRail(direction: -1 | 1) {
   const rail = railRef.value
   if (!rail) return
-  const centers = centersFor(cardsFor(rail))
-  if (!centers.length || rail.scrollWidth <= rail.clientWidth + 1) return
-  const current = pendingIndex ?? findNearestCenteredIndex(centers, rail.scrollLeft + rail.clientWidth / 2)
+  const cards = cardsFor(rail)
+  const maxScrollLeft = Math.max(0, rail.scrollWidth - rail.clientWidth)
+  if (cards.length < 2 || maxScrollLeft <= 1) return
+  const destinations = destinationsFor(rail, cards)
+  if (pendingIndex !== undefined) {
+    const pendingDestination = destinations[pendingIndex]
+    if (pendingDestination === undefined || !isRailDestinationPending(rail.scrollLeft, pendingScrollStart, pendingDestination)) pendingIndex = undefined
+  }
+  const nextIndex = findNextRailDestinationIndex(destinations, rail.scrollLeft, direction, pendingIndex)
+  if (nextIndex < 0) return
   pendingScrollStart = rail.scrollLeft
-  pendingIndex = Math.max(0, Math.min(centers.length - 1, current + direction))
+  pendingIndex = nextIndex
   rail.scrollTo({
-    left: getCenteredScrollLeft(centers[pendingIndex]!, rail.clientWidth, rail.scrollWidth - rail.clientWidth),
+    left: destinations[pendingIndex]!,
     behavior: reducedMotion.value ? 'auto' : 'smooth'
   })
   updateRailControls()
@@ -119,25 +134,21 @@ function measureLayout() {
   layoutFrame = undefined
   const rail = railRef.value
   if (!rail || !mounted) return
-  const previousInset = rail.style.getPropertyValue('--rail-inset')
   const cards = cardsFor(rail)
-  const first = cards[0]
-  const last = cards.at(-1)
   const width = rail.clientWidth
-  const cardWidth = first?.offsetWidth ?? 0
+  const cardWidth = cards[0]?.offsetWidth ?? 0
+  const scrollWidth = rail.scrollWidth
   const index = hasLayout ? pendingIndex ?? visibleIndex : 0
-  const span = first && last ? last.offsetLeft + last.offsetWidth - first.offsetLeft : 0
-  const inset = getRailInset(width, cardWidth, span, cards.length)
-  const changed = previousInset !== inset + 'px' || layoutWidth !== width || layoutCardWidth !== cardWidth
-  rail.style.setProperty('--rail-inset', inset + 'px')
+  const changed = layoutWidth !== width || layoutCardWidth !== cardWidth || layoutScrollWidth !== scrollWidth
+  const destinations = destinationsFor(rail, cards)
   if ((changed || !hasLayout || needsAlignment) && cards[index]) {
-    const card = cards[index]!
-    rail.scrollTo({ left: getCenteredScrollLeft(card.offsetLeft + card.offsetWidth / 2, rail.clientWidth, rail.scrollWidth - rail.clientWidth), behavior: 'auto' })
+    rail.scrollTo({ left: destinations[index]!, behavior: 'auto' })
     pendingIndex = undefined
   }
   hasLayout = true
   layoutWidth = width
   layoutCardWidth = cardWidth
+  layoutScrollWidth = scrollWidth
   needsAlignment = false
   rail.dataset.railReady = 'true'
   updateRailControls()
@@ -163,8 +174,8 @@ function syncReducedMotion(event?: MediaQueryListEvent) {
   reducedMotion.value = event?.matches ?? reducedMotionQuery?.matches ?? false
   const rail = railRef.value
   if (reducedMotion.value && rail && pendingIndex !== undefined) {
-    const card = cardsFor(rail)[pendingIndex]
-    if (card) rail.scrollTo({ left: getCenteredScrollLeft(card.offsetLeft + card.offsetWidth / 2, rail.clientWidth, rail.scrollWidth - rail.clientWidth), behavior: 'auto' })
+    const destination = destinationsFor(rail)[pendingIndex]
+    if (destination !== undefined) rail.scrollTo({ left: destination, behavior: 'auto' })
   }
   clearPendingTarget()
 }
@@ -240,7 +251,7 @@ onBeforeUnmount(() => {
       id="concert-archive-rail"
       class="concert-archive-rail"
       data-horizontal-scroll
-      data-horizontal-align="center"
+      data-horizontal-align="card"
       role="region"
       :aria-label="section.archive"
       @scroll="onRailScroll"

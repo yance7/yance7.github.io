@@ -34,7 +34,7 @@ describe('page content dates', () => {
         honors: { updatedAt: '2026-10-23' },
         research: { updatedAt: '2026-10-30' },
         works: { updatedAt: '2026-10-30' },
-        concerts: { updatedAt: '2026-09-22' }
+        concerts: { updatedAt: '2026-10-31' }
       })
     }
   })

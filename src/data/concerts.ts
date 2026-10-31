@@ -10,16 +10,16 @@ export const concerts = [
   { id: 'huangzihongfan-2026-03-14', date: '2026-03-14', artist: '黄子弘凡', tour: 'OPEN WORLD 开放世界', venue: '鸟巢', poster: { file: 'concert-20260314-huang-zihongfan.jpg', width: 1920, height: 2560 } },
   { id: 'zhangjie-2026-04-19', date: '2026-04-19', artist: '张杰', tour: '未·Live — 开往1982', venue: '鸟巢', poster: { file: 'concert-20260419-zhang-jie.jpg', width: 1828, height: 2560 } },
   { id: 'mayday-2026-05-15', date: '2026-05-15', artist: '五月天', tour: '5525 + 2 回到那一天', venue: '鸟巢', poster: { file: 'concert-20260515-mayday.jpg', width: 1920, height: 2560 } },
-  { id: 'jd-summer-2026-05-31', date: '2026-05-31', artist: '京东 618 夏日歌会', tour: 'JD 618 Summer Concert', venue: '北京工人体育场', poster: { file: 'concert-20260531-jd-618-summer.jpg', width: 1247, height: 2560 } },
+  { id: 'jd-summer-2026-05-31', date: '2026-05-31', artist: '618夏日歌会', tour: '618夏日歌会', venue: '北京工人体育场', poster: { file: 'concert-20260531-jd-618-summer.jpg', width: 1247, height: 2560 } },
   { id: 'zhoujielun-2026-06-26', date: '2026-06-26', artist: '周杰伦', tour: '龙拳 · 北京嘉年华 2026', venue: '鸟巢', poster: { file: 'concert-20260626-zhou-jielun.jpg', width: 1810, height: 2560 } },
   { id: 'xuezhiqian-2026-07-26', date: '2026-07-26', artist: '薛之谦', tour: '万兽之王演唱会', venue: '鸟巢', poster: { file: 'concert-20260726-xue-zhiqian.jpg', width: 1920, height: 2560 } },
   { id: 'wangsulong-2026-08-19', date: '2026-08-19', artist: '汪苏泷', tour: '明日世界演唱会', venue: '鸟巢', poster: { file: 'concert-202608-wang-sulong.jpg', width: 1799, height: 2560 } },
   { id: 'wangsulong-2026-08-30', date: '2026-08-30', artist: '汪苏泷', tour: '明日世界演唱会', venue: '鸟巢', poster: { file: 'concert-202608-wang-sulong.jpg', width: 1799, height: 2560 } },
   { id: 'zhou-shen-2026-09-27', date: '2026-09-27', artist: '周深', tour: '2026「深深的」巡回演唱会', venue: '鸟巢', poster: { file: 'concert-20260927-zhou-shen.jpg', width: 1923, height: 2560 } },
-  { id: 'fforever-2026-10-06', date: '2026-10-06', artist: 'FFOREVER', tour: '「恒星之城」银河加冕 · 北京限定场演唱会', venue: '鸟巢', poster: { file: 'concert-20261006-fforever.jpg', width: 1684, height: 2245 } }
+  { id: 'fforever-2026-10-06', date: '2026-10-06', artist: 'FFOREVER', tour: '「恒星之城」银河加冕', venue: '鸟巢', poster: { file: 'concert-20261006-fforever.jpg', width: 1684, height: 2245 } }
 ] satisfies Concert[]
 
-export const concertsUpdatedAt = '2026-09-21'
+export const concertsUpdatedAt = '2026-10-31'
 
 /* 按年份分组 */
 export function isConcertUpcoming(concert: Concert, now = new Date()) {
