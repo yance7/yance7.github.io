@@ -248,10 +248,12 @@ describe('MiMo particle settings', () => {
     expect(engine.pointer.matches(17)).toBe(false)
   })
 
-  it('uses the actual RAF timestamp for entrance progress and microdrift', () => {
+  it('uses the monotonic clock and bounded RAF fallback for particle frames', () => {
     const source = readFileSync('src/components/HomeHeroParticles.vue', 'utf8')
-    expect(source).toContain('function animate(timestamp: number)')
-    expect(source).toContain('const at = timestamp / 1000')
+    expect(source).toContain('function animate()')
+    expect(source).toContain('const at = start / 1000')
+    expect(source).toContain('frameFallback = window.setTimeout(animate, 250)')
+    expect(source).toContain('if (frameFallback) window.clearTimeout(frameFallback)')
   })
 
   it('starts the entrance when drawing is ready, after renderer preparation', () => {

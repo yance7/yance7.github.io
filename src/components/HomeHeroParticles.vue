@@ -36,6 +36,7 @@ const glyphFont = ref({ family: glyphFontFamily, weight: glyphFontWeight })
 let engine: HomeHeroParticleEngine | null = null
 let renderer: HomeHeroParticleRenderer | null = null
 let frameId = 0
+let frameFallback = 0
 let generation = 0
 let disposed = false
 let visible = true
@@ -69,12 +70,16 @@ function colors(): HomeHeroParticleColors {
 }
 function clearFrame() {
   if (frameId) cancelAnimationFrame(frameId)
+  if (frameFallback) window.clearTimeout(frameFallback)
   frameId = 0
+  frameFallback = 0
 }
 function schedule() {
-  if (frameId || !running()) return
+  if (frameId || frameFallback || !running()) return
   frameId = requestAnimationFrame(animate)
-
+  // Foreground WebKit can temporarily stop delivering animation callbacks.
+  // Keep recovery moving with one bounded fallback, cancelled by the next frame.
+  frameFallback = window.setTimeout(animate, 250)
 }
 function clearScene() {
   clearFrame()
@@ -107,7 +112,7 @@ function updateState() {
   particleState.value = engine?.phase ?? renderMode.value
   animationRunning.value = engine?.needsFrame ?? false
 }
-function animate(timestamp: number) {
+function animate() {
   clearFrame()
   // A browser can update the query without delivering its change event (for
   // example during native pinch emulation). Never leave a stale dynamic canvas.
@@ -118,8 +123,9 @@ function animate(timestamp: number) {
   }
   if (!running() || !engine || !renderer) return
   const start = performance.now()
-  // MiMo evaluates entrance and drift from the RAF clock, with one blend per frame.
-  const at = timestamp / 1000
+  // Use the same monotonic clock as input and lifecycle updates. A stale RAF
+  // timestamp must not rewind entrance or drift when WebKit resumes callbacks.
+  const at = start / 1000
   engine.advanceTo(at)
   physicsMs.value = performance.now() - start
   const renderStart = performance.now()
