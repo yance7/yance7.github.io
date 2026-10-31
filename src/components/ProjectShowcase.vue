@@ -15,7 +15,7 @@ const primaryActionLabel = computed(() => (
     : messages.value.actions.enterProject
 ))
 const secondaryWordmark = computed(() => (
-  locale.value === 'en'
+  locale.value === 'en' || props.project.title === props.project.en
     ? ''
     : props.project.en
 ))
@@ -124,7 +124,7 @@ const secondaryWordmark = computed(() => (
           </ol>
         </div>
 
-        <div class="sc-proof-row">
+        <div v-if="project.story.proof.length" class="sc-proof-row">
           <span class="sc-meta-label">{{ messages.common.proofLinks }}</span>
           <div class="sc-proof-links">
             <a

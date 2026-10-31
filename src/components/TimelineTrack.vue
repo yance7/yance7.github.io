@@ -160,6 +160,13 @@ onUnmounted(() => {
           <div class="tl-actions">
             <CopyCitation v-if="item.citation" :citation="item.citation" />
             <a
+              v-if="item.materialRequest"
+              :href="item.materialRequest.href"
+              class="tl-link"
+            >
+              {{ item.materialRequest.label }} <span aria-hidden="true">↗</span>
+            </a>
+            <a
               v-if="item.paper"
               :href="item.paper.href"
               target="_blank"
