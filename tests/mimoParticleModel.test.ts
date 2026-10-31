@@ -248,10 +248,18 @@ describe('MiMo particle settings', () => {
     expect(engine.pointer.matches(17)).toBe(false)
   })
 
-  it('uses the actual RAF timestamp for entrance progress and microdrift', () => {
+  it('uses the live clock only when a RAF timestamp is materially stale', () => {
     const source = readFileSync('src/components/HomeHeroParticles.vue', 'utf8')
-    expect(source).toContain('function animate(timestamp: number)')
-    expect(source).toContain('const at = timestamp / 1000')
+    expect(source).toContain('function animate(frameTimestamp?: number)')
+    expect(source).toContain('const RAF_CLOCK_DRIFT_LIMIT_MS = 100')
+    expect(source).toContain('Math.abs(start - frameTimestamp) > RAF_CLOCK_DRIFT_LIMIT_MS')
+    expect(source).toContain('const at = (frameIsStale ? start : frameTimestamp!) / 1000')
+    expect(source).toContain('if (staleFrameClock && engine?.active.size) frameFallback = window.setTimeout(() => animate(), 250)')
+    expect(source).toContain('if (!engine?.active.size)')
+    const clearScene = source.slice(source.indexOf('function clearScene()'), source.indexOf('function staticMode()'))
+    expect(clearScene).toContain('staleFrameClock = false')
+    expect(source.indexOf('engine.advanceTo(at)')).toBeLessThan(source.indexOf('staleFrameClock = Boolean(engine.active.size)'))
+    expect(source).toContain('frameTimestamp !== undefined && frameIsStale')
   })
 
   it('starts the entrance when drawing is ready, after renderer preparation', () => {
