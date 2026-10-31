@@ -46,10 +46,14 @@ function rewriteLocalizedHtml(source: string, locale: Locale, page: (typeof page
     .replace(/<meta property="og:title" content="[^"]*">/i, `<meta property="og:title" content="${escapeHtml(seo.ogTitle)}">`)
     .replace(/<meta property="og:description" content="[^"]*">/i, `<meta property="og:description" content="${escapeHtml(seo.ogDescription)}">`)
     .replace(/<meta property="og:url" content="[^"]*">/i, `<meta property="og:url" content="${seo.canonical}">`)
-    .replace(/<meta property="og:site_name" content="[^"]*">/i, `<meta property="og:site_name" content="${escapeHtml(seo.ogTitle)}">`)
     .replace(/<meta property="og:locale" content="[^"]*">/i, `<meta property="og:locale" content="${seo.ogLocale}">`)
     .replace(/<meta property="og:image" content="[^"]*">/i, `<meta property="og:image" content="${seo.ogImage}">`)
     .replace(/<meta property="og:image:alt" content="[^"]*">/i, `<meta property="og:image:alt" content="${escapeHtml(seo.ogImageAlt)}">`)
+    .replace(/<meta name="twitter:card" content="[^"]*">/i, `<meta name="twitter:card" content="${seo.twitterCard}">`)
+    .replace(/<meta name="twitter:title" content="[^"]*">/i, `<meta name="twitter:title" content="${escapeHtml(seo.twitterTitle)}">`)
+    .replace(/<meta name="twitter:description" content="[^"]*">/i, `<meta name="twitter:description" content="${escapeHtml(seo.twitterDescription)}">`)
+    .replace(/<meta name="twitter:image" content="[^"]*">/i, `<meta name="twitter:image" content="${seo.twitterImage}">`)
+    .replace(/<meta name="twitter:image:alt" content="[^"]*">/i, `<meta name="twitter:image:alt" content="${escapeHtml(seo.twitterImageAlt)}">`)
     .replace(/<link rel="canonical" href="[^"]*">/i, `<link rel="canonical" href="${seo.canonical}">`)
     .replace(/\s*<link rel="alternate" hreflang="[^"]*" href="[^"]*">/gi, '')
 
@@ -66,7 +70,7 @@ function rewriteLocalized404(source: string, locale: Locale) {
   return source
     .replace(/<html\s+lang="[^"]*"(?:\s+data-locale="[^"]*")?/i, `<html lang="${definition.htmlLang}" data-locale="${locale}"`)
     .replace(/<body([^>]*)>/i, (_match, attrs: string) => `<body${attrs.replace(/\sdata-locale="[^"]*"/i, '')} data-locale="${locale}">`)
-    .replace(/<title>[^<]*<\/title>/i, `<title>${escapeHtml(messages.error404.title)} · Yance</title>`)
+    .replace(/<title>[^<]*<\/title>/i, '<title>404 · Yance</title>')
     .replace(/<meta name="description" content="[^"]*">/i, `<meta name="description" content="${escapeHtml(messages.error404.copy)}">`)
 }
 

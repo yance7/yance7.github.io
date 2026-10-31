@@ -14,6 +14,7 @@
     "preview": "vite preview --config config/vite.config.ts",
     "smoke": "tsx scripts/smoke-test.ts",
     "sitemap": "tsx scripts/generate-sitemap.ts",
+    "site-manifest:check": "tsx scripts/check-site-manifest.ts",
     "brand:assets": "python scripts/generate-brand-assets.py",
     "brand:assets:check": "python scripts/generate-brand-assets.py --check",
     "lighthouse": "lhci autorun --config=config/lighthouse.desktop.json && lhci autorun --config=config/lighthouse.mobile.json",
@@ -27,7 +28,7 @@
     "fonts:hero:characters": "tsx scripts/export-hero-greeting-characters.ts",
     "typecheck": "vue-tsc --noEmit -p config/tsconfig.app.json && tsc --noEmit -p config/tsconfig.node.json && tsc --noEmit -p config/tsconfig.test.json",
     "deadcode": "knip --config config/knip.json --include files,dependencies,unlisted,unresolved,exports,types --no-progress",
-    "check": "npm run audit:repo && npm run audit:assets && npm run home-hero:assets:check && npm run brand:assets:check && npm run fonts:hero:check && npm run lint && npm run typecheck && npm run deadcode && npm run unit && npm run sitemap && npm run build && npm run smoke",
+    "check": "npm run audit:repo && npm run audit:assets && npm run home-hero:assets:check && npm run brand:assets:check && npm run site-manifest:check && npm run fonts:hero:check && npm run lint && npm run typecheck && npm run deadcode && npm run unit && npm run sitemap && npm run build && npm run smoke",
     "lint": "eslint --config config/eslint.config.js . --max-warnings=0",
     "unit": "vitest run --config config/vitest.config.ts",
     "test:e2e": "playwright test --config config/playwright.config.ts"
@@ -52,13 +53,13 @@
     "globals": "^17.9.0",
     "knip": "^6.32.2",
     "lighthouse": "13.4.1",
-    "playwright-core": "1.60.0",
     "puppeteer-core": "24.43.1",
     "tsx": "^4.23.11",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.66.0",
     "vite": "^8.2.0",
     "vitest": "^4.1.10",
+    "vue-eslint-parser": "10.4.1",
     "vue-tsc": "^3.3.9"
   },
   "optionalDependencies": {

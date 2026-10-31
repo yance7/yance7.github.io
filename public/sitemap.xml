@@ -2,30 +2,33 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://yance.me/</loc>
-    <lastmod>2026-10-30</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/" />
   </url>
   <url>
     <loc>https://yance.me/academics/</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/academics/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/academics/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/academics/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/academics/" />
   </url>
   <url>
     <loc>https://yance.me/honors/</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/honors/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/honors/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/honors/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/honors/" />
   </url>
   <url>
     <loc>https://yance.me/research/</loc>
@@ -35,6 +38,7 @@
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/research/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/research/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/research/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/research/" />
   </url>
   <url>
     <loc>https://yance.me/works/</loc>
@@ -44,42 +48,47 @@
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/works/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/works/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/works/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/works/" />
   </url>
   <url>
     <loc>https://yance.me/concerts/</loc>
-    <lastmod>2026-09-21</lastmod>
+    <lastmod>2026-09-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/concerts/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/concerts/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/concerts/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/concerts/" />
   </url>
   <url>
     <loc>https://yance.me/zh-hk/</loc>
-    <lastmod>2026-10-30</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/" />
   </url>
   <url>
     <loc>https://yance.me/zh-hk/academics/</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/academics/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/academics/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/academics/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/academics/" />
   </url>
   <url>
     <loc>https://yance.me/zh-hk/honors/</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/honors/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/honors/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/honors/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/honors/" />
   </url>
   <url>
     <loc>https://yance.me/zh-hk/research/</loc>
@@ -89,6 +98,7 @@
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/research/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/research/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/research/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/research/" />
   </url>
   <url>
     <loc>https://yance.me/zh-hk/works/</loc>
@@ -98,42 +108,47 @@
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/works/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/works/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/works/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/works/" />
   </url>
   <url>
     <loc>https://yance.me/zh-hk/concerts/</loc>
-    <lastmod>2026-09-21</lastmod>
+    <lastmod>2026-09-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/concerts/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/concerts/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/concerts/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/concerts/" />
   </url>
   <url>
     <loc>https://yance.me/en/</loc>
-    <lastmod>2026-10-30</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/" />
   </url>
   <url>
     <loc>https://yance.me/en/academics/</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/academics/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/academics/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/academics/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/academics/" />
   </url>
   <url>
     <loc>https://yance.me/en/honors/</loc>
-    <lastmod>2026-10-22</lastmod>
+    <lastmod>2026-10-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/honors/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/honors/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/honors/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/honors/" />
   </url>
   <url>
     <loc>https://yance.me/en/research/</loc>
@@ -143,6 +158,7 @@
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/research/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/research/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/research/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/research/" />
   </url>
   <url>
     <loc>https://yance.me/en/works/</loc>
@@ -152,14 +168,16 @@
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/works/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/works/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/works/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/works/" />
   </url>
   <url>
     <loc>https://yance.me/en/concerts/</loc>
-    <lastmod>2026-09-21</lastmod>
+    <lastmod>2026-09-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/concerts/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/concerts/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/concerts/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/concerts/" />
   </url>
 </urlset>

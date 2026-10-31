@@ -202,7 +202,10 @@ export interface LightboxPayload {
 export interface PageMeta {
   kicker: string
   title: string
+  documentTitle: string
   copy: string
+  /** Latest substantive update to this locale's page copy, when it differs from shared data. */
+  contentUpdatedAt?: string
   credit?: HeroCredit
 }
 

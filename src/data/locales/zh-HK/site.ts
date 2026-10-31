@@ -2,12 +2,12 @@ import type { SiteLocaleCopy } from '../types.ts'
 
 export const siteCopy = {
   pageMeta: {
-    home: { kicker: '個人檔案 / 北京 · 2026', title: 'SONG NOTES', copy: '這裡收錄研究、已上線的作品，以及被音樂和現場照亮的生活片段。先從一個真實問題開始，再沿着證據走到可以使用的結果。' },
-    academics: { kicker: '學業', title: '明日從此的座標', copy: 'GPA、標化考試與 AP 成績，是努力留下的可讀痕跡。', credit: { artist: '林俊傑', song: '明日坐標', album: '明日坐標' } },
-    honors: { kicker: '榮譽', title: '一步一步往上爬', copy: '獎項是座標，不是終點；真正重要的是仍然保持向上的慣性。', credit: { artist: '周杰倫', song: '蝸牛', album: 'Fantasy Plus' } },
-    research: { kicker: '研究', title: '我不完美的夢，你陪着我想', copy: '從智慧農業到可解釋 AI，把論文中的模型推向瀏覽器裡可以操作的產品。', credit: { artist: 'TFBOYS', song: '不完美小孩', album: '我們的時光' } },
-    works: { kicker: '作品', title: '因為我已慢慢懂，努力就能成功', copy: '三個持續建構的小世界，記錄想法如何離開紙面，成為可以使用或繼續成長的成果。', credit: { artist: '汪蘇瀧', song: '慢慢懂', album: '慢慢懂' } },
-    concerts: { kicker: '演唱會', title: '緣分讓我們相遇亂世以外', copy: '演唱會足跡與海報，記錄那些被燈光和合唱重新定義的夜晚。', credit: { artist: '鄧紫棋', song: '光年之外', album: '' } }
+    home: { kicker: '個人檔案 / 北京 · 2026', title: 'SONG NOTES', documentTitle: '首頁 · Yance', contentUpdatedAt: '2026-10-30', copy: '這裡收錄研究、已上線的作品，以及被音樂和現場照亮的生活片段。先從一個真實問題開始，再沿着證據走到可以使用的結果。' },
+    academics: { kicker: '學業', title: '明日從此的座標', documentTitle: '學業 · Yance', contentUpdatedAt: '2026-10-23', copy: 'GPA、標化考試與 AP 成績，是努力留下的可讀痕跡。', credit: { artist: '林俊傑', song: '明日坐標', album: '明日坐標' } },
+    honors: { kicker: '榮譽', title: '一步一步往上爬', documentTitle: '榮譽 · Yance', contentUpdatedAt: '2026-10-23', copy: '獎項是座標，不是終點；真正重要的是仍然保持向上的慣性。', credit: { artist: '周杰倫', song: '蝸牛', album: 'Fantasy Plus' } },
+    research: { kicker: '研究', title: '我不完美的夢，你陪着我想', documentTitle: '研究 · Yance', copy: '從智慧農業到可解釋 AI，把論文中的模型推向瀏覽器裡可以操作的產品。', credit: { artist: 'TFBOYS', song: '不完美小孩', album: '我們的時光' } },
+    works: { kicker: '作品', title: '因為我已慢慢懂，努力就能成功', documentTitle: '作品 · Yance', copy: '三個持續建構的小世界，記錄想法如何離開紙面，成為可以使用或繼續成長的成果。', credit: { artist: '汪蘇瀧', song: '慢慢懂', album: '慢慢懂' } },
+    concerts: { kicker: '演唱會', title: '緣分讓我們相遇亂世以外', documentTitle: '演唱會 · Yance', contentUpdatedAt: '2026-09-22', copy: '演唱會足跡與海報，記錄那些被燈光和合唱重新定義的夜晚。', credit: { artist: '鄧紫棋', song: '光年之外', album: '' } }
   },
   nav: {
     home: { label: '首頁', desc: '個人檔案入口' },

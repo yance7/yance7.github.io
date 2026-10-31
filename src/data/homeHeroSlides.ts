@@ -3,6 +3,8 @@ import { homeHeroPresentation, type HomeHeroSlideId, type HomeHeroSlidePresentat
 
 export { HOME_HERO_IMAGE_SIZES } from './homeHeroPresentation'
 
+export const homeHeroContentUpdatedAt = '2026-10-31'
+
 interface HomeHeroImageCandidate {
   src: string
   width: number

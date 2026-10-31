@@ -143,6 +143,19 @@ describe('stable registry and localized content contracts', () => {
 })
 
 describe('localized SEO contracts', () => {
+  const locales = ['zh-CN', 'zh-HK', 'en'] as const
+  const pages = ['home', 'academics', 'honors', 'research', 'works', 'concerts'] as const
+  const expectedDocumentTitles = {
+    'zh-CN': ['首页 · Yance', '学业 · Yance', '荣誉 · Yance', '研究 · Yance', '作品 · Yance', '演唱会 · Yance'],
+    'zh-HK': ['首頁 · Yance', '學業 · Yance', '榮譽 · Yance', '研究 · Yance', '作品 · Yance', '演唱會 · Yance'],
+    en: ['Home · Yance', 'Academics · Yance', 'Honors · Yance', 'Research · Yance', 'Works · Yance', 'Concerts · Yance']
+  } as const
+  const expectedVisibleTitles = {
+    'zh-CN': ['SONG NOTES', '明日从此的坐标', '一步一步往上爬', '我不完美的梦，你陪着我想', '因为我已慢慢懂，努力就能成功', '缘分让我们相遇乱世以外'],
+    'zh-HK': ['SONG NOTES', '明日從此的座標', '一步一步往上爬', '我不完美的夢，你陪着我想', '因為我已慢慢懂，努力就能成功', '緣分讓我們相遇亂世以外'],
+    en: ['SONG NOTES', 'From here, tomorrow finds its course', 'Step by step, I keep climbing', 'You share this imperfect dream with me', 'Little by little, I learned that effort can lead to success', 'Fate brought us together beyond this restless world']
+  } as const
+
   it('emits six pages for each locale without localized index.html URLs', () => {
     expect(localizedSitemapEntries).toHaveLength(18)
     expect(new Set(localizedSitemapEntries.map((entry) => entry.path)).size).toBe(18)
@@ -151,14 +164,45 @@ describe('localized SEO contracts', () => {
     expect(localizedSitemapEntries.filter((entry) => entry.path === '' || entry.path === 'zh-hk/' || entry.path === 'en/')).toHaveLength(3)
   })
 
-  it('keeps self-canonical and reciprocal three-locale alternates', () => {
-    for (const locale of ['zh-CN', 'zh-HK', 'en'] as const) {
+  it('keeps visible page titles independent from the localized document titles', () => {
+    for (const locale of locales) {
+      for (const [pageIndex, page] of pages.entries()) {
+        expect(getLocalizedPageMeta(locale, page).title).toBe(expectedVisibleTitles[locale][pageIndex])
+        expect(getLocalizedPageMeta(locale, page).documentTitle).toBe(expectedDocumentTitles[locale][pageIndex])
+      }
+    }
+  })
+
+  it('derives page and social titles, descriptions, images, and localized alt text from one SEO result', () => {
+    for (const locale of locales) {
+      for (const page of pages) {
+        const meta = getLocalizedPageMeta(locale, page)
+        const seo = getLocalizedSeo(locale, page)
+        expect(seo.title).toBe(meta.documentTitle)
+        expect(seo.ogTitle).toBe(seo.title)
+        expect(seo.twitterTitle).toBe(seo.title)
+        expect(seo.description).toBe(meta.copy)
+        expect(seo.ogDescription).toBe(seo.description)
+        expect(seo.twitterDescription).toBe(seo.description)
+        expect(seo.twitterCard).toBe('summary_large_image')
+        expect(seo.twitterImage).toBe(seo.ogImage)
+        expect(seo.twitterImageAlt).toBe(seo.ogImageAlt)
+        expect(seo.ogImage).toBe(`https://yance.me/${pageRegistry[page].ogImage}`)
+        expect(seo.ogImageAlt).toBe(`${meta.title} — Yance`)
+      }
+    }
+  })
+
+  it('keeps self-canonical and reciprocal locale alternates with same-page x-default', () => {
+    for (const locale of locales) {
       const seo = getLocalizedSeo(locale, 'research')
       expect(seo.canonical).toBe(buildLocalizedCanonicalUrl(locale, 'research'))
       expect(seo.htmlLang).toBe(locale === 'zh-CN' ? 'zh-CN' : locale === 'zh-HK' ? 'zh-HK' : 'en')
-      expect(seo.alternates).toHaveLength(3)
-      expect(seo.alternates.map((alternate) => alternate.hreflang)).toEqual(['zh-CN', 'zh-HK', 'en'])
+      expect(seo.alternates).toHaveLength(4)
+      expect(seo.alternates.map((alternate) => alternate.hreflang)).toEqual(['zh-CN', 'zh-HK', 'en', 'x-default'])
       expect(seo.alternates.map((alternate) => alternate.href)).toContain(seo.canonical)
+      expect(seo.alternates.find((alternate) => alternate.hreflang === 'x-default')?.href)
+        .toBe(buildLocalizedCanonicalUrl('zh-CN', 'research'))
       expect(seo.ogImage.endsWith('.png')).toBe(true)
     }
   })
