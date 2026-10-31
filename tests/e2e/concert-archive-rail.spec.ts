@@ -501,6 +501,30 @@ async function centerError(rail: Locator, index: number) {
   }, index)
 }
 
+async function stableRailGeometry(rail: Locator, index: number) {
+  return rail.evaluate(async (element, cardIndex) => {
+    const scroller = element as HTMLElement
+    let previous = ''
+    let stableFrames = 0
+    for (let frame = 0; frame < 120 && stableFrames < 12; frame += 1) {
+      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
+      const card = scroller.querySelectorAll<HTMLElement>('.concert-rail-card')[cardIndex]!
+      const rect = card.getBoundingClientRect()
+      const current = JSON.stringify([scroller.scrollLeft, scroller.clientWidth, rect.left, rect.right])
+      stableFrames = current === previous ? stableFrames + 1 : 0
+      previous = current
+    }
+
+    const card = scroller.querySelectorAll<HTMLElement>('.concert-rail-card')[cardIndex]!
+    return {
+      stableFrames,
+      scrollLeft: scroller.scrollLeft,
+      railWidth: scroller.clientWidth,
+      centerError: Math.abs(card.offsetLeft + card.offsetWidth / 2 - scroller.scrollLeft - scroller.clientWidth / 2)
+    }
+  }, index)
+}
+
 async function nextDestinationIndex(rail: Locator, direction: 1 | -1, pendingIndex?: number) {
   const geometry = await rail.evaluate(element => {
     const scroller = element as HTMLElement
@@ -559,6 +583,31 @@ test('concert hash uses the shared destination for a visible middle poster', asy
     (window as typeof window & { __railTargetIds?: string[] }).__railTargetIds?.includes(id) ?? false
   ), targetId)).toBe(true)
   await expect.poll(() => centerError(rail, 1)).toBeLessThanOrEqual(2)
+})
+
+test('concert hash for the second poster survives a narrow resize', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop-to-mobile resize is covered by desktop browser projects')
+  await page.setViewportSize({ width: 1200, height: 900 })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  const targetId = 'concert-zhou-shen-2026-09-27'
+  await page.goto(`/concerts/#${targetId}`)
+
+  const rail = page.locator('.concert-archive-rail')
+  const target = rail.locator(`[data-anchor-id="${targetId}"]`)
+  await expect(page.locator('.site-shell[data-page-load-state="ready"]')).toBeVisible()
+  await expect(rail).toHaveAttribute('data-rail-ready', 'true')
+  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
+  await expect(target).toHaveAttribute('data-hash-target', 'true')
+  await page.evaluate(() => document.fonts.ready)
+  const desktop = await stableRailGeometry(rail, 1)
+  expect(desktop.stableFrames).toBe(12)
+  expect(desktop.centerError).toBeLessThanOrEqual(2)
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  const mobile = await stableRailGeometry(rail, 1)
+  expect(mobile.stableFrames).toBe(12)
+  expect(mobile.centerError).toBeLessThanOrEqual(2)
+  await expect(target).toHaveAttribute('data-hash-target', 'true')
 })
 
 test('concert resize fallback works without ResizeObserver', async ({ page }) => {

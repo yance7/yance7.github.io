@@ -34,15 +34,16 @@ export function findNearestDestinationIndex(destinations: readonly number[], scr
   const first = destinations[0]!
   const lastIndex = destinations.length - 1
   const last = destinations[lastIndex]!
-
-  if (Math.abs(scrollLeft - first) <= endpointTolerance) return 0
-  if (Math.abs(scrollLeft - last) <= endpointTolerance) return lastIndex
-
-  return destinations.reduce((nearest, destination, index) => {
+  const nearestIndex = destinations.reduce((nearest, destination, index) => {
     return Math.abs(destination - scrollLeft) < Math.abs(destinations[nearest]! - scrollLeft)
       ? index
       : nearest
   }, 0)
+  const nearestDestination = destinations[nearestIndex]!
+
+  if (nearestDestination === first) return 0
+  if (nearestDestination === last) return lastIndex
+  return nearestIndex
 }
 
 export function findNextRailDestinationIndex(

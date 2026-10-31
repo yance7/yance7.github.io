@@ -37,6 +37,10 @@ describe('horizontal rail geometry', () => {
     expect(findNearestDestinationIndex(destinations, 135)).toBe(2)
   })
 
+  it('keeps a distinct one-pixel target separate from the first endpoint', () => {
+    expect(findNearestDestinationIndex([0, 1, 365], 1)).toBe(1)
+  })
+
   it('skips duplicate destinations and advances from a pending target', () => {
     const destinations = [0, 0, 90, 180, 300, 300, 300]
 
