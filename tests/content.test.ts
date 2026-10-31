@@ -161,7 +161,9 @@ describe('content contracts', () => {
     expect(pageMetadata.concerts.updatedAt).toBe('2026-09-21')
     expect(pageMetadata.home.updatedAt).toBe('2026-10-30')
     expect(pageMetadata.academics.updatedAt).toBe('2026-10-22')
+    expect(pageMetadata.honors.updatedAt).toBe('2026-10-22')
     expect(pageMetadata.research).toEqual({ updatedAt: '2026-10-30' })
+    expect(pageMetadata.works.updatedAt).toBe('2026-10-30')
   })
 
   it('keeps published FishFreshNet V1 metrics aligned with the paper result', () => {

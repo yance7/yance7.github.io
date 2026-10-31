@@ -58,6 +58,7 @@ for (const [page, cssFiles] of Object.entries(pageManifest)) {
 
 function assertHtmlContract(path: string, locale: Locale, pageKey?: (typeof pageEntries)[number]['key']) {
   const html = read(path)
+  assert((html.match(/name="theme-color"/g) ?? []).length === 1, `${path} 必须只有一个 theme-color 标签`)
   assert(/Content-Security-Policy/.test(html), `${path} 缺少 CSP`)
   assert(/script-src 'self' 'sha256-[^']+'/.test(html), `${path} CSP 缺少 theme bootstrap hash`)
   assert(html.includes('<div id="app"></div>'), `${path} 缺少 Vue 挂载点`)
@@ -75,11 +76,19 @@ function assertHtmlContract(path: string, locale: Locale, pageKey?: (typeof page
 
   if (!pageKey) return
   const seo = getLocalizedSeo(locale, pageKey)
+  assert(html.includes(`<title>${seo.title}</title>`), `${path} title 不正确`)
   assert(html.includes(`<link rel="canonical" href="${seo.canonical}">`), `${path} canonical 不正确`)
   assert(html.includes(`og:url" content="${seo.canonical}"`), `${path} og:url 不正确`)
   assert(html.includes(`og:locale" content="${seo.ogLocale}"`), `${path} og:locale 不正确`)
   assert(html.includes(`og:image" content="${seo.ogImage}"`), `${path} OG image 不正确`)
   assert(html.includes(`og:image:alt" content="${seo.ogImageAlt}`), `${path} OG image alt 不正确`)
+  assert(html.includes('og:site_name" content="Yance · 个人主页"'), `${path} og:site_name 不应随页面标题变化`)
+  assert(html.includes(`name="twitter:card" content="${seo.twitterCard}"`), `${path} Twitter card 不正确`)
+  assert((html.match(/name="twitter:card"/g) ?? []).length === 1, `${path} 必须只有一个 Twitter card 标签`)
+  assert(html.includes(`name="twitter:title" content="${seo.twitterTitle}"`), `${path} Twitter title 不正确`)
+  assert(html.includes(`name="twitter:description" content="${seo.twitterDescription}"`), `${path} Twitter description 不正确`)
+  assert(html.includes(`name="twitter:image" content="${seo.twitterImage}"`), `${path} Twitter image 不正确`)
+  assert(html.includes(`name="twitter:image:alt" content="${seo.twitterImageAlt}"`), `${path} Twitter image alt 不正确`)
   for (const alternate of seo.alternates) {
     assert(html.includes(`rel="alternate" hreflang="${alternate.hreflang}" href="${alternate.href}"`), `${path} 缺少 ${alternate.hreflang} hreflang`)
   }
@@ -89,6 +98,8 @@ for (const entry of pageEntries) {
   assertHtmlContract(outputPagePath('zh-CN', entry.routePath), 'zh-CN', entry.key)
 }
 assertHtmlContract('404.html', 'zh-CN')
+assert(read('404.html').includes('<title>404 · Yance</title>'), '404 title 不正确')
+assert(read('404.html').includes('name="robots" content="noindex"'), '404 缺少 noindex')
 
 for (const locale of locales.slice(1)) {
   for (const entry of pageEntries) {
@@ -96,6 +107,10 @@ for (const locale of locales.slice(1)) {
   }
   const prefix = localeRegistry[locale].pathPrefix.slice(1)
   assertHtmlContract(`${prefix}/404.html`, locale)
+  const notFound = read(`${prefix}/404.html`)
+  assert(notFound.includes('<title>404 · Yance</title>'), `${prefix}/404.html title 不正确`)
+  assert(notFound.includes('name="robots" content="noindex"'), `${prefix}/404.html 缺少 noindex`)
+  assert(notFound.includes('data-page="404"'), `${prefix}/404.html 缺少有效导航页面入口`)
 }
 
 for (const locale of locales) {
@@ -106,6 +121,7 @@ for (const locale of locales) {
     const redirect = read(legacyPath)
     const target = `${localeRegistry[locale].pathPrefix}${entry.routePath}`
     const seo = getLocalizedSeo(locale, entry.key)
+    assert(redirect.includes(`<title>${seo.title}</title>`), `${legacyPath} title 不正确`)
     assert(redirect.includes('name="robots" content="noindex,follow"'), `${legacyPath} 缺少 noindex,follow`)
     assert(redirect.includes("script-src 'self'"), `${legacyPath} CSP 不允许同源跳转脚本`)
     assert(redirect.includes(`<link rel="canonical" href="${seo.canonical}">`), `${legacyPath} canonical 不正确`)
@@ -158,7 +174,7 @@ for (const entry of pageEntries) {
 
 const sitemap = read('sitemap.xml')
 assert((sitemap.match(/<url>/g) ?? []).length === localizedSitemapEntries.length, 'sitemap URL 数量不是 18')
-assert((sitemap.match(/<xhtml:link/g) ?? []).length === localizedSitemapEntries.length * 3, 'sitemap hreflang 数量不正确')
+assert((sitemap.match(/<xhtml:link/g) ?? []).length === localizedSitemapEntries.length * 4, 'sitemap hreflang 数量不正确')
 assert(!sitemap.includes('/404.html'), 'sitemap 不应包含 404')
 assert(!sitemap.includes('.html'), 'sitemap 只应包含正式目录 URL')
 

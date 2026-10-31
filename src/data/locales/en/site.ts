@@ -2,12 +2,12 @@ import type { SiteLocaleCopy } from '../types.ts'
 
 export const siteCopy = {
   pageMeta: {
-    home: { kicker: 'PERSONAL ARCHIVE / BEIJING · 2026', title: 'SONG NOTES', copy: 'A record of research, shipped products, and the life fragments lit by music and live shows. Start with a real question, then follow the evidence toward something usable.' },
-    academics: { kicker: 'ACADEMICS', title: 'From here, tomorrow finds its course', copy: 'Coursework, standardized tests, and AP results—evidence of how the work has accumulated.', credit: { artist: 'JJ Lin', song: '明日坐标', album: '明日坐标' } },
-    honors: { kicker: 'HONORS', title: 'Step by step, I keep climbing', copy: 'Awards mark the route; the more useful signal is the habit of continuing upward.', credit: { artist: 'Jay Chou', song: '蜗牛', album: 'Fantasy Plus' } },
-    research: { kicker: 'RESEARCH', title: 'You share this imperfect dream with me', copy: 'From smart agriculture to explainable AI, I turn models into tools that people can open and use.', credit: { artist: 'TFBOYS', song: '不完美小孩', album: '我们的时光' } },
-    works: { kicker: 'WORKS', title: 'Little by little, I learned that effort can lead to success', copy: 'Three evolving project worlds showing how ideas leave the page and become products or open learning resources.', credit: { artist: 'Silence Wang', song: '慢慢懂', album: '慢慢懂' } },
-    concerts: { kicker: 'CONCERTS', title: 'Fate brought us together beyond this restless world', copy: 'Concerts, posters, and the nights when light and a shared chorus changed the scale of the world.', credit: { artist: 'G.E.M.', song: '光年之外', album: '' } }
+    home: { kicker: 'PERSONAL ARCHIVE / BEIJING · 2026', title: 'SONG NOTES', documentTitle: 'Home · Yance', copy: 'A record of research, shipped products, and the life fragments lit by music and live shows. Start with a real question, then follow the evidence toward something usable.' },
+    academics: { kicker: 'ACADEMICS', title: 'From here, tomorrow finds its course', documentTitle: 'Academics · Yance', copy: 'Coursework, standardized tests, and AP results—evidence of how the work has accumulated.', credit: { artist: 'JJ Lin', song: '明日坐标', album: '明日坐标' } },
+    honors: { kicker: 'HONORS', title: 'Step by step, I keep climbing', documentTitle: 'Honors · Yance', copy: 'Awards mark the route; the more useful signal is the habit of continuing upward.', credit: { artist: 'Jay Chou', song: '蜗牛', album: 'Fantasy Plus' } },
+    research: { kicker: 'RESEARCH', title: 'You share this imperfect dream with me', documentTitle: 'Research · Yance', copy: 'From smart agriculture to explainable AI, I turn models into tools that people can open and use.', credit: { artist: 'TFBOYS', song: '不完美小孩', album: '我们的时光' } },
+    works: { kicker: 'WORKS', title: 'Little by little, I learned that effort can lead to success', documentTitle: 'Works · Yance', copy: 'Three evolving project worlds showing how ideas leave the page and become products or open learning resources.', credit: { artist: 'Silence Wang', song: '慢慢懂', album: '慢慢懂' } },
+    concerts: { kicker: 'CONCERTS', title: 'Fate brought us together beyond this restless world', documentTitle: 'Concerts · Yance', copy: 'Concerts, posters, and the nights when light and a shared chorus changed the scale of the world.', credit: { artist: 'G.E.M.', song: '光年之外', album: '' } }
   },
   nav: {
     home: { label: 'Home', desc: 'Personal archive overview' },

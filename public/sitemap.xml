@@ -8,6 +8,7 @@
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/" />
   </url>
   <url>
     <loc>https://yance.me/academics/</loc>
@@ -17,6 +18,7 @@
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/academics/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/academics/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/academics/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/academics/" />
   </url>
   <url>
     <loc>https://yance.me/honors/</loc>
@@ -26,6 +28,7 @@
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/honors/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/honors/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/honors/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/honors/" />
   </url>
   <url>
     <loc>https://yance.me/research/</loc>
@@ -35,6 +38,7 @@
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/research/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/research/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/research/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/research/" />
   </url>
   <url>
     <loc>https://yance.me/works/</loc>
@@ -44,6 +48,7 @@
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/works/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/works/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/works/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/works/" />
   </url>
   <url>
     <loc>https://yance.me/concerts/</loc>
@@ -53,6 +58,7 @@
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/concerts/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/concerts/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/concerts/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/concerts/" />
   </url>
   <url>
     <loc>https://yance.me/zh-hk/</loc>
@@ -62,6 +68,7 @@
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/" />
   </url>
   <url>
     <loc>https://yance.me/zh-hk/academics/</loc>
@@ -71,6 +78,7 @@
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/academics/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/academics/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/academics/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/academics/" />
   </url>
   <url>
     <loc>https://yance.me/zh-hk/honors/</loc>
@@ -80,6 +88,7 @@
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/honors/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/honors/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/honors/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/honors/" />
   </url>
   <url>
     <loc>https://yance.me/zh-hk/research/</loc>
@@ -89,6 +98,7 @@
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/research/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/research/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/research/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/research/" />
   </url>
   <url>
     <loc>https://yance.me/zh-hk/works/</loc>
@@ -98,6 +108,7 @@
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/works/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/works/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/works/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/works/" />
   </url>
   <url>
     <loc>https://yance.me/zh-hk/concerts/</loc>
@@ -107,6 +118,7 @@
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/concerts/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/concerts/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/concerts/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/concerts/" />
   </url>
   <url>
     <loc>https://yance.me/en/</loc>
@@ -116,6 +128,7 @@
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/" />
   </url>
   <url>
     <loc>https://yance.me/en/academics/</loc>
@@ -125,6 +138,7 @@
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/academics/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/academics/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/academics/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/academics/" />
   </url>
   <url>
     <loc>https://yance.me/en/honors/</loc>
@@ -134,6 +148,7 @@
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/honors/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/honors/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/honors/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/honors/" />
   </url>
   <url>
     <loc>https://yance.me/en/research/</loc>
@@ -143,6 +158,7 @@
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/research/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/research/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/research/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/research/" />
   </url>
   <url>
     <loc>https://yance.me/en/works/</loc>
@@ -152,6 +168,7 @@
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/works/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/works/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/works/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/works/" />
   </url>
   <url>
     <loc>https://yance.me/en/concerts/</loc>
@@ -161,5 +178,6 @@
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://yance.me/concerts/" />
     <xhtml:link rel="alternate" hreflang="zh-HK" href="https://yance.me/zh-hk/concerts/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://yance.me/en/concerts/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yance.me/concerts/" />
   </url>
 </urlset>

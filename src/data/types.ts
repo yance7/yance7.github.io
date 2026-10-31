@@ -202,6 +202,7 @@ export interface LightboxPayload {
 export interface PageMeta {
   kicker: string
   title: string
+  documentTitle: string
   copy: string
   credit?: HeroCredit
 }
