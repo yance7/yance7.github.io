@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test'
 import { readMimoReferenceGlyph } from './helpers/mimo-reference'
 
 type HeroPoint = { x: number; y: number; rectX: number; rectY: number; size: number; color: string; alpha: number }
+type HeroClockProbe = { holdAfterNext: boolean; staleFrameDelivered: boolean }
 type HeroIntroWindow = Window & {
   heroIntroCurrentFrameTime?: number
   heroIntroDraw?: { time: number, frame: number }
@@ -29,6 +30,7 @@ type HeroPixelWindow = Window & {
   heroCapturedDeformation?: boolean
   heroPointerLeaveFrame?: number
 }
+type HeroClockProbeWindow = Window & { heroClockProbe?: HeroClockProbe }
 
 async function savePixels(page: import('@playwright/test').Page) {
   const reference = await page.locator('.home-hero-particles').evaluate(readMimoReferenceGlyph)
@@ -970,6 +972,42 @@ test('@particle-v2 consumes live input when RAF timestamps lag behind the event 
   await frames(page, 2)
   expect(Number(await stage.getAttribute('data-peak-candidates'))).toBeGreaterThan(0)
   await expect(stage).toHaveAttribute('data-particle-state', 'disturbed')
+  await stage.evaluate(element => element.dispatchEvent(new PointerEvent('pointerleave', { pointerId: 1, pointerType: 'mouse' })))
+  await expect(stage).toHaveAttribute('data-moving-particle-count', '0', { timeout: 1500 })
+})
+
+test('@particle-v2 starts bounded recovery when the first stale RAF is followed by a stall', async ({ page, isMobile }) => {
+  await page.setViewportSize({ width: isMobile ? 390 : 1440, height: 1100 })
+  await page.addInitScript(() => {
+    const requestFrame = window.requestAnimationFrame.bind(window)
+    const state = { holdAfterNext: false, staleFrameDelivered: false }
+    ;(window as HeroClockProbeWindow).heroClockProbe = state
+    window.requestAnimationFrame = callback => requestFrame(timestamp => {
+      const probe = (window as HeroClockProbeWindow).heroClockProbe!
+      if (!probe.holdAfterNext) {
+        callback(timestamp)
+        return
+      }
+      if (probe.staleFrameDelivered) return
+      probe.staleFrameDelivered = true
+      callback(performance.now() - 300)
+    })
+  })
+  await page.goto('/')
+  await waitForSettledHero(page)
+  const stage = page.locator('.home-hero-particles')
+  await stage.evaluate((element) => {
+    const probe = (window as HeroClockProbeWindow).heroClockProbe!
+    const bounds = element.getBoundingClientRect()
+    probe.holdAfterNext = true
+    probe.staleFrameDelivered = false
+    element.dispatchEvent(new PointerEvent('pointermove', { pointerId: 1, pointerType: 'mouse',
+      clientX: bounds.left + bounds.width * 0.5, clientY: bounds.top + bounds.height * 0.46 }))
+  })
+  await expect(stage).toHaveAttribute('data-particle-state', 'disturbed')
+  const staleFrame = Number(await stage.getAttribute('data-frame-count'))
+  await expect.poll(async () => Number(await stage.getAttribute('data-frame-count')), { timeout: 1000 }).toBeGreaterThan(staleFrame)
+  await page.evaluate(() => { (window as HeroClockProbeWindow).heroClockProbe!.holdAfterNext = false })
   await stage.evaluate(element => element.dispatchEvent(new PointerEvent('pointerleave', { pointerId: 1, pointerType: 'mouse' })))
   await expect(stage).toHaveAttribute('data-moving-particle-count', '0', { timeout: 1500 })
 })

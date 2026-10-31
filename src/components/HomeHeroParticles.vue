@@ -93,6 +93,7 @@ function schedule() {
 }
 function clearScene() {
   clearFrame()
+  staleFrameClock = false
   renderer?.destroy()
   renderer = null
   engine = null
@@ -137,7 +138,6 @@ function animate(frameTimestamp?: number) {
   // Keep normal frame cadence, but recover against the live monotonic clock
   // when the callback timestamp is materially stale.
   const frameIsStale = frameTimestamp === undefined || !Number.isFinite(frameTimestamp) || Math.abs(start - frameTimestamp) > RAF_CLOCK_DRIFT_LIMIT_MS
-  if (frameTimestamp !== undefined) staleFrameClock = frameIsStale && Boolean(engine.active.size)
   const at = (frameIsStale ? start : frameTimestamp!) / 1000
   engine.advanceTo(at)
   physicsMs.value = performance.now() - start
@@ -146,6 +146,7 @@ function animate(frameTimestamp?: number) {
   renderMs.value = performance.now() - renderStart
   frameCount.value += 1
   updateState()
+  if (frameTimestamp !== undefined && frameIsStale) staleFrameClock = Boolean(engine.active.size)
   if (!engine.active.size) staleFrameClock = false
   if (engine.needsFrame) schedule()
 }

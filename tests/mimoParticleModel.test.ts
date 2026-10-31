@@ -256,6 +256,10 @@ describe('MiMo particle settings', () => {
     expect(source).toContain('const at = (frameIsStale ? start : frameTimestamp!) / 1000')
     expect(source).toContain('if (staleFrameClock && engine?.active.size) frameFallback = window.setTimeout(() => animate(), 250)')
     expect(source).toContain('if (!engine?.active.size)')
+    const clearScene = source.slice(source.indexOf('function clearScene()'), source.indexOf('function staticMode()'))
+    expect(clearScene).toContain('staleFrameClock = false')
+    expect(source.indexOf('engine.advanceTo(at)')).toBeLessThan(source.indexOf('staleFrameClock = Boolean(engine.active.size)'))
+    expect(source).toContain('frameTimestamp !== undefined && frameIsStale')
   })
 
   it('starts the entrance when drawing is ready, after renderer preparation', () => {
