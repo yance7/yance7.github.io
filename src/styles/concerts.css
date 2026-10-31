@@ -27,10 +27,10 @@
 .concert-archive-rail {
   transition-property: none;
   position: relative; overflow-x: auto; overflow-y: hidden; padding: 4px 0 20px;
-  scroll-behavior: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 4px;
+  scroll-behavior: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 3px;
   overscroll-behavior-x: contain; scrollbar-color: var(--gold) var(--surface); touch-action: auto;
 }
-.concert-rail-track { display: flex; align-items: stretch; gap: var(--space-4); width: max-content; min-width: 100%; padding-inline: 4px; transition-property: none; }
+.concert-rail-track { display: flex; align-items: stretch; gap: var(--space-4); width: max-content; min-width: 100%; padding-inline: 3px; transition-property: none; }
 .concert-rail-card {
   flex: 0 0 auto; width: clamp(252px, 29vw, 370px); min-width: 0; display: grid; gap: 12px;
   grid-template-rows: auto minmax(0, 1fr);

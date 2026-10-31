@@ -63,6 +63,11 @@ describe('horizontal rail geometry', () => {
     expect(findNextRailDestinationIndex(destinations, 89.5, 1)).toBe(2)
   })
 
+  it('skips destinations within the directional endpoint tolerance', () => {
+    expect(findNextRailDestinationIndex([0, 0.5, 90], 0, 1)).toBe(2)
+    expect(findNextRailDestinationIndex([0, 89.5, 90], 90, -1)).toBe(0)
+  })
+
   it('retires reached destinations and movement that interrupts the commanded path', () => {
     expect(isRailDestinationPending(2, 364, 0)).toBe(true)
     expect(isRailDestinationPending(5460, 364, 0)).toBe(false)

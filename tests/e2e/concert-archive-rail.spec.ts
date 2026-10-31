@@ -1,6 +1,7 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
 import { resolve, sep } from 'node:path'
 import { concerts } from '../../src/data/concerts'
+import { findNextRailDestinationIndex, getRailDestinations } from '../../src/utils/horizontalRail'
 
 const archiveIds = [
   'fforever-2026-10-06',
@@ -271,8 +272,10 @@ test('concert edge centers preserve keyboard focus and reduced-motion snapping',
 
   await next.focus()
   await expect(next).toBeFocused()
+  const firstReachableIndex = await nextDestinationIndex(rail, 1)
+  expect(firstReachableIndex).toBeGreaterThan(0)
   await next.press('Enter')
-  await expect.poll(() => centerError(rail, 1)).toBeLessThanOrEqual(2)
+  await expect.poll(() => centerError(rail, firstReachableIndex)).toBeLessThanOrEqual(2)
   await expect(next).toBeFocused()
 })
 
@@ -498,6 +501,33 @@ async function centerError(rail: Locator, index: number) {
   }, index)
 }
 
+async function nextDestinationIndex(rail: Locator, direction: 1 | -1, pendingIndex?: number) {
+  const geometry = await rail.evaluate(element => {
+    const scroller = element as HTMLElement
+    return {
+      cards: [...scroller.querySelectorAll<HTMLElement>('.concert-rail-card')].map(card => ({
+        offsetLeft: card.offsetLeft,
+        offsetWidth: card.offsetWidth
+      })),
+      viewportWidth: scroller.clientWidth,
+      maxScrollLeft: scroller.scrollWidth - scroller.clientWidth,
+      scrollLeft: scroller.scrollLeft
+    }
+  })
+  const destinations = getRailDestinations(geometry.cards, geometry.viewportWidth, geometry.maxScrollLeft)
+  return findNextRailDestinationIndex(destinations, geometry.scrollLeft, direction, pendingIndex)
+}
+
+async function destinationAfterNextPresses(rail: Locator, pressCount: number) {
+  let pendingIndex: number | undefined
+  for (let press = 0; press < pressCount; press += 1) {
+    const nextIndex = await nextDestinationIndex(rail, 1, pendingIndex)
+    if (nextIndex <= 0) throw new Error('Expected each next button press to have a reachable destination')
+    pendingIndex = nextIndex
+  }
+  return pendingIndex!
+}
+
 async function edgeGap(rail: Locator, index: number, edge: 'start' | 'end') {
   return rail.evaluate((element, target) => {
     const scroller = element as HTMLElement
@@ -584,16 +614,20 @@ test('concert edge centers and button movement preserve the document position', 
   // Let Playwright finish any click setup scrolling before measuring the real interaction.
   await next.click({ trial: true })
   const initialY = await page.evaluate(() => scrollY)
+  const firstReachableIndex = await nextDestinationIndex(rail, 1)
+  expect(firstReachableIndex).toBeGreaterThan(0)
   await next.click()
-  await expect.poll(() => centerError(rail, 1)).toBeLessThanOrEqual(2)
+  await expect.poll(() => centerError(rail, firstReachableIndex)).toBeLessThanOrEqual(2)
   expect(Math.abs(await page.evaluate(() => scrollY) - initialY)).toBeLessThanOrEqual(2)
   await previous.click()
   await expect.poll(() => edgeGap(rail, 0, 'start')).toBeLessThanOrEqual(4)
   await rail.evaluate(element => element.scrollTo({ left: element.scrollWidth, behavior: 'instant' }))
   await expect.poll(() => edgeGap(rail, -1, 'end')).toBeLessThanOrEqual(4)
   await expect(next).toBeDisabled()
+  const previousReachableIndex = await nextDestinationIndex(rail, -1)
+  expect(previousReachableIndex).toBeLessThan(await rail.locator('.concert-rail-card').count() - 1)
   await previous.click()
-  await expect.poll(() => centerError(rail, 14)).toBeLessThanOrEqual(2)
+  await expect.poll(() => centerError(rail, previousReachableIndex)).toBeLessThanOrEqual(2)
 })
 
 test('concert external rail movement cancels an unfinished button destination', async ({ page }) => {
@@ -619,33 +653,39 @@ test('concert external rail movement cancels an unfinished button destination', 
   const next = page.locator('[data-rail-direction="next"]')
   const previous = page.locator('[data-rail-direction="previous"]')
   await next.scrollIntoViewIfNeeded()
+  const firstReachableIndex = await nextDestinationIndex(rail, 1)
   await next.click()
-  await expect.poll(() => centerError(rail, 1)).toBeLessThanOrEqual(2)
+  await expect.poll(() => centerError(rail, firstReachableIndex)).toBeLessThanOrEqual(2)
   await page.evaluate(() => { (window as typeof window & { __interruptRailReturn?: boolean }).__interruptRailReturn = true })
   await previous.click()
   await expect.poll(() => edgeGap(rail, -1, 'end')).toBeLessThanOrEqual(4)
   await expect(next).toBeDisabled()
+  const previousReachableIndex = await nextDestinationIndex(rail, -1)
+  expect(previousReachableIndex).toBeLessThan(await rail.locator('.concert-rail-card').count() - 1)
   await previous.click()
-  await expect.poll(() => centerError(rail, 14)).toBeLessThanOrEqual(2)
+  await expect.poll(() => centerError(rail, previousReachableIndex)).toBeLessThanOrEqual(2)
 })
 
 test('concert rapid button clicks advance the pending destination', async ({ page }) => {
   await page.goto('/concerts/')
+  const rail = page.locator('.concert-archive-rail')
   const next = page.locator('[data-rail-direction="next"]')
   await next.scrollIntoViewIfNeeded()
+  const expectedIndex = await destinationAfterNextPresses(rail, 3)
   await next.click({ clickCount: 3 })
-  await expect.poll(() => centerError(page.locator('.concert-archive-rail'), 3)).toBeLessThanOrEqual(2)
+  await expect.poll(() => centerError(rail, expectedIndex)).toBeLessThanOrEqual(2)
 })
 
 test('concert resize keeps the same centered poster', async ({ page }) => {
   await page.goto('/concerts/')
+  const rail = page.locator('.concert-archive-rail')
   const next = page.locator('[data-rail-direction="next"]')
   await next.scrollIntoViewIfNeeded()
+  const expectedIndex = await destinationAfterNextPresses(rail, 3)
   await next.click({ clickCount: 3 })
-  const rail = page.locator('.concert-archive-rail')
-  await expect.poll(() => centerError(rail, 3)).toBeLessThanOrEqual(2)
+  await expect.poll(() => centerError(rail, expectedIndex)).toBeLessThanOrEqual(2)
   await page.setViewportSize({ width: 900, height: 800 })
-  await expect.poll(() => centerError(rail, 3)).toBeLessThanOrEqual(2)
+  await expect.poll(() => centerError(rail, expectedIndex)).toBeLessThanOrEqual(2)
 })
 
 test('concert reduced-motion resize keeps a deep-linked poster centered', async ({ page }) => {

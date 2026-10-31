@@ -66,7 +66,7 @@ export function findNextRailDestinationIndex(
       : scrollLeft
 
   if (direction > 0) {
-    const nextIndex = destinations.findIndex(destination => destination > currentPosition)
+    const nextIndex = destinations.findIndex(destination => destination > currentPosition + endpointTolerance)
     if (nextIndex < 0) return -1
 
     const nextPosition = destinations[nextIndex]!
@@ -79,7 +79,7 @@ export function findNextRailDestinationIndex(
 
   for (let index = destinations.length - 1; index >= 0; index -= 1) {
     const destination = destinations[index]!
-    if (destination >= currentPosition) continue
+    if (destination >= currentPosition - endpointTolerance) continue
 
     while (index > 0 && destinations[index - 1] === destination) index -= 1
     return index
