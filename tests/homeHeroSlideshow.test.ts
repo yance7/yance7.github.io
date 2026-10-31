@@ -4,6 +4,7 @@ import { createHomeHeroImageLoader, createHomeHeroSlideshow } from '../src/compo
 import type { PreloadImage } from '../src/utils/imagePreload'
 
 type LoadFormat = 'webp' | 'jpeg' | null
+const defaultDwellMs = 3_000
 
 function deferred<T>() {
   let resolve!: (value: T) => void
@@ -30,8 +31,10 @@ function createController(loadImage: (index: number, signal: AbortSignal) => Pro
 async function waitForTarget(controller: ReturnType<typeof createController>) {
   await flushPromises()
   expect(controller.state.value.transitioning).toBe(true)
-  expect(controller.state.value.targetIndex).not.toBeNull()
+  const targetIndex = controller.state.value.targetIndex
+  expect(targetIndex).not.toBeNull()
   expect(controller.activateTransition(controller.state.value.transactionId)).toBe(true)
+  expect(controller.displayIndicatorIndex.value).toBe(targetIndex)
 }
 
 function finishCurrentTransition(controller: ReturnType<typeof createController>) {
@@ -57,7 +60,7 @@ describe('home hero slideshow state machine', () => {
 
     first.resolve('webp')
     await flushPromises()
-    await vi.advanceTimersByTimeAsync(5_999)
+    await vi.advanceTimersByTimeAsync(defaultDwellMs - 1)
     expect(controller.state.value.currentIndex).toBe(0)
     await vi.advanceTimersByTimeAsync(1)
     await waitForTarget(controller)
@@ -65,16 +68,16 @@ describe('home hero slideshow state machine', () => {
     controller.dispose()
   })
 
-  it('advances one photo at a time in order and keeps 7 to 1 moving forward', async () => {
+  it('advances one photo at a time in order and keeps 13 to 1 moving forward', async () => {
     const controller = createController()
     await flushPromises()
 
-    for (let transition = 0; transition < 7; transition += 1) {
-      await vi.advanceTimersByTimeAsync(6_000)
+    for (let transition = 0; transition < 13; transition += 1) {
+      await vi.advanceTimersByTimeAsync(defaultDwellMs)
       await waitForTarget(controller)
       expect(controller.state.value.direction).toBe('forward')
       finishCurrentTransition(controller)
-      expect(controller.state.value.currentIndex).toBe((transition + 1) % 7)
+      expect(controller.state.value.currentIndex).toBe((transition + 1) % 13)
     }
 
     controller.dispose()
@@ -99,6 +102,28 @@ describe('home hero slideshow state machine', () => {
     controller.dispose()
   })
 
+  it('updates the indicator only when the target transition starts and rolls it back on failure', async () => {
+    const controller = createController()
+    await flushPromises()
+    controller.select(7)
+    await flushPromises()
+
+    const transactionId = controller.state.value.transactionId
+    expect(controller.state.value.currentIndex).toBe(0)
+    expect(controller.state.value.targetIndex).toBe(7)
+    expect(controller.state.value.transitioning).toBe(true)
+    expect(controller.displayIndicatorIndex.value).toBe(0)
+
+    expect(controller.activateTransition(transactionId)).toBe(true)
+    expect(controller.state.value.currentIndex).toBe(0)
+    expect(controller.displayIndicatorIndex.value).toBe(7)
+
+    controller.failTransition(transactionId)
+    expect(controller.state.value.currentIndex).toBe(0)
+    expect(controller.displayIndicatorIndex.value).toBe(0)
+    controller.dispose()
+  })
+
   it('keeps manual pause after pointer hover clears and resumes only by explicit play', async () => {
     const controller = createController()
     await flushPromises()
@@ -110,7 +135,7 @@ describe('home hero slideshow state machine', () => {
     expect(controller.state.value.userPaused).toBe(true)
     expect(controller.state.value.transitioning).toBe(false)
     controller.play()
-    await vi.advanceTimersByTimeAsync(6_000)
+    await vi.advanceTimersByTimeAsync(defaultDwellMs)
     await waitForTarget(controller)
     controller.dispose()
   })
@@ -124,7 +149,7 @@ describe('home hero slideshow state machine', () => {
     expect(controller.state.value.transitioning).toBe(false)
 
     controller.play()
-    await vi.advanceTimersByTimeAsync(6_000)
+    await vi.advanceTimersByTimeAsync(defaultDwellMs)
     await waitForTarget(controller)
     expect(controller.state.value.focusPaused).toBe(false)
     controller.dispose()
@@ -145,7 +170,7 @@ describe('home hero slideshow state machine', () => {
     controller.select(4)
     await flushPromises()
     controller.play()
-    await vi.advanceTimersByTimeAsync(6_000)
+    await vi.advanceTimersByTimeAsync(defaultDwellMs)
     await flushPromises()
 
     expect(manualSignal.value?.aborted).toBe(false)
@@ -158,7 +183,7 @@ describe('home hero slideshow state machine', () => {
     expect(controller.state.value.targetIndex).toBe(4)
     finishCurrentTransition(controller)
 
-    await vi.advanceTimersByTimeAsync(5_999)
+    await vi.advanceTimersByTimeAsync(defaultDwellMs - 1)
     expect(controller.state.value.currentIndex).toBe(4)
     await vi.advanceTimersByTimeAsync(1)
     await waitForTarget(controller)
@@ -182,7 +207,7 @@ describe('home hero slideshow state machine', () => {
     expect(controller.state.value.transitioning).toBe(false)
 
     controller.setEnvironment(active)
-    await vi.advanceTimersByTimeAsync(5_999)
+    await vi.advanceTimersByTimeAsync(defaultDwellMs - 1)
     expect(controller.state.value.currentIndex).toBe(0)
     await vi.advanceTimersByTimeAsync(1)
     await waitForTarget(controller)
@@ -401,7 +426,7 @@ describe('home hero slideshow state machine', () => {
       return (index === 0 || index === 1) && attempts.get(index) === 1 ? 'webp' : null
     })
     await flushPromises()
-    await vi.advanceTimersByTimeAsync(6_000)
+    await vi.advanceTimersByTimeAsync(defaultDwellMs)
     await waitForTarget(controller)
     const transactionId = controller.state.value.transactionId
     expect(controller.state.value.targetIndex).toBe(1)
@@ -439,13 +464,13 @@ describe('home hero slideshow state machine', () => {
       return index === 0 ? 'webp' : null
     })
     await flushPromises()
-    await vi.advanceTimersByTimeAsync(6_000)
+    await vi.advanceTimersByTimeAsync(defaultDwellMs)
     await flushPromises()
 
     expect(controller.state.value.currentIndex).toBe(0)
     expect(controller.state.value.autoStopped).toBe(true)
     expect(controller.state.value.userPaused).toBe(true)
-    expect([...attempts.keys()].filter((index) => index !== 0)).toHaveLength(6)
+    expect([...attempts.keys()].filter((index) => index !== 0)).toHaveLength(12)
     controller.dispose()
   })
 
@@ -458,7 +483,7 @@ describe('home hero slideshow state machine', () => {
     expect(controller.state.value.currentIndex).toBe(0)
 
     controller.setEnvironment({ pageVisible: true, inViewport: true })
-    await vi.advanceTimersByTimeAsync(5_999)
+    await vi.advanceTimersByTimeAsync(defaultDwellMs - 1)
     expect(controller.state.value.currentIndex).toBe(0)
     await vi.advanceTimersByTimeAsync(1)
     await waitForTarget(controller)

@@ -9,7 +9,7 @@ interface HomeHeroSlideshowMessages {
   pause: string
   static: string
   showPhoto: (current: number, total: number, name: string) => string
-  photos: Record<1 | 2 | 3 | 4 | 5 | 6 | 7, string>
+  photos: Record<1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13, string>
   status: {
     photoShown: (current: number, total: number, name: string) => string
     photoSelected: (current: number, total: number, name: string) => string

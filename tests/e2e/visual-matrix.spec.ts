@@ -137,6 +137,15 @@ async function settleHomeHero(page: Page, pauseSlideshow = false) {
   }
 }
 
+async function pauseHomeHeroParticlesForVisualCapture(page: Page) {
+  const stage = page.locator('.home-hero-particles')
+  if (!await stage.count()) return
+  await page.evaluate(() => window.dispatchEvent(new Event('blur')))
+  await expect(stage).toHaveAttribute('data-particle-state', 'paused')
+  await expect(stage).toHaveAttribute('data-moving-particle-count', '0')
+  await expect(stage).toHaveAttribute('data-animation-running', 'false')
+}
+
 async function movePointerAway(page: Page) {
   const viewport = page.viewportSize()
   if (!viewport) return
@@ -427,7 +436,7 @@ for (const locale of homeHeroLocales) {
 }
 
 for (const viewport of viewports) {
-  for (const photoNumber of [1, 2, 3, 4, 5, 6, 7]) {
+  for (const photoNumber of Array.from({ length: 13 }, (_, index) => index + 1)) {
     test(`captures home hero photo ${photoNumber} at ${viewport.name} size`, async ({ page }, testInfo) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height })
       await installTheme(page, 'light')
@@ -446,6 +455,7 @@ for (const viewport of viewports) {
       await page.evaluate(() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' }))
       await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0)
       await resetPointerForVisualCapture(page)
+      await pauseHomeHeroParticlesForVisualCapture(page)
 
       const heroVisual = page.locator('.home-hero-visual')
       await expect(heroVisual).toBeVisible()
