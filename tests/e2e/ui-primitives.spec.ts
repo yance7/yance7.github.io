@@ -2,23 +2,34 @@ import { expect, test } from '@playwright/test'
 
 for (const variant of ['primary', 'secondary']) {
   test(`@pointer-refinement Hero ${variant} press keeps its hit area and label stable`, async ({ page }) => {
-    test.skip(!(await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches)), 'fine pointer only')
     await page.goto('/')
+    test.skip(!(await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches)), 'fine pointer only')
     await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'complete')
     const action = page.locator(`.hero-action.${variant}`)
-    const visual = action.locator('.hero-action__visual')
-    const baseline = await action.boundingBox()
+    const label = action.locator('.hero-action__label')
+    const baseline = await action.evaluate(element => ({
+      width: (element as HTMLElement).offsetWidth,
+      height: (element as HTMLElement).offsetHeight
+    }))
     await action.hover({ position: { x: 8, y: 8 } })
     await page.mouse.down()
-    await expect(action).toHaveCSS('transform', 'none')
-    await expect.poll(() => visual.evaluate((element) => {
-      const transform = getComputedStyle(element).transform
-      return transform === 'none' ? 1 : new DOMMatrixReadOnly(transform).m11
-    })).toBeCloseTo(.985, 3)
-    await expect(visual.locator('span').first()).toHaveCSS('transform', 'none')
-    const pressed = await action.boundingBox()
-    expect(pressed?.x).toBeCloseTo(baseline!.x, 1)
-    expect(pressed?.y).toBeCloseTo(baseline!.y, 1)
+    if (variant === 'primary') {
+      await expect.poll(() => action.evaluate(element => {
+        const matrix = new DOMMatrixReadOnly(getComputedStyle(element).transform)
+        return { scale: Number(matrix.a.toFixed(3)), y: Number(matrix.m42.toFixed(1)) }
+      })).toEqual({ scale: .985, y: 1 })
+    } else {
+      await expect(action).toHaveCSS('transform', 'none')
+    }
+    await expect(label).toHaveCSS('transform', 'none')
+    const pressed = await action.evaluate(element => ({
+      width: (element as HTMLElement).offsetWidth,
+      height: (element as HTMLElement).offsetHeight,
+      hitHeight: element.getBoundingClientRect().height
+    }))
+    expect(pressed.width).toBe(baseline.width)
+    expect(pressed.height).toBe(baseline.height)
+    expect(pressed.hitHeight).toBeGreaterThanOrEqual(44)
     await page.mouse.move(0, 0)
     await page.mouse.up()
   })
@@ -257,10 +268,19 @@ test('shared control hover keeps Hero hit areas stable and theme lift restrained
 
   for (const selector of ['.theme-orbit', '.hero-action']) {
     const control = page.locator(selector).first()
+    const baseline = await control.evaluate(element => ({
+      width: (element as HTMLElement).offsetWidth,
+      height: (element as HTMLElement).offsetHeight
+    }))
     await control.hover()
     await expect.poll(() => control.evaluate((element) => {
       const transform = getComputedStyle(element).transform
       return transform === 'none' ? 0 : new DOMMatrixReadOnly(transform).m42
-    })).toBe(selector === '.hero-action' ? 0 : -1)
+    })).toBe(-1)
+    const hovered = await control.evaluate(element => ({
+      width: (element as HTMLElement).offsetWidth,
+      height: (element as HTMLElement).offsetHeight
+    }))
+    expect(hovered).toEqual(baseline)
   }
 })

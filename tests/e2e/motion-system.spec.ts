@@ -60,7 +60,11 @@ test('@pointer-refinement Hero CTA uses a stable inner magnetic layer without mo
   await expect.poll(() => action.locator('[data-magnetic-visual]').evaluate((element) => element.style.translate)).not.toBe('')
   const hovered = await action.boundingBox()
   expect(hovered?.x).toBeCloseTo(baseline!.x, 1)
-  expect(hovered?.y).toBeCloseTo(baseline!.y, 1)
+  const verticalLift = baseline!.y - hovered!.y
+  expect(verticalLift).toBeGreaterThanOrEqual(-0.05)
+  expect(verticalLift).toBeLessThanOrEqual(1.05)
+  expect(hovered?.width).toBeCloseTo(baseline!.width, 1)
+  expect(hovered?.height).toBeCloseTo(baseline!.height, 1)
 })
 
 test('@pointer-refinement magnetic buttons keep a stable hit area and bounded visual displacement', async ({ page }) => {

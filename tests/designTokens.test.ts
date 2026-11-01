@@ -122,7 +122,7 @@ describe('archive design tokens', () => {
     expect(components).not.toContain('padding: 9px 12px; border-radius: var(--radius-sm);')
     expect(shell).toContain('padding: 5px 12px 5px 6px; border-radius: var(--radius-pill);')
     expect(shell).not.toContain('padding: 5px 12px 5px 6px; border-radius: var(--radius-full);')
-    expect(homeHero).toMatch(/padding: 0 16px;[\s\S]*border: 1px solid var\(--control-border\);[\s\S]*border-radius: var\(--radius-pill\)/)
+    expect(homeHero).toMatch(/\.hero-action\.primary\s*\{[\s\S]*?min-height: 48px;[\s\S]*?padding-inline: 22px;[\s\S]*?border-radius: 10px;/)
     expect(homeHero).not.toContain('padding: 11px 18px; border: 1px solid var(--control-border); border-radius: var(--radius-full);')
     expect(responsive).not.toContain('grid-template-areas: "index icon";')
   })
