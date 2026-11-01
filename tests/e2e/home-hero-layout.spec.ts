@@ -81,7 +81,9 @@ for (const fallback of [false, true]) for (const locale of locales) {
           stageCenter: (stage.left + stage.right) / 2,
           stageTop: stage.top,
           stageHeight: stage.height,
-          minimumCtaHeight: Math.min(...ctaHeights)
+          minimumCtaHeight: Math.min(...ctaHeights),
+          primaryCtaHeight: document.querySelector('.hero-action.primary')!.getBoundingClientRect().height,
+          secondaryCtaHeight: document.querySelector('.hero-action.secondary')!.getBoundingClientRect().height
         }
       })
 
@@ -91,6 +93,8 @@ for (const fallback of [false, true]) for (const locale of locales) {
       expect(layout.documentWidth, `${context} horizontal overflow`).toBeLessThanOrEqual(layout.viewportWidth)
       expect(layout.titleOverflow, `${context} title overflow`).toBe(false)
       expect(layout.minimumCtaHeight, `${context} CTA height`).toBeGreaterThanOrEqual(44)
+      expect(layout.primaryCtaHeight, `${context} primary CTA hit height`).toBeGreaterThanOrEqual(48)
+      expect(layout.secondaryCtaHeight, `${context} secondary link hit height`).toBeGreaterThanOrEqual(44)
       expect(layout.actionsBottom, `${context} CTA visibility`).toBeLessThanOrEqual(layout.viewportHeight)
       expect(Math.abs(layout.titleCenter - layout.contentCenter), `${context} title center`).toBeLessThanOrEqual(16)
       expect(Math.abs(layout.actionsCenter - layout.contentCenter), `${context} action center`).toBeLessThanOrEqual(16)
@@ -116,7 +120,7 @@ test('desktop CTA bounds remain stable with a wide fallback interface font', asy
   await page.setViewportSize({ width: 1440, height: 1000 })
   await page.goto('/en/')
   await page.addStyleTag({ content: '.hero-action { font-family: monospace; }' })
-  for (const action of await page.locator('.hero-action').all()) {
+  for (const action of await page.locator('.hero-action.primary').all()) {
     const box = await action.boundingBox()
     expect(box!.width).toBeLessThanOrEqual(240)
     await expect(action).toBeVisible()
@@ -153,7 +157,7 @@ for (const locale of locales) {
     await page.goto(locale.route)
     for (const width of [1440, 390, 320]) {
       await page.setViewportSize({ width, height: 1000 })
-      for (const action of await page.locator('.hero-action').all()) {
+      for (const action of await page.locator('.hero-action.primary').all()) {
         const geometry = await action.evaluate((link) => {
           const label = link.querySelector('.hero-action__label') ?? link.querySelector('.hero-action__visual > span')!
           const range = document.createRange()
@@ -213,6 +217,9 @@ for (const locale of locales) {
             : null,
           titleToActionsGap: actions.top - title.bottom,
           ctaWidths: ctas.map((cta) => cta.width),
+          ctaCenterDelta: firstCta && secondCta
+            ? Math.abs((firstCta.top + firstCta.height / 2) - (secondCta.top + secondCta.height / 2))
+            : null,
           ctaLabelHeights: [...document.querySelectorAll('.hero-action__label')]
             .map((label) => label.getBoundingClientRect().height),
           ctaGap: firstCta && secondCta ? secondCta.left - firstCta.right : null,
@@ -235,13 +242,13 @@ for (const locale of locales) {
       expect(layout.titleLineGap, `${context} title line spacing`).toBeLessThanOrEqual(29)
       expect(layout.titleToActionsGap, `${context} title-to-CTA spacing`).toBeGreaterThanOrEqual(35)
       expect(layout.titleToActionsGap, `${context} title-to-CTA spacing`).toBeLessThanOrEqual(45)
-      for (const width of layout.ctaWidths) {
-        expect(width, `${context} desktop CTA width`).toBeGreaterThanOrEqual(178)
-        expect(width, `${context} desktop CTA width`).toBeLessThanOrEqual(240)
-      }
+      expect(layout.ctaWidths[0], `${context} primary CTA width`).toBeGreaterThanOrEqual(178)
+      expect(layout.ctaWidths[0], `${context} primary CTA width`).toBeLessThanOrEqual(240)
+      expect(layout.ctaWidths[1], `${context} secondary link fits its content column`).toBeLessThanOrEqual(layout.contentWidth)
       for (const height of layout.ctaLabelHeights) {
         expect(height, `${context} desktop CTA label remains readable within two lines`).toBeLessThanOrEqual(30)
       }
+      expect(layout.ctaCenterDelta, `${context} desktop CTA row centers`).toBeLessThanOrEqual(1)
       expect(layout.ctaGap, `${context} desktop CTA spacing`).toBeGreaterThanOrEqual(11)
       expect(layout.ctaGap, `${context} desktop CTA spacing`).toBeLessThanOrEqual(13)
       expect(layout.contentWidth, `${context} maximum content width`).toBeLessThanOrEqual(1262)
@@ -256,6 +263,150 @@ for (const locale of locales) {
         : Math.max(72, Math.min(128, viewport.width * 0.08))
       expect(Math.abs(layout.topPadding - expectedTopPadding), `${context} hero top padding`).toBeLessThanOrEqual(1)
       expect(Math.abs(layout.stageRadius - 28), `${context} stage corner radius`).toBeLessThanOrEqual(2)
+    }
+  })
+}
+
+for (const locale of locales) {
+  test(`${locale.route} home actions keep a clear primary and text-link hierarchy in both themes`, async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 })
+    await page.goto(locale.route)
+
+    const primary = page.locator('.home-hero-actions .hero-action.primary')
+    const secondary = page.locator('.home-hero-actions .hero-action.secondary')
+    const hasFinePointer = await page.evaluate(() => (
+      window.matchMedia('(hover: hover) and (pointer: fine)').matches
+      && !window.matchMedia('(hover: none), (pointer: coarse)').matches
+    ))
+    await expect(primary).toHaveAttribute('href', '#selected-work')
+    await expect(secondary).toHaveAttribute('href', '#home-worlds')
+
+    for (const theme of ['light', 'dark'] as const) {
+      const primaryStyle = await primary.evaluate((link, themeName) => {
+        document.documentElement.dataset.theme = themeName
+        const probe = document.createElement('span')
+        probe.style.backgroundColor = 'var(--action-fill)'
+        probe.style.color = 'var(--accent-contrast)'
+        document.body.append(probe)
+        const expectedBackground = getComputedStyle(probe).backgroundColor
+        const expectedColor = getComputedStyle(probe).color
+        probe.remove()
+
+        const baseProbe = link.cloneNode(true) as HTMLElement
+        baseProbe.style.position = 'fixed'
+        baseProbe.style.left = '-10000px'
+        baseProbe.style.top = '0'
+        baseProbe.style.pointerEvents = 'none'
+        baseProbe.style.visibility = 'hidden'
+        document.body.append(baseProbe)
+        const baseStyle = getComputedStyle(baseProbe)
+        const background = baseStyle.backgroundColor
+        const color = baseStyle.color
+        baseProbe.remove()
+
+        const style = getComputedStyle(link)
+        const bounds = link.getBoundingClientRect()
+        const visual = link.querySelector<HTMLElement>('.hero-action__visual')!
+        const visualStyle = getComputedStyle(visual)
+        const label = link.querySelector('.hero-action__label')!
+        const range = document.createRange()
+        range.selectNodeContents(label)
+        const text = range.getBoundingClientRect()
+        const columns = visualStyle.gridTemplateColumns.split(/\s+/).map(value => Number.parseFloat(value))
+
+        return {
+          minHeight: style.minHeight,
+          height: bounds.height,
+          paddingLeft: style.paddingLeft,
+          paddingRight: style.paddingRight,
+          radius: style.borderTopLeftRadius,
+          fontWeight: style.fontWeight,
+          fontFamily: style.fontFamily,
+          background,
+          backgroundImage: style.backgroundImage,
+          color,
+          expectedBackground,
+          expectedColor,
+          columns,
+          textCenterOffset: Math.abs((text.left + text.right - bounds.left - bounds.right) / 2),
+          transitionDuration: style.transitionDuration.split(',')[0]?.trim()
+        }
+      }, theme)
+
+      expect(primaryStyle.minHeight, `${locale.route} ${theme} primary minimum height`).toBe('48px')
+      expect(primaryStyle.height, `${locale.route} ${theme} primary hit height`).toBeGreaterThanOrEqual(47.99)
+      expect(primaryStyle.paddingLeft).toBe('22px')
+      expect(primaryStyle.paddingRight).toBe('22px')
+      expect(primaryStyle.radius).toBe('10px')
+      expect(primaryStyle.fontWeight).toBe('600')
+      expect(primaryStyle.background).toBe(primaryStyle.expectedBackground)
+      expect(primaryStyle.backgroundImage).toBe('none')
+      expect(primaryStyle.color).toBe(primaryStyle.expectedColor)
+      expect(primaryStyle.columns).toHaveLength(3)
+      expect(Math.abs(primaryStyle.columns[0]! - primaryStyle.columns[2]!)).toBeLessThanOrEqual(0.1)
+      expect(primaryStyle.textCenterOffset).toBeLessThanOrEqual(1)
+      expect(primaryStyle.transitionDuration).toBe('0.16s')
+
+      await primary.focus()
+      const primaryFocus = await primary.evaluate(link => {
+        const style = getComputedStyle(link)
+        return { outlineStyle: style.outlineStyle, outlineWidth: style.outlineWidth, outlineOffset: style.outlineOffset }
+      })
+      expect(primaryFocus).toEqual({ outlineStyle: 'solid', outlineWidth: '2px', outlineOffset: '3px' })
+
+      if (hasFinePointer) await secondary.hover()
+      const secondaryStyle = await secondary.evaluate(link => {
+        const style = getComputedStyle(link)
+        const label = getComputedStyle(link.querySelector('.hero-action__label')!)
+        return {
+          minHeight: style.minHeight,
+          height: link.getBoundingClientRect().height,
+          background: style.backgroundColor,
+          borderColor: style.borderTopColor,
+          radius: style.borderTopLeftRadius,
+          boxShadow: style.boxShadow,
+          underline: label.textDecorationLine,
+          fontFamily: style.fontFamily
+        }
+      })
+      expect(Number.parseFloat(secondaryStyle.minHeight)).toBeGreaterThanOrEqual(44)
+      expect(secondaryStyle.height).toBeGreaterThanOrEqual(44)
+      expect(secondaryStyle.background).toBe('rgba(0, 0, 0, 0)')
+      expect(secondaryStyle.borderColor).toBe('rgba(0, 0, 0, 0)')
+      expect(secondaryStyle.radius).toBe('0px')
+      expect(secondaryStyle.boxShadow).toBe('none')
+      expect(secondaryStyle.underline).toBe('underline')
+      expect(secondaryStyle.fontFamily).toBe(primaryStyle.fontFamily)
+    }
+
+    if (hasFinePointer) {
+      await primary.hover()
+      await expect.poll(() => primary.evaluate(link => getComputedStyle(link).transform))
+        .toBe('matrix(1, 0, 0, 1, 0, -1)')
+      const hoverStyle = await primary.evaluate(link => getComputedStyle(link).boxShadow)
+      expect(hoverStyle).not.toBe('none')
+
+      await page.evaluate(() => document.addEventListener('click', event => event.preventDefault(), { once: true }))
+      await page.mouse.down()
+      await expect.poll(() => primary.evaluate(link => {
+        const matrix = new DOMMatrixReadOnly(getComputedStyle(link).transform)
+        return {
+          active: link.matches(':active'),
+          movesDown: matrix.m42 > 0,
+          scalesDown: matrix.a < 1
+        }
+      })).toEqual({ active: true, movesDown: true, scalesDown: true })
+      await page.mouse.up()
+
+      await page.emulateMedia({ reducedMotion: 'reduce' })
+      await primary.hover()
+      await expect.poll(() => primary.evaluate(link => getComputedStyle(link).transform)).toBe('none')
+      const reducedMotionStyle = await primary.evaluate(link => {
+        const style = getComputedStyle(link)
+        return { transform: style.transform, transitionDuration: style.transitionDuration }
+      })
+      expect(reducedMotionStyle.transform).toBe('none')
+      expect(Number.parseFloat(reducedMotionStyle.transitionDuration)).toBeLessThan(0.001)
     }
   })
 }

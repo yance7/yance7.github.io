@@ -70,6 +70,7 @@ for (const width of [320, 390, 768, 1024, 1440]) {
         documentWidth: document.documentElement.scrollWidth,
         viewportWidth: window.innerWidth,
         groupWidth: grid.getBoundingClientRect().width,
+        gridColumnCount: getComputedStyle(grid).gridTemplateColumns.split(/\s+/).length,
         firstRowTopDelta: Math.abs(firstRow[0]!.top - firstRow[1]!.top),
         hitAreas: links.map((link) => {
           const rect = link.getBoundingClientRect()
@@ -82,7 +83,12 @@ for (const width of [320, 390, 768, 1024, 1440]) {
 
     expect(geometry.documentWidth, `${width}px footer overflow`).toBeLessThanOrEqual(geometry.viewportWidth)
     expect(geometry.svgCount).toBe(2)
+    expect(geometry.groupWidth, `${width}px contacts width cap`).toBeLessThanOrEqual(600)
+    expect(geometry.gridColumnCount, `${width}px contacts column count`).toBe(width <= 760 ? 1 : 2)
     expect(geometry.hitAreas.every(({ width: hitWidth, height }) => hitWidth >= 44 && height >= 44)).toBe(true)
+    expect(geometry.hitAreas.every(({ height }) => height <= 96), `${width}px compact contact cards`).toBe(true)
+    expect(Math.abs(geometry.hitAreas[0]!.width - geometry.hitAreas[1]!.width), `${width}px equal card width`).toBeLessThanOrEqual(1)
+    expect(Math.abs(geometry.hitAreas[0]!.height - geometry.hitAreas[1]!.height), `${width}px equal card height`).toBeLessThanOrEqual(1)
     if (width >= 768) {
       expect(geometry.firstRowTopDelta, `${width}px contact first row`).toBeLessThanOrEqual(1)
     }
@@ -108,8 +114,10 @@ async function observeFooterGeometry(page: Page, resize: { width: number; paddin
         })
         return {
           width: rect.width,
+          height: rect.height,
           gap: arrow.left - Math.max(...textRanges.map(text => text.right)),
           columnGap: arrow.left - copy.right,
+          arrowInlineEnd: rect.right - arrow.right,
           copyWidth: copy.width,
           containsText: textRanges.every(text => text.left >= rect.left && text.right <= rect.right),
           overflow: link.scrollWidth > link.clientWidth + 1
@@ -216,7 +224,7 @@ test.afterEach(async ({ page }, info) => {
   if (unavailable) throw new Error(`Footer observer cleanup unavailable: ${unavailable}`)
 })
 
-async function expectContentFittedContacts(geometry: FooterGeometry, label: string, hostStartedAt: number) {
+async function expectEqualContactCards(geometry: FooterGeometry, label: string, hostStartedAt: number) {
   const { cards } = geometry
   const evidencePath = test.info().outputPath(`footer-geometry-${label.replace(/[^a-z0-9-]/gi, '-')}.json`)
   await mkdir(test.info().outputDir, { recursive: true })
@@ -228,17 +236,20 @@ async function expectContentFittedContacts(geometry: FooterGeometry, label: stri
   expect(cards).toHaveLength(2)
   for (const card of cards) {
     expect(card.gap, `${label} text-to-arrow gap`).toBeGreaterThanOrEqual(10)
-    expect(card.gap, `${label} text-to-arrow gap`).toBeLessThanOrEqual(14)
+    expect(card.columnGap, `${label} text column to arrow gap`).toBeGreaterThanOrEqual(10)
+    expect(card.columnGap, `${label} text column to arrow gap`).toBeLessThanOrEqual(14)
     expect(card.containsText).toBe(true)
     expect(card.overflow).toBe(false)
   }
-  expect(cards[0]!.width, 'short GitHub card does not stretch to match email').toBeGreaterThan(cards[1]!.width + 20)
+  expect(Math.abs(cards[0]!.width - cards[1]!.width), `${label} equal card width`).toBeLessThanOrEqual(1)
+  expect(Math.abs(cards[0]!.height - cards[1]!.height), `${label} equal card height`).toBeLessThanOrEqual(1)
+  expect(Math.abs(cards[0]!.arrowInlineEnd - cards[1]!.arrowInlineEnd), `${label} shared arrow column`).toBeLessThanOrEqual(1)
   expect(geometry.documentWidth <= geometry.viewportWidth).toBe(true)
 }
 
 for (const locale of locales) {
-  for (const width of [1440, 960, 768, 390, 320]) {
-    test(`footer cards fit their actual contact content: ${locale.name} at ${width}px`, async ({ page }) => {
+  for (const width of [1440, 1024, 960, 768, 390, 320]) {
+    test(`footer contact cards are equal and fit their content: ${locale.name} at ${width}px`, async ({ page }) => {
       await page.setViewportSize({ width, height: 1000 })
       await page.emulateMedia({ reducedMotion: 'reduce' })
       await page.goto(locale.path)
@@ -246,14 +257,14 @@ for (const locale of locales) {
       const startedAt = Date.now()
       const observation = await observeFooterGeometry(page)
       try {
-        await expectContentFittedContacts(await observation.evaluate(value => value.before), `${locale.name} ${width}px`, startedAt)
+        await expectEqualContactCards(await observation.evaluate(value => value.before), `${locale.name} ${width}px`, startedAt)
       } finally {
         await observation.dispose()
       }
     })
   }
 
-  test(`footer cards retain their content fit after a responsive resize: ${locale.name}`, async ({ page }) => {
+  test(`footer contact cards retain equal geometry after a responsive resize: ${locale.name}`, async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 1000 })
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.goto(locale.path)
@@ -261,11 +272,11 @@ for (const locale of locales) {
     const startedAt = Date.now()
     const observation = await observeFooterGeometry(page, { width: 320, padding: 16 })
     footerObservations.set(page, { handle: observation, startedAt })
-    await expectContentFittedContacts(await observation.evaluate(value => value.before), `${locale.name} before resize`, startedAt)
+    await expectEqualContactCards(await observation.evaluate(value => value.before), `${locale.name} before resize`, startedAt)
     const resizedAt = Date.now()
     await page.setViewportSize({ width: 320, height: 1000 })
     const resized = await observation.evaluate(value => value.resized!)
-    await expectContentFittedContacts(resized, `${locale.name} after resize`, resizedAt)
+    await expectEqualContactCards(resized, `${locale.name} after resize`, resizedAt)
   })
 }
 
