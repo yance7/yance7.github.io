@@ -22,6 +22,7 @@ describe('repository hygiene', () => {
     expect(await eslint.isPathIgnored(resolve(repositoryRoot, 'tests/mimoParticleModel.test.ts'))).toBe(false)
     expect(await eslint.isPathIgnored(resolve(repositoryRoot, 'test-results/review-copy/src/main.ts'))).toBe(true)
     expect(await eslint.isPathIgnored(resolve(repositoryRoot, 'test-results/report.js'))).toBe(true)
+    expect(await eslint.isPathIgnored(resolve(repositoryRoot, '.ssg-build/entry-server.js'))).toBe(true)
   })
 
   it('keeps internal collaboration paths out of the tracked public tree', () => {

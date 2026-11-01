@@ -3,6 +3,8 @@ import { nextTick, onBeforeUnmount, onMounted, watch, type Ref } from 'vue'
 // Browser navigation, focus, find and keyboard scroll retain control until
 // the next pointer scroll. No wheel movement is consumed or rewritten.
 export function useHomeScrollSnap(isHome: boolean, ready: Ref<boolean>) {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return
+
   let desktop: MediaQueryList | undefined
   let reduced: MediaQueryList | undefined
   let bodyObserver: MutationObserver | undefined

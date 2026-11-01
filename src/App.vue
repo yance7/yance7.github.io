@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch, type Component } from 'vue'
 import { getLocalizedPageMeta } from './data/locales'
-import { isPageKey } from './data'
 import { useLocale } from './i18n'
 import { useTheme } from './composables/useTheme'
 import { useHomeScrollSnap } from './composables/useHomeScrollSnap'
@@ -23,14 +22,13 @@ import SitewideCursor from './components/SitewideCursor.vue'
 import NotFoundPage from './pages/NotFoundPage.vue'
 
 import type { LightboxPayload } from './data/types'
+import type { SiteRenderContext } from './app/renderContext'
 
-const page = (() => {
-  const candidate = document.body.dataset.page
-  return isPageKey(candidate) ? candidate : undefined
-})()
-const initialHash = document.documentElement.dataset.initialHash || window.location.hash
+const props = defineProps<{ context: SiteRenderContext; initialPage?: Component }>()
+const page = props.context.page
+const initialHash = props.context.initialHash ?? ''
 const isHome = page === 'home'
-const deferHomeContent = isHome && !initialHash
+const deferHomeContent = isHome && !initialHash && !props.initialPage
 const pageContentEnabled = ref(!deferHomeContent)
 const { initTheme } = useTheme()
 const { locale, messages } = useLocale()
@@ -39,7 +37,7 @@ const lightbox = ref<LightboxPayload | null>(null)
 type PageLoadState = 'loading' | 'ready' | 'error'
 
 const pageLoader = page ? getPageLoader(page) : undefined
-const pageLoadState = ref<PageLoadState>(pageLoader ? 'loading' : 'ready')
+const pageLoadState = ref<PageLoadState>(props.initialPage ? 'ready' : pageLoader ? 'loading' : 'ready')
 const showPageSkeleton = ref(false)
 const pageLoadController = new AbortController()
 let skeletonTimer: ReturnType<typeof setTimeout> | undefined
@@ -378,9 +376,7 @@ const heroTitle = computed(() => (isError ? messages.value.error404.title : meta
 const heroCopy = computed(() => (isError ? messages.value.error404.copy : meta.value.copy))
 const heroCredit = computed(() => (isError || !page ? null : getLocalizedPageMeta(locale.value, page).credit || null))
 
-const currentPage = pageLoader
-  ? defineAsyncComponent(loadPage)
-  : NotFoundPage
+const currentPage = props.initialPage ?? (pageLoader ? defineAsyncComponent(loadPage) : NotFoundPage)
 function handleLightbox(data: LightboxPayload) { lightbox.value = data }
 function closeLightbox() { lightbox.value = null }
 function moveLightbox(step: number) {
@@ -400,7 +396,7 @@ function moveLightbox(step: number) {
 
     <SiteHeader :page="page" />
 
-    <main id="main">
+    <main id="main" tabindex="-1">
       <ScrollProgress v-if="page" />
 
       <HomeHero
@@ -418,7 +414,13 @@ function moveLightbox(step: number) {
         :credit="heroCredit"
       />
 
-      <Suspense v-if="pageContentEnabled" @resolve="handlePageResolved">
+      <component
+        v-if="initialPage"
+        :is="initialPage"
+        @open-lightbox="handleLightbox"
+      />
+
+      <Suspense v-else-if="pageContentEnabled" @resolve="handlePageResolved">
         <component :is="currentPage" @open-lightbox="handleLightbox" />
         <template #fallback><PageContentSkeleton v-if="showPageSkeleton" /></template>
       </Suspense>

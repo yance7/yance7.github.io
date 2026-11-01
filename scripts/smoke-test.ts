@@ -58,10 +58,27 @@ for (const [page, cssFiles] of Object.entries(pageManifest)) {
 
 function assertHtmlContract(path: string, locale: Locale, pageKey?: (typeof pageEntries)[number]['key']) {
   const html = read(path)
+  const isPrerendered = Boolean(pageKey && pageKey !== 'concerts')
   assert((html.match(/name="theme-color"/g) ?? []).length === 1, `${path} 必须只有一个 theme-color 标签`)
   assert(/Content-Security-Policy/.test(html), `${path} 缺少 CSP`)
   assert(/script-src 'self' 'sha256-[^']+'/.test(html), `${path} CSP 缺少 theme bootstrap hash`)
-  assert(html.includes('<div id="app"></div>'), `${path} 缺少 Vue 挂载点`)
+  assert((html.match(/<div id="app">/g) ?? []).length === 1, `${path} 必须只有一个 Vue 挂载点`)
+  if (isPrerendered) {
+    assert(html.includes('<div id="app"><div class="site-shell"'), `${path} 缺少静态渲染页面内容`)
+    assert(html.includes('data-rendered="ssg"'), `${path} 缺少静态渲染标记`)
+    assert(/data-render-date="\d{4}-\d{2}-\d{2}"/.test(html), `${path} 缺少有效渲染日期`)
+    assert((html.match(/<h1\b/g) ?? []).length === 1, `${path} 必须只有一个主标题`)
+    assert(html.includes('<main id="main" tabindex="-1">'), `${path} 缺少可聚焦主内容入口`)
+    assert(html.includes('<footer class="site-footer'), `${path} 缺少静态页脚`)
+    const noScriptNotice = {
+      'zh-CN': '核心内容与链接可直接浏览',
+      'zh-HK': '核心內容與連結可直接瀏覽',
+      en: 'Core content and links remain available without JavaScript'
+    }[locale]
+    assert(html.includes(noScriptNotice), `${path} 缺少 ${locale} 无 JavaScript 说明`)
+  } else {
+    assert(html.includes('<div id="app"></div>'), `${path} 缺少 Vue 挂载点`)
+  }
   assert(/assets\/vue\/main-[^"']+\.js/.test(html), `${path} 缺少 hash 入口资源`)
   assert(!html.includes('../src/'), `${path} 仍引用源码资源`)
   assert(!html.includes('fonts.googleapis.com'), `${path} 仍阻塞加载 Google Fonts`)

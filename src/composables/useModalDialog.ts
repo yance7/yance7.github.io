@@ -15,6 +15,7 @@ export function useModalDialog(
 ) {
   let lastFocus: HTMLElement | null = null
   let inertTimer: ReturnType<typeof setTimeout> | undefined
+  let stopOpenWatch: (() => void) | undefined
   const { dialogRef, initialFocus, inertSelectors = [], onClose } = options
   const deferInert = options.deferInert ?? false
 
@@ -67,23 +68,23 @@ export function useModalDialog(
     }, 0)
   }
 
-  watch(() => unref(open), async (value) => {
-    scheduleInert(value)
-    if (!value) {
-      lastFocus?.focus()
-      lastFocus = null
-      return
-    }
-    lastFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
-    await nextTick()
-    initialFocus?.value?.focus()
-  }, { immediate: true })
-
   onMounted(() => {
     window.addEventListener('keydown', onKeydown)
+    stopOpenWatch = watch(() => unref(open), async (value) => {
+      scheduleInert(value)
+      if (!value) {
+        lastFocus?.focus()
+        lastFocus = null
+        return
+      }
+      lastFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
+      await nextTick()
+      initialFocus?.value?.focus()
+    }, { immediate: true })
   })
 
   onUnmounted(() => {
+    stopOpenWatch?.()
     if (inertTimer !== undefined) clearTimeout(inertTimer)
     window.removeEventListener('keydown', onKeydown)
     setInert(false)

@@ -201,6 +201,45 @@
   .foot-mark:hover .brand-mark-image { filter: var(--brand-mark-filter); }
 }
 
+/* Keep the primary links available before the mobile menu runtime starts. */
+@media (max-width: 640px) {
+  html:not([data-vue-enhanced='true']) .site-nav {
+    height: auto;
+  }
+  html:not([data-vue-enhanced='true']) .site-nav .site-nav-surface {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    align-items: center;
+    height: auto;
+    min-height: var(--nav-shell-height-mobile);
+    padding-block: 4px 8px;
+    row-gap: 0;
+  }
+  html:not([data-vue-enhanced='true']) .site-nav-brand { grid-column: 1; grid-row: 1; }
+  html:not([data-vue-enhanced='true']) .site-nav-controls { grid-column: 2; grid-row: 1; }
+  html:not([data-vue-enhanced='true']) .site-nav .nav-rail {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: flex;
+    justify-self: stretch;
+    width: 100%;
+    min-height: 44px;
+    gap: var(--space-4);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  html:not([data-vue-enhanced='true']) .site-nav .nav-rail::-webkit-scrollbar { display: none; }
+  html:not([data-vue-enhanced='true']) .site-nav .nav-rail a {
+    flex: 0 0 auto;
+    min-height: 44px;
+  }
+  html:not([data-vue-enhanced='true']) .site-nav .menu-trigger,
+  html:not([data-vue-enhanced='true']) .site-nav .theme-orbit { display: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   [data-pointer-sheen] { --pointer-x: 50% !important; --pointer-y: 50% !important; --pointer-active: 0 !important; }
   *, *::before, *::after {
