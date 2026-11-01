@@ -610,8 +610,9 @@ test('rapid control clicks settle without duplicate or stale state', async ({ pa
 
   await page.goto('/research/')
   const method = page.locator('.method-toggle').first()
+  const details = page.locator('.tl-method').first()
   for (let i = 0; i < 4; i += 1) await method.dispatchEvent('click')
-  await expect(method).toHaveAttribute('aria-expanded', 'false')
+  await expect(details).not.toHaveAttribute('open')
   await expect(page.locator('.method-disclosure').first()).not.toHaveClass(/open/)
 
   await page.goto('/concerts/')

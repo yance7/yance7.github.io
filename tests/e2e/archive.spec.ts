@@ -81,7 +81,6 @@ test('research methodology disclosure and proof links are reachable', async ({ p
   const toggle = page.locator('.method-toggle').first()
   const disclosureContainer = page.locator('.tl-method').first()
   await toggle.click()
-  await expect(toggle).toHaveAttribute('aria-expanded', 'true')
   await expect(disclosureContainer).toHaveAttribute('open', '')
   await expect.poll(() => toggle.locator('.disclosure-mark').evaluate((element) => (
     getComputedStyle(element, '::before').content

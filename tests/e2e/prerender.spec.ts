@@ -162,6 +162,15 @@ test('pre-rendered content remains available when the entry script fails', async
   expect(await page.locator('body').getAttribute('data-hydrated')).toBeNull()
 })
 
+test('pre-rendered entry-script failure preserves and follows an incoming section link', async ({ page }) => {
+  await page.route(/\/assets\/vue\/main-[^/]+\.js$/u, (route) => route.abort('failed'))
+  await page.goto('/en/works/#project-trusted-garden')
+
+  await expect(page.locator('main#main h1')).toBeVisible()
+  await expect(page).toHaveURL(/\/en\/works\/#project-trusted-garden$/u)
+  await expect(page.locator('#project-trusted-garden')).toBeInViewport()
+})
+
 test('pre-rendered content remains available when its page chunk fails', async ({ page }) => {
   await page.route(/\/assets\/vue\/WorksPage-[^/]+\.js$/u, (route) => route.abort('failed'))
   const response = await page.goto('/en/works/')
