@@ -107,7 +107,6 @@ onUnmounted(() => {
           <summary
             class="method-toggle"
             :class="{ open: openMethod[item.id] }"
-            :aria-expanded="!!openMethod[item.id]"
             :aria-controls="`method-${item.id}`"
           >
             <span class="disclosure-mark" aria-hidden="true"></span>
@@ -118,7 +117,6 @@ onUnmounted(() => {
             :id="`method-${item.id}`"
             class="method-disclosure"
             :class="{ open: openMethod[item.id] }"
-            :aria-hidden="!openMethod[item.id]"
           >
             <div class="method-disclosure-inner">
               <div class="method-grid">

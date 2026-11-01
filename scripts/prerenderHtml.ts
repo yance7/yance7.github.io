@@ -61,15 +61,16 @@ function collectPreloads(
   manifest: Record<string, ClientManifestEntry>,
   visited: Set<string>,
   files: Set<string>,
-  stylesheets: Set<string>
+  stylesheets: Set<string>,
+  skipModule?: string
 ) {
   if (visited.has(key)) return
   visited.add(key)
   const entry = manifest[key]
   if (!entry) return
   entry.css?.forEach((file) => addStylesheet(file, stylesheets))
-  if (entry.file?.endsWith('.js')) files.add(publicAssetHref(entry.file))
-  entry.imports?.forEach((dependency) => collectPreloads(dependency, manifest, visited, files, stylesheets))
+  if (entry.file?.endsWith('.js') && key !== skipModule) files.add(publicAssetHref(entry.file))
+  entry.imports?.forEach((dependency) => collectPreloads(dependency, manifest, visited, files, stylesheets, skipModule))
 }
 
 function linkTag(rel: 'stylesheet' | 'modulepreload', href: string) {
@@ -119,7 +120,7 @@ export function injectPrerenderedHtml(options: PrerenderHtmlOptions) {
   }
 
   const preloads = new Set<string>()
-  collectPreloads(pageModule, manifest, new Set(), preloads, stylesheets)
+  collectPreloads(pageModule, manifest, new Set(), preloads, stylesheets, pageModule)
   const additions = [
     ...[...stylesheets].map((href) => linkTag('stylesheet', href)),
     ...[...preloads].map((href) => linkTag('modulepreload', href))

@@ -3,6 +3,7 @@ import { isPageKey } from './data'
 import { createSiteApp } from './createSiteApp'
 import { configurePageChunkPreload, loadPageComponent, preloadPage } from './pageLoaders'
 import { initializeLocale, resolveLocaleFromPath } from './i18n'
+import { decodeHashTarget } from './utils/navigation'
 import './styles.css'
 import './theme.css'
 
@@ -50,6 +51,21 @@ const fontLoadTimeout = 2400
 
 function startLoadingFonts() { void loadFonts() }
 
+function restoreStaticPageHash() {
+  const hash = window.location.hash || initialHash
+  if (hash && !window.location.hash) {
+    window.history.replaceState(
+      window.history.state,
+      '',
+      `${window.location.pathname}${window.location.search}${hash}`
+    )
+  }
+
+  const targetId = decodeHashTarget(hash)
+  if (targetId) document.getElementById(targetId)?.scrollIntoView({ block: 'start', behavior: 'auto' })
+  delete document.documentElement.dataset.initialHash
+}
+
 function scheduleFonts() {
   const idleWindow = window as Window & {
     requestIdleCallback?: (callback: () => void, options?: { timeout?: number }) => number
@@ -82,6 +98,7 @@ async function mountApp() {
     document.body.dataset.hydrated = 'true'
   } catch {
     if (hasPrerenderedMarkup) {
+      restoreStaticPageHash()
       const notice = document.createElement('p')
       notice.className = 'enhancement-notice'
       notice.setAttribute('role', 'status')

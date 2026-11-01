@@ -67,6 +67,9 @@ test.describe('static page routes without JavaScript', () => {
     await details.locator('summary').click()
     await expect(details).toHaveAttribute('open', '')
     await expect(details.locator('.method-disclosure')).toBeVisible()
+    const methodologyText = (await details.locator('.method-grid p').first().innerText()).trim()
+    const accessibilityTree = await details.ariaSnapshot()
+    expect(accessibilityTree).toContain(methodologyText)
   })
 
   test('skip link reaches main content without JavaScript', async ({ page }, testInfo) => {
@@ -169,6 +172,30 @@ test('pre-rendered content remains available when its page chunk fails', async (
   await expect(page.locator('.enhancement-notice')).toBeVisible()
   await expect(page.locator('.site-footer')).toBeVisible()
   expect(await page.locator('body').getAttribute('data-hydrated')).toBeNull()
+})
+
+test('pre-rendered page-chunk failure preserves and follows an incoming section link', async ({ page }) => {
+  await page.route(/\/assets\/vue\/WorksPage-[^/]+\.js$/u, (route) => route.abort('failed'))
+  await page.goto('/en/works/#project-trusted-garden')
+
+  await expect(page.locator('.enhancement-notice')).toBeVisible()
+  await expect(page).toHaveURL(/\/en\/works\/#project-trusted-garden$/u)
+  await expect(page.locator('#project-trusted-garden')).toBeInViewport()
+})
+
+test('WebKit retries a transient page-chunk failure after reloading the same tab', async ({ page }, testInfo) => {
+  test.skip(!testInfo.project.name.startsWith('webkit-'), 'WebKit modulepreload cache regression')
+  const chunk = /\/assets\/vue\/WorksPage-[^/]+\.js$/u
+  let failChunk = true
+  await page.route(chunk, (route) => failChunk ? route.abort('failed') : route.continue())
+
+  await page.goto('/en/works/')
+  await expect(page.locator('.enhancement-notice')).toBeVisible()
+
+  failChunk = false
+  await page.reload()
+  await expect(page.locator('body')).toHaveAttribute('data-hydrated', 'true')
+  await expect(page.locator('.page-works')).toBeVisible()
 })
 
 test('pre-rendered content hydrates with a failed locale font stylesheet', async ({ page }) => {

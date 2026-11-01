@@ -11,6 +11,11 @@ const manifest = {
     file: 'assets/vue/ResearchPage.js',
     css: ['assets/vue/ResearchPage.css']
   },
+  '../src/pages/WorksPage.vue': {
+    file: 'assets/vue/WorksPage.js',
+    css: ['assets/vue/WorksPage.css'],
+    imports: ['_SectionHeading.js']
+  },
   '_SectionHeading.js': {
     file: 'assets/vue/SectionHeading.js',
     css: ['assets/vue/SectionHeading.css']
@@ -42,7 +47,7 @@ describe('prerendered HTML injection', () => {
     expect(html).toContain('href="/assets/vue/SectionHeading.css"')
     expect(html).toContain('href="/assets/vue/fonts-zh-cn.css"')
     expect(html).toContain('href="/assets/vue/fonts-home-hero.css"')
-    expect(html).toContain('rel="modulepreload" href="/assets/vue/HomePage.js"')
+    expect(html).not.toContain('rel="modulepreload" href="/assets/vue/HomePage.js"')
     expect(html).toContain('rel="modulepreload" href="/assets/vue/SectionHeading.js"')
     expect(html).not.toContain('fonts-zh-hk.css')
     expect(html).not.toContain('fonts-en.css')
@@ -59,6 +64,21 @@ describe('prerendered HTML injection', () => {
       modules: new Set(),
       manifest
     })).toThrow(/exactly one #app mount point/u)
+  })
+
+  it('leaves the static page entry chunk retryable after a preload failure', () => {
+    const html = injectPrerenderedHtml({
+      shell: source,
+      appHtml: '<main id="main"><h1>Works</h1></main>',
+      page: 'works',
+      locale: 'en',
+      renderDateIso: '2026-11-01',
+      modules: new Set(),
+      manifest
+    })
+
+    expect(html).not.toContain('rel="modulepreload" href="/assets/vue/WorksPage.js"')
+    expect(html).toContain('rel="modulepreload" href="/assets/vue/SectionHeading.js"')
   })
 
   it('places body Teleport markup outside the hydrated app root', () => {
