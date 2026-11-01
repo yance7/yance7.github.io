@@ -96,6 +96,10 @@ export function getPageLoader(page: PageKey): PageLoader {
   return () => loadPageChunk(page)
 }
 
+export async function loadPageComponent(page: PageKey): Promise<Component> {
+  return (await loadPageChunk(page)).default
+}
+
 export function preloadPage(value: string | undefined) {
   if (!isPageKey(value)) return
   void loadPageChunk(value).catch(() => undefined)

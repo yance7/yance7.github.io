@@ -1,4 +1,6 @@
 /* Homepage greeting only. Upstream names and copyright remain in the subset. */
+@import '@fontsource/amiri/latin-400.css';
+
 @font-face {
   font-family: 'Yance Hero WenKai';
   font-style: normal;

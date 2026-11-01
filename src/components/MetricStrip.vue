@@ -20,14 +20,11 @@ function parseValue(value: string) {
   }
 }
 
-function initialDisplay(value: string, reducedMotion: boolean) {
-  if (reducedMotion) return String(value)
-  const parsed = parseValue(value)
-  if (!parsed) return String(value)
-  return (0).toFixed(parsed.decimals) + parsed.suffix
+function initialDisplay(value: string) {
+  return String(value)
 }
 
-const displays = ref(props.metrics.map((metric) => initialDisplay(metric.value, prefersReducedMotion())))
+const displays = ref(props.metrics.map((metric) => initialDisplay(metric.value)))
 const metricStrip = ref<HTMLElement | null>(null)
 const metricsReady = ref(false)
 const rafs = new Set<number>()
@@ -60,6 +57,7 @@ function animateIndex(i: number) {
     markMetricsReadyIfComplete()
     return
   }
+  displays.value[i] = (0).toFixed(parsed.decimals) + parsed.suffix
   const start = performance.now()
   const duration = 650
   let currentRaf = 0

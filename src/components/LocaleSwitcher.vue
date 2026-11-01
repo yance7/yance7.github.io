@@ -1,22 +1,32 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { onMounted, ref } from 'vue'
 import { buildLocalizedPageHref, localeRegistry, resolvePageFromPath, type Locale, useLocale } from '../i18n'
 import { rememberLocale } from '../i18n/useLocale'
 import { createDocumentPrefetcher } from '../utils/documentPrefetch'
+import { useSiteRenderContext } from '../app/renderContext'
 
 const { locale, messages } = useLocale()
+const context = useSiteRenderContext()
 const localeOrder: Locale[] = ['zh-CN', 'zh-HK', 'en']
 const options = localeOrder.map((code) => localeRegistry[code])
-const currentPage = computed(() => resolvePageFromPath(window.location.pathname))
+const currentPage = ref(context.page ?? 'home')
+const currentSearch = ref('')
+const currentHash = ref('')
 const prefetchDocument = typeof document !== 'undefined' && typeof window !== 'undefined'
   ? createDocumentPrefetcher(document, window.location.href)
   : null
 
+onMounted(() => {
+  currentPage.value = resolvePageFromPath(window.location.pathname) ?? currentPage.value
+  currentSearch.value = window.location.search
+  currentHash.value = window.location.hash || document.documentElement.dataset.initialHash || ''
+})
+
 function hrefFor(target: Locale) {
   const page = currentPage.value ?? 'home'
   return buildLocalizedPageHref(page, target, {
-    search: currentPage.value ? window.location.search : '',
-    hash: currentPage.value ? (window.location.hash || document.documentElement.dataset.initialHash || '') : ''
+    search: currentPage.value ? currentSearch.value : '',
+    hash: currentPage.value ? currentHash.value : ''
   })
 }
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { legacyCopyText, type LegacyCopyDocument } from '../utils/clipboard'
 import { useLocale } from '../i18n'
 
@@ -10,9 +10,12 @@ const props = defineProps({
 type CopyState = 'idle' | 'success' | 'error'
 
 const state = ref<CopyState>('idle')
+const clientReady = ref(false)
 const { messages } = useLocale()
 const copying = ref(false)
 let timer: ReturnType<typeof setTimeout> | undefined
+
+onMounted(() => { clientReady.value = true })
 
 async function copy() {
   if (copying.value) return
@@ -49,7 +52,7 @@ onUnmounted(() => clearTimeout(timer))
     class="tl-link copy-citation"
     :class="`is-${state}`"
     type="button"
-    :disabled="copying"
+    :disabled="!clientReady || copying"
     :data-state="state"
     :aria-label="state === 'success' ? messages.common.copied : messages.common.copyCitation"
     @click="copy"

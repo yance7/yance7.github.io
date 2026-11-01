@@ -79,9 +79,13 @@ test('honor cards finish the shared reveal without replaying metadata on hover',
 test('research methodology disclosure and proof links are reachable', async ({ page }) => {
   await page.goto('/research/')
   const toggle = page.locator('.method-toggle').first()
+  const disclosureContainer = page.locator('.tl-method').first()
   await toggle.click()
   await expect(toggle).toHaveAttribute('aria-expanded', 'true')
-  await expect(toggle.locator('.disclosure-mark')).toHaveText('−')
+  await expect(disclosureContainer).toHaveAttribute('open', '')
+  await expect.poll(() => toggle.locator('.disclosure-mark').evaluate((element) => (
+    getComputedStyle(element, '::before').content
+  ))).toBe('"−"')
   const disclosure = page.locator(`#${await toggle.getAttribute('aria-controls')}`)
   await expect(disclosure).toHaveClass(/open/)
   await expect(disclosure.locator('.method-grid')).toHaveCSS('max-height', 'none')

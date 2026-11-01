@@ -22,8 +22,8 @@ function tagClass(tag: string) {
   return 'dim'
 }
 
-function toggleMethod(id: string) {
-  openMethod[id] = !openMethod[id]
+function syncMethodState(id: string, event: Event) {
+  openMethod[id] = (event.currentTarget as HTMLDetailsElement).open
 }
 
 function updateCurrentItem() {
@@ -103,18 +103,17 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <div v-if="item.methodology" class="tl-method">
-          <button
+        <details v-if="item.methodology" class="tl-method" @toggle="syncMethodState(item.id, $event)">
+          <summary
             class="method-toggle"
             :class="{ open: openMethod[item.id] }"
-            type="button"
             :aria-expanded="!!openMethod[item.id]"
             :aria-controls="`method-${item.id}`"
-            @click="toggleMethod(item.id)"
           >
-            <span class="disclosure-mark" aria-hidden="true">{{ openMethod[item.id] ? '−' : '+' }}</span>
-            {{ openMethod[item.id] ? messages.research.collapseMethodology : messages.research.expandMethodology }}
-          </button>
+            <span class="disclosure-mark" aria-hidden="true"></span>
+            <span class="method-label-closed">{{ messages.research.expandMethodology }}</span>
+            <span class="method-label-open">{{ messages.research.collapseMethodology }}</span>
+          </summary>
           <div
             :id="`method-${item.id}`"
             class="method-disclosure"
@@ -150,7 +149,7 @@ onUnmounted(() => {
               </div>
             </div>
           </div>
-        </div>
+        </details>
 
         <div class="tl-foot">
           <div class="tl-foot-meta">

@@ -83,6 +83,7 @@
 }
 
 .home-hero-typewriter[data-font-state='loading'] { visibility: hidden; }
+html:not([data-vue-enhanced='true']) .home-hero-typewriter[data-font-state='loading'] { visibility: visible; }
 .home-hero-typewriter[data-font-state='fallback'] { font-family: var(--font-home-title); }
 
 .home-hero-typewriter-line {
@@ -577,6 +578,8 @@ html[data-theme='dark'] .home-hero-visual > .home-hero-particles {
   z-index: 3;
   pointer-events: none;
 }
+
+html:not([data-vue-enhanced='true']) .home-hero-slideshow__controls { display: none; }
 
 .home-hero-slideshow__panel {
   position: absolute;

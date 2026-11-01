@@ -40,12 +40,13 @@ describe('critical rendering contracts', () => {
     const loaders = readFileSync(resolve(process.cwd(), 'src/pageLoaders.ts'), 'utf8')
 
     expect(loaders).toContain('export function preloadPage(')
-    expect(main).toContain("if (document.body.dataset.page !== 'home') preloadPage(document.body.dataset.page)")
-    expect(main.indexOf("if (document.body.dataset.page !== 'home') preloadPage(document.body.dataset.page)"))
-      .toBeLessThan(main.indexOf("app.mount('#app')"))
-    expect(app).toContain('const deferHomeContent = isHome && !initialHash')
+    expect(main).toContain("const hasPrerenderedMarkup = document.body.dataset.rendered === 'ssg' && Boolean(page) && page !== 'concerts'")
+    expect(main).toContain('if (!hasPrerenderedMarkup && page !== \'home\') preloadPage(candidate)')
+    expect(main.indexOf("if (!hasPrerenderedMarkup && page !== 'home') preloadPage(candidate)"))
+      .toBeLessThan(main.indexOf('const initialPage = hasPrerenderedMarkup'))
+    expect(app).toContain('const deferHomeContent = isHome && !initialHash && !props.initialPage')
     expect(app).toContain('const pageContentEnabled = ref(!deferHomeContent)')
-    expect(app).toContain('<Suspense v-if="pageContentEnabled"')
+    expect(app).toContain('<Suspense v-else-if="pageContentEnabled"')
     expect(app).toContain('const HOME_CONTENT_FALLBACK_MS = 2_000')
   })
 
@@ -61,7 +62,9 @@ describe('critical rendering contracts', () => {
     expect(main).not.toContain('data-locale-font-preload')
     expect(main).toContain("document.documentElement.dataset.fontsReady = 'loading'")
     // Readiness outcomes, including a stalled request, are exercised in site-typography.spec.ts.
-    const loadFonts = main.slice(main.indexOf('async function loadFonts'), main.indexOf('const app = createApp'))
+    const loadFontsStart = main.indexOf('async function loadFonts')
+    const loadFontsEnd = main.indexOf('const fontLoadTimeout', loadFontsStart)
+    const loadFonts = main.slice(loadFontsStart, loadFontsEnd)
     expect(loadFonts).not.toContain('mountApp()')
     expect(loadFonts).not.toContain('document.fonts.load(')
     expect(main).toContain('function startLoadingFonts() { void loadFonts() }')
@@ -466,8 +469,8 @@ describe('motion hierarchy contracts', () => {
     const shellStyles = readFileSync(resolve(process.cwd(), 'src/styles/shell.css'), 'utf8').replace(/\r\n/g, '\n')
 
     const applyThemeStart = theme.indexOf('function applyTheme(')
-    const setThemeIndex = theme.indexOf('\n  theme.value = value', applyThemeStart)
-    const applyThemeEnd = theme.indexOf('\n}\n\nfunction toggleTheme', applyThemeStart)
+    const setThemeIndex = theme.indexOf('\n    theme.value = value', applyThemeStart)
+    const applyThemeEnd = theme.indexOf('\n  }\n\n  function toggleTheme', applyThemeStart)
 
     expect(setThemeIndex).toBeGreaterThan(applyThemeStart)
     expect(setThemeIndex).toBeLessThan(applyThemeEnd)

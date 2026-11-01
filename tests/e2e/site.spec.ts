@@ -483,7 +483,7 @@ test('slow page chunks still settle deep links', async ({ page }) => {
   await expect.poll(() => page.locator('#project-fresheye').evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBeGreaterThanOrEqual(12)
 })
 
-test('failed English page chunks keep retry typography and avoid a reload loop', async ({ page }) => {
+test('failed English page chunks preserve pre-rendered content and avoid a reload loop', async ({ page }) => {
   let requestCount = 0
   await page.route(/\/(?:assets\/vue\/WorksPage-[^/]+\.js|src\/pages\/WorksPage\.vue)(?:\?.*)?$/, async (route) => {
     requestCount += 1
@@ -491,13 +491,12 @@ test('failed English page chunks keep retry typography and avoid a reload loop',
   })
 
   await page.goto('/en/works/')
-  await expect(page.locator('[data-page-load-state="error"]')).toBeVisible({ timeout: 15000 })
-  await expect(page.locator('.page-load-error')).toBeVisible()
-  const retryFont = await page.locator('.page-load-error button').evaluate((button) => ({
-    family: getComputedStyle(button).fontFamily,
-    interface: getComputedStyle(document.documentElement).getPropertyValue('--font-interface').trim()
-  }))
-  expect(retryFont.family).toBe(retryFont.interface)
+  await expect(page.locator('[data-rendered="ssg"]')).toBeAttached()
+  await expect(page.locator('main#main h1')).toBeVisible()
+  await expect(page.locator('.showcase-list')).toBeVisible()
+  await expect(page.locator('.enhancement-notice')).toBeVisible()
+  await expect(page.locator('.page-load-error')).toHaveCount(0)
+  expect(await page.locator('body').getAttribute('data-hydrated')).toBeNull()
   expect(requestCount).toBeLessThanOrEqual(3)
   await page.waitForLoadState('networkidle')
   expect(requestCount).toBeLessThanOrEqual(3)

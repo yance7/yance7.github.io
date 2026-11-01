@@ -6,7 +6,7 @@ import globals from 'globals'
 
 export default [
   {
-    ignores: ['dist/**', 'node_modules/**', 'test-screenshots/**', 'test-results/**', '.superpowers/**', 'public/assets/**']
+    ignores: ['dist/**', '.ssg-build/**', 'node_modules/**', 'test-screenshots/**', 'test-results/**', '.superpowers/**', 'public/assets/**']
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
