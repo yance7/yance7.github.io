@@ -399,8 +399,10 @@ for (const locale of locales) {
       await page.mouse.up()
 
       await page.emulateMedia({ reducedMotion: 'reduce' })
-      await primary.hover()
-      await expect.poll(() => primary.evaluate(link => getComputedStyle(link).transform)).toBe('none')
+      await expect.poll(() => primary.evaluate(link => ({
+        hovered: link.matches(':hover'),
+        transform: getComputedStyle(link).transform
+      }))).toEqual({ hovered: true, transform: 'none' })
       const reducedMotionStyle = await primary.evaluate(link => {
         const style = getComputedStyle(link)
         return { transform: style.transform, transitionDuration: style.transitionDuration }

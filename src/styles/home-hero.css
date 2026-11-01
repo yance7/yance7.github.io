@@ -196,7 +196,7 @@ html[data-locale='en'] .home-hero-typewriter-line-accent {
 }
 
 @media (min-width: 761px) {
-  .hero-action.primary { max-width: 240px; }
+  .hero-action.primary { max-width: 239.98px; }
 }
 
 .hero-action.primary {
