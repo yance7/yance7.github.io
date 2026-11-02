@@ -82,8 +82,7 @@
   text-align: center;
 }
 
-.home-hero-typewriter[data-font-state='loading'] { visibility: hidden; }
-html:not([data-vue-enhanced='true']) .home-hero-typewriter[data-font-state='loading'] { visibility: visible; }
+.home-hero-typewriter[data-font-state='loading'] { font-family: var(--font-home-title); }
 .home-hero-typewriter[data-font-state='fallback'] { font-family: var(--font-home-title); }
 
 .home-hero-typewriter-line {

@@ -293,6 +293,55 @@ test('pre-rendered home keeps its greeting and primary actions visible through h
   ))).toBe(true)
 })
 
+test('pre-rendered greeting stays visible while its font request is pending through hydration', async ({ page }) => {
+  let markEntryRequested!: () => void
+  let releaseEntry!: () => void
+  let markGreetingFontRequested!: () => void
+  let releaseGreetingFont!: () => void
+  const entryRequested = new Promise<void>((resolve) => { markEntryRequested = resolve })
+  const entryGate = new Promise<void>((resolve) => { releaseEntry = resolve })
+  const greetingFontRequested = new Promise<void>((resolve) => { markGreetingFontRequested = resolve })
+  const greetingFontGate = new Promise<void>((resolve) => { releaseGreetingFont = resolve })
+  await page.route(/\/assets\/vue\/main-[^/]+\.js$/u, async (route) => {
+    markEntryRequested()
+    await entryGate
+    await route.continue()
+  })
+  await page.route('**/hero-greeting-wenkai-tc-regular-*.woff2', async (route) => {
+    markGreetingFontRequested()
+    await greetingFontGate
+    await route.continue()
+  })
+
+  const greeting = page.locator('.home-hero-typewriter')
+  try {
+    await page.goto('/en/', { waitUntil: 'commit' })
+    await entryRequested
+    await expect(greeting).toHaveAttribute('data-font-state', 'loading')
+    await expect(greeting).toHaveCSS('visibility', 'visible')
+
+    releaseEntry()
+    await greetingFontRequested
+    await expect(page.locator('body')).toHaveAttribute('data-hydrated', 'true')
+    await expect(greeting).toHaveAttribute('data-font-state', 'loading')
+    const hydratedGreeting = await greeting.evaluate((element) => ({
+      enhanced: document.documentElement.dataset.vueEnhanced,
+      visibility: getComputedStyle(element).visibility,
+      fontState: (element as HTMLElement).dataset.fontState,
+      matchingEnhancedState: document.documentElement.matches('html[data-vue-enhanced="true"]')
+    }))
+    expect(hydratedGreeting).toEqual({
+      enhanced: 'true',
+      visibility: 'visible',
+      fontState: 'loading',
+      matchingEnhancedState: true
+    })
+  } finally {
+    releaseEntry()
+    releaseGreetingFont()
+  }
+})
+
 test('pre-rendered content remains available when the entry script fails', async ({ page }) => {
   await page.route(/\/assets\/vue\/main-[^/]+\.js$/u, (route) => route.abort('failed'))
   const response = await page.goto('/en/research/')

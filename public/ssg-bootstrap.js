@@ -35,10 +35,13 @@
     if (event.persisted && page === 'home') document.documentElement.classList.remove('home-scroll-snap')
   })
 
-  const startEntry = () => {
+  const startEntry = (preserveFallback = false) => {
+    if (!preserveFallback && fallbackTimer !== undefined) {
+      window.clearTimeout(fallbackTimer)
+      fallbackTimer = undefined
+    }
     if (started) return
     started = true
-    if (fallbackTimer !== undefined) window.clearTimeout(fallbackTimer)
     observer?.disconnect()
     void import(entryUrl.href).catch(() => undefined)
   }
@@ -99,7 +102,7 @@
         delete window.__yanceEarlyHomeHeroTouchTimer
       }, 540)
       window.__yanceEarlyHomeHeroTouchTimer = earlyTouchTimer
-      startEntry()
+      startEntry(true)
     }
     document.addEventListener('pointerdown', captureEarlyHeroTouch, { capture: true, passive: true })
     if (document.body.dataset.hydrated === 'true') cleanupEarlyTouch()

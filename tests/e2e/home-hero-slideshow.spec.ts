@@ -254,6 +254,47 @@ test('releases English homepage content on the bounded fallback if the first pho
   }
 })
 
+test('early hero touch retains the hydration fallback while the first photo is stalled', async ({ browser, browserName }) => {
+  test.skip(browserName !== 'chromium')
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true
+  })
+  const page = await context.newPage()
+  let markPhotoRequestStarted!: () => void
+  let releasePhotoRequest!: () => void
+  const photoRequestStarted = new Promise<void>((resolve) => { markPhotoRequestStarted = resolve })
+  const photoRequestGate = new Promise<void>((resolve) => { releasePhotoRequest = resolve })
+  await page.route('**/assets/images/home-hero/hero-01-*', async (route) => {
+    markPhotoRequestStarted()
+    await photoRequestGate
+    await route.continue()
+  })
+
+  try {
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
+    await photoRequestStarted
+    await expect(page.locator('body')).not.toHaveAttribute('data-hydrated', 'true')
+    const bounds = await page.locator('.home-hero-slideshow__media').boundingBox()
+    expect(bounds).not.toBeNull()
+    await page.touchscreen.tap(bounds!.x + bounds!.width / 2, bounds!.y + bounds!.height / 2)
+    await expect(page).not.toHaveURL(/#/)
+    await expect(page.locator('html')).toHaveAttribute('data-home-hero-touch-until', /\d+/)
+    await expect(page.locator('html')).toHaveAttribute('data-static-entry-fallback', 'true', { timeout: 4000 })
+    await expect(page.locator('body')).toHaveAttribute('data-hydrated', 'true', { timeout: 4500 })
+    const photo = await page.locator('.home-hero-slideshow__image--current').evaluate((element) => ({
+      naturalWidth: (element as HTMLImageElement).naturalWidth,
+      ready: document.documentElement.dataset.homeHeroPhotoReady
+    }))
+    expect(photo).toEqual({ naturalWidth: 0, ready: 'true' })
+  } finally {
+    releasePhotoRequest()
+    await context.close()
+  }
+})
+
 test('uses the accepted Amiri face for the static glyph while the first photo is pending', async ({ page }) => {
   let releaseRequest!: () => void
   const requestGate = new Promise<void>((resolve) => { releaseRequest = resolve })
