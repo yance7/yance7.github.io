@@ -389,6 +389,7 @@ test('@pointer-refinement restores the native cursor after keyboard use, reduced
 test('does not intercept navigation or remain visible after route changes', async ({ page }) => {
   test.skip(!(await supportsCustomCursor(page)), 'custom pointer is only enabled for a fine, hovering pointer')
   await page.goto('/research/')
+  await waitForHydration(page)
 
   const cursor = page.locator('.sitewide-cursor')
   const nextPageLink = page.locator('.site-nav .nav-rail a[href="/works/"]')
