@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
 import { injectPrerenderedHtml, retainFontFacesForMarkup } from '../scripts/prerenderHtml'
 
@@ -58,6 +59,39 @@ describe('prerendered HTML injection', () => {
     expect(html).not.toContain('fonts-zh-hk.css')
     expect(html).not.toContain('fonts-en.css')
     expect(html).toContain('default-src \'self\'')
+  })
+
+  it('selects a static hero image before resource discovery and authorizes its parser bootstrap', () => {
+    const homeShell = source.replace(
+      'content="default-src \'self\'"',
+      'content="default-src \'self\'; script-src \'self\'; style-src \'self\'; manifest-src \'self\'"'
+    )
+    const image = '<img class="home-hero-slideshow__image home-hero-slideshow__image--current" src="/assets/images/home-hero/hero-01-640.webp" srcset="/assets/images/home-hero/hero-01-640.webp 640w, /assets/images/home-hero/hero-01-896.webp 896w" sizes="(max-width: 760px) calc(100vw - 40px), calc(min(1260px, 100vw) - 10vw)" alt="" loading="eager">'
+    const html = injectPrerenderedHtml({
+      shell: homeShell,
+      appHtml: `<main>${image}</main>`,
+      page: 'home',
+      locale: 'zh-CN',
+      renderDateIso: '2026-11-01',
+      modules: new Set(),
+      manifest
+    })
+    const script = html.match(/<script data-home-hero-image-full="[^"]+" data-home-hero-image-save-data="[^"]+">([\s\S]*?)<\/script>/u)?.[1]
+    const fullImage = html.match(/data-home-hero-image-full="([^"]+)"/u)?.[1]
+    const saveDataImage = html.match(/data-home-hero-image-save-data="([^"]+)"/u)?.[1]
+
+    expect(script).toBeDefined()
+    expect(html).toContain(`<noscript>${image}</noscript>`)
+    expect(fullImage).toContain('hero-01-896.webp 896w')
+    expect(saveDataImage).toContain('hero-01-640.webp 640w')
+    expect(saveDataImage).not.toContain('hero-01-896.webp')
+    expect(fullImage).toContain('&gt;')
+    expect(saveDataImage).toContain('&gt;')
+    expect(script).toContain('navigator.connection?.saveData===true')
+    const digest = createHash('sha256').update(script!).digest('base64')
+    expect(html).toContain(`script-src 'self' 'sha256-${digest}'`)
+    expect(html).toContain(`manifest-src 'self'"`)
+    expect(html).not.toContain(`manifest-src 'self' 'sha256-${digest}'`)
   })
 
   it('fails rather than silently leaving an empty app root', () => {

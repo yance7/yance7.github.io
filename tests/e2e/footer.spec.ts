@@ -21,6 +21,7 @@ for (const locale of locales) {
     const contactGrid = footer.locator('.foot-contacts')
     const links = contactGrid.locator('.foot-contact')
 
+    await footer.scrollIntoViewIfNeeded()
     await expect(footer).toBeVisible()
     await expect(mark).toHaveAttribute('href', locale.homeHref)
     await expect(mark.locator('.brand-mark-image')).toBeVisible()

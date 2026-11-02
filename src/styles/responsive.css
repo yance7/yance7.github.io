@@ -202,6 +202,8 @@
 }
 
 /* Keep the primary links available before the mobile menu runtime starts. */
+html:not([data-vue-enhanced='true']) .site-nav .theme-orbit { display: none; }
+
 @media (max-width: 640px) {
   html:not([data-vue-enhanced='true']) .site-nav .site-nav-surface {
     display: grid;
@@ -234,8 +236,7 @@
     flex: 0 0 auto;
     min-height: 44px;
   }
-  html:not([data-vue-enhanced='true']) .site-nav .menu-trigger,
-  html:not([data-vue-enhanced='true']) .site-nav .theme-orbit { display: none; }
+  html:not([data-vue-enhanced='true']) .site-nav .menu-trigger { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

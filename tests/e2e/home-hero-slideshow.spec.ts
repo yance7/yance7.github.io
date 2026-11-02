@@ -520,7 +520,7 @@ test('keeps the photo and static YANCE visible while the particle runtime loads'
   expect(runtimeResources.every((event) => event.time > photoPaint!.time), JSON.stringify({ photoPaint, runtimeResources })).toBe(true)
 })
 
-test('omits the document-level preload and hydrates to the 640px Save-Data candidate', async ({ page }) => {
+test('omits the document-level preload and requests only the 640px Save-Data candidate', async ({ page }) => {
   const imageRequests: string[] = []
   await page.setViewportSize({ width: 390, height: 844 })
   await page.addInitScript(() => {
@@ -537,10 +537,8 @@ test('omits the document-level preload and hydrates to the 640px Save-Data candi
   await expectLoadedImage(page)
 
   await expect(page.locator('link[rel="preload"][as="image"]')).toHaveCount(0)
-  const currentImage = page.locator('.home-hero-slideshow__image--current')
-  await expect.poll(() => currentImage.evaluate((image) => (image as HTMLImageElement).currentSrc)).toContain('hero-01-640-')
-  expect(imageRequests.some((url) => url.includes('hero-01-640-'))).toBe(true)
-  expect(imageRequests.every((url) => url.includes('hero-01-'))).toBe(true)
+  expect(imageRequests).toHaveLength(1)
+  expect(imageRequests[0]).toContain('hero-01-640-')
 })
 
 test('exposes thirteen localized photo buttons outside the decorative subtree', async ({ page }) => {

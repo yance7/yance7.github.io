@@ -128,6 +128,20 @@ test.describe('hydration of static page routes', () => {
   }
 })
 
+test('desktop static markup hides the theme control that requires JavaScript', async ({ browser }) => {
+  const context = await browser.newContext({
+    javaScriptEnabled: false,
+    viewport: { width: 1440, height: 1000 }
+  })
+  const page = await context.newPage()
+  await page.goto('/')
+
+  await expect(page.locator('.theme-orbit')).toBeHidden()
+  await expect(page.locator('.nav-rail')).toBeVisible()
+  await expect(page.locator('.home-hero-slideshow__image--current')).toBeVisible()
+  await context.close()
+})
+
 test('mobile navigation keeps the main-content position when Vue hydrates', async ({ browser }, testInfo) => {
   test.skip(testInfo.project.name === 'firefox-desktop-smoke', 'Firefox does not support mobile context emulation')
   const viewport = { width: 390, height: 844 }
@@ -591,6 +605,22 @@ test('pre-rendered home hydrates for users who prefer reduced motion', async ({ 
   await expect(page.locator('body')).toHaveAttribute('data-hydrated', 'true')
   await expect(page.locator('main#main h1')).toBeVisible()
   expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true)
+})
+
+test('pre-rendered home hydrates without a forced-colors mismatch', async ({ page }) => {
+  const hydrationErrors: string[] = []
+  page.on('console', (message) => {
+    if (message.type() === 'error' && /hydration|mismatch/i.test(message.text())) {
+      hydrationErrors.push(message.text())
+    }
+  })
+  await page.emulateMedia({ forcedColors: 'active' })
+  await page.goto('/')
+
+  await expect(page.locator('body')).toHaveAttribute('data-hydrated', 'true')
+  expect(hydrationErrors).toEqual([])
+  await expect(page.locator('.home-hero-slideshow__image')).toHaveCount(0)
+  await expect(page.locator('.home-hero-particles-word')).toBeVisible()
 })
 
 for (const { path, locale } of [

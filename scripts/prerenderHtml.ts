@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import type { PageKey } from '../src/data/pageRegistry'
 import type { Locale } from '../src/i18n/types'
 
@@ -26,6 +27,12 @@ const localeFontModules: Record<Locale, string> = {
   'zh-CN': 'src/fonts-zh-cn.css',
   'zh-HK': 'src/fonts-zh-hk.css',
   en: 'src/fonts-en.css'
+}
+
+const homeHeroImageBootstrap = "const script=document.currentScript;if(script instanceof HTMLScriptElement){const saveData=navigator.connection?.saveData===true;window.__YANCE_HOME_HERO_SAVE_DATA__=saveData;const image=script.getAttribute(saveData?'data-home-hero-image-save-data':'data-home-hero-image-full');const fallback=script.previousElementSibling;if(image&&fallback?.tagName==='NOSCRIPT'){script.insertAdjacentHTML('beforebegin',image);fallback.remove();script.remove()}}"
+
+function homeHeroImageBootstrapHash() {
+  return `sha256-${createHash('sha256').update(homeHeroImageBootstrap).digest('base64')}`
 }
 
 function normalizedManifestKey(key: string) {
@@ -85,7 +92,58 @@ function fontPreloadTag(href: string) {
 }
 
 function escapeAttribute(value: string) {
-  return value.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;')
+  return value.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
+}
+
+function replaceAttribute(tag: string, name: string, value: string) {
+  const pattern = new RegExp(`(\\s${name}=")([^"]*)(")`, 'u')
+  if (!pattern.test(tag)) throw new Error(`Missing ${name} on the static home hero image`)
+  return tag.replace(pattern, (_match, prefix: string, _previous: string, suffix: string) => (
+    `${prefix}${escapeAttribute(value)}${suffix}`
+  ))
+}
+
+function getAttribute(tag: string, name: string) {
+  const value = tag.match(new RegExp(`\\s${name}="([^"]*)"`, 'u'))?.[1]
+  if (!value) throw new Error(`Missing ${name} on the static home hero image`)
+  return value
+}
+
+function staticHomeHeroImageMarkup(appHtml: string) {
+  const imagePattern = /<img\b(?=[^>]*\bclass="[^"]*\bhome-hero-slideshow__image--current\b[^"]*")[^>]*>/gu
+  const matches = [...appHtml.matchAll(imagePattern)]
+  if (matches.length > 1) throw new Error('Expected exactly one current home hero image in prerendered markup')
+  if (!matches.length) return appHtml
+
+  const image = matches[0]![0]
+  const firstCandidate = getAttribute(image, 'srcset').split(',')[0]?.trim().match(/^(\/assets\/images\/home-hero\/[A-Za-z0-9._-]+\.(?:webp|jpe?g))\s+(\d+)w$/iu)
+  if (!firstCandidate) throw new Error('The static home hero image must start with a local responsive candidate')
+  const smallImage = firstCandidate[1]!
+  const smallWidth = Number(firstCandidate[2]!)
+  const saveDataImage = replaceAttribute(
+    replaceAttribute(
+      replaceAttribute(image, 'src', smallImage),
+      'srcset',
+      `${smallImage} ${smallWidth}w`
+    ),
+    'sizes',
+    `${smallWidth}px`
+  )
+  const fallback = `<noscript>${image}</noscript>`
+  const bootstrap = `<script data-home-hero-image-full="${escapeAttribute(image)}" data-home-hero-image-save-data="${escapeAttribute(saveDataImage)}">${homeHeroImageBootstrap}</script>`
+  return appHtml.replace(image, `${fallback}${bootstrap}`)
+}
+
+function authorizeHomeHeroImageBootstrap(html: string) {
+  const policy = /(<meta\s+http-equiv="Content-Security-Policy"\s+content=")([^"]*)"/iu
+  const match = html.match(policy)
+  if (!match) throw new Error('The static home page must declare its Content Security Policy before adding the image bootstrap')
+
+  const scriptSource = match[2]!.match(/\bscript-src\s+[^;]+/u)?.[0]
+  if (!scriptSource) throw new Error('The static home page CSP must declare script-src before adding its image bootstrap')
+
+  const authorizedPolicy = match[2]!.replace(scriptSource, `${scriptSource} '${homeHeroImageBootstrapHash()}'`)
+  return html.replace(policy, (_match, prefix: string) => `${prefix}${authorizedPolicy}"`)
 }
 
 function deferStaticEntryBootstrap(html: string) {
@@ -220,7 +278,9 @@ export function injectPrerenderedHtml(options: PrerenderHtmlOptions) {
   ].filter((tag) => !shell.includes(tag.match(/href="([^"]+)"/u)?.[1] ?? ''))
 
   const bodyTeleports = teleports.body ?? ''
-  let html = shell.replace(mountPoint, `<div id="app">${appHtml}</div>`)
+  const renderedAppHtml = page === 'home' ? staticHomeHeroImageMarkup(appHtml) : appHtml
+  let html = shell.replace(mountPoint, `<div id="app">${renderedAppHtml}</div>`)
+  if (renderedAppHtml !== appHtml) html = authorizeHomeHeroImageBootstrap(html)
   html = deferStaticEntryBootstrap(html)
   html = html.replace(/<body\b([^>]*)>/iu, (_match, attributes: string) => (
     `<body${attributes} data-rendered="ssg" data-render-date="${escapeAttribute(renderDateIso)}"${routeFontStylesheet ? ` data-locale-font-stylesheet="${escapeAttribute(routeFontStylesheet)}"` : ''}>${bodyTeleports}`
