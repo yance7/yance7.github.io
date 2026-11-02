@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { waitForHydration } from './helpers/hydration'
 
 const routes = ['/', '/research/', '/works/', '/concerts/']
 
@@ -118,6 +119,7 @@ for (const route of routes) {
 test('prioritizes an actionable descendant inside the particle field', async ({ page }) => {
   test.skip(!(await supportsCustomCursor(page)), 'custom pointer is only enabled for a fine, hovering pointer')
   await page.goto('/')
+  await waitForHydration(page)
 
   await page.locator('.home-hero-particles').evaluate((particleField) => {
     particleField.setAttribute('aria-hidden', 'false')
@@ -157,6 +159,7 @@ test('@pointer-refinement keeps both ring and center dot directly at the pointer
   test.skip(!(await supportsCustomCursor(page)), 'custom pointer is only enabled for a fine, hovering pointer')
   await page.setViewportSize({ width: 1200, height: 900 })
   await page.goto('/')
+  await waitForHydration(page)
 
   const cursor = page.locator('.sitewide-cursor')
   const dot = cursor.locator('.sitewide-cursor-dot')
@@ -206,6 +209,7 @@ test('@pointer-refinement sizes the ring for surface, controls, and particles', 
 test('@pointer-refinement reclassifies a target moved under a stationary pointer', async ({ page }) => {
   test.skip(!(await supportsCustomCursor(page)), 'custom pointer is only enabled for a fine, hovering pointer')
   await page.goto('/research/')
+  await waitForHydration(page)
   await page.mouse.move(220, 180)
 
   const cursor = page.locator('.sitewide-cursor')
@@ -230,6 +234,7 @@ test('@pointer-refinement reclassifies a target moved under a stationary pointer
 test('coalesces stationary-pointer hit testing until the next animation frame', async ({ page }) => {
   test.skip(!(await supportsCustomCursor(page)), 'custom pointer is only enabled for a fine, hovering pointer')
   await page.goto('/research/')
+  await waitForHydration(page)
   await page.mouse.move(220, 180)
 
   const frameCounts = await page.evaluate(() => new Promise<{ immediate: string; afterNextFrame: string }>((resolve) => {
@@ -260,6 +265,7 @@ test('coalesces stationary-pointer hit testing until the next animation frame', 
 test('restores the native cursor when touch input reaches a fine-pointer page', async ({ page }) => {
   test.skip(!(await supportsCustomCursor(page)), 'custom pointer is only enabled for a fine, hovering pointer')
   await page.goto('/research/')
+  await waitForHydration(page)
   const cursor = page.locator('.sitewide-cursor')
 
   await page.mouse.move(220, 180)
@@ -354,6 +360,7 @@ test('distinguishes particle and editable text areas without hiding the native t
 test('@pointer-refinement restores the native cursor after keyboard use, reduced motion, and forced colors', async ({ page }) => {
   test.skip(!(await supportsCustomCursor(page)), 'custom pointer is only enabled for a fine, hovering pointer')
   await page.goto('/research/')
+  await waitForHydration(page)
 
   const cursor = page.locator('.sitewide-cursor')
   await page.mouse.move(24, 180)

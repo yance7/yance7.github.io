@@ -29,7 +29,9 @@ const page = props.context.page
 const initialHash = props.context.initialHash ?? ''
 const isHome = page === 'home'
 const deferHomeContent = isHome && !initialHash && !props.initialPage
+const deferHomeHeroRuntime = isHome && !initialHash
 const pageContentEnabled = ref(!deferHomeContent)
+const homeHeroRuntimeEnabled = ref(!deferHomeHeroRuntime)
 const { initTheme } = useTheme()
 const { locale, messages } = useLocale()
 
@@ -152,7 +154,7 @@ function handleHashChange() {
 }
 
 function enableHomeContent() {
-  if (disposed || pageContentEnabled.value) return
+  if (disposed || (pageContentEnabled.value && homeHeroRuntimeEnabled.value)) return
   if (homeContentPaintFrame !== undefined) {
     window.cancelAnimationFrame(homeContentPaintFrame)
     homeContentPaintFrame = undefined
@@ -164,8 +166,14 @@ function enableHomeContent() {
   clearTimeout(homeContentFallbackTimer)
   homeContentFallbackTimer = undefined
   pageContentEnabled.value = true
+  homeHeroRuntimeEnabled.value = true
   document.documentElement.dataset.homeHeroPhotoReady = 'true'
   window.dispatchEvent(new Event('home-hero-photo-ready'))
+}
+
+function enableHomeHeroRuntime() {
+  if (disposed || homeHeroRuntimeEnabled.value) return
+  homeHeroRuntimeEnabled.value = true
 }
 
 function scheduleHomeContentAfterHeroPaint() {
@@ -296,6 +304,10 @@ function scrollToHashTarget(force = false) {
 onMounted(() => {
   initTheme()
   window.addEventListener('hashchange', handleHashChange)
+  if (deferHomeHeroRuntime) {
+    if (document.documentElement.dataset.homeHeroPhotoReady === 'true') enableHomeHeroRuntime()
+    else window.addEventListener('home-hero-photo-ready', enableHomeHeroRuntime, { once: true })
+  }
   if (!deferHomeContent) return
   if (window.matchMedia('(forced-colors: active)').matches) {
     enableHomeContent()
@@ -325,6 +337,7 @@ onBeforeUnmount(() => {
   pageLoadController.abort()
   clearTimeout(skeletonTimer)
   clearTimeout(homeContentFallbackTimer)
+  window.removeEventListener('home-hero-photo-ready', enableHomeHeroRuntime)
   if (homeContentPaintFrame !== undefined) window.cancelAnimationFrame(homeContentPaintFrame)
   homeContentObserver?.disconnect()
   homePhotoFallbackCleanup?.()
@@ -401,7 +414,7 @@ function moveLightbox(step: number) {
 
       <HomeHero
         v-if="isHome"
-        :runtime-enabled="pageContentEnabled"
+        :runtime-enabled="homeHeroRuntimeEnabled"
       />
 
       <ArchiveHero

@@ -10,8 +10,10 @@ const context = useSiteRenderContext()
 const localeOrder: Locale[] = ['zh-CN', 'zh-HK', 'en']
 const options = localeOrder.map((code) => localeRegistry[code])
 const currentPage = ref(context.page ?? 'home')
-const currentSearch = ref('')
-const currentHash = ref('')
+const currentSearch = ref(typeof window === 'undefined' ? '' : window.location.search)
+const currentHash = ref(typeof window === 'undefined'
+  ? context.initialHash ?? ''
+  : window.location.hash || context.initialHash || '')
 const prefetchDocument = typeof document !== 'undefined' && typeof window !== 'undefined'
   ? createDocumentPrefetcher(document, window.location.href)
   : null

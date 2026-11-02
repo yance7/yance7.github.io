@@ -127,31 +127,6 @@ html:not([data-vue-enhanced='true']) .home-hero-typewriter[data-font-state='load
   50% { opacity: 0; }
 }
 
-.home-hero[data-intro-state='typing'] .home-hero-actions {
-  opacity: 0;
-  transition: none;
-}
-
-.home-hero[data-intro-state='typing'] .home-hero-actions:focus-within,
-.home-hero[data-intro-state='revealing-actions'] .home-hero-actions:focus-within {
-  opacity: 1;
-  transform: none;
-  animation: none;
-}
-
-.home-hero[data-intro-state='revealing-actions'] .home-hero-actions {
-  animation: home-hero-actions-in 320ms var(--ease-out) both;
-}
-
-.home-hero[data-intro-state='complete'] .home-hero-actions {
-  opacity: 1;
-}
-
-@keyframes home-hero-actions-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
 html[data-locale='en'] .home-hero-typewriter {
   font-size: clamp(2rem, 4.1vw, 4.35rem);
   letter-spacing: 0;
@@ -404,6 +379,7 @@ html[data-theme='dark'] .home-hero-particles {
 }
 
 .home-hero-touch-ripple {
+  display: none;
   position: absolute;
   top: 0;
   left: 0;
@@ -424,6 +400,10 @@ html[data-theme='dark'] .home-hero-particles {
 .home-hero-touch-ripple.is-active {
   opacity: .72;
   transform: translate3d(var(--touch-x, 0px), var(--touch-y, 0px), 0) translate(-50%, -50%) scale(1);
+}
+
+@media (pointer: coarse) {
+  .home-hero-touch-ripple { display: block; }
 }
 
 @media (max-width: 760px) {

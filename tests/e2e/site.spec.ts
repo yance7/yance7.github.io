@@ -132,7 +132,7 @@ async function expectAccessible(page: Page, options: { settle?: boolean } = {}) 
 }
 
 test('axe remains usable when the locale font stylesheet fails', async ({ page }) => {
-  await page.route(/\/fonts-(?:en|zh-cn|zh-hk)-[^/]+\.css$/, route => route.abort('failed'))
+  await page.route(/\/fonts-(?:route-)?(?:en|zh-cn|zh-hk)-[^/]+\.css$/, route => route.abort('failed'))
   await page.goto('/research/')
   await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'fallback')
   await expectAccessible(page)
@@ -471,13 +471,17 @@ test('research timeline removes breathing motion when reduced motion is enabled'
 
 test('slow page chunks still settle deep links', async ({ page }) => {
   let requestCount = 0
+  let markChunkRequested!: () => void
+  const chunkRequested = new Promise<void>((resolve) => { markChunkRequested = resolve })
   await page.route(/\/(?:assets\/vue\/WorksPage-[^/]+\.js|src\/pages\/WorksPage\.vue)(?:\?.*)?$/, async (route) => {
     requestCount += 1
+    markChunkRequested()
     await new Promise((resolve) => setTimeout(resolve, 5200))
     await route.continue()
   })
 
   await page.goto('/works/#project-fresheye')
+  await chunkRequested
   await expect(page.locator('#project-fresheye')).toBeVisible({ timeout: 30000 })
   expect(requestCount).toBeGreaterThan(0)
   await expect.poll(() => page.locator('#project-fresheye').evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBeGreaterThanOrEqual(12)

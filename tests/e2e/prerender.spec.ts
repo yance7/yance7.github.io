@@ -43,6 +43,7 @@ test.describe('static page routes without JavaScript', () => {
       await expect(page.locator('.menu-trigger')).toBeHidden()
       await expect(page.locator('.theme-orbit')).toBeHidden()
       await expect(page.locator('.locale-switcher-desktop a')).toHaveCount(3)
+      await expect(page.locator('head link[rel="stylesheet"][href*="/fonts-route-"]')).toHaveCount(1)
       await expect(page.locator('.site-footer a[href="mailto:yance777@outlook.com"]')).toHaveCount(1)
       await expect(page.locator('.site-footer a[href="https://github.com/yance7"]')).toHaveCount(1)
       if (evidenceHref) {
@@ -127,6 +128,42 @@ test.describe('hydration of static page routes', () => {
   }
 })
 
+test('mobile navigation keeps the main-content position when Vue hydrates', async ({ browser }, testInfo) => {
+  test.skip(testInfo.project.name === 'firefox-desktop-smoke', 'Firefox does not support mobile context emulation')
+  const viewport = { width: 390, height: 844 }
+  const staticContext = await browser.newContext({ javaScriptEnabled: false, viewport, isMobile: true })
+  const staticPage = await staticContext.newPage()
+  await staticPage.goto('/research/')
+  await expect(staticPage.locator('.nav-rail')).toBeVisible()
+  const staticMainTop = await staticPage.locator('main#main').evaluate((element) => element.getBoundingClientRect().top)
+  await staticContext.close()
+
+  const hydratedContext = await browser.newContext({ viewport, isMobile: true })
+  const hydratedPage = await hydratedContext.newPage()
+  await hydratedPage.goto('/research/')
+  await expect(hydratedPage.locator('body')).toHaveAttribute('data-hydrated', 'true')
+  const hydratedMainTop = await hydratedPage.locator('main#main').evaluate((element) => element.getBoundingClientRect().top)
+  await hydratedContext.close()
+
+  expect(hydratedMainTop).toBe(staticMainTop)
+})
+
+test('static routes use one generated locale font stylesheet', async ({ page }) => {
+  const fontStylesheetRequests: string[] = []
+  page.on('request', (request) => {
+    if (/\/assets\/vue\/fonts-(?:route-)?en-[^/]+\.css$/u.test(request.url())) {
+      fontStylesheetRequests.push(request.url())
+    }
+  })
+
+  await page.goto('/en/research/')
+  await expect(page.locator('body')).toHaveAttribute('data-hydrated', 'true')
+  const stylesheet = page.locator('head link[rel="stylesheet"][href*="/fonts-route-en-"]')
+  await expect(stylesheet).toHaveCount(1)
+  const stylesheetUrl = new URL((await stylesheet.getAttribute('href'))!, page.url()).href
+  expect(fontStylesheetRequests).toEqual([stylesheetUrl])
+})
+
 test('pre-rendered content stays visible while the entry script is delayed', async ({ page }) => {
   let markEntryRequested!: () => void
   let releaseEntry!: () => void
@@ -149,6 +186,111 @@ test('pre-rendered content stays visible while the entry script is delayed', asy
   }
 
   await expect(page.locator('body')).toHaveAttribute('data-hydrated', 'true')
+})
+
+test('pre-rendered home sections stay visible while the home page chunk is delayed', async ({ page }) => {
+  let markPageChunkRequested!: () => void
+  let releasePageChunk!: () => void
+  const pageChunkRequested = new Promise<void>((resolve) => { markPageChunkRequested = resolve })
+  const pageChunkGate = new Promise<void>((resolve) => { releasePageChunk = resolve })
+  await page.route(/\/assets\/vue\/HomePage-[^/]+\.js$/u, async (route) => {
+    markPageChunkRequested()
+    await pageChunkGate
+    await route.continue()
+  })
+
+  try {
+    await page.goto('/', { waitUntil: 'commit' })
+    await pageChunkRequested
+    await expect(page.locator('.home-hero-typewriter')).toBeVisible()
+    await expect(page.locator('#selected-work')).toBeVisible()
+    expect(await page.locator('body').getAttribute('data-hydrated')).toBeNull()
+  } finally {
+    releasePageChunk()
+  }
+
+  await expect(page.locator('body')).toHaveAttribute('data-hydrated', 'true')
+  await expect(page.locator('#selected-work')).toBeVisible()
+})
+
+test('pre-rendered home keeps its greeting and primary actions visible through hydration', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  await page.addInitScript(() => {
+    type HomeVisibilitySnapshot = {
+      introState: string | undefined
+      finalState: string | undefined
+      greetingClipPath: string
+      statementClipPath: string
+      actionsOpacity: string
+    }
+    const state = window as Window & { __homeVisibilitySnapshots?: HomeVisibilitySnapshot[] }
+    state.__homeVisibilitySnapshots = []
+    const record = () => {
+      const hero = document.querySelector<HTMLElement>('.home-hero')
+      const greeting = document.querySelector<HTMLElement>('.home-hero-typewriter')
+      const greetingLine = document.querySelector<HTMLElement>('.home-hero-typewriter-line-greeting')
+      const statementLine = document.querySelector<HTMLElement>('.home-hero-typewriter-line-statement')
+      const actions = document.querySelector<HTMLElement>('.home-hero-actions')
+      if (!hero || !greeting || !greetingLine || !statementLine || !actions) return
+      state.__homeVisibilitySnapshots?.push({
+        introState: hero.dataset.introState,
+        finalState: greeting.dataset.finalState,
+        greetingClipPath: getComputedStyle(greetingLine).clipPath,
+        statementClipPath: getComputedStyle(statementLine).clipPath,
+        actionsOpacity: getComputedStyle(actions).opacity
+      })
+    }
+    new MutationObserver(record).observe(document, {
+      subtree: true,
+      childList: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ['data-intro-state', 'data-final-state', 'data-font-state']
+    })
+  })
+
+  let markEntryRequested!: () => void
+  let releaseEntry!: () => void
+  const entryRequested = new Promise<void>((resolve) => { markEntryRequested = resolve })
+  const entryGate = new Promise<void>((resolve) => { releaseEntry = resolve })
+  await page.route(/\/assets\/vue\/main-[^/]+\.js$/u, async (route) => {
+    markEntryRequested()
+    await entryGate
+    await route.continue()
+  })
+
+  const greeting = page.locator('.home-hero-typewriter')
+  const actions = page.locator('.home-hero-actions')
+  try {
+    await page.goto('/en/', { waitUntil: 'commit' })
+    await entryRequested
+    await expect(page.locator('main#main h1')).toBeVisible()
+    await expect(greeting).toBeVisible()
+    await expect(actions).toHaveCSS('opacity', '1')
+  } finally {
+    releaseEntry()
+  }
+
+  await expect(page.locator('body')).toHaveAttribute('data-hydrated', 'true')
+  await expect(greeting).toHaveAttribute('data-final-state', 'true')
+  await expect(page.locator('.home-hero-typewriter-line-greeting')).toHaveCSS('clip-path', 'none')
+  await expect(page.locator('.home-hero-typewriter-line-statement')).toHaveCSS('clip-path', 'none')
+  await expect(actions).toHaveCSS('opacity', '1')
+  const visibilitySnapshots = await page.evaluate(() => (
+    (window as Window & { __homeVisibilitySnapshots?: Array<{
+      finalState: string | undefined
+      greetingClipPath: string
+      statementClipPath: string
+      actionsOpacity: string
+    }> }).__homeVisibilitySnapshots ?? []
+  ))
+  expect(visibilitySnapshots.length).toBeGreaterThan(0)
+  expect(visibilitySnapshots.every(snapshot => (
+    snapshot.finalState === 'true'
+    && snapshot.greetingClipPath === 'none'
+    && snapshot.statementClipPath === 'none'
+    && snapshot.actionsOpacity === '1'
+  ))).toBe(true)
 })
 
 test('pre-rendered content remains available when the entry script fails', async ({ page }) => {
@@ -183,13 +325,133 @@ test('pre-rendered content remains available when its page chunk fails', async (
   expect(await page.locator('body').getAttribute('data-hydrated')).toBeNull()
 })
 
+test('academic SSR metrics keep their final values while the page chunk is delayed and after hydration', async ({ page }) => {
+  const finalValues = ['4.0', '1560', '108', '8.0']
+  await page.addInitScript(() => {
+    const state = window as Window & { __metricValueSnapshots?: string[][] }
+    state.__metricValueSnapshots = []
+    new MutationObserver(() => {
+      const values = [...document.querySelectorAll('.metric-card b')].map(element => element.textContent ?? '')
+      if (values.length) state.__metricValueSnapshots?.push(values)
+    }).observe(document, { subtree: true, childList: true, characterData: true })
+  })
+
+  let markPageChunkRequested!: () => void
+  let releasePageChunk!: () => void
+  const pageChunkRequested = new Promise<void>((resolve) => { markPageChunkRequested = resolve })
+  const pageChunkGate = new Promise<void>((resolve) => { releasePageChunk = resolve })
+  await page.route(/\/assets\/vue\/AcademicsPage-[^/]+\.js$/u, async (route) => {
+    markPageChunkRequested()
+    await pageChunkGate
+    await route.continue()
+  })
+
+  try {
+    await page.goto('/en/academics/', { waitUntil: 'commit' })
+    await pageChunkRequested
+    await expect(page.locator('.metric-card b')).toHaveText(finalValues)
+    await page.locator('.metric-strip').scrollIntoViewIfNeeded()
+    await expect(page.locator('.metric-strip')).toBeInViewport()
+  } finally {
+    releasePageChunk()
+  }
+
+  await expect(page.locator('body')).toHaveAttribute('data-hydrated', 'true')
+  await expect(page.locator('.metric-strip')).toHaveAttribute('data-metrics-ready', 'true')
+  await expect(page.locator('.metric-card b')).toHaveText(finalValues)
+  const snapshots = await page.evaluate(() => (window as Window & { __metricValueSnapshots?: string[][] }).__metricValueSnapshots ?? [])
+  expect(snapshots.length).toBeGreaterThan(0)
+  expect(snapshots.every(values => values.every((value, index) => value === finalValues[index]))).toBe(true)
+})
+
+test('a delayed Works chunk preserves the URL and localized links retain its query and fragment', async ({ page }, testInfo) => {
+  const destination = '/en/works/?source=a#project-trusted-garden'
+  const localeSwitcher = testInfo.project.use.isMobile ? '.locale-switcher-mobile' : '.locale-switcher-desktop'
+  const showLocaleLinks = async () => {
+    if (!testInfo.project.use.isMobile) return
+    const details = page.locator(localeSwitcher)
+    if (!await details.evaluate(element => (element as HTMLDetailsElement).open)) {
+      await details.locator('summary').click()
+    }
+  }
+
+  let markPageChunkRequested!: () => void
+  let releasePageChunk!: () => void
+  const pageChunkRequested = new Promise<void>((resolve) => { markPageChunkRequested = resolve })
+  const pageChunkGate = new Promise<void>((resolve) => { releasePageChunk = resolve })
+  await page.route(/\/assets\/vue\/WorksPage-[^/]+\.js$/u, async (route) => {
+    markPageChunkRequested()
+    await pageChunkGate
+    await route.continue()
+  })
+
+  let localeClick: Promise<void> | undefined
+  try {
+    await page.goto(destination, { waitUntil: 'commit' })
+    await pageChunkRequested
+    await expect(page).toHaveURL(/\/en\/works\/\?source=a#project-trusted-garden$/u)
+    await showLocaleLinks()
+    const simplifiedChinese = page.locator(`${localeSwitcher} a[hreflang="zh-CN"]`)
+    await expect(simplifiedChinese).toBeVisible()
+    await expect(simplifiedChinese).toHaveAttribute('href', '/works/?source=a#project-trusted-garden')
+    await expect(page.locator('#project-trusted-garden')).toBeVisible()
+    const localizedNavigation = page.waitForURL((url) => (
+      url.pathname === '/works/'
+      && url.search === '?source=a'
+      && url.hash === '#project-trusted-garden'
+    ), { waitUntil: 'commit' })
+    localeClick = simplifiedChinese.click()
+    await localizedNavigation
+    await expect(page.locator('main#main h1')).toBeVisible()
+    expect(await page.locator('body').getAttribute('data-hydrated')).toBeNull()
+  } finally {
+    releasePageChunk()
+  }
+
+  await localeClick
+  await expect(page.locator('body')).toHaveAttribute('data-hydrated', 'true')
+  const simplifiedChinese = page.locator(`${localeSwitcher} a[hreflang="zh-CN"]`)
+  await expect(simplifiedChinese).toHaveAttribute('href', '/works/?source=a#project-trusted-garden')
+  await expect(page.locator('#project-trusted-garden')).toBeInViewport()
+})
+
+test('pre-rendered locale links preserve an incoming hash before Vue hydration', async ({ page }, testInfo) => {
+  const localeSwitcher = testInfo.project.use.isMobile ? '.locale-switcher-mobile' : '.locale-switcher-desktop'
+  let markEntryRequested!: () => void
+  const entryRequested = new Promise<void>((resolve) => { markEntryRequested = resolve })
+  await page.route(/\/assets\/vue\/main-[^/]+\.js$/u, (route) => {
+    markEntryRequested()
+    return route.abort('failed')
+  })
+
+  await page.goto('/en/research/#sec-toolchain', { waitUntil: 'commit' })
+  await entryRequested
+  await expect(page.locator('body')).not.toHaveAttribute('data-hydrated', 'true')
+
+  if (testInfo.project.use.isMobile) {
+    await page.locator(localeSwitcher).locator('summary').click()
+  }
+  const simplifiedChinese = page.locator(`${localeSwitcher} a[hreflang="zh-CN"]`)
+  await expect(simplifiedChinese).toHaveAttribute('href', '/research/#sec-toolchain')
+  const localizedNavigation = page.waitForURL((url) => (
+    url.pathname === '/research/' && url.hash === '#sec-toolchain'
+  ), { waitUntil: 'commit' })
+  await simplifiedChinese.click()
+  await localizedNavigation
+  await expect(page.locator('main#main h1')).toBeVisible()
+  await expect(page).toHaveURL(/\/research\/#sec-toolchain$/u)
+  await expect(page.locator('body')).not.toHaveAttribute('data-hydrated', 'true')
+})
+
 test('pre-rendered page-chunk failure preserves and follows an incoming section link', async ({ page }) => {
   await page.route(/\/assets\/vue\/WorksPage-[^/]+\.js$/u, (route) => route.abort('failed'))
-  await page.goto('/en/works/#project-trusted-garden')
+  await page.goto('/en/works/?source=a#project-trusted-garden')
 
   await expect(page.locator('.enhancement-notice')).toBeVisible()
-  await expect(page).toHaveURL(/\/en\/works\/#project-trusted-garden$/u)
+  await expect(page).toHaveURL(/\/en\/works\/\?source=a#project-trusted-garden$/u)
   await expect(page.locator('#project-trusted-garden')).toBeInViewport()
+  await expect(page.locator('.locale-switcher-desktop a[hreflang="zh-CN"]'))
+    .toHaveAttribute('href', '/works/?source=a#project-trusted-garden')
 })
 
 test('WebKit retries a transient page-chunk failure after reloading the same tab', async ({ page }, testInfo) => {
@@ -212,7 +474,7 @@ test('pre-rendered content hydrates with a failed locale font stylesheet', async
   page.on('console', (message) => {
     if (/hydration|mismatch|server-rendered/i.test(message.text())) hydrationWarnings.push(message.text())
   })
-  await page.route(/\/assets\/vue\/fonts-en-[^/]+\.css$/u, (route) => route.abort('failed'))
+  await page.route(/\/assets\/vue\/fonts-route-en-[^/]+\.css$/u, (route) => route.abort('failed'))
   await page.goto('/en/research/')
 
   await expect(page.locator('body')).toHaveAttribute('data-hydrated', 'true')

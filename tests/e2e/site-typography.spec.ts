@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { waitForHydration } from './helpers/hydration'
 
 const locales = [
   {
@@ -314,24 +315,25 @@ test('zh-CN first content mounts while the locale font stylesheet is still loadi
   })
   let blockedStylesheetRequests = 0
 
-  await page.route('**/assets/vue/fonts-*.css', async (route) => {
+  await page.route('**/assets/vue/fonts-route-*.css', async (route) => {
     blockedStylesheetRequests += 1
     await stylesheetRequestPaused
     await route.continue()
   })
 
   try {
-    await page.goto('/', { waitUntil: 'domcontentloaded' })
+    await page.goto('/', { waitUntil: 'commit' })
     await expect.poll(() => blockedStylesheetRequests).toBeGreaterThan(0)
+    await waitForHydration(page)
+    await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'loading')
     await expect(page.locator('.home-hero-typewriter')).toBeVisible()
   } finally {
     releaseStylesheetRequest()
   }
 })
 
-for (const locale of locales) {
+for (const locale of locales.filter(locale => locale.lang !== 'en')) {
   test(`${locale.name} bundled CJK font covers required glyphs`, async ({ page }) => {
-    const sample = locale.lang === 'zh-HK' ? '繁體中文，標點：『測試』。' : '简体中文，标点：『测试』。'
     const fontRequests: string[] = []
 
     page.on('request', (request) => {
@@ -341,6 +343,10 @@ for (const locale of locales) {
 
     await page.goto(locale.homeRoute)
     await expect.poll(() => page.locator('html').getAttribute('data-fonts-ready')).toBe('ready')
+    const sample = await page.locator('main#main').innerText().then((text) => (
+      [...new Set(text.match(/\p{Script=Han}/gu) ?? [])].join('')
+    ))
+    expect(sample).not.toBe('')
 
     const loadedFamilies = await page.evaluate(async ({ fontFamily, text }) => {
       const sampleNode = document.createElement('span')

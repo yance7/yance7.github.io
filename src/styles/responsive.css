@@ -203,29 +203,27 @@
 
 /* Keep the primary links available before the mobile menu runtime starts. */
 @media (max-width: 640px) {
-  html:not([data-vue-enhanced='true']) .site-nav {
-    height: auto;
-  }
   html:not([data-vue-enhanced='true']) .site-nav .site-nav-surface {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-rows: auto auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: 1fr;
     align-items: center;
-    height: auto;
+    height: 100%;
     min-height: var(--nav-shell-height-mobile);
-    padding-block: 4px 8px;
+    padding-block: 0;
     row-gap: 0;
   }
   html:not([data-vue-enhanced='true']) .site-nav-brand { grid-column: 1; grid-row: 1; }
-  html:not([data-vue-enhanced='true']) .site-nav-controls { grid-column: 2; grid-row: 1; }
+  html:not([data-vue-enhanced='true']) .site-nav-controls { grid-column: 3; grid-row: 1; }
   html:not([data-vue-enhanced='true']) .site-nav .nav-rail {
-    grid-column: 1 / -1;
-    grid-row: 2;
+    grid-column: 2;
+    grid-row: 1;
     display: flex;
     justify-self: stretch;
     width: 100%;
+    min-width: 0;
     min-height: 44px;
-    gap: var(--space-4);
+    gap: var(--space-2);
     overflow-x: auto;
     overscroll-behavior-x: contain;
     scrollbar-width: none;

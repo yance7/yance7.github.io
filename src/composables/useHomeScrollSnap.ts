@@ -22,13 +22,16 @@ export function useHomeScrollSnap(isHome: boolean, ready: Ref<boolean>) {
     : undefined
   let suspended = Boolean(window.location.hash || document.documentElement.dataset.initialHash)
   const root = document.documentElement
+  if (isHome && !window.location.hash && !root.dataset.initialHash) {
+    previousHistoryRestoration = window.history.state?.homeReadingRestoration ?? window.history.scrollRestoration
+    window.history.replaceState({ ...window.history.state, homeReadingRestoration: previousHistoryRestoration }, '')
+    window.history.scrollRestoration = 'manual'
+  }
   if (savedPosition && Number.isFinite(savedPosition.top) && Number.isFinite(savedPosition.left)) {
     suspended = true
     root.dataset.homeScrollRestore = 'true'
     // The browser's later load-time restoration must not compete with either
     // our font-gated restore or input that cancels it.
-    previousHistoryRestoration = window.history.state?.homeReadingRestoration ?? window.history.scrollRestoration
-    window.history.replaceState({ ...window.history.state, homeReadingRestoration: previousHistoryRestoration }, '')
     window.history.scrollRestoration = 'manual'
   } else savedPosition = undefined
 
@@ -62,6 +65,9 @@ export function useHomeScrollSnap(isHome: boolean, ready: Ref<boolean>) {
   }
   function saveReadingPosition() {
     leaving = true
+    // Remove proximity snapping before the browser snapshots this document in
+    // the back-forward cache; the restored position must not snap on resume.
+    root.classList.remove('home-scroll-snap')
     window.history.replaceState({
       ...window.history.state,
       homeReadingPosition: { top: window.scrollY, left: window.scrollX }

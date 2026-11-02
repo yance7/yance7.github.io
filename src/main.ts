@@ -9,13 +9,11 @@ import './theme.css'
 
 const initialHash = document.documentElement.dataset.initialHash || window.location.hash
 if (initialHash) document.documentElement.dataset.initialHash = initialHash
-if (initialHash && window.location.hash && document.documentElement.dataset.homeAliasCanonicalized !== 'true') {
-  window.history.replaceState(
-    window.history.state,
-    '',
-    `${window.location.pathname}${window.location.search}`
-  )
-}
+
+document.querySelectorAll<HTMLAnchorElement>('.locale-switcher a[href]').forEach((link) => {
+  const pathname = new URL(link.href, window.location.href).pathname
+  link.href = `${pathname}${window.location.search}${initialHash}`
+})
 
 const locale = resolveLocaleFromPath(window.location.pathname)
 initializeLocale(locale)
@@ -27,6 +25,7 @@ const renderContext = {
   renderDateIso: document.body.dataset.renderDate ?? '',
   initialHash
 }
+const hasPrerenderedMarkup = document.body.dataset.rendered === 'ssg' && Boolean(page) && page !== 'concerts'
 
 const fontStylesheets = {
   'zh-CN': () => import('./fonts-zh-cn.css'),
@@ -34,9 +33,44 @@ const fontStylesheets = {
   en: () => import('./fonts-en.css')
 } as const
 
+function loadPrerenderedFontStylesheet() {
+  const href = document.body.dataset.localeFontStylesheet
+  if (!href) return Promise.reject(new Error('Missing prerendered locale font stylesheet'))
+
+  const url = new URL(href, window.location.href)
+  if (url.origin !== window.location.origin) return Promise.reject(new Error('Locale font stylesheet must be same-origin'))
+
+  const existingStylesheet = Array.from(document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"][href]'))
+    .find((candidate) => new URL(candidate.href, window.location.href).href === url.href)
+  if (existingStylesheet?.sheet) {
+    try {
+      if (existingStylesheet.sheet.cssRules.length > 0) return Promise.resolve()
+    } catch {
+      // A failed link may still expose a CSSStyleSheet object in Chromium.
+    }
+  }
+  if (existingStylesheet && document.readyState === 'complete') {
+    return Promise.reject(new Error('Prerendered locale font stylesheet failed to load'))
+  }
+
+  return new Promise<void>((resolve, reject) => {
+    const link = existingStylesheet ?? document.createElement('link')
+    link.onload = () => resolve()
+    link.onerror = () => reject(new Error('Prerendered locale font stylesheet failed to load'))
+    if (!existingStylesheet) {
+      link.rel = 'stylesheet'
+      link.href = url.href
+      document.head.append(link)
+    }
+  })
+}
+
 async function loadFonts() {
   let deadline: ReturnType<typeof setTimeout> | undefined
-  const loading = fontStylesheets[locale]()
+  const stylesheet = hasPrerenderedMarkup
+    ? loadPrerenderedFontStylesheet()
+    : fontStylesheets[locale]()
+  const loading = stylesheet
     .then(() => document.fonts.ready)
     .then(() => 'ready' as const, () => 'fallback' as const)
   const fallback = new Promise<'fallback'>(resolve => {
@@ -79,9 +113,86 @@ function scheduleFonts() {
   window.setTimeout(startLoadingFonts, fontLoadTimeout)
 }
 
+function startFontsAfterHomePhotoPaint() {
+  let fontsScheduled = false
+  let photoSettled = false
+  let observer: PerformanceObserver | undefined
+  let photo: HTMLImageElement | null = null
+  const settleAfterPaint = () => {
+    window.requestAnimationFrame(() => window.requestAnimationFrame(markPhotoSettled))
+  }
+  const onPhotoLoad = () => {
+    if (!photo || photo.naturalWidth === 0) {
+      markPhotoSettled()
+      return
+    }
+
+    try {
+      const decoded = typeof photo.decode === 'function'
+        ? photo.decode().catch(() => undefined)
+        : Promise.resolve()
+      void decoded.then(settleAfterPaint)
+    } catch {
+      settleAfterPaint()
+    }
+  }
+  const onPhotoError = () => markPhotoSettled()
+  const cleanupPhotoListener = () => {
+    if (!photo) return
+    photo.removeEventListener('load', onPhotoLoad)
+    photo.removeEventListener('error', onPhotoError)
+  }
+  const watchPhoto = () => {
+    photo = photo ?? document.querySelector<HTMLImageElement>('.home-hero-slideshow__image--current')
+    if (!photo) {
+      markPhotoSettled()
+      return
+    }
+    photo.addEventListener('load', onPhotoLoad, { once: true })
+    photo.addEventListener('error', onPhotoError, { once: true })
+    if (photo.complete) {
+      if (photo.naturalWidth === 0) markPhotoSettled()
+      else onPhotoLoad()
+    }
+  }
+  const scheduleFonts = () => {
+    if (fontsScheduled) return
+    fontsScheduled = true
+    window.clearTimeout(fallbackTimer)
+    window.requestAnimationFrame(() => window.requestAnimationFrame(startLoadingFonts))
+  }
+  const markPhotoSettled = () => {
+    if (photoSettled) return
+    photoSettled = true
+    observer?.disconnect()
+    cleanupPhotoListener()
+    document.documentElement.dataset.homeHeroPhotoReady = 'true'
+    window.dispatchEvent(new Event('home-hero-photo-ready'))
+    scheduleFonts()
+  }
+  const fallbackTimer = window.setTimeout(scheduleFonts, fontLoadTimeout)
+
+  try {
+    if (!PerformanceObserver.supportedEntryTypes?.includes('largest-contentful-paint')) {
+      throw new Error('Largest Contentful Paint observation is unavailable')
+    }
+    observer = new PerformanceObserver((entries) => {
+      const hasHeroPhotoPaint = entries.getEntries().some((entry) => {
+        const candidate = (entry as PerformanceEntry & { element?: Element | null }).element
+        return candidate?.classList.contains('home-hero-slideshow__image') === true
+      })
+      if (hasHeroPhotoPaint) markPhotoSettled()
+    })
+    observer.observe({ type: 'largest-contentful-paint', buffered: true })
+    watchPhoto()
+  } catch {
+    observer?.disconnect()
+    watchPhoto()
+  }
+}
+
 document.documentElement.dataset.fontsReady = 'loading'
 configurePageChunkPreload()
-const hasPrerenderedMarkup = document.body.dataset.rendered === 'ssg' && Boolean(page) && page !== 'concerts'
 if (!hasPrerenderedMarkup && page !== 'home') preloadPage(candidate)
 
 let appMounted = false
@@ -90,6 +201,7 @@ async function mountApp() {
   appMounted = true
 
   try {
+    await waitForStaticPagePaint()
     const initialPage = hasPrerenderedMarkup && page ? await loadPageComponent(page) : undefined
     const app = createSiteApp(renderContext, initialPage, hasPrerenderedMarkup)
     app.mount('#app')
@@ -112,12 +224,66 @@ async function mountApp() {
   }
 }
 
+function waitForStaticPagePaint() {
+  if (!hasPrerenderedMarkup || document.documentElement.dataset.staticEntryFallback === 'true') {
+    return Promise.resolve()
+  }
+
+  if (page === 'home' && !initialHash) {
+    if (document.documentElement.dataset.homeHeroPhotoReady === 'true') return Promise.resolve()
+    return new Promise<void>((resolve) => {
+      const onHeroPhotoReady = () => resolve()
+      window.addEventListener('home-hero-photo-ready', onHeroPhotoReady, { once: true })
+      if (document.documentElement.dataset.homeHeroPhotoReady === 'true') {
+        window.removeEventListener('home-hero-photo-ready', onHeroPhotoReady)
+        resolve()
+      }
+    })
+  }
+
+  return new Promise<void>((resolve) => {
+    let settled = false
+    let observer: PerformanceObserver | undefined
+    const finish = () => {
+      if (settled) return
+      settled = true
+      observer?.disconnect()
+      window.removeEventListener('load', scheduleFallback)
+      resolve()
+    }
+    const scheduleFallback = () => {
+      window.requestAnimationFrame(() => window.requestAnimationFrame(finish))
+    }
+    window.addEventListener('load', scheduleFallback, { once: true })
+
+    try {
+      if (!PerformanceObserver.supportedEntryTypes?.includes('largest-contentful-paint')) {
+        throw new Error('Largest Contentful Paint observation is unavailable')
+      }
+      observer = new PerformanceObserver((entries) => {
+        const hasMainContentPaint = entries.getEntries().some((entry) => {
+          const candidate = (entry as PerformanceEntry & { element?: Element | null }).element
+          return candidate instanceof Element && Boolean(candidate.closest('main#main'))
+        })
+        if (hasMainContentPaint) finish()
+      })
+      observer.observe({ type: 'largest-contentful-paint', buffered: true })
+    } catch {
+      observer?.disconnect()
+      observer = undefined
+    }
+
+    if (document.readyState === 'complete') scheduleFallback()
+  })
+}
+
 void mountApp()
-if (hasPrerenderedMarkup) {
-  startLoadingFonts()
-} else if (document.body.dataset.page === 'home' && !initialHash) {
+if (document.body.dataset.page === 'home' && !initialHash) {
   if (document.documentElement.dataset.homeHeroPhotoReady === 'true') startLoadingFonts()
+  else if (hasPrerenderedMarkup) startFontsAfterHomePhotoPaint()
   else window.addEventListener('home-hero-photo-ready', startLoadingFonts, { once: true })
+} else if (hasPrerenderedMarkup) {
+  startLoadingFonts()
 } else {
   scheduleFonts()
 }

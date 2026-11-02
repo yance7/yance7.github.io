@@ -552,7 +552,7 @@ for (const theme of themes) {
     test(`captures AP Microeconomics dossier ${theme} ${viewport.name} visual baseline`, async ({ page }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height })
       await installTheme(page, theme)
-      await page.goto('/works/#project-ap-microeconomics-notes')
+      await page.goto('/works/')
       await settlePage(page)
 
       const project = page.locator('#project-ap-microeconomics-notes')

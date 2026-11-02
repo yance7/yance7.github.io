@@ -2,7 +2,10 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import type { Metric } from '../data/types'
 
-const props = withDefaults(defineProps<{ metrics: Metric[]; large?: boolean }>(), { large: false })
+const props = withDefaults(defineProps<{ metrics: Metric[]; large?: boolean; animateOnEnter?: boolean }>(), {
+  large: false,
+  animateOnEnter: false
+})
 
 function prefersReducedMotion() {
   return typeof window !== 'undefined'
@@ -81,7 +84,7 @@ function animateIndex(i: number) {
 onMounted(() => {
   const strip = metricStrip.value
   if (!strip) return
-  if (prefersReducedMotion() || !('IntersectionObserver' in window)) {
+  if (prefersReducedMotion() || !props.animateOnEnter || !('IntersectionObserver' in window)) {
     displays.value = props.metrics.map((metric) => String(metric.value))
     metricsReady.value = true
     return

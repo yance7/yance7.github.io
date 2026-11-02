@@ -61,6 +61,11 @@ const legacyHomeRoutes = [
   { legacy: '/en/index.html', canonical: '/en/' }
 ] as const
 
+test('homepage alias redirect script does not block static page parsing', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.locator('script[data-home-alias]')).toHaveAttribute('defer', '')
+})
+
 for (const route of legacyHomeRoutes) {
   test(`legacy home URL ${route.legacy} redirects and preserves query and hash`, async ({ page }) => {
     await page.goto(`${route.legacy}?year=2026#selected-work`)

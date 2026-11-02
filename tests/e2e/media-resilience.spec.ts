@@ -698,72 +698,75 @@ test('lightbox deadline keeps its caption and rejects a late result until retry'
   await expect(page.locator('.poster-open').first()).toBeFocused()
 })
 
-test('pending page content shows one delayed skeleton then a terminal error', async ({ page }) => {
-  await page.clock.install()
+test('pre-rendered page content stays available while its chunk is delayed and fails', async ({ page }) => {
   const responseGate = deferred()
-  let chunkUrl = ''
+  const chunkRequested = deferred()
+  const errors: string[] = []
+  page.on('pageerror', error => errors.push(error.message))
   await page.route(/\/assets\/vue\/WorksPage-[^/]+\.js$/, async route => {
-    chunkUrl = route.request().url()
-    const response = await route.fetch()
+    chunkRequested.release()
     await responseGate.promise
-    await route.fulfill({ response })
+    await route.abort('failed')
   })
   try {
-    await page.goto('/en/works/#project-fresheye', { waitUntil: 'domcontentloaded' })
-    await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'loading')
-    await page.clock.fastForward(151)
-    await expect(page.locator('.page-content-skeleton')).toBeVisible()
+    await page.goto('/en/works/?source=a#project-fresheye', { waitUntil: 'domcontentloaded' })
+    await chunkRequested.promise
+    await expect(page.locator('.page-works')).toBeVisible()
     await expect(page.locator('h1')).toHaveCount(1)
-    await expect(page.locator('.site-footer')).toHaveCount(0)
-    await page.clock.fastForward(15000)
-    await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'error')
-    await expect(page.locator('.page-load-error')).toBeVisible()
-    await expect(page.locator('.page-content-skeleton')).toHaveCount(0)
     await expect(page.locator('.site-footer')).toBeVisible()
-    await page.getByRole('button', { name: /^Switch to dark theme:/ }).click()
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
-    responseGate.release()
-    await page.evaluate(async url => { await import(url) }, chunkUrl)
-    await expect(page.locator('.page-load-error')).toBeVisible()
-    await expect(page.locator('.page-works')).toHaveCount(0)
+    await expect(page.locator('.page-content-skeleton')).toHaveCount(0)
+    await expect(page.locator('.page-load-error')).toHaveCount(0)
+    await expect(page).toHaveURL(/\/en\/works\/\?source=a#project-fresheye$/u)
+    expect(await page.locator('body').getAttribute('data-hydrated')).toBeNull()
   } finally {
     responseGate.release()
   }
+
+  await expect(page.locator('.enhancement-notice')).toBeVisible()
+  await expect(page.locator('.page-works')).toBeVisible()
+  await expect(page.locator('#project-fresheye')).toBeInViewport()
+  expect(errors).toEqual([])
 })
 
-test('a slow successful page replaces its single delayed skeleton', async ({ page }) => {
-  await page.clock.install({ time: new Date('2026-10-22T00:00:00Z') })
-  await page.clock.pauseAt(new Date('2026-10-22T00:00:01Z'))
+test('a slow successful page chunk hydrates without replacing pre-rendered content', async ({ page }) => {
   const gate = deferred()
+  const chunkRequested = deferred()
   await page.route(/\/assets\/vue\/WorksPage-[^/]+\.js$/, async route => {
     const response = await route.fetch()
+    chunkRequested.release()
     await gate.promise
     await route.fulfill({ response })
   })
   try {
-    await page.goto('/en/works/', { waitUntil: 'domcontentloaded' })
-    await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'loading')
-    await expect(page.locator('.page-content-skeleton')).toHaveCount(0)
-    await page.clock.runFor(151)
-    await expect(page.locator('.page-content-skeleton')).toHaveCount(1)
-    gate.release()
-    await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+    await page.goto('/en/works/?source=a#project-fresheye', { waitUntil: 'domcontentloaded' })
+    await chunkRequested.promise
     await expect(page.locator('.page-works')).toBeVisible()
+    await expect(page.locator('h1')).toHaveCount(1)
+    await expect(page.locator('.site-footer')).toBeVisible()
     await expect(page.locator('.page-content-skeleton')).toHaveCount(0)
     await expect(page.locator('.page-load-error')).toHaveCount(0)
-    await expect(page.locator('.site-footer')).toBeVisible()
+    await expect(page).toHaveURL(/\/en\/works\/\?source=a#project-fresheye$/u)
+    expect(await page.locator('body').getAttribute('data-hydrated')).toBeNull()
   } finally {
     gate.release()
   }
+
+  await expect(page.locator('body')).toHaveAttribute('data-hydrated', 'true')
+  await expect(page.locator('.page-works')).toBeVisible()
+  await expect(page.locator('#project-fresheye')).toBeInViewport()
+  await expect(page.locator('.page-content-skeleton')).toHaveCount(0)
+  await expect(page.locator('.enhancement-notice')).toHaveCount(0)
 })
 
-test('rejected page chunks expose one error and leave navigation available', async ({ page }) => {
+test('failed pre-rendered page chunks keep content and navigation available', async ({ page }) => {
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
   await page.route(/\/assets\/vue\/WorksPage-[^/]+\.js$/, route => route.abort('failed'))
   await page.goto('/en/works/', { waitUntil: 'domcontentloaded' })
-  await expect(page.locator('.page-load-error')).toHaveCount(1)
-  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'error')
+  await expect(page.locator('.enhancement-notice')).toBeVisible()
+  await expect(page.locator('.page-works')).toBeVisible()
+  await expect(page.locator('.page-content-skeleton')).toHaveCount(0)
+  await expect(page.locator('.page-load-error')).toHaveCount(0)
   await expect(page.locator('.site-footer')).toBeVisible()
   let navigation = page.getByRole('navigation', { name: 'Main navigation', exact: true })
   if (!await navigation.isVisible()) {
@@ -771,7 +774,8 @@ test('rejected page chunks expose one error and leave navigation available', asy
     navigation = page.getByRole('navigation', { name: 'Mobile navigation', exact: true })
   }
   await navigation.locator('a[href="/en/academics/"]').click()
-  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+  await expect(page).toHaveURL(/\/en\/academics\/$/u)
+  await expect(page.locator('body')).toHaveAttribute('data-hydrated', 'true')
   await expect(page.locator('.page-academics')).toBeVisible()
   expect(errors).toEqual([])
 })
@@ -781,45 +785,44 @@ for (const failure of ['network', 'http'] as const) test('page chunk errors keep
   await page.route(chunk, route => failure === 'network'
     ? route.abort('failed')
     : route.fulfill({ status: 503, headers: { 'cache-control': 'no-store' }, body: 'Temporary service failure' }))
-  await page.goto('/en/works/#project-fresheye', { waitUntil: 'domcontentloaded' })
-  await expect(page.locator('.page-load-error')).toBeVisible()
-  expect(page.url()).toMatch(/\/en\/works\/#project-fresheye$/)
-  expect(await page.evaluate(() => scrollY)).toBeLessThanOrEqual(2)
+  await page.goto('/en/works/?source=a#project-fresheye', { waitUntil: 'domcontentloaded' })
+  await expect(page.locator('.enhancement-notice')).toBeVisible()
+  await expect(page.locator('.page-works')).toBeVisible()
+  await expect(page.locator('#project-fresheye')).toBeInViewport()
+  expect(page.url()).toMatch(/\/en\/works\/\?source=a#project-fresheye$/)
   await page.unroute(chunk)
-  await page.getByRole('button', { name: 'Reload page', exact: true }).click()
-  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+  await page.reload({ waitUntil: 'domcontentloaded' })
+  await expect(page.locator('body')).toHaveAttribute('data-hydrated', 'true')
+  await expect(page.locator('.enhancement-notice')).toHaveCount(0)
   await expect(page.locator('#project-fresheye')).toBeInViewport()
 })
 
-test('a page deadline preserves a newer hash chosen while loading', async ({ page }) => {
-  await page.clock.install()
+test('a failed page chunk preserves a newer hash chosen while static content stays available', async ({ page }) => {
   const gate = deferred()
-  const routeSettled = deferred()
-  let routeStarted = false
+  const chunkRequested = deferred()
   await page.route(/\/assets\/vue\/WorksPage-[^/]+\.js$/, async route => {
-    routeStarted = true
+    chunkRequested.release()
     await gate.promise
-    try {
-      await route.fulfill({ status: 503, headers: { 'cache-control': 'no-store' }, body: 'Late chunk failure' })
-    } finally {
-      routeSettled.release()
-    }
+    await route.fulfill({ status: 503, headers: { 'cache-control': 'no-store' }, body: 'Late chunk failure' })
   })
   try {
     await page.goto('/en/works/#project-fresheye', { waitUntil: 'domcontentloaded' })
-    await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'loading')
+    await chunkRequested.promise
+    await expect(page.locator('.page-works')).toBeVisible()
+    await expect(page.locator('.page-content-skeleton')).toHaveCount(0)
     const skip = page.getByRole('link', { name: 'Skip to main content', exact: true })
     await skip.focus()
     await expect(skip).toBeFocused()
     await skip.click()
     await expect(page).toHaveURL(/#main$/)
-    await page.clock.fastForward(15001)
-    await expect(page.locator('.page-load-error')).toBeVisible()
-    await expect(page).toHaveURL(/#main$/)
   } finally {
     gate.release()
-    if (routeStarted) await routeSettled.promise
   }
+
+  await expect(page.locator('.enhancement-notice')).toBeVisible()
+  await expect(page.locator('.page-works')).toBeVisible()
+  await expect(page.locator('#main')).toBeInViewport()
+  await expect(page).toHaveURL(/#main$/)
 })
 
 const emptyCopy = {

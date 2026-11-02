@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { startFontReadinessObservation, type FontReadinessObservation } from './helpers/fontReadiness'
+import { waitForHydration } from './helpers/hydration'
 
 const fontAssertions = new WeakMap<Page, {
   startedAt: number, finishedAt?: number, observation?: FontReadinessObservation
@@ -103,6 +104,7 @@ async function openHome(page: Page, path = '/') {
   // default five-second assertion expire just before a photo-gated page is ready.
   await expect(shell).toHaveAttribute('data-page-load-state', /^(?:ready|error)$/, { timeout: 16_000 })
   await expect(shell).toHaveAttribute('data-page-load-state', 'ready')
+  await waitForHydration(page)
   const assertion: { startedAt: number, finishedAt?: number, observation?: FontReadinessObservation } = {
     startedAt: Date.now()
   }
@@ -334,6 +336,7 @@ test('home Hero anchors and history navigation preserve their native target', as
   await page.goto('/research/')
   await page.goBack()
   await expect(page).toHaveURL(/#home-worlds$/)
+  await waitForHydration(page)
   await expect(page.locator('#home-worlds .section-head')).toBeInViewport()
   await page.goForward()
   await expect(page).toHaveURL(/\/research\/$/)
@@ -361,13 +364,22 @@ test('home history restores a reading position without snapping to a chapter', a
   await page.goto('/research/')
   await page.goBack()
   await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+  await waitForHydration(page)
+  await expect(page.locator('html')).not.toHaveAttribute('data-home-scroll-restore')
   await expect.poll(() => page.evaluate(() => Math.round(scrollY))).toBe(position)
   await expect(page.locator('html')).toHaveCSS('scroll-snap-type', 'none')
 })
 
+async function forceColdHistoryNavigation(page: Page) {
+  await page.evaluate(() => {
+    window.addEventListener('unload', () => {})
+  })
+}
+
 for (const cancelWithTouch of [false, true]) {
   test(`home history ${cancelWithTouch ? 'yields to touch input' : 'waits for locale fonts'} during cold restoration`, async ({ page }) => {
     await openHome(page)
+    await forceColdHistoryNavigation(page)
     await page.locator('.theme-orbit').focus()
     await page.evaluate(() => scrollTo({ top: 700, behavior: 'instant' }))
     await expect.poll(() => page.evaluate(() => Math.round(scrollY))).toBe(700)
@@ -375,14 +387,15 @@ for (const cancelWithTouch of [false, true]) {
     let releaseFonts = () => {}
     const heldFonts = new Promise<void>(resolve => { releaseFonts = resolve })
     let pendingFonts = 0
-    await page.route('**/assets/vue/fonts-*.css', async route => {
+    await page.route('**/assets/vue/fonts-route-*.css', async route => {
       pendingFonts += 1
       await heldFonts
       await route.continue()
     })
     try {
-      await page.goBack({ waitUntil: 'domcontentloaded' })
+      await page.goBack({ waitUntil: 'commit' })
       await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+      await waitForHydration(page)
       await expect.poll(() => pendingFonts).toBeGreaterThan(0)
       await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'loading')
       await expect(page.locator('html')).toHaveAttribute('data-home-scroll-restore', 'true')
@@ -404,19 +417,21 @@ for (const cancelWithTouch of [false, true]) {
 
 test('home cold history restores without foreground animation frame delivery', async ({ page }) => {
   await openHome(page)
+  await forceColdHistoryNavigation(page)
   await page.locator('.theme-orbit').focus()
   await page.evaluate(() => scrollTo({ top: 700, behavior: 'instant' }))
   await expect.poll(() => page.evaluate(() => Math.round(scrollY))).toBe(700)
   await page.goto('/research/')
   let releaseFonts = () => {}
   const heldFonts = new Promise<void>(resolve => { releaseFonts = resolve })
-  await page.route('**/assets/vue/fonts-*.css', async route => {
+  await page.route('**/assets/vue/fonts-route-*.css', async route => {
     await heldFonts
     await route.continue()
   })
   try {
-    await page.goBack({ waitUntil: 'domcontentloaded' })
+    await page.goBack({ waitUntil: 'commit' })
     await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+    await waitForHydration(page)
     await expect(page.locator('html')).toHaveAttribute('data-home-scroll-restore', 'true')
     await page.evaluate(() => { window.requestAnimationFrame = () => 0 })
     releaseFonts()
@@ -431,7 +446,9 @@ test('home cold history restores without foreground animation frame delivery', a
 test('home loading failure keeps native document scrolling available', async ({ page }) => {
   await page.route('**/assets/vue/HomePage-*.js', route => route.abort())
   await page.goto('/')
-  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'error')
+  await expect(page.locator('.enhancement-notice')).toBeVisible()
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+  expect(await page.locator('body').getAttribute('data-hydrated')).toBeNull()
   await expect(page.locator('.home-hero')).toBeVisible()
   await expect(page.locator('html')).not.toHaveClass(/home-scroll-snap/)
   await expect(page.locator('html')).toHaveCSS('scroll-snap-type', 'none')

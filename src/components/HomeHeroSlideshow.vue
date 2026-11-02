@@ -55,12 +55,16 @@ function photoButtonLabel(index: number) {
 }
 
 function imageSrcset(slide: HomeHeroSlide, format: 'webp' | 'jpeg') {
-  const candidates = state.value.saveData ? slide.sources[format].slice(0, 1) : slide.sources[format]
+  const candidates = state.value.saveData
+    ? slide.sources[format].slice(0, 1)
+    : slide.sources[format]
   return candidates.map((candidate) => `${candidate.src} ${candidate.width}w`).join(', ')
 }
 
 function imageFallbackSrc(slide: HomeHeroSlide, format: 'webp' | 'jpeg') {
-  const candidates = state.value.saveData ? slide.sources[format].slice(0, 1) : slide.sources[format]
+  const candidates = state.value.saveData
+    ? slide.sources[format].slice(0, 1)
+    : slide.sources[format]
   return candidates[0]!.src
 }
 

@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test'
 import { expect, test } from '@playwright/test'
+import { waitForHydration } from './helpers/hydration'
 
 const routes = [
   '/en/',
@@ -207,6 +208,7 @@ async function expectEnglishTextSurfacesReadable(page: Page) {
 
 test('English readability checks actual inline geometry and still detects clipping', async ({ page }) => {
   await page.goto('/en/academics/')
+  await waitForHydration(page)
   await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
   await page.evaluate(() => document.fonts.ready)
   await page.evaluate(() => {
