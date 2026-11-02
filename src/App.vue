@@ -29,7 +29,7 @@ const page = props.context.page
 const initialHash = props.context.initialHash ?? ''
 const isHome = page === 'home'
 const deferHomeContent = isHome && !initialHash && !props.initialPage
-const deferHomeHeroRuntime = isHome && !initialHash
+const deferHomeHeroRuntime = isHome && (!initialHash || Boolean(props.initialPage))
 const pageContentEnabled = ref(!deferHomeContent)
 const homeHeroRuntimeEnabled = ref(!deferHomeHeroRuntime)
 const { initTheme } = useTheme()
@@ -305,7 +305,7 @@ onMounted(() => {
   initTheme()
   window.addEventListener('hashchange', handleHashChange)
   if (deferHomeHeroRuntime) {
-    if (document.documentElement.dataset.homeHeroPhotoReady === 'true') enableHomeHeroRuntime()
+    if (initialHash || document.documentElement.dataset.homeHeroPhotoReady === 'true') enableHomeHeroRuntime()
     else window.addEventListener('home-hero-photo-ready', enableHomeHeroRuntime, { once: true })
   }
   if (!deferHomeContent) return

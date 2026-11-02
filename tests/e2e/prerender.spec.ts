@@ -342,6 +342,44 @@ test('pre-rendered greeting stays visible while its font request is pending thro
   }
 })
 
+test('incoming home hashes preserve the static particle tree through hydration', async ({ page }) => {
+  const hydrationDiagnostics: string[] = []
+  page.on('console', (message) => {
+    if (!['error', 'warning'].includes(message.type())) return
+    if (/hydration|mismatch|server-rendered/i.test(message.text())) hydrationDiagnostics.push(message.text())
+  })
+  page.on('pageerror', (error) => {
+    if (/hydration|mismatch|server-rendered/i.test(error.message)) hydrationDiagnostics.push(error.message)
+  })
+
+  let markEntryRequested!: () => void
+  let releaseEntry!: () => void
+  const entryRequested = new Promise<void>((resolve) => { markEntryRequested = resolve })
+  const entryGate = new Promise<void>((resolve) => { releaseEntry = resolve })
+  await page.route(/\/assets\/vue\/main-[^/]+\.js$/u, async (route) => {
+    markEntryRequested()
+    await entryGate
+    await route.continue()
+  })
+
+  try {
+    await page.goto('/en/#selected-work', { waitUntil: 'commit' })
+    await entryRequested
+    const prerenderedParticles = await page.locator('.home-hero-particles').evaluate((element) => ({
+      renderMode: (element as HTMLElement).dataset.renderMode,
+      canvasCount: element.querySelectorAll('canvas').length
+    }))
+    expect(prerenderedParticles).toEqual({ renderMode: 'static', canvasCount: 0 })
+
+    releaseEntry()
+    await expect(page.locator('body')).toHaveAttribute('data-hydrated', 'true')
+    await expect(page).toHaveURL('/en/#selected-work')
+    expect(hydrationDiagnostics).toEqual([])
+  } finally {
+    releaseEntry()
+  }
+})
+
 test('pre-rendered content remains available when the entry script fails', async ({ page }) => {
   await page.route(/\/assets\/vue\/main-[^/]+\.js$/u, (route) => route.abort('failed'))
   const response = await page.goto('/en/research/')

@@ -277,9 +277,7 @@ test('early hero touch retains the hydration fallback while the first photo is s
     await page.goto('/', { waitUntil: 'domcontentloaded' })
     await photoRequestStarted
     await expect(page.locator('body')).not.toHaveAttribute('data-hydrated', 'true')
-    const bounds = await page.locator('.home-hero-slideshow__media').boundingBox()
-    expect(bounds).not.toBeNull()
-    await page.touchscreen.tap(bounds!.x + bounds!.width / 2, bounds!.y + bounds!.height / 2)
+    await page.locator('.home-hero-particles').tap()
     await expect(page).not.toHaveURL(/#/)
     await expect(page.locator('html')).toHaveAttribute('data-home-hero-touch-until', /\d+/)
     await expect(page.locator('html')).toHaveAttribute('data-static-entry-fallback', 'true', { timeout: 4000 })
