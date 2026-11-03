@@ -1,10 +1,16 @@
 import { expect, test } from '@playwright/test'
+import { waitForHydration } from './helpers/hydration'
 
 for (const variant of ['primary', 'secondary']) {
   test(`@pointer-refinement Hero ${variant} press keeps its hit area and label stable`, async ({ page }) => {
     await page.goto('/')
     test.skip(!(await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches)), 'fine pointer only')
-    await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'complete')
+    const root = page.locator('html')
+    await expect(root).toHaveAttribute('data-home-hero-photo-ready', 'true')
+    await waitForHydration(page)
+    await expect(root).toHaveAttribute('data-fonts-ready', /^(ready|fallback)$/)
+    await page.evaluate(() => document.fonts.ready)
+    await expect(page.locator('.home-hero-actions')).toHaveCSS('opacity', '1')
     const action = page.locator(`.hero-action.${variant}`)
     const label = action.locator('.hero-action__label')
     const baseline = await action.evaluate(element => ({
