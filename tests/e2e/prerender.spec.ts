@@ -356,6 +356,61 @@ test('pre-rendered greeting stays visible while its font request is pending thro
   }
 })
 
+for (const route of ['/', '/zh-hk/']) {
+  test(`Chinese ${route} keeps the hero geometry stable while the greeting font loads`, async ({ page }) => {
+    let markGreetingFontRequested!: () => void
+    let releaseGreetingFont!: () => void
+    const greetingFontRequested = new Promise<void>((resolve) => { markGreetingFontRequested = resolve })
+    const greetingFontGate = new Promise<void>((resolve) => { releaseGreetingFont = resolve })
+    const widths = [320, 390, 427, 428]
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.route('**/hero-greeting-wenkai-tc-regular-*.woff2', async (route) => {
+      markGreetingFontRequested()
+      await greetingFontGate
+      await route.continue()
+    })
+
+    const greeting = page.locator('.home-hero-typewriter')
+    const measureWidths = async () => {
+      const result = []
+      for (const width of widths) {
+        await page.setViewportSize({ width, height: 844 })
+        result.push(await page.evaluate(() => {
+          const line = document.querySelector('.home-hero-typewriter-line-greeting')!
+          const actions = document.querySelector('.home-hero-actions')!
+          return {
+            width: window.innerWidth,
+            greetingHeight: line.getBoundingClientRect().height,
+            actionsTop: actions.getBoundingClientRect().top
+          }
+        }))
+      }
+      return result
+    }
+
+    try {
+      await page.goto(route, { waitUntil: 'domcontentloaded' })
+      await greetingFontRequested
+      await expect(greeting).toHaveAttribute('data-font-state', 'loading')
+      const beforeFont = await measureWidths()
+
+      releaseGreetingFont()
+      await expect(greeting).toHaveAttribute('data-font-state', 'ready')
+      const afterFont = await measureWidths()
+
+      expect(afterFont.map((measurement) => measurement.width)).toEqual(widths)
+      afterFont.forEach((measurement, index) => {
+        const initial = beforeFont[index]
+        if (!initial) throw new Error(`Missing pre-font geometry at viewport index ${index}`)
+        expect(Math.abs(measurement.greetingHeight - initial.greetingHeight)).toBeLessThanOrEqual(1)
+        expect(Math.abs(measurement.actionsTop - initial.actionsTop)).toBeLessThanOrEqual(1)
+      })
+    } finally {
+      releaseGreetingFont()
+    }
+  })
+}
+
 test('incoming home hashes preserve the static particle tree through hydration', async ({ page }) => {
   const hydrationDiagnostics: string[] = []
   page.on('console', (message) => {

@@ -432,6 +432,11 @@ html[data-theme='dark'] .home-hero-particles {
   .home-hero-particles-word { font-size: clamp(3.4rem, 23vw, 6rem); }
 }
 
+@media (max-width: 427px) {
+  html[data-locale='zh-CN'] .home-hero-typewriter-line-greeting,
+  html[data-locale='zh-HK'] .home-hero-typewriter-line-greeting { min-height: 2.5em; }
+}
+
 @media (orientation: landscape) and (max-height: 520px) {
   .home-hero {
     min-height: calc(100vh - 68px);

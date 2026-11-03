@@ -157,6 +157,7 @@ test('MiMo geometry cancellation clears pixels without frames and ignores statio
 test('MiMo cursor enlarges for an anchor without href', async ({ page }) => {
   test.skip(!await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches))
   await page.goto('/')
+  await expect(page.locator('html')).toHaveAttribute('data-vue-enhanced', 'true')
   await page.evaluate(() => {
     const anchor = document.createElement('a')
     anchor.id = 'mimo-plain-anchor'
