@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { pageEntries } from '../src/data/pageRegistry'
 import { getLocalizedHomeCopy, getLocalizedPageMeta } from '../src/data/locales'
 import { uiMessages } from '../src/i18n/messages'
@@ -38,6 +38,26 @@ describe('build-time page rendering', () => {
       expect(result.html.match(/<h1\b/g)).toHaveLength(1)
       expect(result.html).toContain('class="site-footer')
       expect(result.html).not.toContain('page-content-skeleton')
+    }
+  })
+
+  it('does not construct hero images or start image deadlines during server rendering', async () => {
+    const imageConstructor = vi.fn(function ImageMock() {
+      throw new Error('Hero image construction is unavailable during server rendering')
+    })
+    const timeoutSpy = vi.spyOn(globalThis, 'setTimeout')
+    vi.stubGlobal('Image', imageConstructor)
+
+    try {
+      const result = await renderPage({ page: 'home', locale: 'en', renderDateIso })
+      await Promise.resolve()
+
+      expect(result.html).toContain(getLocalizedHomeCopy('en').heroGreeting)
+      expect(imageConstructor).not.toHaveBeenCalled()
+      expect(timeoutSpy.mock.calls.some(([, delay]) => delay === 10_000)).toBe(false)
+    } finally {
+      timeoutSpy.mockRestore()
+      vi.unstubAllGlobals()
     }
   })
 

@@ -46,9 +46,12 @@ const scrimStyle = computed(() => ({
 let transitionFrame = 0
 let cancelTargetReadiness: (() => void) | null = null
 let pointerPlaybackIntent: 'play' | 'pause' | null = null
+let slideshowMounted = false
 const targetImageReadinessDeadlineMs = 10_000
 
 onMounted(() => {
+  slideshowMounted = true
+  controller.setEnvironment({ introReady: props.introReady })
   void nextTick(() => {
     imagePreferencesReady.value = true
   })
@@ -181,6 +184,7 @@ async function prepareTargetTransition(image: HTMLImageElement, transactionId: n
 }
 
 watch(() => props.introReady, (introReady) => {
+  if (!slideshowMounted) return
   controller.setEnvironment({ introReady })
 }, { immediate: true })
 
