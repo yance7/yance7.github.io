@@ -12,6 +12,7 @@ for (const { from, to, color } of [
     await page.addInitScript(theme => localStorage.setItem('yance-theme', theme), from)
     // Test one real theme transition per case, independently of the Hero entrance.
     await page.goto('/404.html')
+    await waitForHydration(page)
     await expect(page.locator('html')).toHaveAttribute('data-theme', from)
     await page.locator('.theme-orbit').click()
     await expect(page.locator('html')).toHaveAttribute('data-theme', to)
@@ -60,6 +61,7 @@ test('@pointer-refinement body text keeps native selection while its real links 
 test('@pointer-refinement editable regions take priority over an outer action', async ({ page }) => {
   test.skip(!(await supportsCustomCursor(page)), 'fine pointer only')
   await page.goto('/')
+  await waitForHydration(page)
   await page.evaluate(() => {
     const action = document.createElement('div')
     action.setAttribute('role', 'button')
@@ -75,6 +77,7 @@ test('@pointer-refinement editable regions take priority over an outer action', 
 test('@pointer-refinement disabled action ancestors suppress interactive feedback on descendant links', async ({ page }) => {
   test.skip(!(await supportsCustomCursor(page)), 'fine pointer only')
   await page.goto('/')
+  await waitForHydration(page)
   await page.evaluate(() => {
     const disabled = document.createElement('div')
     disabled.setAttribute('aria-disabled', 'true')
@@ -90,6 +93,7 @@ test('@pointer-refinement disabled action ancestors suppress interactive feedbac
 test('@pointer-refinement passive particle feedback does not imply activation when pressed', async ({ page }) => {
   test.skip(!(await supportsCustomCursor(page)), 'fine pointer only')
   await page.goto('/')
+  await waitForHydration(page)
   await page.locator('.home-hero-particles').hover()
   await page.mouse.down()
   await expect(page.locator('.sitewide-cursor')).not.toHaveClass(/is-pressed/)
@@ -105,6 +109,7 @@ for (const route of routes) {
     test.skip(!(await supportsCustomCursor(page)), 'custom pointer is only enabled for a fine, hovering pointer')
     const cursor = page.locator('.sitewide-cursor')
     await page.goto(route)
+    await waitForHydration(page)
     await expect(cursor).toBeAttached()
 
     const pageHero = page.locator(route === '/' ? '.home-hero' : '.archive-hero')
@@ -139,6 +144,7 @@ test('prioritizes an actionable descendant inside the particle field', async ({ 
 test('keeps the native cursor over disabled controls', async ({ page }) => {
   test.skip(!(await supportsCustomCursor(page)), 'custom pointer is only enabled for a fine, hovering pointer')
   await page.goto('/works/')
+  await waitForHydration(page)
 
   await page.evaluate(() => {
     const disabledAction = document.createElement('button')
@@ -187,6 +193,7 @@ test('@pointer-refinement keeps both ring and center dot directly at the pointer
 test('@pointer-refinement sizes the ring for surface, controls, and particles', async ({ page }) => {
   test.skip(!(await supportsCustomCursor(page)), 'custom pointer is only enabled for a fine, hovering pointer')
   await page.goto('/')
+  await waitForHydration(page)
   await page.evaluate(() => {
     const surface = document.createElement('div')
     surface.setAttribute('aria-label', 'Cursor surface fixture')
@@ -289,6 +296,7 @@ test('restores the native cursor when touch input reaches a fine-pointer page', 
 test('@pointer-refinement clears the pressed cursor state on release and pointer cancellation', async ({ page }) => {
   test.skip(!(await supportsCustomCursor(page)), 'custom pointer is only enabled for a fine, hovering pointer')
   await page.goto('/works/')
+  await waitForHydration(page)
   const cursor = page.locator('.sitewide-cursor')
   const themeButton = page.locator('.theme-orbit')
   const ring = cursor.locator('.sitewide-cursor-ring')
@@ -405,6 +413,7 @@ test('does not intercept navigation or remain visible after route changes', asyn
 test('theme changes restore the native cursor until the pointer moves again', async ({ page }) => {
   test.skip(!(await supportsCustomCursor(page)), 'custom pointer is only enabled for a fine, hovering pointer')
   await page.goto('/works/')
+  await waitForHydration(page)
 
   await page.locator('.theme-orbit').hover()
   await expect(page.locator('html')).toHaveClass(/sitewide-cursor-active/)
@@ -417,6 +426,7 @@ test('theme changes restore the native cursor until the pointer moves again', as
 test('lightbox changes restore the native cursor after closing', async ({ page }) => {
   test.skip(!(await supportsCustomCursor(page)), 'custom pointer is only enabled for a fine, hovering pointer')
   await page.goto('/concerts/')
+  await waitForHydration(page)
   const cursor = page.locator('.sitewide-cursor')
   await page.locator('.poster-open').first().click()
   await expect(page.locator('.lightbox')).toBeVisible()
@@ -431,6 +441,7 @@ test('lightbox changes restore the native cursor after closing', async ({ page }
 test('keeps custom cursor disabled on coarse touch devices', async ({ page }) => {
   test.skip(await supportsCustomCursor(page), 'coarse-pointer fallback is covered only by touch projects')
   await page.goto('/')
+  await waitForHydration(page)
 
   await expect(page.locator('.sitewide-cursor')).toHaveCount(0)
   await expect(page.locator('html')).not.toHaveClass(/sitewide-cursor-active/)
@@ -452,6 +463,7 @@ test('does not attach global cursor pointer listeners on coarse touch devices', 
     }) as typeof window.addEventListener
   })
   await page.goto('/')
+  await waitForHydration(page)
 
   await expect.poll(() => page.evaluate(() => (
     (window as Window & { __cursorListenerAudit?: { pointerMoveListeners: number } })
@@ -462,6 +474,7 @@ test('does not attach global cursor pointer listeners on coarse touch devices', 
 test('@pointer-refinement clears cursor state when the pointer leaves or the page lifecycle changes', async ({ page }) => {
   test.skip(!(await supportsCustomCursor(page)), 'custom pointer is only enabled for a fine, hovering pointer')
   await page.goto('/research/')
+  await waitForHydration(page)
 
   const root = page.locator('html')
   await expect(root).toHaveAttribute('data-fonts-ready', 'ready')
@@ -511,6 +524,7 @@ test('keeps cursor support consistent across every page, locale, and theme', asy
       await page.evaluate((value) => localStorage.setItem('yance-theme', value), theme)
       for (const path of pageRoutes) {
         const response = await page.goto(`${prefix}${path}`)
+        await waitForHydration(page)
         const status = response?.status() ?? 0
         expect(status, `${locale} ${theme} ${prefix}${path} response`).toBeGreaterThanOrEqual(200)
         expect(status, `${locale} ${theme} ${prefix}${path} response`).toBeLessThan(400)
