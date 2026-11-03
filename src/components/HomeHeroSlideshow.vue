@@ -227,22 +227,28 @@ onBeforeUnmount(() => {
     :style="scrimStyle"
     aria-hidden="true"
   >
-    <img
-      v-if="!state.forcedColors"
-      class="home-hero-slideshow__image home-hero-slideshow__image--current"
-      :class="{ 'is-failed': currentImageFailed }"
-      :src="imageFallbackSrc(controller.currentSlide.value, state.currentFormat ?? 'webp')"
-      :srcset="imageSrcset(controller.currentSlide.value, state.currentFormat ?? 'webp')"
-      :sizes="imageSizes()"
-      :style="imageStyle(controller.currentSlide.value)"
-      :width="controller.currentSlide.value.width"
-      :height="controller.currentSlide.value.height"
-      alt=""
-      loading="eager"
-      decoding="async"
-      draggable="false"
-      @error="currentImageError"
-    >
+    <!-- Keep the SSR photo node while letting forced colors avoid fetching the hidden image. -->
+    <picture v-if="!state.forcedColors">
+      <source
+        media="(forced-colors: active)"
+        srcset="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs= 1x"
+      >
+      <img
+        class="home-hero-slideshow__image home-hero-slideshow__image--current"
+        :class="{ 'is-failed': currentImageFailed }"
+        :src="imageFallbackSrc(controller.currentSlide.value, state.currentFormat ?? 'webp')"
+        :srcset="imageSrcset(controller.currentSlide.value, state.currentFormat ?? 'webp')"
+        :sizes="imageSizes()"
+        :style="imageStyle(controller.currentSlide.value)"
+        :width="controller.currentSlide.value.width"
+        :height="controller.currentSlide.value.height"
+        alt=""
+        loading="eager"
+        decoding="async"
+        draggable="false"
+        @error="currentImageError"
+      >
+    </picture>
     <img
       v-if="state.transitioning && state.targetIndex !== null && state.targetFormat && controller.targetSlide.value"
       class="home-hero-slideshow__image home-hero-slideshow__image--target"

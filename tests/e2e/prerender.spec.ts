@@ -709,11 +709,17 @@ test('pre-rendered home hydrates for users who prefer reduced motion', async ({ 
   expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true)
 })
 
-test('pre-rendered home hydrates without a forced-colors mismatch', async ({ page }) => {
+test('pre-rendered home hydrates without a forced-colors mismatch', async ({ page }, testInfo) => {
   const hydrationErrors: string[] = []
+  const homeHeroImageRequests: string[] = []
   page.on('console', (message) => {
     if (message.type() === 'error' && /hydration|mismatch/i.test(message.text())) {
       hydrationErrors.push(message.text())
+    }
+  })
+  page.on('request', (request) => {
+    if (new URL(request.url()).pathname.includes('/assets/images/home-hero/')) {
+      homeHeroImageRequests.push(request.url())
     }
   })
   await page.emulateMedia({ forcedColors: 'active' })
@@ -723,6 +729,8 @@ test('pre-rendered home hydrates without a forced-colors mismatch', async ({ pag
   expect(hydrationErrors).toEqual([])
   await expect(page.locator('.home-hero-slideshow__image')).toHaveCount(0)
   await expect(page.locator('.home-hero-particles-word')).toBeVisible()
+  // WebKit's forced-colors emulation still downloads picture fallback sources.
+  if (!testInfo.project.name.startsWith('webkit')) expect(homeHeroImageRequests).toEqual([])
 })
 
 for (const { path, locale } of [
