@@ -38,6 +38,7 @@ for (const { from, to, color } of [
 test('@pointer-refinement body text keeps native selection while its real links stay actionable', async ({ page }) => {
   test.skip(!(await supportsCustomCursor(page)), 'fine pointer only')
   await page.goto('/')
+  await waitForHydration(page)
   await page.evaluate(() => {
     const paragraph = document.createElement('p')
     paragraph.id = 'cursor-body-text'
