@@ -20,6 +20,17 @@ const routes = locales.flatMap(({ prefix, key, notice }) => staticPages.map(({ k
   evidenceHref
 })))
 
+async function deferGreetingFontFallback(page: import('@playwright/test').Page) {
+  // This test deliberately holds the font response while comparing layout.
+  // Keep that wait separate from the real one-second fallback tested elsewhere.
+  await page.addInitScript(() => {
+    const nativeSetTimeout = window.setTimeout.bind(window)
+    window.setTimeout = ((callback: TimerHandler, delay = 0, ...args: unknown[]) => (
+      nativeSetTimeout(callback, delay === 1000 ? 60_000 : delay, ...args)
+    )) as typeof window.setTimeout
+  })
+}
+
 test.describe('static page routes without JavaScript', () => {
   test.use({ javaScriptEnabled: false, viewport: { width: 320, height: 800 } })
 
@@ -363,6 +374,7 @@ for (const route of ['/', '/zh-hk/']) {
     const greetingFontRequested = new Promise<void>((resolve) => { markGreetingFontRequested = resolve })
     const greetingFontGate = new Promise<void>((resolve) => { releaseGreetingFont = resolve })
     const widths = [320, 390, 427, 428]
+    await deferGreetingFontFallback(page)
     await page.setViewportSize({ width: 390, height: 844 })
     await page.route('**/hero-greeting-wenkai-tc-regular-*.woff2', async (route) => {
       markGreetingFontRequested()
