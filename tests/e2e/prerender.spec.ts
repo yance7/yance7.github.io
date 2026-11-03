@@ -330,6 +330,8 @@ test('pre-rendered home keeps its greeting and primary actions visible through h
 })
 
 test('pre-rendered greeting stays visible while its font request is pending through hydration', async ({ page }) => {
+  await deferGreetingFontFallback(page)
+
   let markEntryRequested!: () => void
   let releaseEntry!: () => void
   let markGreetingFontRequested!: () => void

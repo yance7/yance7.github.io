@@ -330,6 +330,7 @@ test('@pointer-refinement clears the pressed cursor state on release and pointer
 test('distinguishes particle and editable text areas without hiding the native text cursor', async ({ page }) => {
   test.skip(!(await supportsCustomCursor(page)), 'custom pointer is only enabled for a fine, hovering pointer')
   await page.goto('/')
+  await waitForHydration(page)
 
   const cursor = page.locator('.sitewide-cursor')
   await page.locator('.home-hero-particles').hover()
