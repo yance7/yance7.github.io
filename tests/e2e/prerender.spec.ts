@@ -69,6 +69,17 @@ test.describe('static page routes without JavaScript', () => {
     })
   }
 
+  for (const { prefix, key } of locales) {
+    test(`${key} honors filters are disabled without JavaScript`, async ({ page }) => {
+      const path = prefix ? `${prefix}/honors/` : '/honors/'
+      await page.goto(path)
+      const filters = page.locator('.honor-filter [data-honor-filter]')
+
+      await expect(filters).toHaveCount(4)
+      for (const filter of await filters.all()) await expect(filter).toBeDisabled()
+    })
+  }
+
   test('native methodology details can be opened without JavaScript', async ({ page }) => {
     await page.goto('/en/research/')
     const details = page.locator('.tl-method').first()
