@@ -461,16 +461,38 @@ test('incoming home hashes preserve the static particle tree through hydration',
   }
 })
 
-test('pre-rendered content remains available when the entry script fails', async ({ page }) => {
-  await page.route(/\/assets\/vue\/main-[^/]+\.js$/u, (route) => route.abort('failed'))
-  const response = await page.goto('/en/research/')
+const entryFailureCases = [
+  {
+    locale: 'zh-CN',
+    path: '/research/',
+    notice: '动态交互暂未加载；本页内容和链接仍可使用。刷新页面可再次尝试。'
+  },
+  {
+    locale: 'zh-HK',
+    path: '/zh-hk/research/',
+    notice: '動態互動暫未載入；本頁內容和連結仍可使用。重新整理頁面可再試一次。'
+  },
+  {
+    locale: 'en',
+    path: '/en/research/',
+    notice: 'Interactive features could not load; the page content and links remain available. Refresh to try again.'
+  }
+]
 
-  expect(response?.status()).toBe(200)
-  await expect(page.locator('main#main h1')).toBeVisible()
-  await expect(page.locator('.site-footer')).toBeVisible()
-  await expect(page.locator('.site-footer a[href="mailto:yance777@outlook.com"]')).toHaveCount(1)
-  expect(await page.locator('body').getAttribute('data-hydrated')).toBeNull()
-})
+for (const { locale, path, notice } of entryFailureCases) {
+  test(`pre-rendered ${locale} content remains available when the entry script fails`, async ({ page }) => {
+    await page.route(/\/assets\/vue\/main-[^/]+\.js$/u, (route) => route.abort('failed'))
+    const response = await page.goto(path)
+
+    expect(response?.status()).toBe(200)
+    await expect(page.locator('main#main h1')).toBeVisible()
+    await expect(page.locator('.site-footer')).toBeVisible()
+    await expect(page.locator('.site-footer a[href="mailto:yance777@outlook.com"]')).toHaveCount(1)
+    await expect(page.locator('.enhancement-notice')).toBeVisible()
+    await expect(page.locator('.enhancement-notice')).toContainText(notice)
+    expect(await page.locator('body').getAttribute('data-hydrated')).toBeNull()
+  })
+}
 
 test('pre-rendered entry-script failure preserves and follows an incoming section link', async ({ page }) => {
   await page.route(/\/assets\/vue\/main-[^/]+\.js$/u, (route) => route.abort('failed'))

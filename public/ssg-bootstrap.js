@@ -21,6 +21,20 @@
   let fallbackTimer
   let observer
   let earlyTouchObserver
+  const showEnhancementNotice = () => {
+    if (document.body.dataset.rendered !== 'ssg' || document.querySelector('.enhancement-notice')) return
+
+    const messages = {
+      'zh-CN': '动态交互暂未加载；本页内容和链接仍可使用。刷新页面可再次尝试。',
+      'zh-HK': '動態互動暫未載入；本頁內容和連結仍可使用。重新整理頁面可再試一次。',
+      en: 'Interactive features could not load; the page content and links remain available. Refresh to try again.'
+    }
+    const notice = document.createElement('p')
+    notice.className = 'enhancement-notice'
+    notice.setAttribute('role', 'status')
+    notice.textContent = messages[document.body.dataset.locale] || messages.en
+    document.body.append(notice)
+  }
   const preserveLocaleNavigation = () => {
     const hash = window.location.hash || document.documentElement.dataset.initialHash || ''
     const search = window.location.search
@@ -43,7 +57,7 @@
     if (started) return
     started = true
     observer?.disconnect()
-    void import(entryUrl.href).catch(() => undefined)
+    void import(entryUrl.href).catch(showEnhancementNotice)
   }
   const startEntryAfterFallback = () => {
     document.documentElement.dataset.staticEntryFallback = 'true'
