@@ -115,9 +115,16 @@ function scheduleFonts() {
 
 function startFontsAfterHomePhotoPaint() {
   let fontsScheduled = false
+  let fontsStarted = false
   let photoSettled = false
   let observer: PerformanceObserver | undefined
   let photo: HTMLImageElement | null = null
+  const startFonts = () => {
+    if (fontsStarted) return
+    fontsStarted = true
+    window.clearTimeout(fallbackTimer)
+    startLoadingFonts()
+  }
   const settleAfterPaint = () => {
     window.requestAnimationFrame(() => window.requestAnimationFrame(markPhotoSettled))
   }
@@ -156,10 +163,9 @@ function startFontsAfterHomePhotoPaint() {
     }
   }
   const scheduleFonts = () => {
-    if (fontsScheduled) return
+    if (fontsScheduled || fontsStarted) return
     fontsScheduled = true
-    window.clearTimeout(fallbackTimer)
-    window.requestAnimationFrame(() => window.requestAnimationFrame(startLoadingFonts))
+    window.requestAnimationFrame(() => window.requestAnimationFrame(startFonts))
   }
   const markPhotoSettled = () => {
     if (photoSettled) return
@@ -170,7 +176,9 @@ function startFontsAfterHomePhotoPaint() {
     window.dispatchEvent(new Event('home-hero-photo-ready'))
     scheduleFonts()
   }
-  const fallbackTimer = window.setTimeout(scheduleFonts, fontLoadTimeout)
+  // Keep a deadline even after the photo paints: its foreground animation frames
+  // may be withheld, but font readiness must still release history restoration.
+  const fallbackTimer = window.setTimeout(startFonts, fontLoadTimeout)
 
   try {
     if (!PerformanceObserver.supportedEntryTypes?.includes('largest-contentful-paint')) {

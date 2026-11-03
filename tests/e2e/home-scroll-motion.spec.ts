@@ -416,6 +416,15 @@ for (const cancelWithTouch of [false, true]) {
 }
 
 test('home cold history restores without foreground animation frame delivery', async ({ page }) => {
+  await page.addInitScript(() => {
+    const state = window.history.state as { homeReadingPosition?: unknown } | null
+    if (!state?.homeReadingPosition) return
+
+    const requestAnimationFrame = window.requestAnimationFrame.bind(window)
+    let heroPhotoReady = false
+    window.addEventListener('home-hero-photo-ready', () => { heroPhotoReady = true }, { once: true })
+    window.requestAnimationFrame = callback => heroPhotoReady ? 0 : requestAnimationFrame(callback)
+  })
   await openHome(page)
   await forceColdHistoryNavigation(page)
   await page.locator('.theme-orbit').focus()
@@ -432,8 +441,8 @@ test('home cold history restores without foreground animation frame delivery', a
     await page.goBack({ waitUntil: 'commit' })
     await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
     await waitForHydration(page)
+    await expect(page.locator('html')).toHaveAttribute('data-home-hero-photo-ready', 'true')
     await expect(page.locator('html')).toHaveAttribute('data-home-scroll-restore', 'true')
-    await page.evaluate(() => { window.requestAnimationFrame = () => 0 })
     releaseFonts()
     await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
     await expect(page.locator('html')).not.toHaveAttribute('data-home-scroll-restore')
