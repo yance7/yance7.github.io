@@ -53,6 +53,7 @@ test('@pointer-refinement runtime pointer capability changes clear magnetic feed
 test('@pointer-refinement Hero CTA uses a stable inner magnetic layer without moving its hit area', async ({ page }) => {
   await page.goto('/')
   test.skip(!(await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches)), 'fine pointer only')
+  await waitForHydration(page)
   await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'complete')
   const action = page.locator('.hero-action').first()
   const baseline = await action.boundingBox()
@@ -506,16 +507,17 @@ test('reduced motion completes every reveal immediately', async ({ page }) => {
     return {
       opacity: Number.parseFloat(style.opacity),
       transform: style.transform,
+      transformIsIdentity: style.transform === 'none' || new DOMMatrixReadOnly(style.transform).isIdentity,
       transitionDuration: style.transitionDuration.split(',').map(toMilliseconds),
       transitionDelay: style.transitionDelay.split(',').map(toMilliseconds)
     }
   }))
-  expect(states.every(({ opacity, transform, transitionDuration, transitionDelay }) => (
+  expect(states.every(({ opacity, transformIsIdentity, transitionDuration, transitionDelay }) => (
     opacity === 1
-      && transform === 'none'
+      && transformIsIdentity
       && transitionDuration.every((duration) => duration <= 0.01)
       && transitionDelay.every((delay) => delay === 0)
-  ))).toBe(true)
+  )), JSON.stringify(states)).toBe(true)
 })
 
 test('card hover composes with a running reveal without replacing its offset', async ({ page }) => {
