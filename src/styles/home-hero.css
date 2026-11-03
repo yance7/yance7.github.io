@@ -433,8 +433,8 @@ html[data-theme='dark'] .home-hero-particles {
 }
 
 @media (max-width: 427px) {
-  html[data-locale='zh-CN'] .home-hero-typewriter-line-greeting,
-  html[data-locale='zh-HK'] .home-hero-typewriter-line-greeting { min-height: 2.5em; }
+  body[data-locale='zh-CN'] .home-hero-typewriter-line-greeting,
+  body[data-locale='zh-HK'] .home-hero-typewriter-line-greeting { min-height: 2.5em; }
 }
 
 @media (orientation: landscape) and (max-height: 520px) {
@@ -481,6 +481,11 @@ html[data-theme='dark'] .home-hero-particles {
   isolation: isolate;
   width: 100%;
   min-width: 0;
+  min-height: clamp(340px, 36vw, 480px);
+}
+
+@media (max-width: 760px) {
+  .home-hero-visual { min-height: 300px; }
 }
 
 .home-hero-slideshow__media {
