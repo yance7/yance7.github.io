@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { waitForHydration } from './helpers/hydration'
 
 const locales = [
   {
@@ -32,6 +33,8 @@ for (const fallback of [false, true]) for (const locale of locales) {
     if (fallback) await page.route('**/hero-greeting-wenkai-*.woff2', route => route.abort('failed'))
     await page.setViewportSize(viewports[0])
     await page.goto(locale.route)
+    // The static home shell may wait for its hero photo before Vue mounts.
+    await waitForHydration(page, { timeout: 10_000 })
 
     const greeting = page.locator('.home-hero-typewriter')
     await expect(greeting).toHaveAttribute('data-font-state', /^(ready|fallback)$/)
