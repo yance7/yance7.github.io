@@ -270,11 +270,7 @@ export function injectPrerenderedHtml(options: PrerenderHtmlOptions) {
   collectDependencyCss(pageModule, manifest, new Set(), stylesheets)
   const additions = [
     ...[...stylesheets].map(stylesheetTag),
-    ...(routeFontStylesheet
-      ? page === 'home'
-        ? [`<noscript>${stylesheetTag(routeFontStylesheet)}</noscript>`]
-        : [stylesheetTag(routeFontStylesheet)]
-      : [])
+    ...(routeFontStylesheet ? [stylesheetTag(routeFontStylesheet)] : [])
   ].filter((tag) => !shell.includes(tag.match(/href="([^"]+)"/u)?.[1] ?? ''))
 
   const bodyTeleports = teleports.body ?? ''

@@ -26,6 +26,13 @@ describe('page registry', () => {
 })
 
 describe('critical rendering contracts', () => {
+  it('runs the prerender contract in both WebKit quality-audit projects', () => {
+    const qualityWorkflow = readFileSync(resolve(process.cwd(), '.github/workflows/quality.yml'), 'utf8')
+
+    expect(qualityWorkflow).toContain('tests/e2e/prerender.spec.ts --project=webkit-desktop')
+    expect(qualityWorkflow).toContain('tests/e2e/prerender.spec.ts --project=webkit-mobile')
+  })
+
   it('does not preload locale font styles ahead of the app entry', () => {
     const viteConfig = readFileSync(resolve(process.cwd(), 'config/vite.config.ts'), 'utf8')
     const localizedPages = readFileSync(resolve(process.cwd(), 'scripts/generate-localized-pages.ts'), 'utf8')

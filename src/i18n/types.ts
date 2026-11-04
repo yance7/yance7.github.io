@@ -76,6 +76,7 @@ export interface UiMessages {
     stack: string
     single: string
     copyCitation: string
+    viewCitationText: string
     copyInProgress: string
     copied: string
     copyFailed: string

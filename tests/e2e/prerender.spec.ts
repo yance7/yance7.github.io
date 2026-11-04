@@ -8,9 +8,9 @@ const staticPages = [
   { key: 'works', path: '/works/', evidenceHref: 'https://fresheye.yance.me' }
 ]
 const locales = [
-  { prefix: '', key: 'zh-CN', notice: '核心内容与链接可直接浏览' },
-  { prefix: '/zh-hk', key: 'zh-HK', notice: '核心內容與連結可直接瀏覽' },
-  { prefix: '/en', key: 'en', notice: 'Core content and links remain available without JavaScript' }
+  { prefix: '', key: 'zh-CN', notice: '核心内容与链接可直接浏览', fontName: 'zh-cn', citationLabel: '查看引用文本' },
+  { prefix: '/zh-hk', key: 'zh-HK', notice: '核心內容與連結可直接瀏覽', fontName: 'zh-hk', citationLabel: '查看引用文字' },
+  { prefix: '/en', key: 'en', notice: 'Core content and links remain available without JavaScript', fontName: 'en', citationLabel: 'View citation text' }
 ]
 const routes = locales.flatMap(({ prefix, key, notice }) => staticPages.map(({ key: pageKey, path, evidenceHref }) => ({
   path: prefix ? `${prefix}${path}` : path,
@@ -94,6 +94,19 @@ test.describe('static page routes without JavaScript', () => {
     const accessibilityTree = await details.ariaSnapshot()
     expect(accessibilityTree).toContain(methodologyText)
   })
+
+  for (const { prefix, key, citationLabel } of locales) {
+    test(`${key} citation text remains available for manual copying without JavaScript`, async ({ page }) => {
+      await page.goto(`${prefix}/research/`)
+      const citation = page.locator('.citation-source').first()
+
+      await expect(citation).toBeVisible()
+      await expect(citation.locator('summary')).toHaveText(citationLabel)
+      await citation.locator('summary').click()
+      await expect(citation.locator('pre')).toContainText('@INPROCEEDINGS{11605650')
+      await expect(page.locator('.copy-citation').first()).toBeDisabled()
+    })
+  }
 
   test('skip link reaches main content without JavaScript', async ({ page }, testInfo) => {
     await page.goto('/en/research/')
@@ -199,6 +212,25 @@ test('static routes use one generated locale font stylesheet', async ({ page }) 
   const stylesheetUrl = new URL((await stylesheet.getAttribute('href'))!, page.url()).href
   expect(fontStylesheetRequests).toEqual([stylesheetUrl])
 })
+
+for (const { prefix, key, fontName } of locales) {
+  test(`${key} homepage route font stylesheet loads even when the entry script fails`, async ({ page }) => {
+    const fontStylesheetRequests: string[] = []
+    page.on('request', (request) => {
+      if (request.url().includes(`/assets/vue/fonts-route-${fontName}-`)) {
+        fontStylesheetRequests.push(request.url())
+      }
+    })
+    await page.route('**/ssg-bootstrap.js', (route) => route.abort())
+
+    await page.goto(`${prefix}/`)
+    const stylesheet = page.locator(`head link[rel="stylesheet"][href*="fonts-route-${fontName}-"]`)
+    await expect(stylesheet).toHaveCount(1)
+    await expect(page.locator('body')).toHaveAttribute('data-rendered', 'ssg')
+    await expect(page.locator('main#main')).toBeVisible()
+    expect(fontStylesheetRequests).toHaveLength(1)
+  })
+}
 
 test('pre-rendered content stays visible while the entry script is delayed', async ({ page }) => {
   let markEntryRequested!: () => void

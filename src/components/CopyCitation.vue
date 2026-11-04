@@ -48,20 +48,26 @@ onUnmounted(() => clearTimeout(timer))
 </script>
 
 <template>
-  <button
-    class="tl-link copy-citation"
-    :class="`is-${state}`"
-    type="button"
-    :disabled="!clientReady || copying"
-    :data-state="state"
-    :aria-label="state === 'success' ? messages.common.copied : messages.common.copyCitation"
-    @click="copy"
-  >
-    <span class="copy-icon" aria-hidden="true">
-      <svg v-if="state === 'success'" viewBox="0 0 16 16"><path d="m3 8 3 3 7-7" /></svg>
-      <svg v-else viewBox="0 0 16 16"><rect x="5" y="3" width="8" height="9" rx="1.5" /><path d="M3 6v6.5A1.5 1.5 0 0 0 4.5 14H10" /></svg>
-    </span>
-    <span class="copy-label" aria-live="polite">{{ copying ? messages.common.copyInProgress : state === 'success' ? messages.common.copied : messages.common.copyCitation }}</span>
-  </button>
-  <span v-if="state === 'error'" class="copy-error" role="status" aria-live="polite">{{ messages.common.copyFailed }}</span>
+  <div class="citation-controls">
+    <button
+      class="tl-link copy-citation"
+      :class="`is-${state}`"
+      type="button"
+      :disabled="!clientReady || copying"
+      :data-state="state"
+      :aria-label="state === 'success' ? messages.common.copied : messages.common.copyCitation"
+      @click="copy"
+    >
+      <span class="copy-icon" aria-hidden="true">
+        <svg v-if="state === 'success'" viewBox="0 0 16 16"><path d="m3 8 3 3 7-7" /></svg>
+        <svg v-else viewBox="0 0 16 16"><rect x="5" y="3" width="8" height="9" rx="1.5" /><path d="M3 6v6.5A1.5 1.5 0 0 0 4.5 14H10" /></svg>
+      </span>
+      <span class="copy-label" aria-live="polite">{{ copying ? messages.common.copyInProgress : state === 'success' ? messages.common.copied : messages.common.copyCitation }}</span>
+    </button>
+    <span v-if="state === 'error'" class="copy-error" role="status" aria-live="polite">{{ messages.common.copyFailed }}</span>
+    <details class="citation-source">
+      <summary>{{ messages.common.viewCitationText }}</summary>
+      <pre>{{ citation }}</pre>
+    </details>
+  </div>
 </template>
