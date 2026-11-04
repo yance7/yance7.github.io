@@ -104,7 +104,7 @@ async function openHome(page: Page, path = '/') {
   // default five-second assertion expire just before a photo-gated page is ready.
   await expect(shell).toHaveAttribute('data-page-load-state', /^(?:ready|error)$/, { timeout: 16_000 })
   await expect(shell).toHaveAttribute('data-page-load-state', 'ready')
-  await waitForHydration(page)
+  await waitForHydration(page, { timeout: 10_000 })
   const assertion: { startedAt: number, finishedAt?: number, observation?: FontReadinessObservation } = {
     startedAt: Date.now()
   }
