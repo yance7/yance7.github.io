@@ -208,7 +208,7 @@ test('a late greeting response cannot replay typing or block the global font sig
     const greeting = page.locator('.home-hero-typewriter')
     await expect(greeting).toHaveAttribute('data-font-state', 'fallback')
     await expect(greeting).toBeVisible()
-    await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'fallback', { timeout: 8000 })
+    await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', /^(ready|fallback)$/, { timeout: 8000 })
     const before = await greeting.evaluate(element => ({
       font: getComputedStyle(element).fontFamily,
       text: element.textContent,

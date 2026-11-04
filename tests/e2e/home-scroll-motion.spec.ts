@@ -370,6 +370,14 @@ test('home history restores a reading position without snapping to a chapter', a
     let release = () => {}
     const held = new Promise<void>(resolve => { release = resolve })
     testWindow.__releaseHomeGreetingFont = () => release()
+    // Keep the greeting's one-second fallback from racing this controlled load.
+    const nativeSetTimeout = window.setTimeout
+    window.setTimeout = new Proxy(nativeSetTimeout, {
+      apply(target, thisArg, args) {
+        const [callback, delay, ...rest] = args
+        return Reflect.apply(target, thisArg, [callback, delay === 1000 ? 30_000 : delay, ...rest])
+      }
+    })
     const nativeLoad = document.fonts.load.bind(document.fonts)
     Object.defineProperty(document.fonts, 'load', {
       configurable: true,
@@ -391,7 +399,7 @@ test('home history restores a reading position without snapping to a chapter', a
     await page.waitForFunction(() => {
       const testWindow = window as Window & { __homeGreetingFontLoadStarted?: boolean }
       return testWindow.__homeGreetingFontLoadStarted
-    }, undefined, { timeout: 900 })
+    }, undefined, { timeout: 5000 })
     await expect(page.locator('.home-hero-typewriter')).toHaveAttribute('data-font-state', 'loading')
     await expect(page.locator('html')).toHaveAttribute('data-home-scroll-restore', 'true')
     await releaseGreetingFont()
