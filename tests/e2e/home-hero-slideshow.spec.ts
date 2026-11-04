@@ -385,33 +385,23 @@ test('keeps the prerendered hero image candidate stable through hydration', asyn
   }
 })
 
-test('starts the homepage font stylesheet after the hero photo paints', async ({ page, browserName }) => {
+test('loads the statically linked homepage font stylesheet once while the hero photo paints', async ({ page, browserName }) => {
   test.skip(browserName !== 'chromium')
-  await page.addInitScript(() => {
-    const auditWindow = window as Window & { __homeHeroLcp?: number }
-    new PerformanceObserver((list) => {
-      for (const entry of list.getEntries()) {
-        const candidate = (entry as LargestContentfulPaint).element?.className
-        if (auditWindow.__homeHeroLcp === undefined && typeof candidate === 'string' && candidate.includes('home-hero-slideshow__image')) {
-          auditWindow.__homeHeroLcp = entry.startTime
-        }
-      }
-    }).observe({ type: 'largest-contentful-paint', buffered: true })
+  const fontStylesheetRequests: string[] = []
+  page.on('request', (request) => {
+    if (/\/fonts-route-(?:zh-cn|zh-hk|en)-[^/]+\.css$/u.test(new URL(request.url()).pathname)) {
+      fontStylesheetRequests.push(request.url())
+    }
   })
 
   await page.goto('/')
   await expectLoadedImage(page)
   await expect(page.locator('.page-home')).toBeVisible()
   await expect.poll(() => page.locator('html').getAttribute('data-fonts-ready')).toMatch(/ready|fallback/)
-  const timing = await page.evaluate(() => ({
-    photoLcp: (window as Window & { __homeHeroLcp?: number }).__homeHeroLcp,
-    localeFontStylesheet: performance.getEntriesByType('resource')
-      .find((entry) => /\/fonts-route-(?:zh-cn|zh-hk|en)-[^/]+\.css$/.test(entry.name))?.startTime
-  }))
-
-  expect(timing.photoLcp).toBeDefined()
-  expect(timing.localeFontStylesheet).toBeDefined()
-  expect(timing.localeFontStylesheet!).toBeGreaterThan(timing.photoLcp!)
+  const stylesheet = page.locator('head link[rel="stylesheet"][href*="/fonts-route-"]')
+  await expect(stylesheet).toHaveCount(1)
+  const stylesheetUrl = new URL((await stylesheet.getAttribute('href'))!, page.url()).href
+  expect(fontStylesheetRequests).toEqual([stylesheetUrl])
 })
 
 test('paints the first photo before mounting slideshow controls', async ({ page, browserName }) => {

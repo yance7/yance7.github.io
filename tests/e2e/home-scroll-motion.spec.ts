@@ -387,7 +387,7 @@ for (const cancelWithTouch of [false, true]) {
     let releaseFonts = () => {}
     const heldFonts = new Promise<void>(resolve => { releaseFonts = resolve })
     let pendingFonts = 0
-    await page.route('**/assets/vue/fonts-route-*.css', async route => {
+    await page.route('**/assets/vue/*.woff2', async route => {
       pendingFonts += 1
       await heldFonts
       await route.continue()
@@ -433,7 +433,7 @@ test('home cold history restores without foreground animation frame delivery', a
   await page.goto('/research/')
   let releaseFonts = () => {}
   const heldFonts = new Promise<void>(resolve => { releaseFonts = resolve })
-  await page.route('**/assets/vue/fonts-route-*.css', async route => {
+  await page.route('**/assets/vue/*.woff2', async route => {
     await heldFonts
     await route.continue()
   })

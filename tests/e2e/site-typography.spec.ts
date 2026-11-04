@@ -286,49 +286,29 @@ for (const locale of locales) {
   })
 }
 
-test('zh-CN first content mounts while locale font files are still loading', async ({ page }) => {
+test('zh-CN hydration completes while locale font files are still loading', async ({ page }) => {
   let releaseFontRequests = () => {}
   const fontRequestsPaused = new Promise<void>((resolve) => {
     releaseFontRequests = resolve
   })
   let blockedFontRequests = 0
 
-  await page.route('**/*.woff2', async (route) => {
+  await page.route('**/assets/vue/*.woff2', async (route) => {
     blockedFontRequests += 1
     await fontRequestsPaused
     await route.continue()
   })
 
   try {
-    await page.goto('/', { waitUntil: 'domcontentloaded' })
-    await expect.poll(() => blockedFontRequests).toBeGreaterThan(0)
-    await expect(page.locator('.home-hero-typewriter')).toBeVisible()
-  } finally {
-    releaseFontRequests()
-  }
-})
-
-test('zh-CN first content mounts while the locale font stylesheet is still loading', async ({ page }) => {
-  let releaseStylesheetRequest = () => {}
-  const stylesheetRequestPaused = new Promise<void>((resolve) => {
-    releaseStylesheetRequest = resolve
-  })
-  let blockedStylesheetRequests = 0
-
-  await page.route('**/assets/vue/fonts-route-*.css', async (route) => {
-    blockedStylesheetRequests += 1
-    await stylesheetRequestPaused
-    await route.continue()
-  })
-
-  try {
     await page.goto('/', { waitUntil: 'commit' })
-    await expect.poll(() => blockedStylesheetRequests).toBeGreaterThan(0)
+    await expect.poll(() => blockedFontRequests).toBeGreaterThan(0)
     await waitForHydration(page)
     await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'loading')
     await expect(page.locator('.home-hero-typewriter')).toBeVisible()
+    releaseFontRequests()
+    await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
   } finally {
-    releaseStylesheetRequest()
+    releaseFontRequests()
   }
 })
 
