@@ -362,12 +362,46 @@ test('home history restores a reading position without snapping to a chapter', a
   })
   await expect.poll(() => page.evaluate(() => Math.round(scrollY))).toBe(position)
   await page.goto('/research/')
-  await page.goBack()
-  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
-  await waitForHydration(page)
-  await expect(page.locator('html')).not.toHaveAttribute('data-home-scroll-restore')
-  await expect.poll(() => page.evaluate(() => Math.round(scrollY))).toBe(position)
-  await expect(page.locator('html')).toHaveCSS('scroll-snap-type', 'none')
+  await page.addInitScript(() => {
+    const testWindow = window as Window & {
+      __homeGreetingFontLoadStarted?: boolean
+      __releaseHomeGreetingFont?: () => void
+    }
+    let release = () => {}
+    const held = new Promise<void>(resolve => { release = resolve })
+    testWindow.__releaseHomeGreetingFont = () => release()
+    const nativeLoad = document.fonts.load.bind(document.fonts)
+    Object.defineProperty(document.fonts, 'load', {
+      configurable: true,
+      value: (font: string, text?: string) => {
+        const loaded = nativeLoad(font, text)
+        if (!font.includes('Yance Hero WenKai')) return loaded
+        testWindow.__homeGreetingFontLoadStarted = true
+        return loaded.then(faces => held.then(() => faces))
+      }
+    })
+  })
+  const releaseGreetingFont = () => page.evaluate(() => {
+    (window as Window & { __releaseHomeGreetingFont?: () => void }).__releaseHomeGreetingFont?.()
+  }).catch(() => undefined)
+  try {
+    await page.goBack()
+    await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+    await waitForHydration(page)
+    await page.waitForFunction(() => {
+      const testWindow = window as Window & { __homeGreetingFontLoadStarted?: boolean }
+      return testWindow.__homeGreetingFontLoadStarted
+    }, undefined, { timeout: 900 })
+    await expect(page.locator('.home-hero-typewriter')).toHaveAttribute('data-font-state', 'loading')
+    await expect(page.locator('html')).toHaveAttribute('data-home-scroll-restore', 'true')
+    await releaseGreetingFont()
+    await expect(page.locator('.home-hero-typewriter')).toHaveAttribute('data-font-state', /^(ready|fallback)$/)
+    await expect(page.locator('html')).not.toHaveAttribute('data-home-scroll-restore')
+    await expect.poll(() => page.evaluate(() => Math.round(scrollY))).toBe(position)
+    await expect(page.locator('html')).toHaveCSS('scroll-snap-type', 'none')
+  } finally {
+    await releaseGreetingFont()
+  }
 })
 
 async function forceColdHistoryNavigation(page: Page) {

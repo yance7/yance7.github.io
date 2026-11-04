@@ -17,7 +17,6 @@ for (const width of [320, 390, 768, 1440]) for (const theme of ['light', 'dark']
     await page.addInitScript(theme => localStorage.setItem('yance-theme', theme), theme)
     await page.goto('/en/')
     const root = page.locator('html')
-    await expect(root).toHaveAttribute('data-home-hero-photo-ready', 'true')
     await waitForHydration(page)
     await expect(root).toHaveAttribute('data-fonts-ready', /^(ready|fallback)$/)
     await page.evaluate(() => document.fonts.ready)

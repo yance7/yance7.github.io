@@ -9,6 +9,7 @@ export function useHomeScrollSnap(isHome: boolean, ready: Ref<boolean>) {
   let reduced: MediaQueryList | undefined
   let bodyObserver: MutationObserver | undefined
   let fontsObserver: MutationObserver | undefined
+  let greetingFontObserver: MutationObserver | undefined
   let mounted = false
   let restorationCancelled = false
   let leaving = false
@@ -62,6 +63,8 @@ export function useHomeScrollSnap(isHome: boolean, ready: Ref<boolean>) {
     delete root.dataset.homeScrollRestore
     fontsObserver?.disconnect()
     fontsObserver = undefined
+    greetingFontObserver?.disconnect()
+    greetingFontObserver = undefined
   }
   function saveReadingPosition() {
     leaving = true
@@ -88,6 +91,16 @@ export function useHomeScrollSnap(isHome: boolean, ready: Ref<boolean>) {
     // Locale font CSS loads after mount; document.fonts.ready can resolve
     // before that stylesheet starts loading. main.ts publishes the final state.
     if (root.dataset.fontsReady !== 'ready' && root.dataset.fontsReady !== 'fallback') return
+    const greeting = document.querySelector<HTMLElement>('.home-hero-typewriter')
+    if (greeting?.dataset.fontState === 'loading') {
+      if (!greetingFontObserver) {
+        greetingFontObserver = new MutationObserver(restoreReadingPosition)
+        greetingFontObserver.observe(greeting, { attributes: true, attributeFilter: ['data-font-state'] })
+      }
+      if (greeting.dataset.fontState === 'loading') return
+    }
+    greetingFontObserver?.disconnect()
+    greetingFontObserver = undefined
     const position = savedPosition
     savedPosition = undefined
     fontsObserver?.disconnect()
