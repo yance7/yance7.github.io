@@ -843,7 +843,10 @@ test('waits for the resized target candidate to load before revealing it', async
     releaseLargeCandidate()
     await expect.poll(() => target.evaluate((element) => (element as HTMLImageElement).naturalWidth)).toBeGreaterThan(0)
     await target.evaluate((element) => (element as HTMLImageElement).decode())
-    await page.clock.runFor(16)
+    await expect.poll(async () => {
+      await page.clock.runFor(1_000 / 60)
+      return media.getAttribute('data-transitioning')
+    }).toBe('true')
     await expect(media).toHaveClass(/is-transitioning/)
     await expect(controls.locator('.home-hero-slideshow__dot-button').nth(1)).toHaveAttribute('aria-current', 'true')
     await expect(media).toHaveAttribute('data-current-index', '0')

@@ -229,40 +229,15 @@ test('a late greeting response cannot replay typing or block the global font sig
 })
 
 for (const locale of locales) {
-  test(`${locale.name} loads its font stylesheet and used font faces after first content mounts`, async ({ page }) => {
-    await page.addInitScript(() => {
-      type MountEvidence = {
-        mountedAt: number
-        localeStylesheetActiveAtMount: boolean
-      }
-      const timingWindow = window as Window & { __appMountEvidence?: MountEvidence }
-      const observer = new MutationObserver(() => {
-        if (document.querySelector('#app')?.childElementCount && timingWindow.__appMountEvidence === undefined) {
-          const mountedAt = performance.now()
-          timingWindow.__appMountEvidence = {
-            mountedAt,
-            localeStylesheetActiveAtMount: Array.from(document.styleSheets).some(({ href }) => href?.includes('/assets/vue/fonts-'))
-          }
-          observer.disconnect()
-        }
-      })
+  test(`${locale.name} links its route font stylesheet in prerendered HTML and loads used font faces`, async ({ page }) => {
+    const response = await page.goto(locale.homeRoute)
+    const prerenderedHtml = await response?.text() ?? ''
+    const stylesheetPattern = new RegExp(`<link rel="stylesheet" href="(/assets/vue/fonts-route-${locale.lang.toLowerCase()}-[a-f0-9]{12}\\.css)">`)
+    const stylesheetHref = prerenderedHtml.match(stylesheetPattern)?.[1]
 
-      observer.observe(document, { childList: true, subtree: true })
-    })
-
-    await page.goto(locale.homeRoute)
+    expect(stylesheetHref).toBeDefined()
+    expect(prerenderedHtml).toContain(`data-locale-font-stylesheet="${stylesheetHref}"`)
     await expect(page.locator('.home-hero-typewriter')).toBeVisible()
-
-    const evidence = await page.evaluate(() =>
-      (window as Window & { __appMountEvidence?: {
-        mountedAt: number
-        localeStylesheetActiveAtMount: boolean
-      } }).__appMountEvidence
-    )
-
-    expect(evidence).toBeDefined()
-    expect(evidence?.mountedAt).toBeGreaterThan(0)
-    expect(evidence?.localeStylesheetActiveAtMount).toBe(false)
     await expect.poll(() => page.locator('html').getAttribute('data-fonts-ready')).toBe('ready')
     const loadedFonts = await page.evaluate(() => ({
       localeStylesheetActive: Array.from(document.styleSheets).some(({ href }) => href?.includes('/assets/vue/fonts-')),
