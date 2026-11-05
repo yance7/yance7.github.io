@@ -50,6 +50,7 @@ export interface HomeHeroSlideshowOptions {
   saveData?: boolean
   forcedColors?: boolean
   pageVisible?: boolean
+  deferInitialLoad?: boolean
 }
 
 export interface HomeHeroSlideshowEnvironment {
@@ -547,7 +548,7 @@ export function createHomeHeroSlideshow(options: HomeHeroSlideshowOptions) {
     cancelActiveLoad()
   }
 
-  if (!state.value.forcedColors) void loadInitialPhoto()
+  if (!options.deferInitialLoad && !state.value.forcedColors) void loadInitialPhoto()
 
   return {
     state: readonly(state) as Readonly<Ref<HomeHeroSlideshowState>>,
@@ -570,17 +571,13 @@ export function createHomeHeroSlideshow(options: HomeHeroSlideshowOptions) {
 
 export function useHomeHeroSlideshow(options: UseHomeHeroSlideshowOptions) {
   const { container, controls, imageSizes, ...controllerOptions } = options
-  const reducedMotion = controllerOptions.reducedMotion
-    ?? (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
-  const forcedColors = controllerOptions.forcedColors
-    ?? (typeof window !== 'undefined' && window.matchMedia('(forced-colors: active)').matches)
-  const saveData = controllerOptions.saveData
-    ?? (typeof navigator !== 'undefined'
-      && (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData === true)
-  const pageVisible = controllerOptions.pageVisible
-    ?? (typeof document === 'undefined' || document.visibilityState !== 'hidden')
+  const reducedMotion = controllerOptions.reducedMotion ?? false
+  const forcedColors = controllerOptions.forcedColors ?? false
+  const saveData = controllerOptions.saveData ?? false
+  const pageVisible = controllerOptions.pageVisible ?? true
   const controller = createHomeHeroSlideshow({
     ...controllerOptions,
+    deferInitialLoad: true,
     reducedMotion,
     forcedColors,
     saveData,
@@ -678,6 +675,7 @@ export function useHomeHeroSlideshow(options: UseHomeHeroSlideshowOptions) {
     window.addEventListener('pointercancel', touchEnd, { passive: true })
     bindContainer(container.value)
     bindControls(controls.value)
+    updatePreferences()
     visibilityChanged()
   })
 

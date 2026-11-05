@@ -10,6 +10,12 @@ import { pageEntries } from '../src/data/pageRegistry'
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)))
 const dist = join(root, 'dist')
 const localizedTargets = ['zh-HK', 'en'] as const
+const noScriptNotice: Record<Locale, string> = {
+  'zh-CN': '核心内容与链接可直接浏览；动态效果与部分交互需要 JavaScript。',
+  'zh-HK': '核心內容與連結可直接瀏覽；動態效果與部分互動需要 JavaScript。',
+  en: 'Core content and links remain available without JavaScript; some visual effects and interactions require JavaScript.'
+}
+const sourceNoScriptNotice = noScriptNotice['zh-CN']
 
 function escapeHtml(value: string) {
   return value
@@ -61,6 +67,7 @@ function rewriteLocalizedHtml(source: string, locale: Locale, page: (typeof page
     .map((alternate) => `  <link rel="alternate" hreflang="${alternate.hreflang}" href="${alternate.href}">`)
     .join('\n')
   html = html.replace('</head>', `${alternateLinks}\n</head>`)
+  html = html.replaceAll(sourceNoScriptNotice, escapeHtml(noScriptNotice[locale]))
   return normalizeRootAssets(rewriteJsonLd(html, seo))
 }
 
@@ -72,6 +79,7 @@ function rewriteLocalized404(source: string, locale: Locale) {
     .replace(/<body([^>]*)>/i, (_match, attrs: string) => `<body${attrs.replace(/\sdata-locale="[^"]*"/i, '')} data-locale="${locale}">`)
     .replace(/<title>[^<]*<\/title>/i, '<title>404 · Yance</title>')
     .replace(/<meta name="description" content="[^"]*">/i, `<meta name="description" content="${escapeHtml(messages.error404.copy)}">`)
+    .replaceAll(sourceNoScriptNotice, escapeHtml(noScriptNotice[locale]))
 }
 
 function sourcePagePath(page: (typeof pageEntries)[number]) {

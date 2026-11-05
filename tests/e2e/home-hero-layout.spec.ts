@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { waitForHydration } from './helpers/hydration'
 
 const locales = [
   {
@@ -32,6 +33,8 @@ for (const fallback of [false, true]) for (const locale of locales) {
     if (fallback) await page.route('**/hero-greeting-wenkai-*.woff2', route => route.abort('failed'))
     await page.setViewportSize(viewports[0])
     await page.goto(locale.route)
+    // The static home shell may wait for its hero photo before Vue mounts.
+    await waitForHydration(page, { timeout: 10_000 })
 
     const greeting = page.locator('.home-hero-typewriter')
     await expect(greeting).toHaveAttribute('data-font-state', /^(ready|fallback)$/)
@@ -281,6 +284,8 @@ for (const locale of locales) {
     await expect(primary).toHaveAttribute('href', '#selected-work')
     await expect(secondary).toHaveAttribute('href', '#home-worlds')
 
+    if (hasFinePointer) await secondary.hover()
+
     for (const theme of ['light', 'dark'] as const) {
       const primaryStyle = await primary.evaluate((link, themeName) => {
         document.documentElement.dataset.theme = themeName
@@ -354,11 +359,11 @@ for (const locale of locales) {
       })
       expect(primaryFocus).toEqual({ outlineStyle: 'solid', outlineWidth: '2px', outlineOffset: '3px' })
 
-      if (hasFinePointer) await secondary.hover()
       const secondaryStyle = await secondary.evaluate(link => {
         const style = getComputedStyle(link)
         const label = getComputedStyle(link.querySelector('.hero-action__label')!)
         return {
+          hovered: link.matches(':hover'),
           minHeight: style.minHeight,
           height: link.getBoundingClientRect().height,
           background: style.backgroundColor,
@@ -369,6 +374,7 @@ for (const locale of locales) {
           fontFamily: style.fontFamily
         }
       })
+      if (hasFinePointer) expect(secondaryStyle.hovered).toBe(true)
       expect(Number.parseFloat(secondaryStyle.minHeight)).toBeGreaterThanOrEqual(44)
       expect(secondaryStyle.height).toBeGreaterThanOrEqual(44)
       expect(secondaryStyle.background).toBe('rgba(0, 0, 0, 0)')

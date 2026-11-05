@@ -1,7 +1,9 @@
 import { expect, test } from '@playwright/test'
+import { waitForHydration } from './helpers/hydration'
 
 test('content pages expose a localized transform-driven reading progress bar', async ({ page }) => {
   await page.goto('/research/')
+  await waitForHydration(page)
 
   const progress = page.locator('.scroll-progress')
   const bar = page.locator('.scroll-bar')
@@ -10,7 +12,7 @@ test('content pages expose a localized transform-driven reading progress bar', a
   await expect(progress).toHaveAttribute('aria-valuemin', '0')
   await expect(progress).toHaveAttribute('aria-valuemax', '100')
   await expect(progress).toHaveAttribute('aria-valuenow', '0')
-  await expect(bar).toHaveAttribute('style', /transform: scaleX\(/)
+  await expect(bar).toHaveAttribute('style', /transform:\s*scaleX\(/)
 
   await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready', { timeout: 10_000 })
   await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'auto' }))

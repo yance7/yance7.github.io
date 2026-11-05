@@ -16,7 +16,7 @@ const particleState = ref(props.runtimeEnabled ? 'initializing' : 'static')
 const glyphFontFamily = 'Amiri, serif'
 const glyphFontWeight = '400'
 const RAF_CLOCK_DRIFT_LIMIT_MS = 100
-const ensureGlyphFont = createHeroGlyphFontLoader(document.fonts, () => new FontFace('Amiri', `url("${amiriFontUrl}")`, { weight: '400', style: 'normal' }))
+let ensureGlyphFont: (() => Promise<void>) | undefined
 const particleCount = ref(0)
 const sourceParticleCount = ref(0)
 const inkArea = ref(0)
@@ -185,7 +185,7 @@ async function rebuild(force = false) {
     staticMode()
     const revision = generation
     await fitStaticGlyph(width, height, revision)
-    await ensureGlyphFont().catch(() => undefined)
+    await ensureGlyphFont?.().catch(() => undefined)
     await fitStaticGlyph(width, height, revision)
     return
   }
@@ -200,7 +200,7 @@ async function rebuild(force = false) {
   if (disposed || revision !== generation || !canRenderCanvas() || !canvas.value) return
   try {
     // Generate the mask only after the locally bundled Amiri regular face loads.
-    await ensureGlyphFont()
+    await ensureGlyphFont?.()
     if (disposed || revision !== generation || !canRenderCanvas() || !canvas.value) return
     const [{ MimoParticleEngine, createMimoTextMask, createMimoParticleScene }, { HomeHeroParticleRenderer: ParticleRenderer }] = await Promise.all([
       import('../utils/mimoParticleModel'),
@@ -372,6 +372,7 @@ function theme() {
 watch(() => props.runtimeEnabled, (enabled) => { if (enabled) void rebuild() }, { flush: 'post' })
 watch(() => props.introStartedAt, () => { if (props.runtimeEnabled && !engine && allowed()) void rebuild() })
 onMounted(() => {
+  ensureGlyphFont = createHeroGlyphFontLoader(document.fonts, () => new FontFace('Amiri', `url("${amiriFontUrl}")`, { weight: '400', style: 'normal' }))
   motionMedia = matchMedia('(prefers-reduced-motion: reduce)')
   forcedMedia = matchMedia('(forced-colors: active)')
   connection = (navigator as Navigator & { connection?: EventTarget & { saveData?: boolean } }).connection

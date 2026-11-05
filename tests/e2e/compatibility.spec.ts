@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { pageEntries } from '../../src/data/pageRegistry'
+import { waitForHydration } from './helpers/hydration'
 
 const archiveRoutes = [...pageEntries.map(({ routePath }) => routePath), '/404.html']
 
@@ -238,10 +239,17 @@ test('touch rail controls follow the active theme control tokens', async ({ page
 test('Firefox preserves direct hashes and theme state across navigation', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'firefox-desktop-smoke', 'Firefox-specific desktop compatibility proof')
   await page.goto('/research/#sec-toolchain')
+  await waitForHydration(page)
+  const initialTheme = await page.locator('html').getAttribute('data-theme')
+  if (initialTheme !== 'light' && initialTheme !== 'dark') throw new Error('Theme is not initialized after hydration')
+
   await page.locator('.theme-orbit').click()
-  const theme = await page.locator('html').getAttribute('data-theme')
+  const theme = initialTheme === 'light' ? 'dark' : 'light'
+  await expect(page.locator('html')).toHaveAttribute('data-theme', theme)
+
   await page.goto('/works/#project-fresheye')
-  await expect(page.locator('html')).toHaveAttribute('data-theme', theme!)
+  await waitForHydration(page)
+  await expect(page.locator('html')).toHaveAttribute('data-theme', theme)
 })
 
 test('Android touch workflows survive portrait and landscape changes', async ({ page }, testInfo) => {

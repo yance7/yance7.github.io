@@ -2,8 +2,17 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 
 const hasCoarsePointer = ref(false)
-const touchActive = ref(false)
-const touchPosition = reactive({ x: 0, y: 0 })
+const root = typeof document === 'undefined' ? null : document.documentElement
+const earlyTouchExpiresAt = Number(root?.dataset.homeHeroTouchUntil)
+const earlyTouch = root && Number.isFinite(earlyTouchExpiresAt) && earlyTouchExpiresAt > Date.now()
+  ? {
+      x: Number(root.dataset.homeHeroTouchX) || 0,
+      y: Number(root.dataset.homeHeroTouchY) || 0,
+      expiresAt: earlyTouchExpiresAt
+    }
+  : null
+const touchActive = ref(earlyTouch !== null)
+const touchPosition = reactive({ x: earlyTouch?.x ?? 0, y: earlyTouch?.y ?? 0 })
 const touchStyle = computed(() => ({
   '--touch-x': `${touchPosition.x}px`,
   '--touch-y': `${touchPosition.y}px`
@@ -29,6 +38,9 @@ function startTouchRipple(event: PointerEvent) {
 
   touchPosition.x = event.clientX - bounds.left
   touchPosition.y = event.clientY - bounds.top
+  delete document.documentElement.dataset.homeHeroTouchUntil
+  delete document.documentElement.dataset.homeHeroTouchX
+  delete document.documentElement.dataset.homeHeroTouchY
   touchActive.value = true
   window.clearTimeout(rippleTimer)
   rippleTimer = window.setTimeout(() => { touchActive.value = false }, 540)
@@ -46,6 +58,19 @@ onMounted(() => {
   motionMedia = window.matchMedia('(prefers-reduced-motion: reduce)')
   connection = (navigator as Navigator & { connection?: EventTarget & { saveData?: boolean } }).connection
   updateTouchSupport()
+  const bootstrapWindow = window as Window & { __yanceEarlyHomeHeroTouchTimer?: number }
+  if (bootstrapWindow.__yanceEarlyHomeHeroTouchTimer !== undefined) {
+    window.clearTimeout(bootstrapWindow.__yanceEarlyHomeHeroTouchTimer)
+    delete bootstrapWindow.__yanceEarlyHomeHeroTouchTimer
+  }
+  delete document.documentElement.dataset.homeHeroTouchUntil
+  delete document.documentElement.dataset.homeHeroTouchX
+  delete document.documentElement.dataset.homeHeroTouchY
+  if (earlyTouch) {
+    const remaining = Math.max(0, earlyTouch.expiresAt - Date.now())
+    if (remaining > 0) rippleTimer = window.setTimeout(() => { touchActive.value = false }, remaining)
+    else touchActive.value = false
+  }
   window.addEventListener('pointerdown', startTouchRipple, { passive: true })
   coarsePointerMedia.addEventListener('change', updateTouchSupport)
   motionMedia.addEventListener('change', updateTouchSupport)
@@ -63,7 +88,6 @@ onBeforeUnmount(() => {
 
 <template>
   <span
-    v-if="hasCoarsePointer"
     class="home-hero-touch-ripple"
     :class="{ 'is-active': touchActive }"
     :data-active="touchActive"

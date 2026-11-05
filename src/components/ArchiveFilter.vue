@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onMounted, ref } from 'vue'
 import { useLocale } from '../i18n'
 
 interface ArchiveCategory {
@@ -19,6 +20,11 @@ const emit = defineEmits<{
   filter: [category: ArchiveCategory['key']]
 }>()
 const { messages } = useLocale()
+const enhanced = ref(false)
+
+onMounted(() => {
+  enhanced.value = true
+})
 </script>
 
 <template>
@@ -31,6 +37,7 @@ const { messages } = useLocale()
       :class="{ active: props.active === cat.key, [cat.key]: true }"
       :data-honor-filter="cat.key"
       :aria-pressed="props.active === cat.key"
+      :disabled="!enhanced"
       @click="emit('filter', cat.key)"
     >
       <span class="filter-label">{{ cat.label }}</span>

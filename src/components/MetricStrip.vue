@@ -2,7 +2,10 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import type { Metric } from '../data/types'
 
-const props = withDefaults(defineProps<{ metrics: Metric[]; large?: boolean }>(), { large: false })
+const props = withDefaults(defineProps<{ metrics: Metric[]; large?: boolean; animateOnEnter?: boolean }>(), {
+  large: false,
+  animateOnEnter: false
+})
 
 function prefersReducedMotion() {
   return typeof window !== 'undefined'
@@ -20,14 +23,11 @@ function parseValue(value: string) {
   }
 }
 
-function initialDisplay(value: string, reducedMotion: boolean) {
-  if (reducedMotion) return String(value)
-  const parsed = parseValue(value)
-  if (!parsed) return String(value)
-  return (0).toFixed(parsed.decimals) + parsed.suffix
+function initialDisplay(value: string) {
+  return String(value)
 }
 
-const displays = ref(props.metrics.map((metric) => initialDisplay(metric.value, prefersReducedMotion())))
+const displays = ref(props.metrics.map((metric) => initialDisplay(metric.value)))
 const metricStrip = ref<HTMLElement | null>(null)
 const metricsReady = ref(false)
 const rafs = new Set<number>()
@@ -60,6 +60,7 @@ function animateIndex(i: number) {
     markMetricsReadyIfComplete()
     return
   }
+  displays.value[i] = (0).toFixed(parsed.decimals) + parsed.suffix
   const start = performance.now()
   const duration = 650
   let currentRaf = 0
@@ -83,7 +84,7 @@ function animateIndex(i: number) {
 onMounted(() => {
   const strip = metricStrip.value
   if (!strip) return
-  if (prefersReducedMotion() || !('IntersectionObserver' in window)) {
+  if (prefersReducedMotion() || !props.animateOnEnter || !('IntersectionObserver' in window)) {
     displays.value = props.metrics.map((metric) => String(metric.value))
     metricsReady.value = true
     return

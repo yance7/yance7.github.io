@@ -27,3 +27,4 @@ docs/handoff/
 # Vue build
 node_modules/
 /dist/
+/.ssg-build/

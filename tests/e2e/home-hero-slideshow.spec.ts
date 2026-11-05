@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
+import { waitForHydration } from './helpers/hydration'
 
 const locales = [
   { route: '/', group: '首页照片轮播', second: '显示第 2 张，共 13 张：校园影像' },
@@ -59,6 +60,42 @@ async function suppressLargestContentfulPaintEntries(page: import('@playwright/t
   })
 }
 
+test('starts the YANCE canvas after the pre-rendered hero photo is painted', async ({ page }) => {
+  let markImageRequested!: () => void
+  let releaseImage!: () => void
+  let mainEntryRequested = false
+  const imageRequested = new Promise<void>((resolve) => { markImageRequested = resolve })
+  const imageGate = new Promise<void>((resolve) => { releaseImage = resolve })
+  page.on('request', (request) => {
+    if (/\/assets\/vue\/main-[^/]+\.js$/u.test(request.url())) mainEntryRequested = true
+  })
+  await page.route(/\/assets\/images\/home-hero\/hero-01-[^/]+\.webp$/u, async (route) => {
+    markImageRequested()
+    await imageGate
+    await route.continue()
+  })
+
+  try {
+    await page.goto('/', { waitUntil: 'commit' })
+    await imageRequested
+    await page.waitForLoadState('domcontentloaded')
+    expect(mainEntryRequested).toBe(false)
+    await expect(page.locator('body')).not.toHaveAttribute('data-hydrated', 'true')
+    await expect(page.locator('.home-hero-typewriter')).toBeVisible()
+    const particles = page.locator('.home-hero-particles')
+    await expect(particles).toHaveAttribute('data-render-mode', 'static')
+    await expect(particles.locator('canvas')).toHaveCount(0)
+  } finally {
+    releaseImage()
+  }
+
+  await expectLoadedImage(page)
+  await expect.poll(() => mainEntryRequested).toBe(true)
+  await expect(page.locator('body')).toHaveAttribute('data-hydrated', 'true')
+  await expect(page.locator('html')).toHaveAttribute('data-home-hero-photo-ready', 'true', { timeout: 5000 })
+  await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-render-mode', 'canvas', { timeout: 8000 })
+})
+
 test('enables homepage runtime after the first photo decodes when LCP reports no entries', async ({ page }) => {
   await suppressLargestContentfulPaintEntries(page)
 
@@ -99,7 +136,7 @@ test('requests the first responsive photo at high priority and at most one next 
       imageRequests.push(request.url())
       requestOrder.push('hero-image')
     }
-    if (request.resourceType() === 'script' && /\/assets\/vue\/main-[\w-]+\.js/.test(request.url())) {
+    if (/\/assets\/vue\/main-[\w-]+\.js/.test(request.url())) {
       appScripts.push(request.url())
       requestOrder.push('main-script')
     }
@@ -107,6 +144,7 @@ test('requests the first responsive photo at high priority and at most one next 
 
   await page.goto('/')
   const image = await expectLoadedImage(page)
+  await expect(page.locator('body')).toHaveAttribute('data-hydrated', 'true')
 
   const ids = [...new Set(imageRequests.map((url) => url.match(/hero-(?:0[1-9]|1[0-3])/)?.[0]).filter(Boolean))]
   expect(ids).toContain('hero-01')
@@ -199,9 +237,11 @@ test('releases English homepage content on the bounded fallback if the first pho
     expect(fallbackStart).not.toBeNull()
     expect(await page.evaluate(() => Date.now())).toBe(fallbackStart)
     await page.clock.runFor(1_999)
-    await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'loading')
+    await expect(page.locator('body')).not.toHaveAttribute('data-hydrated', 'true')
+    await expect(page.locator('.home-hero-typewriter')).toBeVisible()
+    await expect(page.locator('.home-hero-particles')).toHaveAttribute('data-render-mode', 'static')
     await page.clock.runFor(1)
-    await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+    await expect(page.locator('body')).toHaveAttribute('data-hydrated', 'true')
     await expect(page.locator('.page-home')).toBeVisible()
 
     const photoState = await page.evaluate(() => ({
@@ -211,6 +251,45 @@ test('releases English homepage content on the bounded fallback if the first pho
     expect(photoState).toEqual({ ready: 'true', naturalWidth: 0 })
   } finally {
     releaseRequest()
+  }
+})
+
+test('early hero touch retains the hydration fallback while the first photo is stalled', async ({ browser, browserName }) => {
+  test.skip(browserName !== 'chromium')
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true
+  })
+  const page = await context.newPage()
+  let markPhotoRequestStarted!: () => void
+  let releasePhotoRequest!: () => void
+  const photoRequestStarted = new Promise<void>((resolve) => { markPhotoRequestStarted = resolve })
+  const photoRequestGate = new Promise<void>((resolve) => { releasePhotoRequest = resolve })
+  await page.route('**/assets/images/home-hero/hero-01-*', async (route) => {
+    markPhotoRequestStarted()
+    await photoRequestGate
+    await route.continue()
+  })
+
+  try {
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
+    await photoRequestStarted
+    await expect(page.locator('body')).not.toHaveAttribute('data-hydrated', 'true')
+    await page.locator('.home-hero-particles').tap()
+    await expect(page).not.toHaveURL(/#/)
+    await expect(page.locator('html')).toHaveAttribute('data-home-hero-touch-until', /\d+/)
+    await expect(page.locator('html')).toHaveAttribute('data-static-entry-fallback', 'true', { timeout: 4000 })
+    await expect(page.locator('body')).toHaveAttribute('data-hydrated', 'true', { timeout: 4500 })
+    const photo = await page.locator('.home-hero-slideshow__image--current').evaluate((element) => ({
+      naturalWidth: (element as HTMLImageElement).naturalWidth,
+      ready: document.documentElement.dataset.homeHeroPhotoReady
+    }))
+    expect(photo).toEqual({ naturalWidth: 0, ready: 'true' })
+  } finally {
+    releasePhotoRequest()
+    await context.close()
   }
 })
 
@@ -262,37 +341,67 @@ test('selects the crop-sized 896px candidate on a high-density mobile viewport',
   }
 })
 
-test('starts below-fold homepage content after the hero photo paints', async ({ page, browserName }) => {
+test('keeps the prerendered hero image candidate stable through hydration', async ({ browser, browserName }) => {
   test.skip(browserName !== 'chromium')
-  await page.addInitScript(() => {
-    const auditWindow = window as Window & { __homeHeroLcp?: number }
-    new PerformanceObserver((list) => {
-      for (const entry of list.getEntries()) {
-        const candidate = (entry as LargestContentfulPaint).element?.className
-        if (auditWindow.__homeHeroLcp === undefined && typeof candidate === 'string' && candidate.includes('home-hero-slideshow__image')) {
-          auditWindow.__homeHeroLcp = entry.startTime
-        }
-      }
-    }).observe({ type: 'largest-contentful-paint', buffered: true })
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true })
+  const page = await context.newPage()
+  let releaseEntry!: () => void
+  let notifyEntryRequested!: () => void
+  const entryGate = new Promise<void>((resolve) => { releaseEntry = resolve })
+  const entryRequested = new Promise<void>((resolve) => { notifyEntryRequested = resolve })
+  await page.route('**/assets/vue/main-*.js', async (route) => {
+    notifyEntryRequested()
+    await entryGate
+    await route.continue()
+  })
+
+  try {
+    await page.goto('/')
+    await expect(page.locator('body')).toHaveAttribute('data-rendered', 'ssg')
+    await entryRequested
+
+    const image = page.locator('.home-hero-slideshow__image--current')
+    const prerenderedSource = await image.evaluate((element) => ({
+      src: element.getAttribute('src'),
+      srcset: element.getAttribute('srcset'),
+      sizes: element.getAttribute('sizes'),
+      currentSrc: (element as HTMLImageElement).currentSrc
+    }))
+    expect(prerenderedSource.srcset).toContain('896w')
+    expect(prerenderedSource.sizes).toBe('(max-width: 760px) calc(100vw - 40px), calc(min(1260px, 100vw) - 10vw)')
+    expect(prerenderedSource.currentSrc).toContain('hero-01-896-')
+
+    releaseEntry()
+    await waitForHydration(page)
+    await expect.poll(() => image.evaluate((element) => ({
+      src: element.getAttribute('src'),
+      srcset: element.getAttribute('srcset'),
+      sizes: element.getAttribute('sizes'),
+      currentSrc: (element as HTMLImageElement).currentSrc
+    }))).toEqual(prerenderedSource)
+  } finally {
+    releaseEntry()
+    await context.close()
+  }
+})
+
+test('loads the statically linked homepage font stylesheet once while the hero photo paints', async ({ page, browserName }) => {
+  test.skip(browserName !== 'chromium')
+  const fontStylesheetRequests: string[] = []
+  page.on('request', (request) => {
+    if (/\/fonts-route-(?:zh-cn|zh-hk|en)-[^/]+\.css$/u.test(new URL(request.url()).pathname)) {
+      fontStylesheetRequests.push(request.url())
+    }
   })
 
   await page.goto('/')
   await expectLoadedImage(page)
   await expect(page.locator('.page-home')).toBeVisible()
   await expect.poll(() => page.locator('html').getAttribute('data-fonts-ready')).toMatch(/ready|fallback/)
-  const timing = await page.evaluate(() => ({
-    photoLcp: (window as Window & { __homeHeroLcp?: number }).__homeHeroLcp,
-    homePageChunk: performance.getEntriesByType('resource')
-      .find((entry) => /\/HomePage-[^/]+\.js$/.test(entry.name))?.startTime,
-    localeFontStylesheet: performance.getEntriesByType('resource')
-      .find((entry) => /\/fonts-(?:zh-cn|zh-hk|en)-[^/]+\.css$/.test(entry.name))?.startTime
-  }))
-
-  expect(timing.photoLcp).toBeDefined()
-  expect(timing.homePageChunk).toBeDefined()
-  expect(timing.homePageChunk!).toBeGreaterThan(timing.photoLcp!)
-  expect(timing.localeFontStylesheet).toBeDefined()
-  expect(timing.localeFontStylesheet!).toBeGreaterThan(timing.photoLcp!)
+  const stylesheet = page.locator('head link[rel="stylesheet"][href*="/fonts-route-"]')
+  await expect(stylesheet).toHaveCount(1)
+  const stylesheetUrl = new URL((await stylesheet.getAttribute('href'))!, page.url()).href
+  expect(fontStylesheetRequests).toEqual([stylesheetUrl])
 })
 
 test('paints the first photo before mounting slideshow controls', async ({ page, browserName }) => {
@@ -356,7 +465,7 @@ test('keeps the photo and static YANCE visible while the particle runtime loads'
     }).observe({ type: 'largest-contentful-paint', buffered: true })
     new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) {
-        if (entry.name.includes('/mimoParticleModel-') || entry.name.includes('/latin-400-') || entry.name.includes('amiri-latin-400')) {
+        if (entry.name.includes('/mimoParticleModel-')) {
           events.push({ kind: 'particle-runtime-resource', time: entry.startTime, candidate: entry.name })
         }
       }
@@ -401,8 +510,9 @@ test('keeps the photo and static YANCE visible while the particle runtime loads'
   expect(runtimeResources.every((event) => event.time > photoPaint!.time), JSON.stringify({ photoPaint, runtimeResources })).toBe(true)
 })
 
-test('skips the document-level photo preload and keeps the 640px candidate with Save-Data', async ({ page }) => {
+test('omits the document-level preload and requests only the 640px Save-Data candidate', async ({ page }) => {
   const imageRequests: string[] = []
+  await page.setViewportSize({ width: 390, height: 844 })
   await page.addInitScript(() => {
     const connection = new EventTarget() as EventTarget & { saveData: boolean }
     connection.saveData = true
@@ -413,6 +523,7 @@ test('skips the document-level photo preload and keeps the 640px candidate with 
   })
 
   await page.goto('/')
+  await waitForHydration(page)
   await expectLoadedImage(page)
 
   await expect(page.locator('link[rel="preload"][as="image"]')).toHaveCount(0)
@@ -656,6 +767,7 @@ test('carousel controls pass a scoped axe accessibility scan', async ({ page }) 
 
 test('save-data starts with only the small first candidate and waits for an explicit play', async ({ page }) => {
   const imageRequests: string[] = []
+  await page.setViewportSize({ width: 390, height: 844 })
   page.on('request', (request) => {
     if (request.resourceType() === 'image' && request.url().includes('/assets/images/home-hero/')) imageRequests.push(request.url())
   })
@@ -731,7 +843,10 @@ test('waits for the resized target candidate to load before revealing it', async
     releaseLargeCandidate()
     await expect.poll(() => target.evaluate((element) => (element as HTMLImageElement).naturalWidth)).toBeGreaterThan(0)
     await target.evaluate((element) => (element as HTMLImageElement).decode())
-    await page.clock.runFor(16)
+    await expect.poll(async () => {
+      await page.clock.runFor(1_000 / 60)
+      return media.getAttribute('data-transitioning')
+    }).toBe('true')
     await expect(media).toHaveClass(/is-transitioning/)
     await expect(controls.locator('.home-hero-slideshow__dot-button').nth(1)).toHaveAttribute('aria-current', 'true')
     await expect(media).toHaveAttribute('data-current-index', '0')

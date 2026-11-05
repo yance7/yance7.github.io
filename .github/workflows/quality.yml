@@ -368,6 +368,10 @@ jobs:
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-site
         run: npm run test:e2e -- tests/e2e/site.spec.ts --project=webkit-desktop --workers=4 --retries=0
+      - name: WebKit desktop prerender quality
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-prerender
+        run: npm run test:e2e -- tests/e2e/prerender.spec.ts --project=webkit-desktop --workers=1 --retries=0
       - name: WebKit desktop footer quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-footer
@@ -417,6 +421,10 @@ jobs:
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-site
         run: npm run test:e2e -- tests/e2e/site.spec.ts --project=webkit-mobile --workers=4 --retries=0
+      - name: WebKit mobile prerender quality
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-prerender
+        run: npm run test:e2e -- tests/e2e/prerender.spec.ts --project=webkit-mobile --workers=1 --retries=0
       - name: WebKit mobile footer quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-footer

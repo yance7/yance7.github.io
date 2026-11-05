@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { waitForHydration } from './helpers/hydration'
 
 async function openLocaleNav(page: Page) {
   const desktop = page.locator('.locale-switcher-desktop')
@@ -92,6 +93,7 @@ test('desktop locale orbit exposes three real language anchors and one active se
 test('locale intent registers one same-origin prefetch without intercepting the anchor', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto('/en/research/')
+  await waitForHydration(page)
   const target = page.locator('.locale-switcher-desktop a[hreflang="zh-HK"]')
   const documentPrefetchCount = () => page.locator('link[rel="prefetch"]').evaluateAll((links) => links
     .filter((link) => {

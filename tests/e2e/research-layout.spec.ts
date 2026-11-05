@@ -151,10 +151,11 @@ test('Research mobile methodology disclosure remains explicit after layout balan
   const toggle = page.locator('.method-toggle').first()
   const disclosureId = await toggle.getAttribute('aria-controls')
   const disclosure = page.locator(`#${disclosureId}`)
-  await expect(toggle).toHaveAttribute('aria-expanded', 'false')
+  const details = page.locator('.tl-method').first()
+  await expect(details).not.toHaveAttribute('open')
   await expect(disclosure).not.toHaveClass(/open/)
 
   await toggle.click()
-  await expect(toggle).toHaveAttribute('aria-expanded', 'true')
+  await expect(details).toHaveAttribute('open', '')
   await expect(disclosure).toHaveClass(/open/)
 })

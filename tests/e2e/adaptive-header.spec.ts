@@ -438,20 +438,20 @@ test('adaptive header tracks a cold fragment after the lazy page chunk mounts', 
   await page.setViewportSize({ width: 390, height: 844 })
 
   let homePageChunkRequested = false
-  let headerWasMountedBeforePageChunk = false
+  let siteNavCountBeforePageChunk = 0
 
   await page.route('**/assets/vue/HomePage-*.js', async (route) => {
     homePageChunkRequested = true
     await page.locator('.site-nav').waitFor({ state: 'attached' })
-    headerWasMountedBeforePageChunk = await page.locator('.site-nav').count() === 1
+    siteNavCountBeforePageChunk = await page.locator('.site-nav').count()
     await route.continue()
   })
 
   await page.goto('/#home-worlds')
   await waitForReady(page)
 
-  expect(homePageChunkRequested).toBe(true)
-  expect(headerWasMountedBeforePageChunk).toBe(true)
+  await expect.poll(() => homePageChunkRequested).toBe(true)
+  await expect.poll(() => siteNavCountBeforePageChunk, 'site nav must be present before the page chunk continues').toBe(1)
 
   const target = page.locator('#home-worlds')
   await expect(target).toBeAttached()

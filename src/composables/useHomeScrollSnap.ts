@@ -3,10 +3,13 @@ import { nextTick, onBeforeUnmount, onMounted, watch, type Ref } from 'vue'
 // Browser navigation, focus, find and keyboard scroll retain control until
 // the next pointer scroll. No wheel movement is consumed or rewritten.
 export function useHomeScrollSnap(isHome: boolean, ready: Ref<boolean>) {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return
+
   let desktop: MediaQueryList | undefined
   let reduced: MediaQueryList | undefined
   let bodyObserver: MutationObserver | undefined
   let fontsObserver: MutationObserver | undefined
+  let greetingFontObserver: MutationObserver | undefined
   let mounted = false
   let restorationCancelled = false
   let leaving = false
@@ -20,13 +23,16 @@ export function useHomeScrollSnap(isHome: boolean, ready: Ref<boolean>) {
     : undefined
   let suspended = Boolean(window.location.hash || document.documentElement.dataset.initialHash)
   const root = document.documentElement
+  if (isHome && !window.location.hash && !root.dataset.initialHash) {
+    previousHistoryRestoration = window.history.state?.homeReadingRestoration ?? window.history.scrollRestoration
+    window.history.replaceState({ ...window.history.state, homeReadingRestoration: previousHistoryRestoration }, '')
+    window.history.scrollRestoration = 'manual'
+  }
   if (savedPosition && Number.isFinite(savedPosition.top) && Number.isFinite(savedPosition.left)) {
     suspended = true
     root.dataset.homeScrollRestore = 'true'
     // The browser's later load-time restoration must not compete with either
     // our font-gated restore or input that cancels it.
-    previousHistoryRestoration = window.history.state?.homeReadingRestoration ?? window.history.scrollRestoration
-    window.history.replaceState({ ...window.history.state, homeReadingRestoration: previousHistoryRestoration }, '')
     window.history.scrollRestoration = 'manual'
   } else savedPosition = undefined
 
@@ -57,9 +63,14 @@ export function useHomeScrollSnap(isHome: boolean, ready: Ref<boolean>) {
     delete root.dataset.homeScrollRestore
     fontsObserver?.disconnect()
     fontsObserver = undefined
+    greetingFontObserver?.disconnect()
+    greetingFontObserver = undefined
   }
   function saveReadingPosition() {
     leaving = true
+    // Remove proximity snapping before the browser snapshots this document in
+    // the back-forward cache; the restored position must not snap on resume.
+    root.classList.remove('home-scroll-snap')
     window.history.replaceState({
       ...window.history.state,
       homeReadingPosition: { top: window.scrollY, left: window.scrollX }
@@ -80,6 +91,16 @@ export function useHomeScrollSnap(isHome: boolean, ready: Ref<boolean>) {
     // Locale font CSS loads after mount; document.fonts.ready can resolve
     // before that stylesheet starts loading. main.ts publishes the final state.
     if (root.dataset.fontsReady !== 'ready' && root.dataset.fontsReady !== 'fallback') return
+    const greeting = document.querySelector<HTMLElement>('.home-hero-typewriter')
+    if (greeting?.dataset.fontState === 'loading') {
+      if (!greetingFontObserver) {
+        greetingFontObserver = new MutationObserver(restoreReadingPosition)
+        greetingFontObserver.observe(greeting, { attributes: true, attributeFilter: ['data-font-state'] })
+      }
+      if (greeting.dataset.fontState === 'loading') return
+    }
+    greetingFontObserver?.disconnect()
+    greetingFontObserver = undefined
     const position = savedPosition
     savedPosition = undefined
     fontsObserver?.disconnect()

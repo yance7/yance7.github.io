@@ -28,10 +28,11 @@ const visual = ref<HTMLElement | null>(null)
 
         <h1 id="home-hero-title" class="home-hero-title sr-only">{{ home.heroGreeting }} {{ home.heroStatement }}</h1>
 
+        <!-- SSR copy is already final; client intro motion is decorative. -->
         <HomeHeroTypewriter
           :greeting="greeting"
           :statement="statement"
-          :final-state="!isIntroActive"
+          :final-state="true"
           :started-at="introStartedAt"
         />
 

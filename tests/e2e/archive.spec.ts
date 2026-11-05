@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { pageEntries } from '../../src/data/pageRegistry'
+import { waitForHydration } from './helpers/hydration'
 
 const contentRoutes = pageEntries.map(({ routePath }) => routePath)
 const archiveRoutes = pageEntries
@@ -78,10 +79,14 @@ test('honor cards finish the shared reveal without replaying metadata on hover',
 
 test('research methodology disclosure and proof links are reachable', async ({ page }) => {
   await page.goto('/research/')
+  await waitForHydration(page)
   const toggle = page.locator('.method-toggle').first()
+  const disclosureContainer = page.locator('.tl-method').first()
   await toggle.click()
-  await expect(toggle).toHaveAttribute('aria-expanded', 'true')
-  await expect(toggle.locator('.disclosure-mark')).toHaveText('−')
+  await expect(disclosureContainer).toHaveAttribute('open', '')
+  await expect.poll(() => toggle.locator('.disclosure-mark').evaluate((element) => (
+    getComputedStyle(element, '::before').content
+  ))).toBe('"−"')
   const disclosure = page.locator(`#${await toggle.getAttribute('aria-controls')}`)
   await expect(disclosure).toHaveClass(/open/)
   await expect(disclosure.locator('.method-grid')).toHaveCSS('max-height', 'none')
@@ -106,6 +111,7 @@ test('copy citation uses one explicit control system in both themes', async ({ p
     await page.reload()
     const button = page.locator('.copy-citation').first()
     await expect(button).toBeVisible()
+    await expect(button).toBeEnabled()
     const appearance = await button.evaluate((element) => {
       const style = getComputedStyle(element)
       return { background: style.backgroundColor, border: style.borderStyle, radius: style.borderRadius }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, ref, toRef, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, toRef, watch } from 'vue'
 import type { HomeHeroSlide } from '../data/homeHeroSlides'
 import { HOME_HERO_IMAGE_SIZES, homeHeroSlides } from '../data/homeHeroSlides'
 import { useHomeHeroSlideshow } from '../composables/useHomeHeroSlideshow'
@@ -22,6 +22,10 @@ const controller = useHomeHeroSlideshow({
 })
 const state = controller.state
 const media = ref<HTMLElement | null>(null)
+const imagePreferencesReady = ref(
+  typeof window === 'undefined'
+    || (window as Window & { __YANCE_HOME_HERO_SAVE_DATA__?: boolean }).__YANCE_HOME_HERO_SAVE_DATA__ !== true
+)
 const transitionActive = ref(false)
 const currentImageFailed = ref(false)
 const announcement = computed(() => {
@@ -42,7 +46,16 @@ const scrimStyle = computed(() => ({
 let transitionFrame = 0
 let cancelTargetReadiness: (() => void) | null = null
 let pointerPlaybackIntent: 'play' | 'pause' | null = null
+let slideshowMounted = false
 const targetImageReadinessDeadlineMs = 10_000
+
+onMounted(() => {
+  slideshowMounted = true
+  controller.setEnvironment({ introReady: props.introReady })
+  void nextTick(() => {
+    imagePreferencesReady.value = true
+  })
+})
 
 function photoName(index: number) {
   const photoIndex = (index + 1) as keyof typeof messages.value.photos
@@ -55,17 +68,21 @@ function photoButtonLabel(index: number) {
 }
 
 function imageSrcset(slide: HomeHeroSlide, format: 'webp' | 'jpeg') {
-  const candidates = state.value.saveData ? slide.sources[format].slice(0, 1) : slide.sources[format]
+  const candidates = !imagePreferencesReady.value || state.value.saveData
+    ? slide.sources[format].slice(0, 1)
+    : slide.sources[format]
   return candidates.map((candidate) => `${candidate.src} ${candidate.width}w`).join(', ')
 }
 
 function imageFallbackSrc(slide: HomeHeroSlide, format: 'webp' | 'jpeg') {
-  const candidates = state.value.saveData ? slide.sources[format].slice(0, 1) : slide.sources[format]
+  const candidates = !imagePreferencesReady.value || state.value.saveData
+    ? slide.sources[format].slice(0, 1)
+    : slide.sources[format]
   return candidates[0]!.src
 }
 
 function imageSizes() {
-  return state.value.saveData
+  return !imagePreferencesReady.value || state.value.saveData
     ? '640px'
     : '(max-width: 760px) calc(100vw - 40px), calc(min(1260px, 100vw) - 10vw)'
 }
@@ -167,6 +184,7 @@ async function prepareTargetTransition(image: HTMLImageElement, transactionId: n
 }
 
 watch(() => props.introReady, (introReady) => {
+  if (!slideshowMounted) return
   controller.setEnvironment({ introReady })
 }, { immediate: true })
 
@@ -213,22 +231,28 @@ onBeforeUnmount(() => {
     :style="scrimStyle"
     aria-hidden="true"
   >
-    <img
-      v-if="!state.forcedColors"
-      class="home-hero-slideshow__image home-hero-slideshow__image--current"
-      :class="{ 'is-failed': currentImageFailed }"
-      :src="imageFallbackSrc(controller.currentSlide.value, state.currentFormat ?? 'webp')"
-      :srcset="imageSrcset(controller.currentSlide.value, state.currentFormat ?? 'webp')"
-      :sizes="imageSizes()"
-      :style="imageStyle(controller.currentSlide.value)"
-      :width="controller.currentSlide.value.width"
-      :height="controller.currentSlide.value.height"
-      alt=""
-      loading="eager"
-      decoding="async"
-      draggable="false"
-      @error="currentImageError"
-    >
+    <!-- Keep the SSR photo node while letting forced colors avoid fetching the hidden image. -->
+    <picture v-if="!state.forcedColors">
+      <source
+        media="(forced-colors: active)"
+        srcset="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs= 1x"
+      >
+      <img
+        class="home-hero-slideshow__image home-hero-slideshow__image--current"
+        :class="{ 'is-failed': currentImageFailed }"
+        :src="imageFallbackSrc(controller.currentSlide.value, state.currentFormat ?? 'webp')"
+        :srcset="imageSrcset(controller.currentSlide.value, state.currentFormat ?? 'webp')"
+        :sizes="imageSizes()"
+        :style="imageStyle(controller.currentSlide.value)"
+        :width="controller.currentSlide.value.width"
+        :height="controller.currentSlide.value.height"
+        alt=""
+        loading="eager"
+        decoding="async"
+        draggable="false"
+        @error="currentImageError"
+      >
+    </picture>
     <img
       v-if="state.transitioning && state.targetIndex !== null && state.targetFormat && controller.targetSlide.value"
       class="home-hero-slideshow__image home-hero-slideshow__image--target"

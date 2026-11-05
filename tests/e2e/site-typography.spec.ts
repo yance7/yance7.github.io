@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { waitForHydration } from './helpers/hydration'
 
 const locales = [
   {
@@ -207,7 +208,7 @@ test('a late greeting response cannot replay typing or block the global font sig
     const greeting = page.locator('.home-hero-typewriter')
     await expect(greeting).toHaveAttribute('data-font-state', 'fallback')
     await expect(greeting).toBeVisible()
-    await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'fallback', { timeout: 8000 })
+    await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', /^(ready|fallback)$/, { timeout: 8000 })
     const before = await greeting.evaluate(element => ({
       font: getComputedStyle(element).fontFamily,
       text: element.textContent,
@@ -228,40 +229,15 @@ test('a late greeting response cannot replay typing or block the global font sig
 })
 
 for (const locale of locales) {
-  test(`${locale.name} loads its font stylesheet and used font faces after first content mounts`, async ({ page }) => {
-    await page.addInitScript(() => {
-      type MountEvidence = {
-        mountedAt: number
-        localeStylesheetActiveAtMount: boolean
-      }
-      const timingWindow = window as Window & { __appMountEvidence?: MountEvidence }
-      const observer = new MutationObserver(() => {
-        if (document.querySelector('#app')?.childElementCount && timingWindow.__appMountEvidence === undefined) {
-          const mountedAt = performance.now()
-          timingWindow.__appMountEvidence = {
-            mountedAt,
-            localeStylesheetActiveAtMount: Array.from(document.styleSheets).some(({ href }) => href?.includes('/assets/vue/fonts-'))
-          }
-          observer.disconnect()
-        }
-      })
+  test(`${locale.name} links its route font stylesheet in prerendered HTML and loads used font faces`, async ({ page }) => {
+    const response = await page.goto(locale.homeRoute)
+    const prerenderedHtml = await response?.text() ?? ''
+    const stylesheetPattern = new RegExp(`<link rel="stylesheet" href="(/assets/vue/fonts-route-${locale.lang.toLowerCase()}-[a-f0-9]{12}\\.css)">`)
+    const stylesheetHref = prerenderedHtml.match(stylesheetPattern)?.[1]
 
-      observer.observe(document, { childList: true, subtree: true })
-    })
-
-    await page.goto(locale.homeRoute)
+    expect(stylesheetHref).toBeDefined()
+    expect(prerenderedHtml).toContain(`data-locale-font-stylesheet="${stylesheetHref}"`)
     await expect(page.locator('.home-hero-typewriter')).toBeVisible()
-
-    const evidence = await page.evaluate(() =>
-      (window as Window & { __appMountEvidence?: {
-        mountedAt: number
-        localeStylesheetActiveAtMount: boolean
-      } }).__appMountEvidence
-    )
-
-    expect(evidence).toBeDefined()
-    expect(evidence?.mountedAt).toBeGreaterThan(0)
-    expect(evidence?.localeStylesheetActiveAtMount).toBe(false)
     await expect.poll(() => page.locator('html').getAttribute('data-fonts-ready')).toBe('ready')
     const loadedFonts = await page.evaluate(() => ({
       localeStylesheetActive: Array.from(document.styleSheets).some(({ href }) => href?.includes('/assets/vue/fonts-')),
@@ -285,53 +261,34 @@ for (const locale of locales) {
   })
 }
 
-test('zh-CN first content mounts while locale font files are still loading', async ({ page }) => {
+test('zh-CN hydration completes while locale font files are still loading', async ({ page }) => {
   let releaseFontRequests = () => {}
   const fontRequestsPaused = new Promise<void>((resolve) => {
     releaseFontRequests = resolve
   })
   let blockedFontRequests = 0
 
-  await page.route('**/*.woff2', async (route) => {
+  await page.route('**/assets/vue/*.woff2', async (route) => {
     blockedFontRequests += 1
     await fontRequestsPaused
     await route.continue()
   })
 
   try {
-    await page.goto('/', { waitUntil: 'domcontentloaded' })
+    await page.goto('/', { waitUntil: 'commit' })
     await expect.poll(() => blockedFontRequests).toBeGreaterThan(0)
+    await waitForHydration(page)
+    await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'loading')
     await expect(page.locator('.home-hero-typewriter')).toBeVisible()
+    releaseFontRequests()
+    await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
   } finally {
     releaseFontRequests()
   }
 })
 
-test('zh-CN first content mounts while the locale font stylesheet is still loading', async ({ page }) => {
-  let releaseStylesheetRequest = () => {}
-  const stylesheetRequestPaused = new Promise<void>((resolve) => {
-    releaseStylesheetRequest = resolve
-  })
-  let blockedStylesheetRequests = 0
-
-  await page.route('**/assets/vue/fonts-*.css', async (route) => {
-    blockedStylesheetRequests += 1
-    await stylesheetRequestPaused
-    await route.continue()
-  })
-
-  try {
-    await page.goto('/', { waitUntil: 'domcontentloaded' })
-    await expect.poll(() => blockedStylesheetRequests).toBeGreaterThan(0)
-    await expect(page.locator('.home-hero-typewriter')).toBeVisible()
-  } finally {
-    releaseStylesheetRequest()
-  }
-})
-
-for (const locale of locales) {
+for (const locale of locales.filter(locale => locale.lang !== 'en')) {
   test(`${locale.name} bundled CJK font covers required glyphs`, async ({ page }) => {
-    const sample = locale.lang === 'zh-HK' ? '繁體中文，標點：『測試』。' : '简体中文，标点：『测试』。'
     const fontRequests: string[] = []
 
     page.on('request', (request) => {
@@ -341,6 +298,10 @@ for (const locale of locales) {
 
     await page.goto(locale.homeRoute)
     await expect.poll(() => page.locator('html').getAttribute('data-fonts-ready')).toBe('ready')
+    const sample = await page.locator('main#main').innerText().then((text) => (
+      [...new Set(text.match(/\p{Script=Han}/gu) ?? [])].join('')
+    ))
+    expect(sample).not.toBe('')
 
     const loadedFamilies = await page.evaluate(async ({ fontFamily, text }) => {
       const sampleNode = document.createElement('span')

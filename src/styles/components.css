@@ -384,12 +384,14 @@ html[data-locale='en'] .section-copy {
 
 /* ===== 滚动进入动画 ===== */
 .reveal {
-  opacity: 0;
-  transform: translate3d(0, var(--reveal-distance), 0);
   transition:
     opacity var(--reveal-duration) var(--ease-out),
     transform var(--reveal-duration) var(--ease-out),
     translate var(--dur-fast) var(--ease-out);
+}
+html[data-vue-enhanced='true'] .reveal:not(.revealed) {
+  opacity: 0;
+  transform: translate3d(0, var(--reveal-distance), 0);
 }
 .reveal.revealed {
   opacity: 1;

@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test'
 import { expect, test } from '@playwright/test'
+import { waitForHydration } from './helpers/hydration'
 
 const routes = [
   '/en/',
@@ -15,7 +16,9 @@ for (const width of [320, 390, 768, 1440]) for (const theme of ['light', 'dark']
     await page.setViewportSize({ width, height: 1000 })
     await page.addInitScript(theme => localStorage.setItem('yance-theme', theme), theme)
     await page.goto('/en/')
-    await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
+    const root = page.locator('html')
+    await waitForHydration(page)
+    await expect(root).toHaveAttribute('data-fonts-ready', /^(ready|fallback)$/)
     await page.evaluate(() => document.fonts.ready)
     const names = page.locator('.beyond-leadership > span')
     await expect(names).toHaveText([
@@ -207,6 +210,7 @@ async function expectEnglishTextSurfacesReadable(page: Page) {
 
 test('English readability checks actual inline geometry and still detects clipping', async ({ page }) => {
   await page.goto('/en/academics/')
+  await waitForHydration(page)
   await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
   await page.evaluate(() => document.fonts.ready)
   await page.evaluate(() => {

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { waitForHydration } from './helpers/hydration'
 
 test('home leads with the quiet editorial stage', async ({ page }) => {
   await page.goto('/')
@@ -216,6 +217,7 @@ test('home removes duplicate archive navigation and keeps the five worlds as the
 
 test('home keeps pointer sheen on featured work but not on the five world cards', async ({ page }) => {
   await page.goto('/')
+  await waitForHydration(page)
   await expect(page.locator('.world-card')).toHaveCount(5)
   const featuredSheen = await page.locator('.focus-card').evaluateAll((elements) =>
     elements.map((element) => element.hasAttribute('data-pointer-sheen'))

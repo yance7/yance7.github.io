@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { waitForHydration } from './helpers/hydration'
 
 const locales = [
   { route: '/academics/', pending: '当前课程 · 尚无成绩' },
@@ -57,6 +58,10 @@ test('the English FishFreshNet V2 title and expanded methods fit a narrow viewpo
   await page.setViewportSize({ width: 320, height: 800 })
   await page.goto('/en/research/')
   await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+  await waitForHydration(page)
+  await page.addStyleTag({ content: 'html { scroll-behavior: auto !important; }' })
+  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', /^(ready|fallback)$/)
+  await page.evaluate(() => document.fonts.ready)
 
   const v2 = page.locator('#fishfreshnet-v2')
   const title = v2.locator('.tl-body h3')
@@ -64,9 +69,13 @@ test('the English FishFreshNet V2 title and expanded methods fit a narrow viewpo
   await expect(title).toContainText('Circular Region Attention')
   await expect.poll(() => title.evaluate((element) => element.scrollWidth <= element.clientWidth + 1)).toBe(true)
 
-  await v2.locator('.method-toggle').click()
+  const methodToggle = v2.locator('.method-toggle')
+  await methodToggle.evaluate(element => element.scrollIntoView({ block: 'center', behavior: 'instant' }))
+  await methodToggle.click()
+  const disclosure = v2.locator('.tl-method')
+  await expect(disclosure).toHaveJSProperty('open', true)
   const method = page.locator('#method-fishfreshnet-v2')
-  await expect(method).toHaveAttribute('aria-hidden', 'false')
+  await expect(method).toBeVisible()
   await expect(method).toContainText('consistently framed fish-eye crops')
   await expect(method).toContainText('0.966M parameters')
   await expect(method).toContainText('65.5%–78.2%')

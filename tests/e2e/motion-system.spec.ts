@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { waitForHydration } from './helpers/hydration'
 
 // Request rendering once, then observe the original CSS and JavaScript cleanup.
 // Waiting for a RAF callback can hide cleanup that already met the poll budget.
@@ -52,6 +53,7 @@ test('@pointer-refinement runtime pointer capability changes clear magnetic feed
 test('@pointer-refinement Hero CTA uses a stable inner magnetic layer without moving its hit area', async ({ page }) => {
   await page.goto('/')
   test.skip(!(await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches)), 'fine pointer only')
+  await waitForHydration(page)
   await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', 'complete')
   const action = page.locator('.hero-action').first()
   const baseline = await action.boundingBox()
@@ -318,6 +320,7 @@ test('Academics AP rows emphasize their result without shifting layout', async (
 
 test('Research toolchain groups use a bounded staggered reveal', async ({ page }) => {
   await page.goto('/research/')
+  await waitForHydration(page)
 
   const groups = page.locator('.toolchain-group')
 
@@ -332,6 +335,7 @@ test('Research toolchain groups use a bounded staggered reveal', async ({ page }
 
 test('Research toolchain groups expose a passive accent without lifting the group', async ({ page }) => {
   await page.goto('/research/')
+  await waitForHydration(page)
   const finePointer = await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)
   test.skip(!finePointer, 'Hover emphasis is only observable on fine-pointer projects')
 
@@ -367,6 +371,7 @@ test('Research toolchain groups expose a passive accent without lifting the grou
 
 test('Research tool tags remain flat information labels on hover', async ({ page }) => {
   await page.goto('/research/')
+  await waitForHydration(page)
 
   const tool = page.locator('.tc-tool').first()
 
@@ -415,6 +420,7 @@ test('Honor filter controls keep hover-only styling off coarse pointers', async 
 test('New interaction polish does not introduce motion under reduced motion', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/research/')
+  await waitForHydration(page)
 
   const group = page.locator('.toolchain-group').first()
 
@@ -430,12 +436,16 @@ test('New interaction polish does not introduce motion under reduced motion', as
 
 test('reveal content uses the shared fade-up tokens with a bounded stagger', async ({ page }) => {
   await page.goto('/works/')
+  await waitForHydration(page)
   await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
   await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
 
   const secondProject = page.locator('#project-ap-microeconomics-notes')
   await expect(secondProject).toHaveClass(/reveal/)
   await expect(secondProject).not.toHaveClass(/revealed/)
+  await expect.poll(() => secondProject.evaluate((element) => (
+    new DOMMatrixReadOnly(getComputedStyle(element).transform).m42
+  ))).toBe(16)
 
   const initialMotion = await secondProject.evaluate((element) => {
     const style = getComputedStyle(element)
@@ -471,6 +481,7 @@ test('reveal content uses the shared fade-up tokens with a bounded stagger', asy
 
   for (const route of ['/', '/honors/']) {
     await page.goto(route)
+    await waitForHydration(page)
     const delays = await page.locator('.reveal').evaluateAll((elements) => elements
       .map((element) => element.style.transitionDelay)
       .filter(Boolean)
@@ -482,6 +493,7 @@ test('reveal content uses the shared fade-up tokens with a bounded stagger', asy
 test('reduced motion completes every reveal immediately', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/research/')
+  await waitForHydration(page)
 
   await expect.poll(() => page.locator('.reveal').count()).toBeGreaterThan(0)
   await expect.poll(() => page.locator('.reveal:not(.revealed)').count()).toBe(0)
@@ -495,24 +507,27 @@ test('reduced motion completes every reveal immediately', async ({ page }) => {
     return {
       opacity: Number.parseFloat(style.opacity),
       transform: style.transform,
+      transformIsIdentity: style.transform === 'none' || new DOMMatrixReadOnly(style.transform).isIdentity,
       transitionDuration: style.transitionDuration.split(',').map(toMilliseconds),
       transitionDelay: style.transitionDelay.split(',').map(toMilliseconds)
     }
   }))
-  expect(states.every(({ opacity, transform, transitionDuration, transitionDelay }) => (
+  expect(states.every(({ opacity, transformIsIdentity, transitionDuration, transitionDelay }) => (
     opacity === 1
-      && transform === 'none'
+      && transformIsIdentity
       && transitionDuration.every((duration) => duration <= 0.01)
       && transitionDelay.every((delay) => delay === 0)
-  ))).toBe(true)
+  )), JSON.stringify(states)).toBe(true)
 })
 
 test('card hover composes with a running reveal without replacing its offset', async ({ page }) => {
   test.skip(!(await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches)), 'fine pointer only')
   await page.goto('/works/')
+  await waitForHydration(page)
   await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
   const card = page.locator('#project-ap-microeconomics-notes')
   await expect(card).not.toHaveClass(/revealed/)
+  await expect.poll(() => card.evaluate(element => new DOMMatrixReadOnly(getComputedStyle(element).transform).m42)).toBe(16)
   const offset = await card.evaluate(element => new Promise<number>((resolve, reject) => {
     // A queued transitionrun event can arrive after a 500ms transition finishes
     // on a busy browser. Observe the real reveal class mutation in its microtask

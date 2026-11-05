@@ -2,6 +2,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test'
 import { resolve, sep } from 'node:path'
 import { concerts } from '../../src/data/concerts'
 import { findNextRailDestinationIndex, getRailDestinations } from '../../src/utils/horizontalRail'
+import { waitForHydration } from './helpers/hydration'
 
 const archiveIds = [
   'fforever-2026-10-06',
@@ -32,6 +33,7 @@ async function gotoConcerts(page: Page, hash = '') {
 async function gotoConcertRoute(page: Page, path: string) {
   await page.clock.setFixedTime(FIXED_NOW)
   await page.goto(path)
+  await waitForHydration(page)
 }
 
 async function gotoConcertFixture(page: Page, count: number) {
@@ -465,6 +467,7 @@ for (const [source, target] of [
   await expectUniformCards(page)
   await page.locator(`.locale-switcher-desktop a[href="${target}"]`).click()
   await expect(page).toHaveURL(new URL(target, page.url()).href)
+  await waitForHydration(page)
   await expect(page.locator('.concert-rail-card')).toHaveCount(concerts.length)
   await expectUniformCards(page)
 })

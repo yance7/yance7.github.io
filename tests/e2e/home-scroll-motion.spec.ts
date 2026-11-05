@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { startFontReadinessObservation, type FontReadinessObservation } from './helpers/fontReadiness'
+import { waitForHydration } from './helpers/hydration'
 
 const fontAssertions = new WeakMap<Page, {
   startedAt: number, finishedAt?: number, observation?: FontReadinessObservation
@@ -103,6 +104,7 @@ async function openHome(page: Page, path = '/') {
   // default five-second assertion expire just before a photo-gated page is ready.
   await expect(shell).toHaveAttribute('data-page-load-state', /^(?:ready|error)$/, { timeout: 16_000 })
   await expect(shell).toHaveAttribute('data-page-load-state', 'ready')
+  await waitForHydration(page, { timeout: 10_000 })
   const assertion: { startedAt: number, finishedAt?: number, observation?: FontReadinessObservation } = {
     startedAt: Date.now()
   }
@@ -334,6 +336,7 @@ test('home Hero anchors and history navigation preserve their native target', as
   await page.goto('/research/')
   await page.goBack()
   await expect(page).toHaveURL(/#home-worlds$/)
+  await waitForHydration(page)
   await expect(page.locator('#home-worlds .section-head')).toBeInViewport()
   await page.goForward()
   await expect(page).toHaveURL(/\/research\/$/)
@@ -359,15 +362,66 @@ test('home history restores a reading position without snapping to a chapter', a
   })
   await expect.poll(() => page.evaluate(() => Math.round(scrollY))).toBe(position)
   await page.goto('/research/')
-  await page.goBack()
-  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
-  await expect.poll(() => page.evaluate(() => Math.round(scrollY))).toBe(position)
-  await expect(page.locator('html')).toHaveCSS('scroll-snap-type', 'none')
+  await page.addInitScript(() => {
+    const testWindow = window as Window & {
+      __homeGreetingFontLoadStarted?: boolean
+      __releaseHomeGreetingFont?: () => void
+    }
+    let release = () => {}
+    const held = new Promise<void>(resolve => { release = resolve })
+    testWindow.__releaseHomeGreetingFont = () => release()
+    // Keep the greeting's one-second fallback from racing this controlled load.
+    const nativeSetTimeout = window.setTimeout
+    window.setTimeout = new Proxy(nativeSetTimeout, {
+      apply(target, thisArg, args) {
+        const [callback, delay, ...rest] = args
+        return Reflect.apply(target, thisArg, [callback, delay === 1000 ? 30_000 : delay, ...rest])
+      }
+    })
+    const nativeLoad = document.fonts.load.bind(document.fonts)
+    Object.defineProperty(document.fonts, 'load', {
+      configurable: true,
+      value: (font: string, text?: string) => {
+        const loaded = nativeLoad(font, text)
+        if (!font.includes('Yance Hero WenKai')) return loaded
+        testWindow.__homeGreetingFontLoadStarted = true
+        return loaded.then(faces => held.then(() => faces))
+      }
+    })
+  })
+  const releaseGreetingFont = () => page.evaluate(() => {
+    (window as Window & { __releaseHomeGreetingFont?: () => void }).__releaseHomeGreetingFont?.()
+  }).catch(() => undefined)
+  try {
+    await page.goBack()
+    await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+    await waitForHydration(page)
+    await page.waitForFunction(() => {
+      const testWindow = window as Window & { __homeGreetingFontLoadStarted?: boolean }
+      return testWindow.__homeGreetingFontLoadStarted
+    }, undefined, { timeout: 5000 })
+    await expect(page.locator('.home-hero-typewriter')).toHaveAttribute('data-font-state', 'loading')
+    await expect(page.locator('html')).toHaveAttribute('data-home-scroll-restore', 'true')
+    await releaseGreetingFont()
+    await expect(page.locator('.home-hero-typewriter')).toHaveAttribute('data-font-state', /^(ready|fallback)$/)
+    await expect(page.locator('html')).not.toHaveAttribute('data-home-scroll-restore')
+    await expect.poll(() => page.evaluate(() => Math.round(scrollY))).toBe(position)
+    await expect(page.locator('html')).toHaveCSS('scroll-snap-type', 'none')
+  } finally {
+    await releaseGreetingFont()
+  }
 })
+
+async function forceColdHistoryNavigation(page: Page) {
+  await page.evaluate(() => {
+    window.addEventListener('unload', () => {})
+  })
+}
 
 for (const cancelWithTouch of [false, true]) {
   test(`home history ${cancelWithTouch ? 'yields to touch input' : 'waits for locale fonts'} during cold restoration`, async ({ page }) => {
     await openHome(page)
+    await forceColdHistoryNavigation(page)
     await page.locator('.theme-orbit').focus()
     await page.evaluate(() => scrollTo({ top: 700, behavior: 'instant' }))
     await expect.poll(() => page.evaluate(() => Math.round(scrollY))).toBe(700)
@@ -375,14 +429,15 @@ for (const cancelWithTouch of [false, true]) {
     let releaseFonts = () => {}
     const heldFonts = new Promise<void>(resolve => { releaseFonts = resolve })
     let pendingFonts = 0
-    await page.route('**/assets/vue/fonts-*.css', async route => {
+    await page.route('**/assets/vue/*.woff2', async route => {
       pendingFonts += 1
       await heldFonts
       await route.continue()
     })
     try {
-      await page.goBack({ waitUntil: 'domcontentloaded' })
+      await page.goBack({ waitUntil: 'commit' })
       await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+      await waitForHydration(page)
       await expect.poll(() => pendingFonts).toBeGreaterThan(0)
       await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'loading')
       await expect(page.locator('html')).toHaveAttribute('data-home-scroll-restore', 'true')
@@ -403,22 +458,33 @@ for (const cancelWithTouch of [false, true]) {
 }
 
 test('home cold history restores without foreground animation frame delivery', async ({ page }) => {
+  await page.addInitScript(() => {
+    const state = window.history.state as { homeReadingPosition?: unknown } | null
+    if (!state?.homeReadingPosition) return
+
+    const requestAnimationFrame = window.requestAnimationFrame.bind(window)
+    let heroPhotoReady = false
+    window.addEventListener('home-hero-photo-ready', () => { heroPhotoReady = true }, { once: true })
+    window.requestAnimationFrame = callback => heroPhotoReady ? 0 : requestAnimationFrame(callback)
+  })
   await openHome(page)
+  await forceColdHistoryNavigation(page)
   await page.locator('.theme-orbit').focus()
   await page.evaluate(() => scrollTo({ top: 700, behavior: 'instant' }))
   await expect.poll(() => page.evaluate(() => Math.round(scrollY))).toBe(700)
   await page.goto('/research/')
   let releaseFonts = () => {}
   const heldFonts = new Promise<void>(resolve => { releaseFonts = resolve })
-  await page.route('**/assets/vue/fonts-*.css', async route => {
+  await page.route('**/assets/vue/*.woff2', async route => {
     await heldFonts
     await route.continue()
   })
   try {
-    await page.goBack({ waitUntil: 'domcontentloaded' })
+    await page.goBack({ waitUntil: 'commit' })
     await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+    await waitForHydration(page)
+    await expect(page.locator('html')).toHaveAttribute('data-home-hero-photo-ready', 'true')
     await expect(page.locator('html')).toHaveAttribute('data-home-scroll-restore', 'true')
-    await page.evaluate(() => { window.requestAnimationFrame = () => 0 })
     releaseFonts()
     await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
     await expect(page.locator('html')).not.toHaveAttribute('data-home-scroll-restore')
@@ -431,7 +497,9 @@ test('home cold history restores without foreground animation frame delivery', a
 test('home loading failure keeps native document scrolling available', async ({ page }) => {
   await page.route('**/assets/vue/HomePage-*.js', route => route.abort())
   await page.goto('/')
-  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'error')
+  await expect(page.locator('.enhancement-notice')).toBeVisible()
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+  expect(await page.locator('body').getAttribute('data-hydrated')).toBeNull()
   await expect(page.locator('.home-hero')).toBeVisible()
   await expect(page.locator('html')).not.toHaveClass(/home-scroll-snap/)
   await expect(page.locator('html')).toHaveCSS('scroll-snap-type', 'none')

@@ -45,7 +45,7 @@ function forwardLightbox(payload: LightboxPayload) {
         :copy="section.copy"
       />
 
-      <MetricStrip :metrics="concertMetrics" />
+      <MetricStrip :metrics="concertMetrics" animate-on-enter />
     </section>
 
     <section id="concert-archive" class="content concert-group">

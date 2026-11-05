@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { mkdir, writeFile } from 'node:fs/promises'
+import { waitForHydration } from './helpers/hydration'
 
 const contacts = [
   { label: '邮箱', href: 'mailto:yance777@outlook.com', value: 'yance777@outlook.com', external: false },
@@ -12,6 +13,14 @@ const locales = [
   { name: 'English', path: '/en/', homeHref: '/en/', contactLabel: 'Contact' }
 ] as const
 
+async function waitForFooterTypography(page: Page) {
+  const root = page.locator('html')
+  await expect(root).toHaveAttribute('data-home-hero-photo-ready', 'true')
+  await waitForHydration(page)
+  await expect(root).toHaveAttribute('data-fonts-ready', /^(ready|fallback)$/)
+  await page.evaluate(() => document.fonts.ready)
+}
+
 for (const locale of locales) {
   test(`footer exposes the localized two-contact system: ${locale.name}`, async ({ page }) => {
     await page.goto(locale.path)
@@ -21,6 +30,7 @@ for (const locale of locales) {
     const contactGrid = footer.locator('.foot-contacts')
     const links = contactGrid.locator('.foot-contact')
 
+    await footer.scrollIntoViewIfNeeded()
     await expect(footer).toBeVisible()
     await expect(mark).toHaveAttribute('href', locale.homeHref)
     await expect(mark.locator('.brand-mark-image')).toBeVisible()
@@ -253,7 +263,7 @@ for (const locale of locales) {
       await page.setViewportSize({ width, height: 1000 })
       await page.emulateMedia({ reducedMotion: 'reduce' })
       await page.goto(locale.path)
-      await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
+      await waitForFooterTypography(page)
       const startedAt = Date.now()
       const observation = await observeFooterGeometry(page)
       try {
@@ -268,7 +278,7 @@ for (const locale of locales) {
     await page.setViewportSize({ width: 1440, height: 1000 })
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.goto(locale.path)
-    await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
+    await waitForFooterTypography(page)
     const startedAt = Date.now()
     const observation = await observeFooterGeometry(page, { width: 320, padding: 16 })
     footerObservations.set(page, { handle: observation, startedAt })

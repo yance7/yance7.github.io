@@ -30,11 +30,11 @@ function getInitialMode() {
 }
 
 export function useHomeHeroIntro(greeting: ComputedRef<string>, statement: ComputedRef<string>) {
-  const shouldAnimate = getInitialMode()
-  const state = ref<IntroState>(shouldAnimate ? 'typing' : 'static')
-  const animateParticles = ref(shouldAnimate)
+  let shouldAnimate = false
+  const state = ref<IntroState>('static')
+  const animateParticles = ref(false)
   const isIntroActive = computed(() => state.value === 'typing' || state.value === 'revealing-actions')
-  const introStartedAt = ref<number | null>(shouldAnimate ? window.performance.now() : null)
+  const introStartedAt = ref<number | null>(null)
   const timers = new Set<number>()
   let motionPreference: MediaQueryList | null = null
   let connection: NetworkInformation | undefined
@@ -99,8 +99,12 @@ export function useHomeHeroIntro(greeting: ComputedRef<string>, statement: Compu
   })
 
   onMounted(() => {
+    shouldAnimate = getInitialMode()
     if (!shouldAnimate) return
 
+    state.value = 'typing'
+    animateParticles.value = true
+    introStartedAt.value = window.performance.now()
     motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)')
     connection = (navigator as Navigator & { connection?: NetworkInformation }).connection
     if (motionPreference.matches || connection?.saveData) {

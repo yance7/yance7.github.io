@@ -1,8 +1,13 @@
 /* Homepage greeting only. Upstream names and copyright remain in the subset. */
+@import '@fontsource/amiri/latin-400.css';
+
 @font-face {
   font-family: 'Yance Hero WenKai';
   font-style: normal;
   font-weight: 400;
   font-display: swap;
   src: url('./assets/fonts/hero-greeting-wenkai-tc-regular.woff2') format('woff2');
+  ascent-override: 92.8%;
+  descent-override: 25.6%;
+  line-gap-override: 0%;
 }
