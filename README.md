@@ -1,156 +1,93 @@
-<p align="center">
-  <img src="public/assets/images/brand/yance-mark-128.webp" alt="Yance brand mark" width="96" />
-</p>
+# Yance · Personal Archive
 
-<h1 align="center">Yance · Personal Archive</h1>
+[English](#english) · [简体中文](#简体中文)
 
-<p align="center">一个以档案叙事组织学术、研究、作品与现场记忆的多语言个人网站。</p>
+## English
 
-<p align="center">
-  <a href="https://yance.me">yance.me</a>
-</p>
+A quiet, content-first personal archive for academic work, research, selected projects, and live-music memories.
 
-<p align="center">
-  <a href="https://github.com/yance7/yance7.github.io/actions/workflows/ci.yml"><img src="https://github.com/yance7/yance7.github.io/actions/workflows/ci.yml/badge.svg?branch=main" alt="Pull Request CI" /></a>
-  <a href="https://github.com/yance7/yance7.github.io/actions/workflows/quality.yml"><img src="https://github.com/yance7/yance7.github.io/actions/workflows/quality.yml/badge.svg?branch=main" alt="Quality Audit" /></a>
-  <a href="https://github.com/yance7/yance7.github.io/actions/workflows/pages.yml"><img src="https://github.com/yance7/yance7.github.io/actions/workflows/pages.yml/badge.svg?branch=main" alt="GitHub Pages" /></a>
-</p>
+[Visit yance.me](https://yance.me/)
 
-<p align="center">
-  <img src="public/assets/images/social/og-card.png" alt="Yance Personal Archive preview" />
-</p>
+[![Yance website preview](public/assets/images/social/og-card.png)](https://yance.me/)
 
-## 快速导航
+The site includes Home, Academics, Honors, Research, Works, and Concerts pages. It supports Simplified Chinese, Traditional Chinese, and English; light and dark themes; responsive layouts; keyboard access; and reduced-motion preferences.
 
-| 如果你想…… | 从这里开始 |
-| --- | --- |
-| 浏览线上网站 | [yance.me](https://yance.me) |
-| 修改页面结构或路由视图 | [`src/pages/`](src/pages/) |
-| 修改页面共享内容与多语言文案 | [`src/data/`](src/data/) |
-| 修改自定义 Vue 指令 | [`src/directives/`](src/directives/) |
-| 修改页面多语言内容 | [`src/data/locales/`](src/data/locales/) |
-| 修改界面翻译与语言状态 | [`src/i18n/`](src/i18n/) |
-| 修改通用界面组件 | [`src/components/`](src/components/) |
-| 调整全站或页面样式 | [`src/styles/`](src/styles/) |
-| 修改 HTML 入口源 | [`html-src/`](html-src/) |
-| 查找静态图片与媒体 | [`public/assets/`](public/assets/) |
-| 运行构建与审计工具 | [`scripts/`](scripts/) |
-| 调整构建、测试与质量检查配置 | [`config/`](config/) |
-| 查阅项目文档 | [`docs/README.md`](docs/README.md) |
-| 参与贡献 | [贡献指南](.github/CONTRIBUTING.md) |
-| 报告安全或隐私问题 | [`SECURITY.md`](SECURITY.md) |
+### Technology
 
-## 项目简介
+Vue 3, TypeScript, and Vite 8. Vue renders 15 localized pages to static HTML at build time; GitHub Actions publishes the generated site to GitHub Pages. The site has no runtime backend.
 
-网站以档案方式整理个人经历与创作，包含：
+### Run locally
 
-- Academics
-- Honors
-- Research
-- Works
-- Concerts
-- 简体中文、繁体中文和英文
-- 明暗主题
-- 响应式布局
-- 无障碍与减弱动效支持
-
-## 技术栈
-
-- Vue 3
-- TypeScript
-- Vite
-- Vitest
-- Playwright
-- axe-core
-- Lighthouse CI
-- GitHub Actions
-- GitHub Pages
-
-## 项目结构
-
-```text
-src/
-├── components/       可复用 Vue 组件
-├── pages/             页面级组件
-├── composables/       可复用组合式逻辑
-├── directives/        自定义 Vue 指令
-├── data/              页面共享内容与类型
-│   └── locales/       页面多语言内容
-├── i18n/              界面翻译与语言状态
-├── styles/            全局与页面样式
-└── utils/             导航、媒体与预加载工具
-html-src/              HTML 源文件
-public/assets/         静态媒体与品牌资源
-tests/                 单元、浏览器与视觉测试
-config/                构建、类型、测试与质量检查配置
-scripts/               构建、媒体与审计工具
-docs/                  交互、媒体、隐私与发布文档
-.github/workflows/     GitHub Actions 工作流
-```
-
-- HTML 源文件位于 `html-src/`，根目录 HTML 文件由构建流程生成。
-- 页面共享内容位于 `src/data/`。
-- `dist/` 是生成产物，不提交到 Git。
-- 视觉基线位于 `tests/e2e/visual-snapshots/`。
-- 工具配置集中在 `config/`；根目录保留项目入口、依赖清单、通用说明及编辑器自动识别所需的配置入口。
-
-## 本地开发
-
-环境要求：
-
-- Node.js >= 22.12.0
-- npm >= 10.9.0
-- Python 工具依赖来自 `scripts/requirements.txt`
-
-安装依赖并启动开发环境：
+Requirements: Node.js `>=22.12.0`, npm `>=10.9.0`. Python tools use the pinned packages in [`scripts/requirements.txt`](scripts/requirements.txt).
 
 ```bash
 npm ci
 npm run dev
-npm run check
-npm run test:e2e
-npm run preview
 ```
 
-首次运行 Playwright 前安装浏览器：
+Run the repository checks with `npm run check`. See the [contribution guide](.github/CONTRIBUTING.md) for browser testing and other development details.
+
+### Repository map
+
+| Path | Contents |
+| --- | --- |
+| `src/components/`, `src/pages/` | Reusable Vue components and page views |
+| `src/composables/`, `src/directives/`, `src/styles/`, `src/utils/` | Shared interaction logic, directives, styles, and utilities |
+| `src/data/`, `src/data/locales/`, `src/i18n/` | Shared and localized page data, translations, and locale state |
+| `html-src/` | Source HTML files used by the build |
+| `public/` | GitHub Pages metadata, including `CNAME`, `robots.txt`, and `sitemap.xml` |
+| `public/assets/` | Site images, fonts, and other static resources |
+| `scripts/` | Build, asset-generation, and audit tools |
+| `config/` | Vite, TypeScript, lint, test, and Lighthouse configuration |
+| `tests/` | Unit, browser, accessibility, and visual checks |
+
+### Build, deployment, and media rights
+
+`npm run build` creates the GitHub Pages artifact in `dist/`. The Pages workflow deploys it to [yance.me](https://yance.me/); generated `dist/` files are not committed.
+
+The repository has no general reuse license. Public visibility does not grant permission to reuse the site's photos, fonts, or third-party media. Read the [asset rights guide](docs/asset-rights.md) before using assets, and see the [contribution guide](.github/CONTRIBUTING.md) for project changes.
+
+## 简体中文
+
+这是一个以内容为先的个人档案网站，整理学业、研究、精选作品与现场记忆。
+
+[访问 yance.me](https://yance.me/)
+
+[![Yance 网站预览](public/assets/images/social/og-card.png)](https://yance.me/)
+
+网站包含首页、学业、荣誉、研究、作品和演唱会页面，支持简体中文、繁体中文和英文，以及浅色与深色主题。布局适配桌面和手机，并支持键盘操作与减少动态效果偏好。
+
+### 技术栈
+
+Vue 3、TypeScript 和 Vite 8。构建时由 Vue 生成 15 个本地化静态 HTML 页面，再由 GitHub Actions 发布到 GitHub Pages；网站没有运行时后端。
+
+### 本地启动
+
+环境要求：Node.js `>=22.12.0`、npm `>=10.9.0`。Python 工具依赖见 [`scripts/requirements.txt`](scripts/requirements.txt)。
 
 ```bash
-npx playwright install --with-deps chromium webkit firefox
+npm ci
+npm run dev
 ```
 
-## 质量门禁
+运行仓库检查：`npm run check`。浏览器测试及其他开发说明见[贡献指南](.github/CONTRIBUTING.md)。
 
-- `npm run check`：运行仓库检查、品牌资源检查、lint、类型检查、死代码检查、单元测试、构建和 smoke 检查。
-- `npm run audit:repo`：检查跟踪文件、忽略规则和公开说明文本边界。
-- `npm run audit:assets`：检查媒体格式、尺寸、可解码性和隐私相关元数据。
-- `npm run links`：检查项目中的外部链接。
-- GitHub Quality Audit：在 GitHub Actions 中运行 Lighthouse、浏览器、视觉、兼容性和无障碍质量检查。
+### 目录结构
 
-当前 Lighthouse 预算如下，具体结果以每次审计为准：
-
-| 指标 | 目标 |
+| 路径 | 内容 |
 | --- | --- |
-| Desktop Performance | >= 90 |
-| Mobile Performance | >= 85 |
-| Accessibility | >= 98 |
-| Best Practices | >= 95 |
-| SEO | >= 95 |
-| LCP | <= 2.5s |
-| TBT | <= 300ms |
-| CLS | <= 0.1 |
-| INP | <= 200ms |
+| `src/components/`、`src/pages/` | 可复用 Vue 组件与页面视图 |
+| `src/composables/`、`src/directives/`、`src/styles/`、`src/utils/` | 共享交互逻辑、指令、样式与工具 |
+| `src/data/`、`src/data/locales/`、`src/i18n/` | 页面数据、多语言内容、界面翻译与语言状态 |
+| `html-src/` | 构建使用的 HTML 源文件 |
+| `public/` | GitHub Pages 部署元数据，包括 `CNAME`、`robots.txt` 和 `sitemap.xml` |
+| `public/assets/` | 网站图片、字体与其他静态资源 |
+| `scripts/` | 构建、资源生成与审计工具 |
+| `config/` | Vite、TypeScript、lint、测试与 Lighthouse 配置 |
+| `tests/` | 单元、浏览器、无障碍与视觉检查 |
 
-## 部署
+### 构建、部署与资源权利
 
-- 通过 `.github/workflows/pages.yml` 部署。
-- 发布目标为 GitHub Pages。
-- 自定义域名为 `yance.me`。
-- `dist/` 不进入 Git。
+运行 `npm run build` 会在 `dist/` 生成 GitHub Pages 发布产物。Pages 工作流将其部署到 [yance.me](https://yance.me/)；`dist/` 是构建产物，不提交到仓库。
 
-## 资源、隐私与使用边界
-
-- [资源权利说明](docs/asset-rights.md)
-- [docs/privacy-release-checklist.md](docs/privacy-release-checklist.md)
-- [docs/security-privacy-decisions.md](docs/security-privacy-decisions.md)
-
-仓库当前未提供通用开源许可证。仓库公开可见不等于授予复制、再分发或商业使用权限。第三方专辑封面、演唱会图像和其他媒体仍受原权利人权利约束。网站不接入第三方分析、广告或用户跟踪脚本。
+仓库没有通用的素材复用许可。仓库公开可见不代表可以复用网站照片、字体或第三方媒体。使用素材前请阅读[资源权利说明](docs/asset-rights.md)；修改项目请参阅[贡献指南](.github/CONTRIBUTING.md)。
