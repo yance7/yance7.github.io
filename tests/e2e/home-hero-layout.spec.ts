@@ -274,6 +274,7 @@ for (const locale of locales) {
   test(`${locale.route} home actions keep a clear primary and text-link hierarchy in both themes`, async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 1000 })
     await page.goto(locale.route)
+    await waitForHydration(page)
 
     const primary = page.locator('.home-hero-actions .hero-action.primary')
     const secondary = page.locator('.home-hero-actions .hero-action.secondary')
