@@ -49,7 +49,6 @@
   border-color: var(--aqua);
   color: var(--ink);
   transform: translateY(var(--motion-control-lift));
-  box-shadow: var(--interactive-shadow);
 }
 .y-archive-link:hover > span:last-child { transform: translateX(3px); }
 .y-archive-link:active { transform: translateY(1px) scale(var(--motion-press-scale)); }
@@ -86,7 +85,6 @@
   border-color: var(--action-fill);
   background: var(--action-fill);
   color: var(--accent-contrast);
-  box-shadow: 0 6px 18px var(--glow-gold);
 }
 .y-button--secondary {
   border-color: var(--control-border);
@@ -116,7 +114,6 @@
 .y-button--primary:not(:disabled):not([aria-disabled='true']):hover {
   border-color: var(--button-hover);
   background: var(--button-hover);
-  box-shadow: 0 8px 24px var(--glow-gold);
 }
 .y-button--secondary:not(:disabled):not([aria-disabled='true']):hover,
 .y-button--quiet:not(:disabled):not([aria-disabled='true']):hover {
@@ -159,7 +156,7 @@
   .y-button--primary:not(:disabled):not([aria-disabled='true']):hover {
     border-color: var(--action-fill);
     background: var(--action-fill);
-    box-shadow: 0 6px 18px var(--glow-gold);
+    box-shadow: none;
   }
   .y-button--secondary:not(:disabled):not([aria-disabled='true']):hover,
   .y-button--quiet:not(:disabled):not([aria-disabled='true']):hover {
