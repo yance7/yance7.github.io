@@ -232,7 +232,6 @@ html[data-locale='en'] .home-hero-typewriter-line-accent {
   transform: translateY(-1px);
   border-color: color-mix(in srgb, var(--gold) 70%, var(--action-fill));
   background: var(--button-hover);
-  box-shadow: 0 3px 10px color-mix(in srgb, var(--gold) 18%, transparent);
 }
 
 .hero-action.secondary:hover {
@@ -254,7 +253,6 @@ html[data-locale='en'] .home-hero-typewriter-line-accent {
   border-color: color-mix(in srgb, var(--gold) 70%, var(--action-fill));
   background: var(--button-hover);
   color: var(--accent-contrast);
-  box-shadow: 0 3px 10px color-mix(in srgb, var(--gold) 18%, transparent);
 }
 
 .hero-action.primary:active {

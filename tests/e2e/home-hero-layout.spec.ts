@@ -390,8 +390,17 @@ for (const locale of locales) {
       await primary.hover()
       await expect.poll(() => primary.evaluate(link => getComputedStyle(link).transform))
         .toBe('matrix(1, 0, 0, 1, 0, -1)')
-      const hoverStyle = await primary.evaluate(link => getComputedStyle(link).boxShadow)
-      expect(hoverStyle).not.toBe('none')
+      const hoverStyle = await primary.evaluate(link => {
+        const probe = document.createElement('span')
+        probe.style.backgroundColor = 'var(--action-fill)'
+        document.body.append(probe)
+        const baseBackground = getComputedStyle(probe).backgroundColor
+        probe.remove()
+        const style = getComputedStyle(link)
+        return { background: style.backgroundColor, baseBackground, boxShadow: style.boxShadow }
+      })
+      expect(hoverStyle.boxShadow).toBe('none')
+      expect(hoverStyle.background).not.toBe(hoverStyle.baseBackground)
 
       await page.evaluate(() => document.addEventListener('click', event => event.preventDefault(), { once: true }))
       await page.mouse.down()
