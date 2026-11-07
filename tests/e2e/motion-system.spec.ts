@@ -251,31 +251,6 @@ test('Academics passive rows remain inside layout after pointer emphasis', async
   expect(geometry.right).toBeLessThanOrEqual(geometry.viewport + 1)
 })
 
-test('Academics education rows expose emphasis without becoming controls', async ({ page }) => {
-  await page.goto('/academics/')
-  const finePointer = await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)
-  test.skip(!finePointer, 'Hover emphasis is only observable on fine-pointer projects')
-
-  const row = page.locator('.education-row').first()
-  const initial = await row.evaluate((element) => ({
-    backgroundImage: getComputedStyle(element).backgroundImage,
-    markerTransform: getComputedStyle(element, '::before').transform,
-    nameColor: getComputedStyle(element.querySelector('.education-name')!).color
-  }))
-
-  await row.hover()
-
-  await expect.poll(() => row.evaluate((element) => getComputedStyle(element).backgroundImage))
-    .not.toBe(initial.backgroundImage)
-  await expect.poll(() => row.evaluate((element) => getComputedStyle(element, '::before').transform))
-    .not.toBe(initial.markerTransform)
-  await expect.poll(() => row.evaluate((element) => getComputedStyle(element.querySelector('.education-name')!).color))
-    .not.toBe(initial.nameColor)
-
-  await expect.poll(() => row.evaluate((element) => getComputedStyle(element).cursor))
-    .not.toBe('pointer')
-})
-
 test('Academics AP rows emphasize their result without shifting layout', async ({ page }) => {
   await page.goto('/academics/')
   const finePointer = await page.evaluate(() => (

@@ -12,30 +12,9 @@ const academics = computed(() => getLocalizedAcademics(locale.value))
 
 <template>
   <div class="page-academics">
-    <section id="sec-education" class="content">
-      <SectionHeading
-        no="00"
-        :label="academics.sections.education.label"
-        :title="academics.sections.education.title"
-        :accent="academics.sections.education.accent"
-        :copy="academics.sections.education.copy"
-      />
-      <div class="education-track">
-        <article
-          v-for="(edu, i) in academics.education"
-          :key="edu.name"
-          class="education-row"
-          v-reveal="{ delay: Math.min(i, 3) * 60 }"
-        >
-          <span class="education-period">{{ edu.period }}</span>
-          <span class="education-name">{{ edu.name }}</span>
-        </article>
-      </div>
-    </section>
-
     <section id="sec-scoreboard" class="content">
       <SectionHeading
-        no="01"
+        no="00"
         :label="academics.sections.scoreboard.label"
         :title="academics.sections.scoreboard.title"
         :accent="academics.sections.scoreboard.accent"
@@ -51,7 +30,7 @@ const academics = computed(() => getLocalizedAcademics(locale.value))
 
     <section id="sec-ap-archive" class="content">
       <SectionHeading
-        no="02"
+        no="01"
         :label="academics.sections.apArchive.label"
         :title="academics.sections.apArchive.title"
         :accent="academics.sections.apArchive.accent"

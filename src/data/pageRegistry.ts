@@ -17,7 +17,7 @@ const registry = {
     changefreq: 'monthly',
     priority: '0.8',
     ogImage: 'assets/images/social/og-academics.png',
-    sectionIds: ['sec-education', 'sec-scoreboard', 'sec-ap-archive']
+    sectionIds: ['sec-scoreboard', 'sec-ap-archive']
   },
   honors: {
     htmlName: 'honors',
