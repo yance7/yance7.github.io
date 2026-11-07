@@ -1,6 +1,6 @@
 # 安全与隐私报告
 
-本项目仅支持最新 `main` 和当前部署版本。安全问题不要通过公开 Issue 披露，请发送邮件至 [yance777@outlook.com](mailto:yance777@outlook.com)。
+本项目仅支持最新 `main` 和当前部署版本。安全问题不要通过公开 Issue 披露，请发送邮件至 [yc@yance.me](mailto:yc@yance.me)。
 
 报告中请尽量包含：
 

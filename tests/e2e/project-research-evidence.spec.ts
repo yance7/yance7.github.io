@@ -83,7 +83,7 @@ for (const locale of locales) {
     await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
 
     const feeding = page.locator('#multimodal-feeding')
-    const requestLink = feeding.locator('a[href="mailto:yance777@outlook.com"]')
+    const requestLink = feeding.locator('a[href="mailto:yc@yance.me"]')
     await expect(requestLink).toContainText(locale.materialRequest)
     await expect(feeding.locator('.tl-actions a')).toHaveCount(1)
     await expect(feeding.locator('a[href=""]')).toHaveCount(0)

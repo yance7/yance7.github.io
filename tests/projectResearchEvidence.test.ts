@@ -96,7 +96,7 @@ describe('project and research evidence', () => {
       const feeding = getLocalizedResearch(locale).find(({ id }) => id === 'multimodal-feeding')
       expect(feeding?.materialRequest).toEqual({
         label: expectedLabels[locale],
-        href: 'mailto:yance777@outlook.com'
+        href: 'mailto:yc@yance.me'
       })
       expect(feeding?.link).toBeUndefined()
       expect(feeding?.proof).toBeUndefined()
