@@ -30,7 +30,7 @@
   content: ''; position: absolute; inset: 0; z-index: 3; pointer-events: none;
   border-radius: inherit;
   background:
-    radial-gradient(420px circle at var(--pointer-x) var(--pointer-y), color-mix(in srgb, currentColor 10%, transparent), transparent 64%),
+    radial-gradient(420px circle at var(--pointer-x) var(--pointer-y), color-mix(in srgb, currentColor 6%, transparent), transparent 64%),
     linear-gradient(110deg, transparent 38%, var(--interactive-sheen) 50%, transparent 62%);
   background-size: auto, 220% 100%; background-position: center, 100% 0;
   opacity: calc(var(--pointer-active) * .55);
@@ -417,7 +417,7 @@
   overflow-wrap: anywhere;
 }
 .sc-proof-links .y-archive-link:hover {
-  transform: translateY(-1px);
+  transform: translateY(var(--motion-control-lift));
   border-color: currentColor;
   color: currentColor;
   box-shadow: var(--interactive-shadow);

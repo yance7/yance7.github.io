@@ -242,7 +242,7 @@ html[data-locale='en'] .beyond-leadership small { grid-column: 2; }
 }
 .activity-row:hover .activity-btn,
 .activity-btn:hover,
-.activity-btn:focus-visible { background: var(--control-hover); transform: translateY(-1px); }
+.activity-btn:focus-visible { background: var(--control-hover); transform: translateY(var(--motion-control-lift)); }
 .activity-btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 .activity-btn:active { background: var(--control-pressed); transform: translateY(1px) scale(var(--motion-press-scale)); }
 .activity-period {
