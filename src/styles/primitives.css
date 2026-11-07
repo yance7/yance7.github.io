@@ -48,7 +48,7 @@
 .y-archive-link:hover {
   border-color: var(--aqua);
   color: var(--ink);
-  transform: translateY(-1px);
+  transform: translateY(var(--motion-control-lift));
   box-shadow: var(--interactive-shadow);
 }
 .y-archive-link:hover > span:last-child { transform: translateX(3px); }
@@ -111,7 +111,7 @@
 .y-button:is(:hover, :active) { transform: none; }
 .y-button:active:not(:disabled):not([aria-disabled='true']) { transform: none; }
 .y-button:not(:disabled):not([aria-disabled='true']):hover .y-button__visual {
-  transform: translateY(-1px);
+  transform: translateY(var(--motion-control-lift));
 }
 .y-button--primary:not(:disabled):not([aria-disabled='true']):hover {
   border-color: var(--button-hover);
