@@ -6,7 +6,6 @@
   box-sizing: border-box;
   border: 1px solid var(--line); border-radius: var(--radius-card);
   background: var(--surface);
-  box-shadow: var(--shadow-1);
   overflow: hidden;
 }
 .toolchain-head {
@@ -22,7 +21,7 @@
 }
 .tc-head-status i {
   width: 6px; height: 6px; border-radius: 50%;
-  background: var(--aqua); box-shadow: 0 0 8px var(--glow-aqua);
+  background: var(--aqua);
 }
 .toolchain-grid {
   display: grid;
@@ -36,7 +35,7 @@
 }
 .toolchain-cell::after {
   content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
-  background: linear-gradient(90deg, var(--gold), transparent);
+  background: color-mix(in srgb, var(--gold) 52%, transparent);
   transform: scaleX(0); transform-origin: left;
   transition: transform var(--dur-base) var(--ease-apple);
 }
@@ -129,8 +128,8 @@
   flex: 1;
   height: 1px;
   min-width: 28px;
-  background: linear-gradient(90deg, var(--gold), var(--aqua));
-  opacity: .5;
+  background: var(--line-strong);
+  opacity: .6;
 }
 .toolchain-groups {
   display: grid;
@@ -153,7 +152,7 @@
   top: 16%;
   bottom: 16%;
   left: 0;
-  width: 2px;
+  width: 1px;
   background: var(--aqua);
   opacity: 0;
   transform: scaleY(.55);
@@ -161,7 +160,7 @@
 }
 @media (hover: hover) and (pointer: fine) {
   .toolchain-group:hover::after {
-    opacity: .7;
+    opacity: .55;
     transform: scaleY(1);
   }
 }
@@ -218,7 +217,7 @@
   letter-spacing: .12em;
 }
 .toolchain-foot span:first-child { color: var(--aqua); }
-.toolchain-foot i { display: inline-block; width: 6px; height: 6px; margin-right: 7px; border-radius: 50%; background: var(--aqua); box-shadow: 0 0 9px var(--glow-aqua); }
+.toolchain-foot i { display: inline-block; width: 6px; height: 6px; margin-right: 7px; border-radius: 50%; background: var(--aqua); }
 
 /* ===== 研究 · 时间轴 ===== */
 .timeline-track { position: relative; width: 100%; max-width: none; margin-inline: auto; padding-left: 8px; box-sizing: border-box; }
@@ -233,7 +232,7 @@
 }
 .tl-item::after {
   content: ''; position: absolute; left: 162px; right: 0; bottom: 0; height: 1px;
-  background: linear-gradient(90deg, var(--line), transparent);
+  background: var(--line);
   transition: background var(--dur-base) var(--ease-soft);
 }
 .tl-item:last-child::after { display: none; }
@@ -252,7 +251,7 @@
   position: absolute; inset: 3px; border-radius: 50%; background: var(--gold);
   transition: background-color var(--dur-base) var(--ease-soft), opacity var(--dur-base) var(--ease-soft);
 }
-.tl-item.is-current::after { background: linear-gradient(90deg, var(--aqua), transparent); }
+.tl-item.is-current::after { background: color-mix(in srgb, var(--aqua) 55%, var(--line)); }
 .tl-item.is-current .tl-date { color: var(--ink); }
 .tl-item.is-current .tl-node { border-color: var(--aqua); box-shadow: 0 0 0 4px var(--glow-aqua); }
 .tl-item.is-current .tl-node i { background: var(--aqua); }

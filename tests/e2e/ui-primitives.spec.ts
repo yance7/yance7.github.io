@@ -246,19 +246,19 @@ test('metric surfaces refine their boundary without adding elevation', async ({ 
   })
   await expect(page.locator('.metric-strip')).toHaveClass(/revealed/)
   await expect(page.locator('.metric-strip')).toHaveCSS('transform', 'none')
+  const baseBackground = await metric.evaluate((element) => getComputedStyle(element).backgroundColor)
   await metric.hover()
 
   await expect(metric).toHaveCSS('transform', 'none')
+  await expect(metric).toHaveCSS('box-shadow', 'none')
   const hasFinePointer = await page.evaluate(() => (
     window.matchMedia('(hover: hover) and (pointer: fine)').matches
     && !window.matchMedia('(hover: none), (pointer: coarse)').matches
   ))
   if (hasFinePointer) {
     await expect
-      .poll(() => metric.evaluate((element) => getComputedStyle(element).boxShadow))
-      .toMatch(/inset/)
-  } else {
-    await expect(metric).toHaveCSS('box-shadow', 'none')
+      .poll(() => metric.evaluate((element) => getComputedStyle(element).backgroundColor))
+      .not.toBe(baseBackground)
   }
   const numberMetrics = await metric.locator('b').evaluate((element) => {
     const style = getComputedStyle(element)

@@ -13,7 +13,7 @@
 .ap-panel {
   margin-top: 64px; border-top: 1px solid var(--line);
   border-radius: var(--radius-card); overflow: hidden;
-  border: 1px solid var(--line); box-shadow: var(--shadow-1);
+  border: 1px solid var(--line);
 }
 .panel-label {
   padding: var(--space-5) var(--space-5) var(--space-3); font-family: var(--font-technical); font-size: var(--type-meta-size);
@@ -57,7 +57,6 @@
   .ap-row:hover .ap-no { color: var(--gold); }
   .ap-row:not(.pending):hover .ap-badge {
     border-color: var(--gold);
-    box-shadow: 0 0 0 3px var(--glow-gold);
   }
 }
 
