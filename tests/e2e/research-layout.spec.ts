@@ -183,6 +183,7 @@ for (const paper of citationPapers) {
       await page.keyboard.press(paper.toggleKey)
       await expect(item.locator('.citation-source')).toHaveAttribute('open', '')
       await expect(item.locator('.citation-source pre')).toBeVisible()
+      await expect(item.locator('.citation-source pre')).toContainText(paper.citationStart)
       await page.evaluate(() => new Promise<void>((resolve) => {
         requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
       }))

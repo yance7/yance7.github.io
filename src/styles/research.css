@@ -417,8 +417,8 @@
   font-size: var(--text-xs);
 }
 .citation-source summary {
-  display: inline-flex; align-items: center; gap: 8px;
-  min-height: 36px; cursor: pointer; text-underline-offset: 3px;
+  min-height: 36px; padding-block: 8px; list-style-position: inside;
+  cursor: pointer; text-underline-offset: 3px;
   font-family: var(--font-technical); font-size: var(--type-meta-size);
   letter-spacing: var(--tracking-latin-meta);
   transition: color var(--dur-fast);
