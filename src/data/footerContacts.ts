@@ -10,8 +10,8 @@ export interface FooterContact {
 export const footerContacts: readonly FooterContact[] = [
   {
     key: 'email',
-    href: 'mailto:yance777@outlook.com',
-    value: 'yance777@outlook.com',
+    href: 'mailto:yc@yance.me',
+    value: 'yc@yance.me',
     external: false
   },
   {

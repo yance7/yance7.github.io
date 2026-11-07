@@ -55,7 +55,7 @@ test.describe('static page routes without JavaScript', () => {
       await expect(page.locator('.theme-orbit')).toBeHidden()
       await expect(page.locator('.locale-switcher-desktop a')).toHaveCount(3)
       await expect(page.locator('head link[rel="stylesheet"][href*="/fonts-route-"]')).toHaveCount(1)
-      await expect(page.locator('.site-footer a[href="mailto:yance777@outlook.com"]')).toHaveCount(1)
+      await expect(page.locator('.site-footer a[href="mailto:yc@yance.me"]')).toHaveCount(1)
       await expect(page.locator('.site-footer a[href="https://github.com/yance7"]')).toHaveCount(1)
       if (evidenceHref) {
         await expect(main.locator(`a[href="${evidenceHref}"]`).first()).toHaveAttribute('href', evidenceHref)
@@ -532,7 +532,7 @@ for (const { locale, path, notice } of entryFailureCases) {
     expect(response?.status()).toBe(200)
     await expect(page.locator('main#main h1')).toBeVisible()
     await expect(page.locator('.site-footer')).toBeVisible()
-    await expect(page.locator('.site-footer a[href="mailto:yance777@outlook.com"]')).toHaveCount(1)
+    await expect(page.locator('.site-footer a[href="mailto:yc@yance.me"]')).toHaveCount(1)
     await expect(page.locator('.enhancement-notice')).toBeVisible()
     await expect(page.locator('.enhancement-notice')).toContainText(notice)
     expect(await page.locator('body').getAttribute('data-hydrated')).toBeNull()

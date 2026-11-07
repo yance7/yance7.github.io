@@ -13,7 +13,7 @@ const entities = Object.fromEntries(research.map((item) => [item.id, {
 
 entities['multimodal-feeding']!.materialRequest = {
   label: '代码未公开，可邮件索取',
-  href: 'mailto:yance777@outlook.com'
+  href: 'mailto:yc@yance.me'
 }
 
 export const researchCopy = {

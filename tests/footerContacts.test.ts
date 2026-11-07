@@ -13,8 +13,8 @@ describe('footer contact data', () => {
     expect(footerContacts).toEqual([
       {
         key: 'email',
-        href: 'mailto:yance777@outlook.com',
-        value: 'yance777@outlook.com',
+        href: 'mailto:yc@yance.me',
+        value: 'yc@yance.me',
         external: false
       },
       {
@@ -106,7 +106,7 @@ describe('footer component contract', () => {
     expect(styles).toContain('grid-template-columns: repeat(2, minmax(0, 1fr))')
     expect(styles).toContain('grid-template-columns: 22px minmax(0, 1fr) 14px')
     expect(styles).toContain('min-height: 60px')
-    expect(styles).toContain('inline-size: min(100%, 600px)')
+    expect(styles).toContain('inline-size: min(100%, 480px)')
     expect(styles).toContain('min-width: 0')
     expect(styles).not.toContain('transition: all')
     expect(styles).toContain('transition: color 200ms var(--ease-soft)')

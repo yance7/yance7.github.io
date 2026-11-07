@@ -225,9 +225,9 @@ html[data-locale='en'] .section-copy {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: stretch;
   gap: 12px;
-  flex: 0 1 600px;
-  inline-size: min(100%, 600px);
-  max-inline-size: 600px;
+  flex: 0 1 480px;
+  inline-size: min(100%, 480px);
+  max-inline-size: 480px;
   min-width: 0;
   margin: 0;
   font-style: normal;

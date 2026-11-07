@@ -3,7 +3,7 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { waitForHydration } from './helpers/hydration'
 
 const contacts = [
-  { label: '邮箱', href: 'mailto:yance777@outlook.com', value: 'yance777@outlook.com', external: false },
+  { label: '邮箱', href: 'mailto:yc@yance.me', value: 'yc@yance.me', external: false },
   { label: 'GitHub', href: 'https://github.com/yance7', value: '@yance7', external: true }
 ] as const
 
@@ -93,7 +93,7 @@ for (const width of [320, 390, 768, 1024, 1440]) {
 
     expect(geometry.documentWidth, `${width}px footer overflow`).toBeLessThanOrEqual(geometry.viewportWidth)
     expect(geometry.svgCount).toBe(2)
-    expect(geometry.groupWidth, `${width}px contacts width cap`).toBeLessThanOrEqual(600)
+    expect(geometry.groupWidth, `${width}px contacts width cap`).toBeLessThanOrEqual(width >= 768 ? 481 : 480)
     expect(geometry.gridColumnCount, `${width}px contacts column count`).toBe(width <= 760 ? 1 : 2)
     expect(geometry.hitAreas.every(({ width: hitWidth, height }) => hitWidth >= 44 && height >= 44)).toBe(true)
     expect(geometry.hitAreas.every(({ height }) => height <= 96), `${width}px compact contact cards`).toBe(true)
