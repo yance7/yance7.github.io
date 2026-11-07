@@ -59,13 +59,9 @@ describe('cross-platform reading fallbacks', () => {
     expect(concertFallback).toContain('backdrop-filter: none')
   })
 
-  it('disables decorative blend effects when the blend mode is unavailable', () => {
-    const blendFallback = '@supports not (mix-blend-mode: soft-light)'
-    const fallback = concerts.slice(concerts.indexOf(blendFallback))
-
-    expect(fallback).toContain('.concert-poster::after')
-    expect(fallback).toContain('background: none')
-    expect(fallback).toContain('opacity: 0')
+  it('keeps the poster surface free of decorative blend effects', () => {
+    expect(concerts).not.toContain('mix-blend-mode: soft-light')
+    expect(concerts).not.toContain('.concert-poster::after')
   })
 
   it('keeps mobile lyric entrances within a short critical-content budget', () => {
