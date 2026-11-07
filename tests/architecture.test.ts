@@ -17,7 +17,7 @@ describe('page registry', () => {
     ])
     expect('nav' in pageRegistry.research).toBe(false)
     expect('sections' in pageRegistry.academics).toBe(false)
-    expect(pageRegistry.academics.sectionIds).toEqual(['sec-education', 'sec-scoreboard', 'sec-ap-archive'])
+    expect(pageRegistry.academics.sectionIds).toEqual(['sec-scoreboard', 'sec-ap-archive'])
     expect(pageRegistry.honors.sectionIds).toEqual(['sec-milestones', 'sec-honors-archive'])
     expect(pageEntries.every((entry) => entry.sectionIds.length >= 2)).toBe(true)
     expect(isPageKey('research')).toBe(true)

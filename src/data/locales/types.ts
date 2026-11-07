@@ -1,4 +1,4 @@
-import type { PageKey, PageMeta, SiteNavItem, Status, World, AcademicStat, ApScore, Education, Activity, Leadership, Honor, Concert, ResearchItem, Project } from '../types.ts'
+import type { PageKey, PageMeta, SiteNavItem, Status, World, AcademicStat, ApScore, Activity, Leadership, Honor, Concert, ResearchItem, Project } from '../types.ts'
 import type { HonorLevel } from '../types.ts'
 
 type LocalizedNav = Omit<SiteNavItem, 'href' | 'key'>
@@ -28,10 +28,8 @@ export interface SiteLocaleCopy {
 export interface AcademicsLocaleCopy {
   stats: AcademicStat[]
   satSingle: { label: string; value: string; note: string }
-  education: Education[]
   apScores: ApScore[]
   sections: {
-    education: { label: string; title: string; accent: string; copy: string }
     scoreboard: { label: string; title: string; accent: string; copy: string }
     apArchive: { label: string; title: string; accent: string; copy: string; panelLabel: string; noScoreLabel: string }
   }

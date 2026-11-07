@@ -149,8 +149,6 @@ async function readEnglishTextSurfaceViolations(page: Page) {
       '.beyond-leadership small',
       '.beyond-activity strong',
       '.beyond-activity small',
-      '.education-name',
-      '.education-en',
       '.ap-main strong',
       '.ap-main small',
       '.filter-btn',
@@ -214,12 +212,14 @@ test('English readability checks actual inline geometry and still detects clippi
   await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
   await page.evaluate(() => document.fonts.ready)
   await page.evaluate(() => {
-    const probe = document.createElement('span')
+    const container = document.createElement('div')
+    container.className = 'ap-main'
+    const probe = document.createElement('strong')
     probe.id = 'inline-readability-probe'
-    probe.className = 'education-name'
     probe.style.cssText = 'white-space:nowrap'
     probe.textContent = 'Inline probe'
-    document.querySelector('main')!.append(probe)
+    container.append(probe)
+    document.querySelector('main')!.append(container)
   })
   expect(await readEnglishTextSurfaceViolations(page)).toEqual([])
   await page.locator('#inline-readability-probe').evaluate(element => {
