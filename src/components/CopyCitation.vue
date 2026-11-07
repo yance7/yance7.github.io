@@ -65,9 +65,5 @@ onUnmounted(() => clearTimeout(timer))
       <span class="copy-label" aria-live="polite">{{ copying ? messages.common.copyInProgress : state === 'success' ? messages.common.copied : messages.common.copyCitation }}</span>
     </button>
     <span v-if="state === 'error'" class="copy-error" role="status" aria-live="polite">{{ messages.common.copyFailed }}</span>
-    <details class="citation-source">
-      <summary>{{ messages.common.viewCitationText }}</summary>
-      <pre>{{ citation }}</pre>
-    </details>
   </div>
 </template>
