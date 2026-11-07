@@ -1,4 +1,4 @@
-import type { AcademicStat, ApScore, Education } from './types.ts'
+import type { AcademicStat, ApScore } from './types.ts'
 
 export const academicsUpdatedAt = '2026-10-22'
 
@@ -8,12 +8,6 @@ export const stats = [
   { value: '108', label: 'TOEFL', note: 'R29 · L27 · S23 · W29' },
   { value: '8.0', label: 'IELTS', note: 'L8.5 · R8.5 · W7.5 · S6.5' }
 ] satisfies AcademicStat[]
-
-/* ---------- 教育履历 ---------- */
-export const education = [
-  { period: '2024.02 — 至今', name: '北京市第八十中学国际部', en: 'International Department, Beijing No. 80 High School' },
-  { period: '2021.09 — 2024.01', name: '北京陈经纶中学团结湖分校', en: 'Beijing Chen Jinglun Middle School, Tuanjiehu Branch' }
-] satisfies Education[]
 
 /* ---------- AP 成绩档案（9 门已得 5 分 + 3 门待出分） ---------- */
 export const apScores = [

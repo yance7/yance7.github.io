@@ -1,35 +1,3 @@
-  /* ===== 学业 · 教育履历 ===== */
-.education-track {
-  position: relative; padding-left: 8px;
-  border-left: 1px solid var(--line);
-}
-.education-row {
-  position: relative; padding: var(--space-5) 0 var(--space-5) var(--space-6);
-  transition: background-color var(--dur-base);
-}
-.education-row::before {
-  content: ''; position: absolute; left: -5px; top: 32px;
-  width: 9px; height: 9px; border-radius: 50%;
-  background: var(--gold); box-shadow: 0 0 10px var(--glow-gold);
-  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast), background-color var(--dur-fast);
-}
-.education-row:hover { background: transparent; }
-.education-period {
-  display: block; font-family: var(--font-technical); font-size: var(--type-meta-size);
-  letter-spacing: var(--tracking-latin-meta); color: var(--gold); margin-bottom: 6px;
-}
-.education-name {
-  min-width: 0;
-  overflow-wrap: break-word;
-  transition: color var(--dur-fast);
-  font-family: var(--font-editorial); font-size: 1.4rem; font-weight: 400;
-  color: var(--ink); line-height: 1.3;
-}
-.education-en {
-  display: block; margin-top: 4px;
-  font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: var(--tracking-zh-meta);
-  color: var(--dim); text-transform: uppercase;
-}
 .scoreboard-note {
   max-width: 58rem;
   min-width: 0;
@@ -45,7 +13,7 @@
 .ap-panel {
   margin-top: 64px; border-top: 1px solid var(--line);
   border-radius: var(--radius-card); overflow: hidden;
-  border: 1px solid var(--line); box-shadow: var(--shadow-1);
+  border: 1px solid var(--line);
 }
 .panel-label {
   padding: var(--space-5) var(--space-5) var(--space-3); font-family: var(--font-technical); font-size: var(--type-meta-size);
@@ -85,22 +53,10 @@
 .ap-row.pending:hover .ap-badge { border-color: var(--dim); box-shadow: none; }
 
 @media (hover: hover) and (pointer: fine) {
-  .education-row:hover {
-    background: linear-gradient(90deg, var(--accent-wash), transparent 72%);
-  }
-
-  .education-row:hover::before {
-    transform: scale(1.15);
-    box-shadow: 0 0 0 4px var(--glow-gold), 0 0 14px var(--glow-gold);
-  }
-
-  .education-row:hover .education-name { color: var(--gold-text); }
-
   .ap-row:hover { background: var(--surface-hover); }
   .ap-row:hover .ap-no { color: var(--gold); }
   .ap-row:not(.pending):hover .ap-badge {
     border-color: var(--gold);
-    box-shadow: 0 0 0 3px var(--glow-gold);
   }
 }
 
@@ -112,15 +68,12 @@
 }
 
 @media (hover: none), (pointer: coarse) {
-  .education-row:hover:not(:focus-visible) { background: transparent; }
   .ap-row:hover:not(:focus-visible) { background: var(--surface-strong); }
   .ap-row:hover:not(:focus-visible) .ap-badge { border-color: var(--line); box-shadow: none; }
   .ap-row.pending:hover:not(:focus-visible) .ap-badge { border-color: var(--dim); box-shadow: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .education-row::before,
-  .education-name,
   .ap-no,
   .ap-badge {
     transition: none !important;

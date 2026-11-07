@@ -143,12 +143,6 @@ export interface Honor {
 
 export type AcademicStat = Metric
 
-export interface Education {
-  period: string
-  name: string
-  en: string
-}
-
 interface ApScoreBase {
   name: string
   en: string

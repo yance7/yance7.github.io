@@ -14,27 +14,20 @@
   display: flex; flex-direction: column; gap: 1px;
   background: var(--line); border: 1px solid var(--line);
   border-radius: var(--radius-card); overflow: hidden;
-  box-shadow: var(--shadow-1);
 }
 .world-card {
-  --pointer-x: 50%; --pointer-y: 50%; --pointer-active: 0;
   position: relative; display: grid; grid-template-columns: 80px 1fr 40px; align-items: center; gap: 24px;
   padding: var(--space-6); background: var(--surface-strong);
   transition: transform var(--dur-base) var(--ease-apple), background-color var(--dur-base) var(--ease-soft);
   overflow: hidden;
-}
-.world-card::before {
-  content: ''; position: absolute; inset: 0; pointer-events: none;
-  background: radial-gradient(320px circle at var(--pointer-x) var(--pointer-y), var(--interactive-glow), transparent 62%);
-  opacity: var(--pointer-active); transition: opacity var(--dur-fast);
 }
 .world-card::after {
   content: ''; position: absolute; left: 0; top: 16%; bottom: 16%; width: 2px;
   border-radius: var(--radius-pill); background: currentColor; opacity: 0; transform: scaleY(.55);
   transition: opacity var(--dur-fast), transform var(--dur-fast) var(--ease-out);
 }
-.world-card:is(:hover, :focus-visible) { background: var(--surface-hover); box-shadow: var(--interactive-shadow); }
-.world-card:is(:hover, :focus-visible)::after { opacity: .72; transform: scaleY(1); }
+.world-card:is(:hover, :focus-visible) { background: var(--surface-hover); }
+.world-card:is(:hover, :focus-visible)::after { opacity: .55; transform: scaleY(1); }
 .world-card:is(:hover, :focus-visible) .world-arrow { opacity: 1; transform: none; }
 .world-left { display: flex; align-items: center; gap: 16px; }
 .world-no { font-family: var(--font-technical); font-size: var(--type-meta-size); letter-spacing: var(--tracking-latin-wide); color: var(--gold); }
@@ -60,7 +53,6 @@
     align-items: stretch;
   }
   .focus-card {
-    --pointer-x: 50%; --pointer-y: 50%; --pointer-active: 0;
     position: relative;
     isolation: isolate;
     overflow: hidden;
@@ -71,22 +63,10 @@
     border: 1px solid var(--line);
     border-radius: var(--radius-card);
     background: var(--surface);
-    box-shadow: var(--shadow-1);
-    transition: transform var(--dur-base) var(--ease-apple), border-color var(--dur-base), box-shadow var(--dur-base);
-  }
-  .focus-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    background: radial-gradient(300px circle at var(--pointer-x) var(--pointer-y), var(--interactive-glow), transparent 64%);
-    opacity: var(--pointer-active);
-    transition: opacity var(--dur-fast);
+    transition: transform var(--dur-base) var(--ease-apple), border-color var(--dur-base);
   }
   .focus-card > * { position: relative; z-index: 1; }
-  .focus-card:is(:hover, :focus-visible, :focus-within) { border-color: var(--gold); background: var(--surface-hover); box-shadow: var(--interactive-shadow); }
-  .focus-card:is(:focus-visible, :focus-within)::before { opacity: .42; }
+  .focus-card:is(:hover, :focus-visible, :focus-within) { border-color: var(--gold); background: var(--surface-hover); }
   .focus-card.focus-product.gold:is(:hover, :focus-within) { border-color: var(--gold); }
   .focus-card.focus-product.aqua:is(:hover, :focus-within) { border-color: var(--aqua); }
   .home-focus-connector {
@@ -130,7 +110,7 @@
     display: block;
     width: 62px;
     height: 1px;
-    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    background: color-mix(in srgb, var(--gold) 48%, transparent);
   }
   .focus-label {
     margin-bottom: 24px;
@@ -288,7 +268,7 @@ html[data-locale='en'] .beyond-leadership small { grid-column: 2; }
   .world-card { grid-template-columns: 50px 1fr 30px; gap: var(--space-4); padding: var(--space-5); }
   .home-focus-grid { grid-template-columns: 1fr; gap: var(--space-3); }
   .home-focus-connector { min-height: 46px; flex-direction: row; }
-  .home-focus-connector i { width: 1px; height: 30px; background: linear-gradient(180deg, transparent, var(--gold), transparent); }
+  .home-focus-connector i { width: 1px; height: 30px; background: color-mix(in srgb, var(--gold) 48%, transparent); }
   .world-center strong { font-size: 1.4rem; }
   .world-center p {
     display: -webkit-box;

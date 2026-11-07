@@ -178,6 +178,10 @@ onUnmounted(() => {
             </a>
           </div>
         </div>
+        <details v-if="item.citation" class="citation-source">
+          <summary>{{ messages.common.viewCitationText }}</summary>
+          <pre>{{ item.citation }}</pre>
+        </details>
         <div v-if="item.proof?.length" class="tl-proof">
           <span class="tl-proof-label">{{ messages.common.proof }}</span>
           <div class="tl-proof-list">

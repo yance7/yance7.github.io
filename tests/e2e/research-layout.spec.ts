@@ -145,6 +145,106 @@ for (const route of routes) {
   }
 }
 
+const citationPapers = [
+  { id: 'fishfreshnet-v1', citationStart: '@INPROCEEDINGS{11605650', toggleKey: 'Enter' },
+  { id: 'corn-growth', citationStart: '@article{bioconf202623702029', toggleKey: 'Space' }
+] as const
+const citationViewports = [
+  { name: 'mobile', width: 390, height: 844 },
+  { name: 'desktop', width: 1440, height: 1000 }
+] as const
+
+for (const paper of citationPapers) {
+  for (const viewport of citationViewports) {
+    test(`Research citation panel keeps full width and stable actions: ${paper.id} ${viewport.name}`, async ({ page }) => {
+      await expectResearchReady(page, '/research/', viewport.width, viewport.height)
+
+      const item = page.locator(`#${paper.id}`)
+      await item.evaluate(element => element.scrollIntoView({ block: 'center', behavior: 'instant' }))
+      await expect(item).toHaveClass(/revealed/)
+      await expect(item).toHaveCSS('transform', 'none')
+      await page.evaluate(() => new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      }))
+      const actions = item.locator('.tl-actions')
+      const button = actions.locator('.copy-citation')
+      await expect(button).toHaveCount(1)
+      await expect(actions.locator('.citation-source')).toHaveCount(0)
+
+      const before = await actions.evaluate((element) => {
+        const rect = element.getBoundingClientRect()
+        const itemRect = element.closest('.tl-item')!.getBoundingClientRect()
+        return { height: rect.height, left: rect.left, top: rect.top - itemRect.top, width: rect.width }
+      })
+
+      const summary = item.locator('.citation-source summary')
+      await summary.focus()
+      await expect(summary).toBeFocused()
+      await page.keyboard.press(paper.toggleKey)
+      await expect(item.locator('.citation-source')).toHaveAttribute('open', '')
+      await expect(item.locator('.citation-source pre')).toBeVisible()
+      await expect(item.locator('.citation-source pre')).toContainText(paper.citationStart)
+      await page.evaluate(() => new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      }))
+
+      const geometry = await item.evaluate((element) => {
+        const body = element.querySelector<HTMLElement>('.tl-body')!
+        const source = element.querySelector<HTMLElement>('.citation-source')!
+        const pre = source.querySelector('pre')!
+        const actions = element.querySelector<HTMLElement>('.tl-actions')!
+        const doi = element.querySelector<HTMLElement>('.tl-doi')
+        const bodyStyle = getComputedStyle(body)
+        const preStyle = getComputedStyle(pre)
+        const bodyRect = body.getBoundingClientRect()
+        const itemRect = element.getBoundingClientRect()
+        const sourceRect = source.getBoundingClientRect()
+        const actionsRect = actions.getBoundingClientRect()
+        const doiRect = doi?.getBoundingClientRect()
+        const overlaps = (left: DOMRect, right: DOMRect) => (
+          left.left < right.right - .5
+          && right.left < left.right - .5
+          && left.top < right.bottom - .5
+          && right.top < left.bottom - .5
+        )
+
+        return {
+          actionsAfter: {
+            height: actionsRect.height,
+            left: actionsRect.left,
+            top: actionsRect.top - itemRect.top,
+            width: actionsRect.width
+          },
+          bodyContentLeft: bodyRect.left + Number.parseFloat(bodyStyle.paddingLeft),
+          bodyContentWidth: body.clientWidth - Number.parseFloat(bodyStyle.paddingLeft) - Number.parseFloat(bodyStyle.paddingRight),
+          documentWidth: document.documentElement.scrollWidth,
+          doiActionsOverlap: doiRect ? overlaps(doiRect, actionsRect) : false,
+          preMaxHeight: preStyle.maxHeight,
+          preOverflowY: preStyle.overflowY,
+          preVisible: preStyle.display !== 'none' && preStyle.visibility !== 'hidden' && pre.getBoundingClientRect().height > 0,
+          preWidth: pre.getBoundingClientRect().width,
+          sourceLeft: sourceRect.left,
+          sourceWidth: sourceRect.width,
+          viewportWidth: window.innerWidth
+        }
+      })
+
+      expect(geometry.documentWidth, `${paper.id} ${viewport.name} overflow`).toBeLessThanOrEqual(geometry.viewportWidth + 1)
+      expect(geometry.preVisible).toBe(true)
+      expect(geometry.preMaxHeight).toBe('256px')
+      expect(geometry.preOverflowY).toBe('auto')
+      expect(Math.abs(geometry.sourceWidth - geometry.bodyContentWidth), `${paper.id} ${viewport.name} source width`).toBeLessThanOrEqual(1)
+      expect(Math.abs(geometry.sourceLeft - geometry.bodyContentLeft), `${paper.id} ${viewport.name} source left`).toBeLessThanOrEqual(1)
+      expect(geometry.preWidth, `${paper.id} ${viewport.name} pre width`).toBeLessThanOrEqual(geometry.sourceWidth + 1)
+      expect(geometry.doiActionsOverlap, `${paper.id} ${viewport.name} DOI overlap`).toBe(false)
+      expect(Math.abs(geometry.actionsAfter.width - before.width), `${paper.id} ${viewport.name} actions width`).toBeLessThanOrEqual(1)
+      expect(Math.abs(geometry.actionsAfter.height - before.height), `${paper.id} ${viewport.name} actions height`).toBeLessThanOrEqual(1)
+      expect(Math.abs(geometry.actionsAfter.left - before.left), `${paper.id} ${viewport.name} actions left`).toBeLessThanOrEqual(1)
+      expect(Math.abs(geometry.actionsAfter.top - before.top), `${paper.id} ${viewport.name} actions top`).toBeLessThanOrEqual(1)
+    })
+  }
+}
+
 test('Research mobile methodology disclosure remains explicit after layout balancing', async ({ page }) => {
   await expectResearchReady(page, '/research/', 390, 844)
 
