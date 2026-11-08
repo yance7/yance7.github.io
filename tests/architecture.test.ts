@@ -372,7 +372,7 @@ describe('release workflow contracts', () => {
     const ciWorkflow = readFileSync(ciPath, 'utf8')
     expect(ciWorkflow).toContain('pull_request:')
     expect(ciWorkflow).toContain('npm ci')
-    expect(ciWorkflow).toContain('npm run test:e2e -- --project=chromium --workers=1 --grep')
+    expect(ciWorkflow).toContain('npm run test:e2e -- --project=chromium --workers=1 --retries=0 --grep')
     expect(ciWorkflow).not.toContain('deploy-pages')
     expect(qualityWorkflow).toContain('pull_request:')
     expect(qualityWorkflow).toContain('branches: [main]')
