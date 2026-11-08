@@ -12,6 +12,11 @@ on:
         required: false
         default: false
         type: boolean
+      run_full_audit:
+        description: 'Run the complete quality audit on manual dispatch'
+        required: false
+        default: false
+        type: boolean
       run_particle_stress:
         description: 'Run ten rounds of particle interactions on Linux'
         required: false
@@ -44,7 +49,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: quality-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' && inputs.run_poster_retry_stress == true && 'poster-retry-stress' || 'full' }}
+  group: quality-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' && (inputs.run_poster_retry_stress && 'poster-retry-stress' || inputs.run_home_motion_stress && 'home-motion-stress' || inputs.run_pointer_stress && 'pointer-stress' || inputs.run_particle_stress && 'particle-stress' || inputs.run_visual_stress && 'visual-stress' || inputs.update_visual_snapshots && 'visual-snapshot-review' || 'full') || 'full' }}
   cancel-in-progress: true
 
 jobs:
@@ -276,6 +281,7 @@ jobs:
           path: tests/e2e/visual-snapshots/chromium-visual/linux
           if-no-files-found: error
   audit:
+    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' || inputs.run_full_audit == true }}
     runs-on: ubuntu-latest
     env:
       PLAYWRIGHT_USE_PREVIEW: '1'

@@ -55,20 +55,25 @@ jobs:
         run: npm run build
       - name: Smoke test artifact
         run: npm run smoke
-      - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
-      - name: Browser release smoke
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium webkit
+      - name: Browser release gate matrix
         env:
           PLAYWRIGHT_USE_PREVIEW: '1'
-          PLAYWRIGHT_OUTPUT_DIR: test-results/release-smoke
-        run: npm run test:e2e -- --project=chromium --workers=1 --grep "all archive pages boot and expose the main landmark"
-      - name: Upload smoke artifacts
+          PLAYWRIGHT_OUTPUT_DIR: test-results/release-gate
+        run: |
+          npm run test:e2e -- --project=chromium --project=webkit-desktop --project=webkit-mobile --workers=2 --retries=0 tests/e2e/concert-archive-preservation.spec.ts tests/e2e/concert-archive-rail.spec.ts
+          PLAYWRIGHT_OUTPUT_DIR=test-results/release-gate-boot npm run test:e2e -- --project=chromium --project=webkit-desktop --project=webkit-mobile --workers=2 --retries=0 tests/e2e/site.spec.ts --grep "all archive pages boot and expose the main landmark"
+          PLAYWRIGHT_OUTPUT_DIR=test-results/release-gate-nojs npm run test:e2e -- --project=chromium --project=webkit-desktop --project=webkit-mobile --workers=2 --retries=0 tests/e2e/prerender.spec.ts --grep "fallback content"
+      - name: Upload release gate artifacts
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: browser-release-smoke
+          name: browser-release-gate
           path: |
-            test-results
+            test-results/release-gate
+            test-results/release-gate-boot
+            test-results/release-gate-nojs
             playwright-report
           if-no-files-found: ignore
       - name: Configure GitHub Pages
