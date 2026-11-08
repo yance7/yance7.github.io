@@ -10,7 +10,7 @@
   "packageManager": "npm@10.9.0",
   "scripts": {
     "dev": "vite --config config/vite.config.ts",
-    "build": "npm run sitemap && vite build --config config/vite.config.ts && npm run build:ssg && tsx scripts/normalize-page-output.ts && tsx scripts/generate-localized-pages.ts && tsx scripts/prerender-pages.ts && tsx scripts/generate-legacy-pages.ts && tsx scripts/generate-noscript-fallbacks.ts",
+    "build": "vite build --config config/vite.config.ts && npm run build:ssg && tsx scripts/normalize-page-output.ts && tsx scripts/generate-localized-pages.ts && tsx scripts/prerender-pages.ts && tsx scripts/generate-legacy-pages.ts && tsx scripts/generate-noscript-fallbacks.ts && npm run sitemap",
     "build:ssg": "tsx scripts/prepare-ssg-build.ts && vite build --config config/vite.ssg.config.ts",
     "preview": "vite preview --config config/vite.config.ts",
     "smoke": "tsx scripts/smoke-test.ts",
@@ -29,7 +29,7 @@
     "fonts:hero:characters": "tsx scripts/export-hero-greeting-characters.ts",
     "typecheck": "vue-tsc --noEmit -p config/tsconfig.app.json && tsc --noEmit -p config/tsconfig.node.json && tsc --noEmit -p config/tsconfig.test.json",
     "deadcode": "knip --config config/knip.json --include files,dependencies,unlisted,unresolved,exports,types --no-progress",
-    "check": "npm run audit:repo && npm run audit:assets && npm run home-hero:assets:check && npm run brand:assets:check && npm run site-manifest:check && npm run fonts:hero:check && npm run lint && npm run typecheck && npm run deadcode && npm run unit && npm run sitemap && npm run build && npm run smoke",
+    "check": "npm run audit:repo && npm run audit:assets && npm run home-hero:assets:check && npm run brand:assets:check && npm run site-manifest:check && npm run fonts:hero:check && npm run lint && npm run typecheck && npm run deadcode && npm run unit && npm run build && npm run smoke",
     "lint": "eslint --config config/eslint.config.js . --max-warnings=0",
     "unit": "vitest run --config config/vitest.config.ts",
     "test:e2e": "playwright test --config config/playwright.config.ts"

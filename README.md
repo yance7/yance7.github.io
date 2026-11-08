@@ -35,7 +35,7 @@ Run the repository checks with `npm run check`. See the [contribution guide](.gi
 | `src/composables/`, `src/directives/`, `src/styles/`, `src/utils/` | Shared interaction logic, directives, styles, and utilities |
 | `src/data/`, `src/data/locales/`, `src/i18n/` | Shared and localized page data, translations, and locale state |
 | `html-src/` | Source HTML files used by the build |
-| `public/` | GitHub Pages metadata, including `CNAME`, `robots.txt`, and `sitemap.xml` |
+| `public/` | GitHub Pages metadata, including `CNAME` and `robots.txt` |
 | `public/assets/` | Site images, fonts, and other static resources |
 | `scripts/` | Build, asset-generation, and audit tools |
 | `config/` | Vite, TypeScript, lint, test, and Lighthouse configuration |
@@ -43,7 +43,7 @@ Run the repository checks with `npm run check`. See the [contribution guide](.gi
 
 ### Build, deployment, and media rights
 
-`npm run build` creates the GitHub Pages artifact in `dist/`. The Pages workflow deploys it to [yance.me](https://yance.me/); generated `dist/` files are not committed.
+`npm run build` creates the GitHub Pages artifact in `dist/`, including the generated `dist/sitemap.xml`. The Pages workflow deploys it to [yance.me](https://yance.me/); generated `dist/` files are not committed.
 
 The repository has no general reuse license. Public visibility does not grant permission to reuse the site's photos, fonts, or third-party media. Read the [asset rights guide](docs/asset-rights.md) before using assets, and see the [contribution guide](.github/CONTRIBUTING.md) for project changes.
 
@@ -80,7 +80,7 @@ npm run dev
 | `src/composables/`、`src/directives/`、`src/styles/`、`src/utils/` | 共享交互逻辑、指令、样式与工具 |
 | `src/data/`、`src/data/locales/`、`src/i18n/` | 页面数据、多语言内容、界面翻译与语言状态 |
 | `html-src/` | 构建使用的 HTML 源文件 |
-| `public/` | GitHub Pages 部署元数据，包括 `CNAME`、`robots.txt` 和 `sitemap.xml` |
+| `public/` | GitHub Pages 部署元数据，包括 `CNAME` 和 `robots.txt` |
 | `public/assets/` | 网站图片、字体与其他静态资源 |
 | `scripts/` | 构建、资源生成与审计工具 |
 | `config/` | Vite、TypeScript、lint、测试与 Lighthouse 配置 |
@@ -88,6 +88,6 @@ npm run dev
 
 ### 构建、部署与资源权利
 
-运行 `npm run build` 会在 `dist/` 生成 GitHub Pages 发布产物。Pages 工作流将其部署到 [yance.me](https://yance.me/)；`dist/` 是构建产物，不提交到仓库。
+运行 `npm run build` 会在 `dist/` 生成 GitHub Pages 发布产物，其中包括构建生成的 `dist/sitemap.xml`。Pages 工作流将其部署到 [yance.me](https://yance.me/)；`dist/` 是构建产物，不提交到仓库。
 
 仓库没有通用的素材复用许可。仓库公开可见不代表可以复用网站照片、字体或第三方媒体。使用素材前请阅读[资源权利说明](docs/asset-rights.md)；修改项目请参阅[贡献指南](.github/CONTRIBUTING.md)。

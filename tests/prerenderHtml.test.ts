@@ -1,6 +1,9 @@
 import { createHash } from 'node:crypto'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { injectPrerenderedHtml, retainFontFacesForMarkup } from '../scripts/prerenderHtml'
+import { uiMessages } from '../src/i18n/messages'
 
 const manifest = {
   '../src/pages/HomePage.vue': {
@@ -195,5 +198,16 @@ describe('route font CSS', () => {
 
     expect(retainFontFacesForMarkup(`${matching}${unused}`, 'A'))
       .toBe(matching)
+  })
+
+  it('keeps glyphs used only by interactive locale messages', () => {
+    const interactive = '@font-face{font-family:Noto;src:url(interactive.woff2);unicode-range:U+7BB1}'
+    const messages = JSON.stringify(uiMessages['zh-CN'])
+    const source = readFileSync(resolve(process.cwd(), 'scripts/prerender-pages.ts'), 'utf8')
+
+    expect(uiMessages['zh-CN'].lightbox.close).toContain('灯箱')
+    expect(retainFontFacesForMarkup(interactive, '')).toBe('')
+    expect(retainFontFacesForMarkup(interactive, messages)).toBe(interactive)
+    expect(source).toContain('JSON.stringify(uiMessages[locale])')
   })
 })
