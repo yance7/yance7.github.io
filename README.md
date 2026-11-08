@@ -14,7 +14,7 @@ The site includes Home, Academics, Honors, Research, Works, and Concerts pages. 
 
 ### Technology
 
-Vue 3, TypeScript, and Vite 8. Vue renders 15 localized pages to static HTML at build time; GitHub Actions publishes the generated site to GitHub Pages. The site has no runtime backend.
+Vue 3, TypeScript, and Vite 8. The sitemap lists 18 localized routes: 15 are prerendered to static HTML at build time, while the 3 Concerts routes are client-rendered with a build-time no-JavaScript fallback. GitHub Actions publishes the generated site to GitHub Pages. The site has no runtime backend.
 
 ### Run locally
 
@@ -59,7 +59,7 @@ The repository has no general reuse license. Public visibility does not grant pe
 
 ### 技术栈
 
-Vue 3、TypeScript 和 Vite 8。构建时由 Vue 生成 15 个本地化静态 HTML 页面，再由 GitHub Actions 发布到 GitHub Pages；网站没有运行时后端。
+Vue 3、TypeScript 和 Vite 8。站点地图共 18 个本地化路由：其中 15 个在构建期预渲染为静态 HTML，演唱会 3 个路由由客户端渲染，并提供构建期无 JavaScript 降级内容。站点由 GitHub Actions 发布到 GitHub Pages；没有运行时后端。
 
 ### 本地启动
 
