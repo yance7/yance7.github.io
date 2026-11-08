@@ -38,6 +38,13 @@ async function waitForA11yReady(page: Page) {
       })
     return document.documentElement.dataset.fontsReady === 'ready' && stylesLoaded && revealsSettled
   })).toBe(true)
+  await page.evaluate(async () => {
+    const animations = document.getAnimations().filter((animation) => {
+      const timing = animation.effect?.getTiming()
+      return animation.playState === 'running' && timing?.iterations !== Number.POSITIVE_INFINITY
+    })
+    await Promise.all(animations.map((animation) => animation.finished.catch(() => {})))
+  })
 }
 
 async function expectAccessible(page: Page) {
@@ -46,12 +53,9 @@ async function expectAccessible(page: Page) {
 }
 
 for (const viewport of viewports) {
-  test(`all pages preserve geometry and runtime integrity at ${viewport.width}x${viewport.height}`, async ({ page }) => {
-    // WebKit's mobile emulation is slow when it renders every page at a desktop-sized viewport.
-    test.setTimeout(viewport.width >= 1024 ? 90000 : 60000)
-    await page.setViewportSize(viewport)
-
-    for (const entry of htmlPageEntries) {
+  for (const entry of htmlPageEntries) {
+    test(`${entry.htmlName} preserves geometry and runtime integrity at ${viewport.width}x${viewport.height}`, async ({ page }) => {
+      await page.setViewportSize(viewport)
       const consoleErrors: string[] = []
       const pageErrors: string[] = []
       const onConsole = (message: { type(): string; text(): string }) => {
@@ -102,20 +106,18 @@ for (const viewport of viewports) {
       expect(consoleErrors, `${entry.htmlName} console errors`).toEqual([])
       expect(pageErrors, `${entry.htmlName} page errors`).toEqual([])
       page.off('console', onConsole)
-      page.off('pageerror', onPageError)
-    }
-  })
+      page.off('pageerror', onPageError)    })
+  }
 }
 
-test('section hashes clear the sticky navigation in portrait, landscape, and desktop layouts', async ({ page }) => {
-  test.setTimeout(120000)
-  for (const viewport of [viewports[2], viewports[4], viewports[9]]) {
-    await page.setViewportSize(viewport)
-    for (const entry of pageEntries) {
+for (const viewport of [viewports[2], viewports[4], viewports[9]]) {
+  for (const entry of pageEntries) {
+    test(`${entry.htmlName} section hash clears sticky navigation at ${viewport.width}x${viewport.height}`, async ({ page }) => {
+      await page.setViewportSize(viewport)
       const sectionId = entry.sectionIds.at(-1)!
-      await page.goto(`${entry.routePath}#${sectionId}`, { waitUntil: 'domcontentloaded', timeout: 60000 })
+      await page.goto(`${entry.routePath}#${sectionId}`, { waitUntil: 'domcontentloaded' })
       const target = page.locator(`#${sectionId}`)
-      await target.waitFor({ state: 'attached', timeout: 60000 })
+      await target.waitFor({ state: 'attached' })
       const placement = await target.evaluate((element) => {
         const header = document.querySelector<HTMLElement>('.site-nav')
         return {
@@ -125,9 +127,9 @@ test('section hashes clear the sticky navigation in portrait, landscape, and des
       })
       expect(placement.targetTop, `${entry.htmlName} at ${viewport.width}x${viewport.height}`)
         .toBeGreaterThanOrEqual(placement.headerBottom - 1)
-    }
+    })
   }
-})
+}
 
 test('dark theme and reduced motion preserve readable static content', async ({ page }) => {
   await page.setViewportSize(viewports[2])
@@ -154,20 +156,18 @@ test('dark theme and reduced motion preserve readable static content', async ({ 
   }
 })
 
-test('representative light and dark layouts remain axe-clean', async ({ page }) => {
-  test.setTimeout(120000)
-  for (const theme of ['light', 'dark'] as const) {
-    await page.setViewportSize(theme === 'light' ? viewports[9] : viewports[2])
-    await page.goto('/')
-    await page.evaluate((nextTheme) => localStorage.setItem('yance-theme', nextTheme), theme)
-    for (const entry of htmlPageEntries) {
+for (const theme of ['light', 'dark'] as const) {
+  for (const entry of htmlPageEntries) {
+    test(`representative ${theme} ${entry.htmlName} remains axe-clean`, async ({ page }) => {
+      await page.setViewportSize(theme === 'light' ? viewports[9] : viewports[2])
+      await page.addInitScript((nextTheme) => localStorage.setItem('yance-theme', nextTheme), theme)
       await page.goto(routeForEntry(entry))
       await expect(page.locator('html')).toHaveAttribute('data-theme', theme)
       await waitForA11yReady(page)
       await expectAccessible(page)
-    }
+    })
   }
-})
+}
 
 test('forced colors preserve concert poster keyboard-focus boundaries', async ({ page, browserName }) => {
   test.skip(browserName !== 'chromium', 'Forced-colors emulation is provided by Chromium in this matrix')

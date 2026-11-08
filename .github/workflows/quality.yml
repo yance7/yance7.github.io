@@ -131,12 +131,19 @@ jobs:
           else
             npm run test:e2e -- tests/e2e/home-scroll-motion.spec.ts --project=${{ matrix.project }} --workers=1 --grep 'native snap follows|native proximity|natural footer|history restores|cold restoration|focus during|focus reveals|immediate focus reveal|reveals remain|home hash content' --repeat-each=10 --retries=0
           fi
+      - name: Run ten rounds of mobile home hero layout tests
+        if: matrix.project == 'webkit-mobile'
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: test-results/home-motion-stress-${{ matrix.project }}-hero
+        run: npm run test:e2e -- tests/e2e/home-hero-layout.spec.ts --project=webkit-mobile --workers=1 --repeat-each=10 --retries=0
       - name: Upload stress evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: home-motion-stress-${{ matrix.project }}
-          path: test-results/home-motion-stress-${{ matrix.project }}
+          path: |
+            test-results/home-motion-stress-${{ matrix.project }}
+            test-results/home-motion-stress-${{ matrix.project }}-hero
           if-no-files-found: ignore
           include-hidden-files: true
   pointer-stress:
@@ -504,7 +511,7 @@ jobs:
         shell: bash
         run: |
           if [ "${{ inputs.update_visual_snapshots }}" = "true" ]; then
-            npm run test:e2e -- --project=chromium-visual --workers=2 --retries=0 --update-snapshots
+            npm run test:e2e -- --project=chromium-visual --workers=2 --retries=0 --update-snapshots=all
           else
             npm run test:e2e -- --project=chromium-visual --workers=2 --retries=0
           fi

@@ -66,3 +66,8 @@ codex/<type>/<short-kebab-topic>
 - 不得提交内部协作资料。
 
 请在 PR 描述中说明变更范围、验证命令、未覆盖的风险，以及是否涉及内容或媒体资源。
+
+## 视觉基线
+
+- Linux 基线由 Quality Audit 的 `update_visual_snapshots` 手动工作流生成，并由 CI 的 Chromium visual 任务校验。
+- win32 基线仅用于 Windows 本地审阅，不作为 CI 门禁：2026-11-08 验证时 GitHub Windows runner 的字体/渲染度量与本地不同（`works-dark-desktop-main` 高度 4010px vs 4036px），会误报视觉差异。修改 UI 后请在本地运行 `chromium-visual` 并人工审阅 win32 结果。
