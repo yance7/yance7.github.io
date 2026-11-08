@@ -10,7 +10,7 @@
   "packageManager": "npm@10.9.0",
   "scripts": {
     "dev": "vite --config config/vite.config.ts",
-    "build": "npm run sitemap && vite build --config config/vite.config.ts && npm run build:ssg && tsx scripts/normalize-page-output.ts && tsx scripts/generate-localized-pages.ts && tsx scripts/prerender-pages.ts && tsx scripts/generate-legacy-pages.ts",
+    "build": "npm run sitemap && vite build --config config/vite.config.ts && npm run build:ssg && tsx scripts/normalize-page-output.ts && tsx scripts/generate-localized-pages.ts && tsx scripts/prerender-pages.ts && tsx scripts/generate-legacy-pages.ts && tsx scripts/generate-noscript-fallbacks.ts",
     "build:ssg": "tsx scripts/prepare-ssg-build.ts && vite build --config config/vite.ssg.config.ts",
     "preview": "vite preview --config config/vite.config.ts",
     "smoke": "tsx scripts/smoke-test.ts",

@@ -19,6 +19,14 @@ const routes = locales.flatMap(({ prefix, key, notice }) => staticPages.map(({ k
   notice,
   evidenceHref
 })))
+const fallbackRoutes = [
+  { marker: 'concerts', path: '/concerts/', heading: '缘分让我们相遇乱世以外', localeLinks: ['/concerts/', '/zh-hk/concerts/', '/en/concerts/'], homeHref: '/' },
+  { marker: 'concerts', path: '/zh-hk/concerts/', heading: '緣分讓我們相遇亂世以外', localeLinks: ['/concerts/', '/zh-hk/concerts/', '/en/concerts/'], homeHref: '/zh-hk/' },
+  { marker: 'concerts', path: '/en/concerts/', heading: 'Fate brought us together beyond this restless world', localeLinks: ['/concerts/', '/zh-hk/concerts/', '/en/concerts/'], homeHref: '/en/' },
+  { marker: '404', path: '/404.html', heading: '这一页走丢了', localeLinks: ['/', '/zh-hk/', '/en/'], homeHref: '/' },
+  { marker: '404', path: '/zh-hk/404.html', heading: '這一頁走失了', localeLinks: ['/', '/zh-hk/', '/en/'], homeHref: '/zh-hk/' },
+  { marker: '404', path: '/en/404.html', heading: 'This page wandered off', localeLinks: ['/', '/zh-hk/', '/en/'], homeHref: '/en/' }
+] as const
 
 async function deferGreetingFontFallback(page: import('@playwright/test').Page) {
   // This test deliberately holds the font response while comparing layout.
@@ -62,6 +70,30 @@ test.describe('static page routes without JavaScript', () => {
       }
       await expect(page.locator('.noscript-notice')).toContainText(notice)
 
+      const hasHorizontalOverflow = await page.evaluate(() =>
+        document.documentElement.scrollWidth > document.documentElement.clientWidth
+      )
+      expect(hasHorizontalOverflow).toBe(false)
+    })
+  }
+
+  for (const route of fallbackRoutes) {
+    test(`${route.marker} ${route.path} serves readable fallback content without JavaScript`, async ({ page }) => {
+      const response = await page.goto(route.path)
+      expect(response?.status()).toBe(200)
+
+      const fallback = page.locator(`main[data-noscript-fallback="${route.marker}"]`)
+      await expect(fallback).toBeVisible()
+      await expect(fallback).toHaveAttribute('tabindex', '-1')
+      await expect(fallback.locator('h1')).toHaveText(route.heading)
+      await expect(fallback.locator(`a[href="${route.homeHref}"]`).first()).toBeVisible()
+      for (const href of route.localeLinks) {
+        await expect(fallback.locator(`a[href="${href}"]`).first()).toBeVisible()
+      }
+      if (route.marker === 'concerts') {
+        expect(await fallback.locator('.noscript-concert-list li').count()).toBeGreaterThanOrEqual(10)
+        await expect(fallback.locator('.noscript-concert-list a[href^="/assets/images/concerts/originals/"]').first()).toBeVisible()
+      }
       const hasHorizontalOverflow = await page.evaluate(() =>
         document.documentElement.scrollWidth > document.documentElement.clientWidth
       )

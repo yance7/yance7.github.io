@@ -3,6 +3,7 @@ import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { localeRegistry } from '../src/i18n/locales'
 import type { Locale } from '../src/i18n/types'
+import { getLocalizedConcerts } from '../src/data/locales'
 import { getLocalizedSeo, localizedSitemapEntries } from '../src/data/seo'
 import { pageEntries } from '../src/data/pageRegistry'
 
@@ -58,6 +59,8 @@ for (const [page, cssFiles] of Object.entries(pageManifest)) {
 
 function assertHtmlContract(path: string, locale: Locale, pageKey?: (typeof pageEntries)[number]['key']) {
   const html = read(path)
+  const noScript = html.match(/<noscript\b[^>]*>([\s\S]*?)<\/noscript>/i)?.[1] ?? ''
+  const localePrefixes = Object.values(localeRegistry).map((definition) => definition.pathPrefix)
   const isPrerendered = Boolean(pageKey && pageKey !== 'concerts')
   assert((html.match(/name="theme-color"/g) ?? []).length === 1, `${path} 必须只有一个 theme-color 标签`)
   assert(/Content-Security-Policy/.test(html), `${path} 缺少 CSP`)
@@ -76,8 +79,23 @@ function assertHtmlContract(path: string, locale: Locale, pageKey?: (typeof page
       en: 'Core content and links remain available without JavaScript'
     }[locale]
     assert(html.includes(noScriptNotice), `${path} 缺少 ${locale} 无 JavaScript 说明`)
+  } else if (pageKey === 'concerts') {
+    assert(noScript.includes('data-noscript-fallback="concerts"'), `${path} 缺少演唱会无 JavaScript 降级正文`)
+    const concerts = getLocalizedConcerts(locale)
+    assert(concerts.length > 0, `${path} 演唱会数据为空`)
+    assert(noScript.includes(concerts[0]!.date), `${path} 降级正文缺少演出日期`)
+    assert(noScript.includes(concerts[0]!.venue), `${path} 降级正文缺少演出场馆`)
+    assert(noScript.includes('/assets/images/concerts/originals/'), `${path} 降级正文缺少海报链接`)
+    for (const prefix of localePrefixes) {
+      assert(noScript.includes(`href="${prefix}/concerts/"`), `${path} 降级正文缺少 ${prefix || '/'} 演唱会语言链接`)
+    }
   } else {
     assert(html.includes('<div id="app"></div>'), `${path} 缺少 Vue 挂载点`)
+    assert(noScript.includes('data-noscript-fallback="404"'), `${path} 缺少 404 无 JavaScript 降级正文`)
+    for (const prefix of localePrefixes) {
+      assert(noScript.includes(`href="${prefix}/"`), `${path} 降级正文缺少 ${prefix || '/'} 语言导航`)
+    }
+    assert(noScript.includes('/research/'), `${path} 降级正文缺少研究链接`)
   }
   assert(/assets\/vue\/main-[^"']+\.js/.test(html), `${path} 缺少 hash 入口资源`)
   assert(!html.includes('../src/'), `${path} 仍引用源码资源`)
