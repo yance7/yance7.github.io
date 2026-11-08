@@ -61,4 +61,4 @@ jobs:
         env:
           PLAYWRIGHT_USE_PREVIEW: '1'
           PLAYWRIGHT_OUTPUT_DIR: test-results/release-smoke
-        run: npm run test:e2e -- --project=chromium --workers=1 --grep "all archive pages boot and expose the main landmark"
+        run: npm run test:e2e -- --project=chromium --workers=1 --retries=0 --grep "all archive pages boot and expose the main landmark"
