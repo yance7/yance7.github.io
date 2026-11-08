@@ -49,8 +49,6 @@ jobs:
         run: npm run fonts:hero:check
       - name: Unit tests
         run: npm run unit
-      - name: Generate sitemap
-        run: npm run sitemap
       - name: Build site
         run: npm run build
       - name: Smoke test artifact
