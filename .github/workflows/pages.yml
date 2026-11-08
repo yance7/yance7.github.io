@@ -27,6 +27,12 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Install system CJK fallback fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends --yes fonts-noto-cjk
+          fc-match --format='%{family}\n' "Noto Sans CJK SC" | grep -F "Noto Sans CJK SC"
+          fc-match --format='%{family}\n' "Noto Sans CJK TC" | grep -F "Noto Sans CJK TC"
       - name: Setup Python tools
         uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
         with:
