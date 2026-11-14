@@ -8,8 +8,7 @@
   position: relative;
   overflow: hidden;
   color: var(--gold);
-  border: 1px solid var(--line);
-  border-top: 2px solid color-mix(in srgb, currentColor 72%, var(--line));
+  border: 1px solid var(--line-faint);
   border-radius: var(--radius-large);
   background: var(--surface);
   scroll-margin-top: var(--anchor-offset);
@@ -37,7 +36,7 @@
   flex-wrap: wrap;
   min-height: 58px;
   padding: var(--space-3) var(--space-6);
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--line-faint);
   background: var(--surface-tint);
 }
 .sc-file-code,
@@ -83,32 +82,32 @@
   gap: clamp(20px, 3vw, 40px);
   overflow: hidden;
   padding: clamp(36px, 5vw, 64px);
-  border-right: 1px solid var(--line);
+  border-right: 1px solid var(--line-faint);
 }
 .sc-identity::after {
   content: 'RELEASED';
   position: absolute;
   right: -8px;
-  bottom: -22px;
+  bottom: -18px;
   z-index: -1;
-  color: color-mix(in srgb, currentColor 5%, transparent);
+  color: color-mix(in srgb, currentColor 2.5%, transparent);
   font-family: var(--font-editorial);
-  font-size: clamp(4rem, 10vw, 8.5rem);
-  font-weight: 560;
+  font-size: clamp(3rem, 7vw, 6rem);
+  font-weight: 520;
   letter-spacing: -.06em;
   line-height: 1;
   pointer-events: none;
 }
 .sc-index {
   align-self: start;
-  padding-top: var(--space-5);
-  color: currentColor;
+  padding-top: var(--space-4);
+  color: var(--dim);
   font-family: var(--font-editorial);
-  font-size: clamp(2.8rem, 5vw, 4.8rem);
+  font-size: clamp(1.5rem, 2.4vw, 2.2rem);
   font-style: italic;
-  font-weight: 380;
-  letter-spacing: -.06em;
-  line-height: .8;
+  font-weight: 400;
+  letter-spacing: -.04em;
+  line-height: 1;
 }
 .sc-identity-copy {
   min-width: 0;
@@ -130,9 +129,9 @@
   min-width: 0;
   margin-bottom: 8px;
   font-family: var(--font-editorial);
-  font-size: clamp(1.35rem, 2.5vw, 2.1rem);
-  font-weight: 400;
-  letter-spacing: .08em;
+  font-size: clamp(1.6rem, 2.9vw, 2.5rem);
+  font-weight: 420;
+  letter-spacing: .04em;
   overflow-wrap: anywhere;
 }
 .sc-wordmark {
@@ -190,7 +189,7 @@
 
 .sc-body {
   padding: clamp(28px, 4vw, 46px);
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--line-faint);
   background: var(--surface-tint);
 }
 .sc-story-head {
@@ -412,7 +411,7 @@
   gap: var(--space-6);
   margin-top: 24px;
   padding-top: var(--space-5);
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--line-faint);
 }
 .sc-role > span:last-child {
   display: block;
@@ -426,10 +425,11 @@
   gap: 6px;
 }
 .sc-tag {
-  padding: 4px 9px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-small);
-  color: var(--muted);
+  padding: 3px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-xs);
+  background: color-mix(in srgb, currentColor 5%, transparent);
+  color: var(--dim);
   font-family: var(--font-technical);
   font-size: var(--text-xs);
   letter-spacing: var(--tracking-zh-meta);
@@ -438,7 +438,7 @@
 /* ===== 作品页面级响应式补丁 ===== */
 @media (max-width: 900px) {
   .sc-dossier-main { grid-template-columns: 1fr; min-height: 0; }
-  .sc-identity { border-right: 0; border-bottom: 1px solid var(--line); }
+  .sc-identity { border-right: 0; border-bottom: 1px solid var(--line-faint); }
   .sc-story-head { align-items: flex-start; }
   .sc-sequence { grid-template-columns: 1fr; gap: 12px; }
   .sc-sequence li:first-child { border-left: 0; }
@@ -470,7 +470,7 @@
 @media (max-width: 420px) {
   .sc-file-code span:last-child { display: none; }
   .sc-identity { grid-template-columns: 42px minmax(0, 1fr); gap: var(--space-3); padding: var(--space-6) var(--space-4); }
-  .sc-index { padding-top: 24px; font-size: 2.6rem; }
+  .sc-index { padding-top: 18px; font-size: 1.6rem; }
   .sc-summary { padding: var(--space-5) var(--space-4); }
   .sc-body { padding: var(--space-5) var(--space-4); }
   .sc-actions { flex-direction: column; align-items: stretch; }
