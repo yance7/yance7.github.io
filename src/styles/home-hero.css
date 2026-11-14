@@ -88,6 +88,7 @@
 .home-hero-typewriter-line {
   display: block;
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 /* The intro is revealed per grapheme in JS: unrevealed glyphs keep their space but
