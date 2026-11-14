@@ -9,7 +9,8 @@ import { getLocalizedSeo } from '../src/data/seo.ts'
 
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const htmlRoot = resolve(rootDir, 'html-src')
-const THEME_BOOTSTRAP_HASH = 'sha256-BZ7RVQb0dyreOR80Wg6T36UVzwwxFYnWWeYn4ePYcZU='
+const THEME_BOOTSTRAP_HASH = 'sha256-6EB3M6kNQrN+F2fiZKnP3nFuSSwjlF8ebVl/agRwPYs='
+const THEME_ORBIT_BOOT_HASH = 'sha256-1Qc6KGJPKuuwR4iDZkIduRqVaSTDr0/ambn12UlLUZU='
 const HOME_HERO_PRELOAD_HASH = 'sha256-zxh2PIPyGJ3BMCyeINgDQPxbnSIPCBhq4Y1wioP5Hww='
 const HOME_HERO_IMAGE_SIZES = '(max-width: 760px) calc(100vw - 40px), calc(min(1260px, 100vw) - 10vw)'
 const homeHeroAssetManifest = JSON.parse(readFileSync(resolve(rootDir, 'src/data/homeHeroAssets.json'), 'utf8')) as {
@@ -35,6 +36,7 @@ function themeTokenPlugin() {
         .replaceAll('__THEME_COLOR_LIGHT__', THEME_COLORS.light)
         .replaceAll('__THEME_COLOR_DARK__', THEME_COLORS.dark)
         .replaceAll('__THEME_BOOTSTRAP_HASH__', THEME_BOOTSTRAP_HASH)
+        .replaceAll('__THEME_ORBIT_BOOT_HASH__', THEME_ORBIT_BOOT_HASH)
         .replaceAll('__HOME_HERO_PRELOAD_HASH__', HOME_HERO_PRELOAD_HASH)
         .replaceAll('__HOME_HERO_PRELOAD_SRCSET__', HOME_HERO_PRELOAD_SRCSET)
         .replaceAll('__HOME_HERO_PRELOAD_SIZES__', HOME_HERO_IMAGE_SIZES)

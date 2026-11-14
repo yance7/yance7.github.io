@@ -62,7 +62,7 @@ function assertHtmlContract(path: string, locale: Locale, pageKey?: (typeof page
   const noScript = html.match(/<noscript\b[^>]*>([\s\S]*?)<\/noscript>/i)?.[1] ?? ''
   const localePrefixes = Object.values(localeRegistry).map((definition) => definition.pathPrefix)
   const isPrerendered = Boolean(pageKey && pageKey !== 'concerts')
-  assert((html.match(/name="theme-color"/g) ?? []).length === 1, `${path} 必须只有一个 theme-color 标签`)
+  assert((html.match(/<meta\b[^>]*\bname="theme-color"/g) ?? []).length === 1, `${path} 必须只有一个 theme-color 标签`)
   assert(/Content-Security-Policy/.test(html), `${path} 缺少 CSP`)
   assert(/script-src 'self' 'sha256-[^']+'/.test(html), `${path} CSP 缺少 theme bootstrap hash`)
   assert((html.match(/<div id="app">/g) ?? []).length === 1, `${path} 必须只有一个 Vue 挂载点`)
@@ -80,6 +80,8 @@ function assertHtmlContract(path: string, locale: Locale, pageKey?: (typeof page
     }[locale]
     assert(html.includes(noScriptNotice), `${path} 缺少 ${locale} 无 JavaScript 说明`)
   } else if (pageKey === 'concerts') {
+    assert(html.includes('<div id="app"><div class="site-shell startup-shell"'), `${path} 缺少演唱会启动外壳`)
+    assert(html.includes('data-rendered="shell"'), `${path} 缺少启动外壳标记`)
     assert(noScript.includes('data-noscript-fallback="concerts"'), `${path} 缺少演唱会无 JavaScript 降级正文`)
     const concerts = getLocalizedConcerts(locale)
     assert(concerts.length > 0, `${path} 演唱会数据为空`)
@@ -90,7 +92,8 @@ function assertHtmlContract(path: string, locale: Locale, pageKey?: (typeof page
       assert(noScript.includes(`href="${prefix}/concerts/"`), `${path} 降级正文缺少 ${prefix || '/'} 演唱会语言链接`)
     }
   } else {
-    assert(html.includes('<div id="app"></div>'), `${path} 缺少 Vue 挂载点`)
+    assert(html.includes('<div id="app"><div class="site-shell startup-shell"'), `${path} 缺少 404 启动外壳`)
+    assert(html.includes('data-rendered="shell"'), `${path} 缺少启动外壳标记`)
     assert(noScript.includes('data-noscript-fallback="404"'), `${path} 缺少 404 无 JavaScript 降级正文`)
     for (const prefix of localePrefixes) {
       assert(noScript.includes(`href="${prefix}/"`), `${path} 降级正文缺少 ${prefix || '/'} 语言导航`)

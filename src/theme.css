@@ -424,8 +424,10 @@ html:lang(zh-HK) {
 /* ---------- 主题轨道按钮 ---------- */
 .theme-orbit .orbit-opt.sun { color: var(--gold); }
 .theme-orbit .orbit-opt.moon { color: var(--dim); }
-.theme-orbit.dark .orbit-opt.sun { color: var(--dim); }
-.theme-orbit.dark .orbit-opt.moon { color: var(--violet); }
+.theme-orbit.dark .orbit-opt.sun,
+html[data-theme='dark'] .theme-orbit .orbit-opt.sun { color: var(--dim); }
+.theme-orbit.dark .orbit-opt.moon,
+html[data-theme='dark'] .theme-orbit .orbit-opt.moon { color: var(--violet); }
 
 html[data-theme-changing],
 html[data-theme-changing] *,

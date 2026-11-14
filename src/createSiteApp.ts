@@ -9,9 +9,10 @@ import { siteRenderContextKey, type SiteRenderContext } from './app/renderContex
 
 export function createSiteApp(context: SiteRenderContext, initialPage?: Component, hydrate = true) {
   const app = hydrate ? createSSRApp(App, { context, initialPage }) : createApp(App, { context, initialPage })
+  const initialTheme = typeof document !== 'undefined' && document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'
   app.provide(siteRenderContextKey, context)
   app.provide(localeStateKey, createLocaleState(context.locale))
-  app.provide(themeStateKey, createThemeState())
+  app.provide(themeStateKey, createThemeState(initialTheme))
   app.directive('reveal', reveal)
   app.directive('magnetic', magnetic)
   app.directive('pointer-sheen', pointerSheen)
