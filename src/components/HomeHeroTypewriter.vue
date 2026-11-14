@@ -12,31 +12,31 @@ const props = defineProps<{
   statement: string
 }>()
 
+interface NetworkInformation extends EventTarget {
+  saveData?: boolean
+}
+
 const fontState = ref<'loading' | 'ready' | 'fallback'>('loading')
 const finalState = ref(false)
-const greetingLine = ref<HTMLElement | null>(null)
-const statementLine = ref<HTMLElement | null>(null)
+const greetingRevealed = ref(0)
+const statementRevealed = ref(0)
 const greetingTimeline = computed(() => buildTypewriterLine(props.greeting))
 const statementTimeline = computed(() => buildTypewriterLine(props.statement))
 let frame = 0
 let startedAt = 0
 let disposed = false
+let motionPreference: MediaQueryList | null = null
+let connection: NetworkInformation | undefined
 
-function setClip(element: HTMLElement | null, revealed: number, total: number) {
-  if (!element) return
-  if (revealed >= total) {
-    element.style.clipPath = 'none'
-    return
-  }
-  const right = total <= 0 ? 100 : Math.max(0, Math.min(100, (1 - revealed / total) * 100))
-  element.style.clipPath = `inset(0 ${right}% 0 0)`
+function stopFrame() {
+  if (frame) window.cancelAnimationFrame(frame)
+  frame = 0
 }
 
 function showFinal() {
-  if (frame) window.cancelAnimationFrame(frame)
-  frame = 0
-  if (greetingLine.value) greetingLine.value.style.clipPath = 'none'
-  if (statementLine.value) statementLine.value.style.clipPath = 'none'
+  stopFrame()
+  greetingRevealed.value = greetingTimeline.value.graphemes.length
+  statementRevealed.value = statementTimeline.value.graphemes.length
   finalState.value = true
 }
 
@@ -46,12 +46,8 @@ function applyReveal(elapsedMs: number) {
   const statementStartMs = greeting.totalMs + TYPEWRITER_TIMINGS.linePauseMs
   const statementElapsedMs = elapsedMs - statementStartMs
 
-  setClip(greetingLine.value, getTypewriterReveal(greeting, elapsedMs), greeting.graphemes.length)
-  setClip(
-    statementLine.value,
-    statementElapsedMs < 0 ? 0 : getTypewriterReveal(statement, statementElapsedMs),
-    statement.graphemes.length
-  )
+  greetingRevealed.value = getTypewriterReveal(greeting, elapsedMs)
+  statementRevealed.value = statementElapsedMs < 0 ? 0 : getTypewriterReveal(statement, statementElapsedMs)
 
   if (elapsedMs >= statementStartMs + statement.totalMs) {
     showFinal()
@@ -67,6 +63,14 @@ function tick() {
   frame = window.requestAnimationFrame(tick)
 }
 
+function stopForMotionPreference() {
+  if (motionPreference?.matches) showFinal()
+}
+
+function stopForDataPreference() {
+  if (connection?.saveData) showFinal()
+}
+
 onMounted(() => {
   void loadHomeGreetingFont(`${props.greeting} ${props.statement}`).then(state => {
     if (disposed) return
@@ -75,11 +79,15 @@ onMounted(() => {
   })
 
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData === true
-  if (reducedMotion || saveData) {
+  connection = (navigator as Navigator & { connection?: NetworkInformation }).connection
+  if (reducedMotion || connection?.saveData) {
     showFinal()
     return
   }
+
+  motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)')
+  motionPreference.addEventListener('change', stopForMotionPreference)
+  connection?.addEventListener('change', stopForDataPreference)
 
   startedAt = performance.now()
   tick()
@@ -87,7 +95,9 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   disposed = true
-  if (frame) window.cancelAnimationFrame(frame)
+  stopFrame()
+  motionPreference?.removeEventListener('change', stopForMotionPreference)
+  connection?.removeEventListener('change', stopForDataPreference)
 })
 </script>
 
@@ -97,10 +107,22 @@ onBeforeUnmount(() => {
     aria-hidden="true"
     :data-font-state="fontState"
     :data-final-state="finalState"
+    :data-greeting-revealed="greetingRevealed"
+    :data-statement-revealed="statementRevealed"
   >
-    <span ref="greetingLine" class="home-hero-typewriter-line home-hero-typewriter-line-greeting">{{ props.greeting }}</span>
-    <span ref="statementLine" class="home-hero-typewriter-line home-hero-typewriter-line-statement home-hero-typewriter-line-accent">
-      <span class="home-hero-typewriter-copy">{{ props.statement }}</span><span class="home-hero-cursor" aria-hidden="true">_</span>
+    <span class="home-hero-typewriter-line home-hero-typewriter-line-greeting"><span
+      v-for="(glyph, index) in greetingTimeline.graphemes"
+      :key="`g-${index}`"
+      class="home-hero-typewriter-glyph"
+      :class="{ 'is-revealed': index < greetingRevealed }"
+    >{{ glyph }}</span></span>
+    <span class="home-hero-typewriter-line home-hero-typewriter-line-statement home-hero-typewriter-line-accent">
+      <span class="home-hero-typewriter-copy"><span
+        v-for="(glyph, index) in statementTimeline.graphemes"
+        :key="`s-${index}`"
+        class="home-hero-typewriter-glyph"
+        :class="{ 'is-revealed': index < statementRevealed }"
+      >{{ glyph }}</span></span><span class="home-hero-cursor" aria-hidden="true">_</span>
     </span>
   </div>
 </template>

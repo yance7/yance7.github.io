@@ -90,12 +90,11 @@
   min-width: 0;
 }
 
-/* The intro reveal is driven in JS (per-grapheme clip); this rule keeps the
-   lines hidden until the first frame so client navigation never flashes the
-   full copy before typing. */
-.home-hero-typewriter[data-final-state='false'] .home-hero-typewriter-line {
-  clip-path: inset(0 100% 0 0);
-}
+/* The intro is revealed per grapheme in JS: unrevealed glyphs keep their space but
+   stay invisible, so wrapped lines type strictly left-to-right and the full copy
+   never flashes before typing. */
+.home-hero-typewriter-glyph { visibility: visible; }
+.home-hero-typewriter[data-final-state='false'] .home-hero-typewriter-glyph:not(.is-revealed) { visibility: hidden; }
 
 .home-hero-typewriter-line-accent {
   color: var(--gold);
@@ -111,13 +110,7 @@
   font-weight: 400;
 }
 
-.home-hero-typewriter[data-final-state='false'] .home-hero-cursor {
-  animation: home-hero-cursor-blink 1s steps(2, jump-none) infinite;
-}
-
-@keyframes home-hero-cursor-blink {
-  50% { opacity: 0; }
-}
+.home-hero-typewriter[data-final-state='false'] .home-hero-cursor { visibility: hidden; }
 
 html[data-locale='en'] .home-hero-typewriter {
   font-size: clamp(2rem, 4.1vw, 4.35rem);
@@ -451,6 +444,11 @@ html[data-theme='dark'] .home-hero-particles {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .home-hero-typewriter .home-hero-typewriter-glyph,
+  .home-hero-typewriter .home-hero-cursor {
+    visibility: visible !important;
+  }
+
   .home-hero-typewriter-line-greeting,
   .home-hero-typewriter-line-statement {
     clip-path: none;

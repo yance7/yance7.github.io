@@ -275,7 +275,7 @@ for (const locale of locales) {
     await page.setViewportSize({ width: 1440, height: 1000 })
     await page.goto(locale.route)
     await waitForHydration(page)
-
+    await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', /static|complete/, { timeout: 8000 })
     const primary = page.locator('.home-hero-actions .hero-action.primary')
     const secondary = page.locator('.home-hero-actions .hero-action.secondary')
     const hasFinePointer = await page.evaluate(() => (
@@ -415,6 +415,7 @@ for (const locale of locales) {
       await page.mouse.up()
 
       await page.emulateMedia({ reducedMotion: 'reduce' })
+      await primary.hover()
       await expect.poll(() => primary.evaluate(link => ({
         hovered: link.matches(':hover'),
         transform: getComputedStyle(link).transform

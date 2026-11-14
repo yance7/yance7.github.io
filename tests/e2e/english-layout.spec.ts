@@ -333,6 +333,9 @@ for (const viewport of lyricViewports) {
 
       const hero = page.locator('.hero-title.hero-lyric')
       await expect(hero).toHaveAttribute('aria-label', contract.title)
+      // The raw heading text must keep real spaces so crawlers never read joined words.
+      const rawHeading = await hero.evaluate((element) => (element.textContent ?? '').replace(/\s+/g, ' ').trim())
+      expect(rawHeading).toBe(contract.title)
       await expect(page.locator('.lyric-credit')).toContainText(contract.credit.artist)
       await expect(page.locator('.lyric-credit')).toContainText(`「${contract.credit.song}」`)
       await expect(page.locator('.lyric-credit')).toContainText(contract.credit.album)
