@@ -28,13 +28,9 @@ const localizedHomeHref = computed(() => buildLocalizedPageHref('home', locale.v
         :href="contact.href"
         :target="contact.external ? '_blank' : undefined"
         :rel="contact.external ? 'noopener noreferrer' : undefined"
+        :aria-label="`${messages.footer[contact.key]}: ${contact.value}`"
       >
         <FooterContactIcon :name="contact.key" />
-        <span class="foot-contact-copy">
-          <span class="foot-contact-label">{{ messages.footer[contact.key] }}</span>
-          <span class="foot-contact-value">{{ contact.value }}</span>
-        </span>
-        <span class="foot-contact-arrow" aria-hidden="true">↗</span>
       </a>
     </address>
   </footer>

@@ -169,13 +169,11 @@
   .metric-card:hover:not(:focus-visible) { background: var(--surface-strong); transform: none; box-shadow: none; }
   .foot-mark:hover:not(:focus-visible) { color: var(--ink); transform: none; }
   .foot-contact:hover:not(:focus-visible) {
-    color: var(--dim); border-color: transparent; background: transparent; transform: none;
+    color: var(--dim); border-color: var(--control-border); background: var(--control-bg); transform: none; box-shadow: var(--control-shadow);
   }
   .foot-contact:hover:not(:focus-visible) svg { transform: none; color: var(--gold); }
-  .foot-contact:hover:not(:focus-visible) .foot-contact-arrow { color: var(--muted); transform: none; }
   .foot-contact:focus-visible { transform: none; }
-  .foot-contact:focus-visible svg,
-  .foot-contact:focus-visible .foot-contact-arrow { transform: none; }
+  .foot-contact:focus-visible svg { transform: none; }
   .lb-nav:hover:not(:focus-visible), .lb-close:hover:not(:focus-visible) {
     background: var(--control-bg); border-color: var(--control-border); color: var(--ink); box-shadow: var(--control-shadow); transform: none;
   }
@@ -188,15 +186,12 @@
   .wordmark .brand-mark-header,
   .foot-mark,
   .foot-contact,
-  .foot-contact svg,
-  .foot-contact-arrow { transition: none; }
+  .foot-contact svg { transition: none; }
   .wordmark:hover,
   .foot-mark:hover,
   .foot-contact:hover { transform: none; }
   .foot-contact:hover svg,
-  .foot-contact:hover .foot-contact-arrow,
-  .foot-contact:focus-visible svg,
-  .foot-contact:focus-visible .foot-contact-arrow { transform: none; }
+  .foot-contact:focus-visible svg { transform: none; }
   .wordmark:hover .brand-mark-image,
   .foot-mark:hover .brand-mark-image { filter: var(--brand-mark-filter); }
 }
