@@ -150,7 +150,10 @@ for (const locale of locales) {
     await expect(greeting).toHaveCSS('font-weight', '400')
     await expect(page.locator('.home-hero-particles')).toHaveCSS('font-family', 'Amiri, serif')
     if (page.context().browser()?.browserType().name() === 'chromium') {
-      for (const selector of ['.home-hero-typewriter-line-greeting', '.home-hero-typewriter-copy']) {
+      for (const selector of [
+        '.home-hero-typewriter-line-greeting .home-hero-typewriter-glyph',
+        '.home-hero-typewriter-line-statement .home-hero-typewriter-glyph'
+      ]) {
         const fonts = await readRenderedFontEntries(page, selector)
         expect(fonts.filter(({ glyphCount }) => glyphCount > 0).every(({ familyName, isCustomFont }) =>
           /LXGW WenKai TC|霞鶩文楷 TC/.test(familyName) && isCustomFont
@@ -174,8 +177,10 @@ test('a rejected greeting font leaves complete readable fallback text', async ({
   await expect(greeting).toHaveAttribute('data-final-state', 'true')
   await expect(greeting).toBeVisible()
   await expect(page.locator('h1.home-hero-title')).toHaveText('Hi, I’m Yance Welcome to my world')
-  await expect(page.locator('.home-hero-typewriter-line-greeting')).toHaveCSS('clip-path', 'none')
-  await expect(page.locator('.home-hero-typewriter-line-statement')).toHaveCSS('clip-path', 'none')
+  await expect(page.locator('.home-hero-typewriter-line-greeting .home-hero-typewriter-glyph').first())
+    .toHaveCSS('visibility', 'visible')
+  await expect(page.locator('.home-hero-typewriter-line-statement .home-hero-typewriter-glyph').first())
+    .toHaveCSS('visibility', 'visible')
   await expect(page.locator('.home-hero-particles')).toHaveCSS('font-family', 'Amiri, serif')
 })
 
@@ -209,22 +214,22 @@ test('a late greeting response cannot replay typing or block the global font sig
     await expect(greeting).toHaveAttribute('data-font-state', 'fallback')
     await expect(greeting).toBeVisible()
     await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', /^(ready|fallback)$/, { timeout: 8000 })
-    const before = await greeting.evaluate(element => ({
+    const readTypingState = () => greeting.evaluate(element => ({
       font: getComputedStyle(element).fontFamily,
       text: element.textContent,
-      clip: [...element.children].map(line => getComputedStyle(line).clipPath)
+      finalState: (element as HTMLElement).dataset.finalState,
+      greetingRevealed: (element as HTMLElement).dataset.greetingRevealed,
+      statementRevealed: (element as HTMLElement).dataset.statementRevealed
     }))
+    const before = await readTypingState()
     const response = page.waitForResponse('**/hero-greeting-wenkai-*.woff2')
     release()
     await response
     await page.evaluate(() => document.fonts.ready)
     await expect(greeting).toHaveAttribute('data-font-state', 'fallback')
     await expect(greeting).toHaveAttribute('data-final-state', 'true')
-    expect(await greeting.evaluate(element => ({
-      font: getComputedStyle(element).fontFamily,
-      text: element.textContent,
-      clip: [...element.children].map(line => getComputedStyle(line).clipPath)
-    }))).toEqual(before)
+    // A late font response must not reset the reveal counts into a replay.
+    expect(await readTypingState()).toEqual(before)
   } finally { release() }
 })
 
@@ -338,11 +343,12 @@ for (const locale of locales) {
     await expect(page.locator('.home-hero-typewriter')).toBeVisible()
     await expect.poll(() => page.locator('html').getAttribute('data-fonts-ready')).toBe('ready')
     await page.evaluate(() => document.fonts.ready)
+    await expect(page.locator('.home-hero-typewriter')).toHaveAttribute('data-final-state', 'true')
 
     const lightHome = await readFontRoles(page)
     const isChromium = page.context().browser()?.browserType().name() === 'chromium'
     const renderedHomeFonts = isChromium
-      ? await readRenderedFontNames(page, '.home-hero-typewriter')
+      ? await readRenderedFontNames(page, '.home-hero-typewriter-line-greeting .home-hero-typewriter-glyph')
       : []
 
     if (isChromium) {

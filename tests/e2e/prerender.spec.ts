@@ -55,6 +55,8 @@ test.describe('static page routes without JavaScript', () => {
       if (pageKey === 'home') {
         await expect(page.locator('.home-hero-typewriter')).toBeVisible()
         await expect(page.locator('.home-hero-typewriter-line-greeting')).not.toBeEmpty()
+        await expect(page.locator('.home-hero-typewriter-line-greeting .home-hero-typewriter-glyph').first())
+          .toHaveCSS('visibility', 'visible')
       }
       await expect(page.locator('.site-footer')).toBeVisible()
       await expect(page.locator('.nav-rail')).toBeVisible()
@@ -376,39 +378,38 @@ test('pre-rendered home sections stay visible while the home page chunk is delay
   await expect(page.locator('#selected-work')).toBeVisible()
 })
 
-test('pre-rendered home keeps its greeting and primary actions visible through hydration', async ({ page }) => {
+test('pre-rendered home types the greeting in without flashing the full copy', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' })
   await page.addInitScript(() => {
-    type HomeVisibilitySnapshot = {
-      introState: string | undefined
+    type TypingSnapshot = {
       finalState: string | undefined
-      greetingClipPath: string
-      statementClipPath: string
+      greetingRevealed: string | undefined
+      statementRevealed: string | undefined
+      firstGlyphRevealed: boolean | undefined
+      lastGreetingRevealed: boolean | undefined
       actionsOpacity: string
     }
-    const state = window as Window & { __homeVisibilitySnapshots?: HomeVisibilitySnapshot[] }
-    state.__homeVisibilitySnapshots = []
+    const state = window as Window & { __typingSnapshots?: TypingSnapshot[] }
+    state.__typingSnapshots = []
     const record = () => {
-      const hero = document.querySelector<HTMLElement>('.home-hero')
       const greeting = document.querySelector<HTMLElement>('.home-hero-typewriter')
-      const greetingLine = document.querySelector<HTMLElement>('.home-hero-typewriter-line-greeting')
-      const statementLine = document.querySelector<HTMLElement>('.home-hero-typewriter-line-statement')
       const actions = document.querySelector<HTMLElement>('.home-hero-actions')
-      if (!hero || !greeting || !greetingLine || !statementLine || !actions) return
-      state.__homeVisibilitySnapshots?.push({
-        introState: hero.dataset.introState,
+      if (!greeting || !actions) return
+      const greetingGlyphs = greeting.querySelectorAll<HTMLElement>('.home-hero-typewriter-line-greeting .home-hero-typewriter-glyph')
+      state.__typingSnapshots?.push({
         finalState: greeting.dataset.finalState,
-        greetingClipPath: getComputedStyle(greetingLine).clipPath,
-        statementClipPath: getComputedStyle(statementLine).clipPath,
+        greetingRevealed: greeting.dataset.greetingRevealed,
+        statementRevealed: greeting.dataset.statementRevealed,
+        firstGlyphRevealed: greetingGlyphs[0]?.classList.contains('is-revealed'),
+        lastGreetingRevealed: greetingGlyphs[greetingGlyphs.length - 1]?.classList.contains('is-revealed'),
         actionsOpacity: getComputedStyle(actions).opacity
       })
     }
     new MutationObserver(record).observe(document, {
       subtree: true,
       childList: true,
-      characterData: true,
       attributes: true,
-      attributeFilter: ['data-intro-state', 'data-final-state', 'data-font-state']
+      attributeFilter: ['data-final-state', 'data-greeting-revealed', 'data-statement-revealed', 'class']
     })
   })
 
@@ -424,37 +425,116 @@ test('pre-rendered home keeps its greeting and primary actions visible through h
 
   const greeting = page.locator('.home-hero-typewriter')
   const actions = page.locator('.home-hero-actions')
+  const firstGlyph = page.locator('.home-hero-typewriter-line-greeting .home-hero-typewriter-glyph').first()
   try {
     await page.goto('/en/', { waitUntil: 'commit' })
     await entryRequested
-    await expect(page.locator('main#main h1')).toBeVisible()
+    // Continuity: the crawlable heading is complete while the decorative glyphs stay
+    // hidden, so the full copy never flashes before typing starts.
+    await expect(page.locator('main#main h1')).toContainText('Hi, I’m Yance')
     await expect(greeting).toBeVisible()
+    await expect(greeting).toHaveAttribute('data-final-state', 'false')
+    await expect(greeting).toHaveAttribute('data-greeting-revealed', '0')
+    await expect(firstGlyph).toHaveCSS('visibility', 'hidden')
     await expect(actions).toHaveCSS('opacity', '1')
   } finally {
     releaseEntry()
   }
 
   await expect(page.locator('body')).toHaveAttribute('data-hydrated', 'true')
-  await expect(greeting).toHaveAttribute('data-final-state', 'true')
-  await expect(page.locator('.home-hero-typewriter-line-greeting')).toHaveCSS('clip-path', 'none')
-  await expect(page.locator('.home-hero-typewriter-line-statement')).toHaveCSS('clip-path', 'none')
+  await expect(greeting).toHaveAttribute('data-final-state', 'true', { timeout: 6000 })
+  const greetingCount = await greeting.locator('.home-hero-typewriter-line-greeting .home-hero-typewriter-glyph').count()
+  const statementCount = await greeting.locator('.home-hero-typewriter-line-statement .home-hero-typewriter-glyph').count()
+  expect(greetingCount).toBeGreaterThan(1)
+  expect(statementCount).toBeGreaterThan(1)
+  await expect(greeting).toHaveAttribute('data-greeting-revealed', String(greetingCount))
+  await expect(greeting).toHaveAttribute('data-statement-revealed', String(statementCount))
+  await expect(firstGlyph).toHaveCSS('visibility', 'visible')
+  await expect(greeting).toContainText('Hi, I’m Yance')
   await expect(actions).toHaveCSS('opacity', '1')
-  const visibilitySnapshots = await page.evaluate(() => (
-    (window as Window & { __homeVisibilitySnapshots?: Array<{
+
+  const snapshots = await page.evaluate(() => (
+    (window as Window & { __typingSnapshots?: Array<{
       finalState: string | undefined
-      greetingClipPath: string
-      statementClipPath: string
+      greetingRevealed: string | undefined
+      statementRevealed: string | undefined
+      firstGlyphRevealed: boolean | undefined
+      lastGreetingRevealed: boolean | undefined
       actionsOpacity: string
-    }> }).__homeVisibilitySnapshots ?? []
+    }> }).__typingSnapshots ?? []
   ))
-  expect(visibilitySnapshots.length).toBeGreaterThan(0)
-  expect(visibilitySnapshots.every(snapshot => (
+  const greetingSeries = snapshots
+    .map(snapshot => Number(snapshot.greetingRevealed))
+    .filter(Number.isFinite)
+  const statementSeries = snapshots
+    .map(snapshot => Number(snapshot.statementRevealed))
+    .filter(Number.isFinite)
+  // Progressive typing: several distinct reveal counts, not just the SSR 0 and the end.
+  expect(new Set(greetingSeries).size).toBeGreaterThanOrEqual(3)
+  expect(new Set(statementSeries).size).toBeGreaterThanOrEqual(3)
+  expect(Math.max(...greetingSeries)).toBe(greetingCount)
+  expect(Math.max(...statementSeries)).toBe(statementCount)
+  // No premature cut to final before the copy finished revealing.
+  expect(snapshots.some(snapshot => (
     snapshot.finalState === 'true'
-    && snapshot.greetingClipPath === 'none'
-    && snapshot.statementClipPath === 'none'
-    && snapshot.actionsOpacity === '1'
+    && (Number(snapshot.greetingRevealed) < greetingCount || Number(snapshot.statementRevealed) < statementCount)
+  ))).toBe(false)
+  expect(snapshots.every(snapshot => snapshot.actionsOpacity === '1')).toBe(true)
+  // Glyph visibility really progresses: an intermediate frame shows the first glyph
+  // while the last greeting glyph is still hidden, then all become visible.
+  expect(snapshots.some(snapshot => (
+    snapshot.firstGlyphRevealed === true && snapshot.lastGreetingRevealed === false
   ))).toBe(true)
+  const settled = snapshots[snapshots.length - 1]!
+  expect(settled.firstGlyphRevealed).toBe(true)
+  expect(settled.lastGreetingRevealed).toBe(true)
 })
+
+test('reduced motion reveals the finished greeting before hydration', async ({ browser }) => {
+  const context = await browser.newContext({ reducedMotion: 'reduce' })
+  const page = await context.newPage()
+  // Block the entry bundle entirely so only CSS applies.
+  await page.route(/\/assets\/vue\/main-[^/]+\.js$/u, (route) => route.abort())
+
+  await page.goto('/en/')
+  await expect(page.locator('.home-hero-typewriter-line-greeting .home-hero-typewriter-glyph').first())
+    .toHaveCSS('visibility', 'visible')
+  await expect(page.locator('.home-hero-cursor')).toHaveCSS('visibility', 'visible')
+  await expect(page.locator('main#main h1')).toContainText('Hi, I’m Yance')
+  await context.close()
+})
+
+test('reduced motion settles the hydrated greeting immediately', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/en/')
+  await expect(page.locator('body')).toHaveAttribute('data-hydrated', 'true')
+
+  const greeting = page.locator('.home-hero-typewriter')
+  await expect(greeting).toHaveAttribute('data-final-state', 'true')
+  const greetingCount = await greeting.locator('.home-hero-typewriter-line-greeting .home-hero-typewriter-glyph').count()
+  await expect(greeting).toHaveAttribute('data-greeting-revealed', String(greetingCount))
+  await expect(page.locator('.home-hero-typewriter-line-greeting .home-hero-typewriter-glyph').first())
+    .toHaveCSS('visibility', 'visible')
+  await expect(page.locator('main#main h1')).toContainText('Hi, I’m Yance')
+})
+
+for (const { prefix, key, greeting: greetingText } of [
+  { prefix: '', key: 'zh-CN', greeting: '你好，我是 Yance' },
+  { prefix: '/zh-hk', key: 'zh-HK', greeting: '你好，我是 Yance' },
+  { prefix: '/en', key: 'en', greeting: 'Hi, I’m Yance' }
+]) {
+  test(`${key} home types the full greeting in and settles without losing copy`, async ({ page }) => {
+    await page.goto(prefix ? `${prefix}/` : '/')
+
+    const greeting = page.locator('.home-hero-typewriter')
+    await expect(greeting.locator('.home-hero-typewriter-line-greeting')).toContainText(greetingText)
+    await expect(greeting).toHaveAttribute('data-final-state', 'true', { timeout: 6000 })
+    const greetingCount = await greeting.locator('.home-hero-typewriter-line-greeting .home-hero-typewriter-glyph').count()
+    await expect(greeting).toHaveAttribute('data-greeting-revealed', String(greetingCount))
+    await expect(greeting.locator('.home-hero-typewriter-glyph').first()).toHaveCSS('visibility', 'visible')
+    await expect(page.locator('main#main h1')).toContainText(greetingText)
+  })
+}
 
 test('pre-rendered greeting stays visible while its font request is pending through hydration', async ({ page }) => {
   await deferGreetingFontFallback(page)

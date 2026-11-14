@@ -396,6 +396,11 @@ html[data-vue-enhanced='true'] .reveal:not(.revealed) {
   transform: none;
   will-change: auto;
 }
+/* Section headings reuse the reveal contract with a tighter 10px / 360ms entrance. */
+.reveal.section-head {
+  --reveal-distance: 10px;
+  --reveal-duration: .36s;
+}
 .reveal.showcase,
 .reveal.focus-card,
 .reveal.world-card,

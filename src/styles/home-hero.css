@@ -88,21 +88,14 @@
 .home-hero-typewriter-line {
   display: block;
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 
-.home-hero-typewriter[data-font-state='ready'][data-final-state='false'] .home-hero-typewriter-line-greeting {
-  clip-path: inset(0 100% 0 0);
-  animation: home-hero-line-reveal var(--home-hero-greeting-duration) steps(var(--home-hero-greeting-steps), end) var(--home-hero-greeting-delay) both;
-}
-
-.home-hero-typewriter[data-font-state='ready'][data-final-state='false'] .home-hero-typewriter-line-statement {
-  clip-path: inset(0 100% 0 0);
-  animation: home-hero-line-reveal var(--home-hero-statement-duration) steps(var(--home-hero-statement-steps), end) var(--home-hero-statement-delay) both;
-}
-
-@keyframes home-hero-line-reveal {
-  to { clip-path: inset(0 0 0 0); }
-}
+/* The intro is revealed per grapheme in JS: unrevealed glyphs keep their space but
+   stay invisible, so wrapped lines type strictly left-to-right and the full copy
+   never flashes before typing. */
+.home-hero-typewriter-glyph { visibility: visible; }
+.home-hero-typewriter[data-final-state='false'] .home-hero-typewriter-glyph:not(.is-revealed) { visibility: hidden; }
 
 .home-hero-typewriter-line-accent {
   color: var(--gold);
@@ -118,13 +111,7 @@
   font-weight: 400;
 }
 
-.home-hero-typewriter[data-final-state='false'] .home-hero-cursor {
-  animation: home-hero-cursor-blink 1s steps(2, jump-none) infinite;
-}
-
-@keyframes home-hero-cursor-blink {
-  50% { opacity: 0; }
-}
+.home-hero-typewriter[data-final-state='false'] .home-hero-cursor { visibility: hidden; }
 
 html[data-locale='en'] .home-hero-typewriter {
   font-size: clamp(2rem, 4.1vw, 4.35rem);
@@ -458,6 +445,11 @@ html[data-theme='dark'] .home-hero-particles {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .home-hero-typewriter .home-hero-typewriter-glyph,
+  .home-hero-typewriter .home-hero-cursor {
+    visibility: visible !important;
+  }
+
   .home-hero-typewriter-line-greeting,
   .home-hero-typewriter-line-statement {
     clip-path: none;

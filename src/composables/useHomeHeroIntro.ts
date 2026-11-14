@@ -1,17 +1,12 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch, type ComputedRef } from 'vue'
 import {
-  HOME_HERO_INTRO_TIMINGS,
+  buildHomeHeroIntroTimeline,
   getHomeHeroIntroState,
   shouldAnimateHomeHeroIntro,
   type HomeHeroIntroState
 } from '../utils/homeHeroIntro'
 
 type IntroState = 'static' | HomeHeroIntroState
-
-const typingDurationMs = HOME_HERO_INTRO_TIMINGS.firstLineMs
-  + HOME_HERO_INTRO_TIMINGS.linePauseMs
-  + HOME_HERO_INTRO_TIMINGS.secondLineMs
-const completeDurationMs = typingDurationMs + HOME_HERO_INTRO_TIMINGS.actionsMs
 
 interface NetworkInformation extends EventTarget {
   saveData?: boolean
@@ -29,12 +24,16 @@ function getInitialMode() {
   }
 }
 
-export function useHomeHeroIntro(greeting: ComputedRef<string>, statement: ComputedRef<string>) {
+export function useHomeHeroIntro(
+  greeting: ComputedRef<string>,
+  statement: ComputedRef<string>
+) {
   let shouldAnimate = false
   const state = ref<IntroState>('static')
   const animateParticles = ref(false)
   const isIntroActive = computed(() => state.value === 'typing' || state.value === 'revealing-actions')
   const introStartedAt = ref<number | null>(null)
+  const timeline = computed(() => buildHomeHeroIntroTimeline(greeting.value, statement.value))
   const timers = new Set<number>()
   let motionPreference: MediaQueryList | null = null
   let connection: NetworkInformation | undefined
@@ -64,13 +63,13 @@ export function useHomeHeroIntro(greeting: ComputedRef<string>, statement: Compu
     if (startedAt === null) return
 
     const elapsedMs = window.performance.now() - startedAt
-    const nextState = getHomeHeroIntroState(elapsedMs)
+    const nextState = getHomeHeroIntroState(elapsedMs, timeline.value)
     state.value = nextState
 
     const nextDeadlineMs = nextState === 'typing'
-      ? typingDurationMs
+      ? timeline.value.typingMs
       : nextState === 'revealing-actions'
-        ? completeDurationMs
+        ? timeline.value.completeMs
         : null
 
     if (nextDeadlineMs !== null) {
@@ -83,7 +82,7 @@ export function useHomeHeroIntro(greeting: ComputedRef<string>, statement: Compu
     if (startedAt === null) return
 
     const elapsedMs = window.performance.now() - startedAt
-    schedule(updateIntroState, Math.max(0, typingDurationMs - elapsedMs))
+    schedule(updateIntroState, Math.max(0, timeline.value.typingMs - elapsedMs))
   }
 
   function stopForMotionPreference() {
@@ -123,5 +122,5 @@ export function useHomeHeroIntro(greeting: ComputedRef<string>, statement: Compu
     connection?.removeEventListener('change', stopForDataPreference)
   })
 
-  return { state, animateParticles, isIntroActive, introStartedAt }
+  return { state, animateParticles, isIntroActive, introStartedAt, timeline }
 }

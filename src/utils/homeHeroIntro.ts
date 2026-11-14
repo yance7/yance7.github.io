@@ -1,21 +1,73 @@
-export const HOME_HERO_INTRO_TIMINGS = {
-  firstLineMs: 720,
+export const TYPEWRITER_TIMINGS = {
+  charMs: 70,
+  punctuationPauseMs: 200,
+  sentencePauseMs: 300,
   linePauseMs: 160,
-  secondLineMs: 1500,
   actionsMs: 320
 } as const
 
 export type HomeHeroIntroState = 'typing' | 'revealing-actions' | 'complete'
 
-export function getHomeHeroIntroState(elapsedMs: number): HomeHeroIntroState {
-  const typingMs = HOME_HERO_INTRO_TIMINGS.firstLineMs
-    + HOME_HERO_INTRO_TIMINGS.linePauseMs
-    + HOME_HERO_INTRO_TIMINGS.secondLineMs
-  const completeMs = typingMs + HOME_HERO_INTRO_TIMINGS.actionsMs
+const punctuationChars = new Set(['，', ',', '、', ';', '；', ':', '：'])
+const sentenceChars = new Set(['。', '.', '！', '!', '？', '?', '…', '—'])
 
-  if (elapsedMs < typingMs) return 'typing'
-  if (elapsedMs < completeMs) return 'revealing-actions'
+export interface TypewriterLine {
+  graphemes: string[]
+  starts: number[]
+  totalMs: number
+}
+
+export interface HomeHeroIntroTimeline {
+  greeting: TypewriterLine
+  statement: TypewriterLine
+  typingMs: number
+  completeMs: number
+}
+
+export function buildTypewriterLine(text: string): TypewriterLine {
+  const graphemes = splitGraphemes(text)
+  const starts: number[] = []
+  let elapsed = 0
+
+  for (const grapheme of graphemes) {
+    starts.push(elapsed)
+    elapsed += TYPEWRITER_TIMINGS.charMs
+    if (sentenceChars.has(grapheme)) elapsed += TYPEWRITER_TIMINGS.sentencePauseMs
+    else if (punctuationChars.has(grapheme)) elapsed += TYPEWRITER_TIMINGS.punctuationPauseMs
+  }
+
+  return { graphemes, starts, totalMs: elapsed }
+}
+
+export function buildHomeHeroIntroTimeline(greeting: string, statement: string): HomeHeroIntroTimeline {
+  const greetingLine = buildTypewriterLine(greeting)
+  const statementLine = buildTypewriterLine(statement)
+  const typingMs = greetingLine.totalMs + TYPEWRITER_TIMINGS.linePauseMs + statementLine.totalMs
+
+  return {
+    greeting: greetingLine,
+    statement: statementLine,
+    typingMs,
+    completeMs: typingMs + TYPEWRITER_TIMINGS.actionsMs
+  }
+}
+
+export function getHomeHeroIntroState(elapsedMs: number, timeline: HomeHeroIntroTimeline): HomeHeroIntroState {
+  if (elapsedMs < timeline.typingMs) return 'typing'
+  if (elapsedMs < timeline.completeMs) return 'revealing-actions'
   return 'complete'
+}
+
+export function getTypewriterReveal(line: TypewriterLine, elapsedMs: number): number {
+  if (elapsedMs >= line.totalMs) return line.graphemes.length
+  if (elapsedMs < 0) return 0
+
+  let revealed = 0
+  for (let index = 0; index < line.starts.length; index += 1) {
+    if (line.starts[index]! <= elapsedMs) revealed = index + 1
+    else break
+  }
+  return revealed
 }
 
 interface GraphemeSegmenter {
