@@ -90,18 +90,11 @@
   min-width: 0;
 }
 
-.home-hero-typewriter[data-font-state='ready'][data-final-state='false'] .home-hero-typewriter-line-greeting {
+/* The intro reveal is driven in JS (per-grapheme clip); this rule keeps the
+   lines hidden until the first frame so client navigation never flashes the
+   full copy before typing. */
+.home-hero-typewriter[data-final-state='false'] .home-hero-typewriter-line {
   clip-path: inset(0 100% 0 0);
-  animation: home-hero-line-reveal var(--home-hero-greeting-duration) steps(var(--home-hero-greeting-steps), end) var(--home-hero-greeting-delay) both;
-}
-
-.home-hero-typewriter[data-font-state='ready'][data-final-state='false'] .home-hero-typewriter-line-statement {
-  clip-path: inset(0 100% 0 0);
-  animation: home-hero-line-reveal var(--home-hero-statement-duration) steps(var(--home-hero-statement-steps), end) var(--home-hero-statement-delay) both;
-}
-
-@keyframes home-hero-line-reveal {
-  to { clip-path: inset(0 0 0 0); }
 }
 
 .home-hero-typewriter-line-accent {

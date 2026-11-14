@@ -375,7 +375,10 @@ html[data-theme='dark'] .orbit-knob { transform: translateX(24px); background: v
 .hero-title.hero-lyric::after { content: '」'; margin-left: .16em; }
 .hero-title.hero-works-title .lyric-char { flex: 0 0 auto; }
 .lyric-word { display: inline-block; white-space: nowrap; }
-.lyric-space { display: inline-block; width: .3em; flex: 0 0 auto; }
+.lyric-space { display: inline-block; position: relative; width: .3em; flex: 0 0 auto; }
+/* Real space text keeps the raw heading crawlable; it is taken out of flow so the
+   lyric inline layout and glyph positions stay identical to the approved baseline. */
+.lyric-space-copy { position: absolute; left: 0; top: 0; width: 0; height: 0; overflow: hidden; }
 .lyric-char {
   display: inline-block;
   opacity: 0;

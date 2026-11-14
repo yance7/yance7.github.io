@@ -427,15 +427,21 @@ test('pre-rendered home keeps its greeting and primary actions visible through h
   try {
     await page.goto('/en/', { waitUntil: 'commit' })
     await entryRequested
-    await expect(page.locator('main#main h1')).toBeVisible()
+    // Continuity: the server copy is complete and crawlable, while the decorative
+    // typewriter line starts clipped so the full greeting never flashes before typing.
+    await expect(page.locator('main#main h1')).toContainText('Hi, I’m Yance')
     await expect(greeting).toBeVisible()
+    await expect(greeting).toHaveAttribute('data-final-state', 'false')
+    await expect(page.locator('.home-hero-typewriter-line-greeting')).toHaveCSS('clip-path', /inset/)
     await expect(actions).toHaveCSS('opacity', '1')
   } finally {
     releaseEntry()
   }
 
   await expect(page.locator('body')).toHaveAttribute('data-hydrated', 'true')
-  await expect(greeting).toHaveAttribute('data-final-state', 'true')
+  // The full copy stays in the DOM throughout the reveal; only the clip moves.
+  await expect(greeting).toContainText('Hi, I’m Yance')
+  await expect(greeting).toHaveAttribute('data-final-state', 'true', { timeout: 6000 })
   await expect(page.locator('.home-hero-typewriter-line-greeting')).toHaveCSS('clip-path', 'none')
   await expect(page.locator('.home-hero-typewriter-line-statement')).toHaveCSS('clip-path', 'none')
   await expect(actions).toHaveCSS('opacity', '1')
@@ -448,13 +454,43 @@ test('pre-rendered home keeps its greeting and primary actions visible through h
     }> }).__homeVisibilitySnapshots ?? []
   ))
   expect(visibilitySnapshots.length).toBeGreaterThan(0)
-  expect(visibilitySnapshots.every(snapshot => (
-    snapshot.finalState === 'true'
-    && snapshot.greetingClipPath === 'none'
-    && snapshot.statementClipPath === 'none'
-    && snapshot.actionsOpacity === '1'
-  ))).toBe(true)
+  // Animation actually ran: typing snapshots (final=false) precede the settled one.
+  expect(visibilitySnapshots.some(snapshot => snapshot.finalState === 'false')).toBe(true)
+  const settled = visibilitySnapshots[visibilitySnapshots.length - 1]!
+  expect(settled.finalState).toBe('true')
+  expect(settled.greetingClipPath).toBe('none')
+  expect(settled.statementClipPath).toBe('none')
+  expect(visibilitySnapshots.every(snapshot => snapshot.actionsOpacity === '1')).toBe(true)
 })
+
+test('reduced motion shows the finished greeting immediately', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/en/')
+  await expect(page.locator('body')).toHaveAttribute('data-hydrated', 'true')
+
+  const greeting = page.locator('.home-hero-typewriter')
+  await expect(greeting).toHaveAttribute('data-final-state', 'true')
+  await expect(page.locator('.home-hero-typewriter-line-greeting')).toHaveCSS('clip-path', 'none')
+  await expect(page.locator('.home-hero-typewriter-line-statement')).toHaveCSS('clip-path', 'none')
+  await expect(page.locator('main#main h1')).toContainText('Hi, I’m Yance')
+})
+
+for (const { prefix, key, greeting: greetingText } of [
+  { prefix: '', key: 'zh-CN', greeting: '你好，我是 Yance' },
+  { prefix: '/zh-hk', key: 'zh-HK', greeting: '你好，我是 Yance' },
+  { prefix: '/en', key: 'en', greeting: 'Hi, I’m Yance' }
+]) {
+  test(`${key} home types the full greeting in and settles without losing copy`, async ({ page }) => {
+    await page.goto(prefix ? `${prefix}/` : '/')
+
+    const greeting = page.locator('.home-hero-typewriter')
+    await expect(greeting.locator('.home-hero-typewriter-line-greeting')).toContainText(greetingText)
+    await expect(greeting).toHaveAttribute('data-final-state', 'true', { timeout: 6000 })
+    await expect(greeting.locator('.home-hero-typewriter-line-greeting')).toHaveCSS('clip-path', 'none')
+    await expect(greeting.locator('.home-hero-typewriter-line-statement')).toHaveCSS('clip-path', 'none')
+    await expect(page.locator('main#main h1')).toContainText(greetingText)
+  })
+}
 
 test('pre-rendered greeting stays visible while its font request is pending through hydration', async ({ page }) => {
   await deferGreetingFontFallback(page)

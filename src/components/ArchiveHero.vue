@@ -36,7 +36,7 @@ const accessibleTitle = computed(() =>
           :aria-label="accessibleTitle"
         >
           <template v-for="(token, tokenIndex) in lyricTokens" :key="`${token.type}-${token.text}-${tokenIndex}`">
-            <span v-if="token.type === 'space'" class="lyric-space" aria-hidden="true"></span>
+            <span v-if="token.type === 'space'" class="lyric-space" aria-hidden="true"><span class="lyric-space-copy">{{ token.text }}</span></span>
             <span v-else-if="token.type === 'word'" class="lyric-word" aria-hidden="true">
               <span
                 v-for="(ch, charIndex) in token.text"
