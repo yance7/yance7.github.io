@@ -9,8 +9,9 @@ const props = withDefaults(defineProps<{ metrics: Metric[]; large?: boolean; ani
 })
 
 const COUNT_DURATION_MS = 950
-// Trigger slightly before the strip scrolls in so the reset to zero happens off-screen.
-const COUNT_ROOT_MARGIN = '0px 0px 120px 0px'
+// The wider margin only arms (zeroes) a strip while it is still off-screen; the
+// count itself starts from a second observer once the strip is really on screen.
+const ARM_ROOT_MARGIN = '0px 0px 120px 0px'
 
 function prefersReducedMotion() {
   return typeof window !== 'undefined'
@@ -32,10 +33,13 @@ const displays = ref(props.metrics.map((metric) => String(metric.value)))
 const metricStrip = ref<HTMLElement | null>(null)
 const metricsReady = ref(false)
 const rafs = new Set<number>()
-let observer: IntersectionObserver | null = null
+let armObserver: IntersectionObserver | null = null
+let startObserver: IntersectionObserver | null = null
 let motionQuery: MediaQueryList | null = null
-const animatedIndexes = new Set<number>()
+let reducedMotion = false
+const startedIndexes = new Set<number>()
 const completedIndexes = new Set<number>()
+const finishedIndexes = new Set<number>()
 const observedIndexes = new Set<number>()
 let initialObservationComplete = false
 
@@ -44,20 +48,33 @@ function refreshReady() {
     metricsReady.value = false
     return
   }
-  metricsReady.value = [...animatedIndexes].every((index) => completedIndexes.has(index))
+  // A strip that is armed but not yet on screen has not started, so it counts as settled.
+  metricsReady.value = [...startedIndexes].every((index) => completedIndexes.has(index))
 }
 
 function finishAll() {
   rafs.forEach((id) => cancelAnimationFrame(id))
   rafs.clear()
   displays.value = props.metrics.map((metric) => String(metric.value))
-  animatedIndexes.forEach((index) => completedIndexes.add(index))
+  props.metrics.forEach((_, index) => {
+    startedIndexes.add(index)
+    completedIndexes.add(index)
+    finishedIndexes.add(index)
+  })
   metricsReady.value = true
 }
 
 function animateIndex(i: number) {
-  if (animatedIndexes.has(i)) return
-  animatedIndexes.add(i)
+  if (reducedMotion || prefersReducedMotion()) {
+    displays.value[i] = String(props.metrics[i]?.value ?? '')
+    startedIndexes.add(i)
+    completedIndexes.add(i)
+    finishedIndexes.add(i)
+    refreshReady()
+    return
+  }
+  if (startedIndexes.has(i)) return
+  startedIndexes.add(i)
   refreshReady()
 
   const metric = props.metrics[i]
@@ -73,6 +90,12 @@ function animateIndex(i: number) {
   let currentRaf = 0
   const step = (now: number) => {
     rafs.delete(currentRaf)
+    if (reducedMotion) {
+      displays.value[i] = String(metric.value)
+      completedIndexes.add(i)
+      refreshReady()
+      return
+    }
     const t = Math.min((now - start) / COUNT_DURATION_MS, 1)
     const eased = 1 - Math.pow(1 - t, 3)
     displays.value[i] = (parsed.num * eased).toFixed(parsed.decimals) + parsed.suffix
@@ -89,8 +112,25 @@ function animateIndex(i: number) {
   rafs.add(currentRaf)
 }
 
+function maybeCompleteObservation(cardCount: number) {
+  if (observedIndexes.size >= cardCount) {
+    initialObservationComplete = true
+    refreshReady()
+  }
+}
+
+function stopObservers() {
+  armObserver?.disconnect()
+  startObserver?.disconnect()
+  armObserver = null
+  startObserver = null
+}
+
 function handleMotionChange() {
-  if (motionQuery?.matches) finishAll()
+  if (!motionQuery?.matches) return
+  reducedMotion = true
+  stopObservers()
+  finishAll()
 }
 
 onMounted(() => {
@@ -102,57 +142,73 @@ onMounted(() => {
     return
   }
 
+  reducedMotion = false
   const cards = [...strip.querySelectorAll<HTMLElement>('[data-metric-index]')]
-  const initiallyVisible = new Set<number>()
-  cards.forEach((card) => {
-    const index = Number(card.dataset.metricIndex)
-    if (!Number.isInteger(index)) return
-    observedIndexes.add(index)
-    // Content already on screen keeps its rendered final value (no reset flash).
-    if (isInInitialViewport(card.getBoundingClientRect(), window.innerHeight)) {
-      initiallyVisible.add(index)
-      completedIndexes.add(index)
-    }
-  })
-
-  observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      const index = Number((entry.target as HTMLElement).dataset.metricIndex)
-      if (!Number.isInteger(index)) return
-      observedIndexes.add(index)
-      if (!entry.isIntersecting) return
-      const target = entry.target as HTMLElement
-      const rect = target.getBoundingClientRect()
-      const onScreenNow = rect.bottom > 0 && rect.top < window.innerHeight
-      observer?.unobserve(target)
-      // Only reset a value to zero while it is still off-screen, so the final
-      // server-rendered number is never replaced by zero in front of the reader.
-      if (onScreenNow) {
-        completedIndexes.add(index)
-        refreshReady()
-        return
-      }
-      animateIndex(index)
-    })
-    if (observedIndexes.size >= cards.length) {
-      initialObservationComplete = true
-      refreshReady()
-    }
-  }, { threshold: 0, rootMargin: COUNT_ROOT_MARGIN })
-
-  cards.forEach((card) => {
-    const index = Number(card.dataset.metricIndex)
-    if (initiallyVisible.has(index)) return
-    observer?.observe(card)
-  })
-
   if (!cards.length) {
     initialObservationComplete = true
     metricsReady.value = true
-  } else {
-    if (observedIndexes.size >= cards.length) initialObservationComplete = true
-    refreshReady()
+    return
   }
+
+  armObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      const target = entry.target as HTMLElement
+      const index = Number(target.dataset.metricIndex)
+      if (!Number.isInteger(index)) return
+      observedIndexes.add(index)
+      if (!entry.isIntersecting) return
+      armObserver?.unobserve(target)
+      maybeCompleteObservation(cards.length)
+
+      const rect = target.getBoundingClientRect()
+      const onScreenNow = rect.bottom > 0 && rect.top < window.innerHeight
+      if (onScreenNow || reducedMotion) {
+        // Already visible (or motion was reduced): keep the server-rendered value.
+        displays.value[index] = String(props.metrics[index]?.value ?? '')
+        startedIndexes.add(index)
+        completedIndexes.add(index)
+        finishedIndexes.add(index)
+        refreshReady()
+        return
+      }
+
+      // Off-screen: zero the value here so the count can start cleanly on entry.
+      const parsed = parseValue(props.metrics[index]?.value ?? '')
+      if (parsed) displays.value[index] = (0).toFixed(parsed.decimals) + parsed.suffix
+      startObserver?.observe(target)
+    })
+    maybeCompleteObservation(cards.length)
+  }, { threshold: 0, rootMargin: ARM_ROOT_MARGIN })
+
+  startObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      const target = entry.target as HTMLElement
+      const index = Number(target.dataset.metricIndex)
+      if (!Number.isInteger(index)) return
+      if (!entry.isIntersecting) return
+      startObserver?.unobserve(target)
+      animateIndex(index)
+    })
+  }, { threshold: 0.3 })
+
+  cards.forEach((card) => {
+    const index = Number(card.dataset.metricIndex)
+    if (!Number.isInteger(index)) return
+    if (isInInitialViewport(card.getBoundingClientRect(), window.innerHeight)) {
+      // Visible from the first paint: no reset, no flash.
+      displays.value[index] = String(props.metrics[index]?.value ?? '')
+      observedIndexes.add(index)
+      startedIndexes.add(index)
+      completedIndexes.add(index)
+      finishedIndexes.add(index)
+      return
+    }
+    armObserver?.observe(card)
+  })
+
+  maybeCompleteObservation(cards.length)
+  if (observedIndexes.size >= cards.length) initialObservationComplete = true
+  refreshReady()
 
   motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
   motionQuery.addEventListener('change', handleMotionChange)
@@ -161,12 +217,12 @@ onMounted(() => {
 onUnmounted(() => {
   rafs.forEach((id) => cancelAnimationFrame(id))
   rafs.clear()
-  observer?.disconnect()
-  observer = null
+  stopObservers()
   motionQuery?.removeEventListener('change', handleMotionChange)
   motionQuery = null
-  animatedIndexes.clear()
+  startedIndexes.clear()
   completedIndexes.clear()
+  finishedIndexes.clear()
   observedIndexes.clear()
   initialObservationComplete = false
 })
