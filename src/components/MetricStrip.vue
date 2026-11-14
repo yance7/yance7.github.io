@@ -39,7 +39,6 @@ let motionQuery: MediaQueryList | null = null
 let reducedMotion = false
 const startedIndexes = new Set<number>()
 const completedIndexes = new Set<number>()
-const finishedIndexes = new Set<number>()
 const observedIndexes = new Set<number>()
 let initialObservationComplete = false
 
@@ -59,7 +58,6 @@ function finishAll() {
   props.metrics.forEach((_, index) => {
     startedIndexes.add(index)
     completedIndexes.add(index)
-    finishedIndexes.add(index)
   })
   metricsReady.value = true
 }
@@ -69,7 +67,6 @@ function animateIndex(i: number) {
     displays.value[i] = String(props.metrics[i]?.value ?? '')
     startedIndexes.add(i)
     completedIndexes.add(i)
-    finishedIndexes.add(i)
     refreshReady()
     return
   }
@@ -167,7 +164,6 @@ onMounted(() => {
         displays.value[index] = String(props.metrics[index]?.value ?? '')
         startedIndexes.add(index)
         completedIndexes.add(index)
-        finishedIndexes.add(index)
         refreshReady()
         return
       }
@@ -200,7 +196,6 @@ onMounted(() => {
       observedIndexes.add(index)
       startedIndexes.add(index)
       completedIndexes.add(index)
-      finishedIndexes.add(index)
       return
     }
     armObserver?.observe(card)
@@ -222,7 +217,6 @@ onUnmounted(() => {
   motionQuery = null
   startedIndexes.clear()
   completedIndexes.clear()
-  finishedIndexes.clear()
   observedIndexes.clear()
   initialObservationComplete = false
 })
@@ -236,8 +230,9 @@ onUnmounted(() => {
       class="metric-card"
       :data-metric-index="i"
     >
-      <b>{{ displays[i] ?? m.value }}</b>
-      <span>{{ m.label }}</span>
+      <b aria-hidden="true">{{ displays[i] ?? m.value }}</b>
+      <span class="sr-only">{{ m.value }}</span>
+      <span class="metric-label">{{ m.label }}</span>
       <small v-if="m.note">{{ m.note }}</small>
     </div>
   </div>

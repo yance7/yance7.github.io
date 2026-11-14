@@ -2,15 +2,32 @@ import { expect, test } from '@playwright/test'
 import { waitForHydration } from './helpers/hydration'
 
 const finalValues = ['4.0', '1560', '108', '8.0']
+const finalNumbers = finalValues.map((value) => Number.parseFloat(value))
+
+async function nextFrames(page: import('@playwright/test').Page) {
+  await page.evaluate(() => new Promise<void>((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+  }))
+}
+
+async function readMetrics(page: import('@playwright/test').Page) {
+  return page.evaluate(() => ({
+    values: [...document.querySelectorAll('.metric-card b')].map((element) => element.textContent ?? ''),
+    ready: document.querySelector('.metric-strip')?.getAttribute('data-metrics-ready')
+  }))
+}
 
 test('academic metrics count up from zero when they enter the viewport and settle at the final values', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 })
   await page.addInitScript(() => {
-    const state = window as Window & { __metricTexts?: string[][] }
-    state.__metricTexts = []
+    const state = window as Window & { __metricSnapshots?: Array<{ values: string[]; onScreen: boolean }> }
+    state.__metricSnapshots = []
     const record = () => {
+      const strip = document.querySelector('.metric-strip')
       const values = [...document.querySelectorAll('.metric-card b')].map((element) => element.textContent ?? '')
-      if (values.length) state.__metricTexts?.push(values)
+      if (!strip || !values.length) return
+      const rect = strip.getBoundingClientRect()
+      state.__metricSnapshots?.push({ values, onScreen: rect.bottom > 0 && rect.top < window.innerHeight })
     }
     new MutationObserver(record).observe(document, { subtree: true, childList: true, characterData: true })
   })
@@ -19,27 +36,56 @@ test('academic metrics count up from zero when they enter the viewport and settl
   await waitForHydration(page)
   const strip = page.locator('#sec-scoreboard .metric-strip')
   const apBadge = page.locator('.ap-row .ap-badge').first()
+  const apYear = page.locator('.ap-row small')
   const apBadgeBefore = await apBadge.textContent()
+  const apYearsBefore = await apYear.allTextContents()
   await expect(strip).toHaveAttribute('data-metrics-ready', 'true')
 
-  // Arm the count just below the fold, then scroll it on screen to start counting.
-  const stripTop = await strip.evaluate((element) => element.getBoundingClientRect().top + window.scrollY)
-  await page.evaluate((top) => window.scrollTo(0, Math.max(0, top - window.innerHeight - 80)), stripTop)
+  // Screen readers get a stable final value even while the visual number is still zeroed.
+  await expect(page.locator('.metric-card .sr-only')).toHaveText(finalValues)
+  await expect(page.locator('.metric-card b').first()).toHaveAttribute('aria-hidden', 'true')
+
+  // Scrolling the strip on screen starts the count (ready flips to false while it runs).
   await strip.scrollIntoViewIfNeeded()
   await expect(strip).toHaveAttribute('data-metrics-ready', 'false')
   await expect(strip).toHaveAttribute('data-metrics-ready', 'true')
   await expect(page.locator('.metric-card b')).toHaveText(finalValues)
 
-  // AP badges are static data and never take part in the count.
+  // AP rows stay static through the count.
   expect(await apBadge.textContent()).toBe(apBadgeBefore)
+  expect(await apYear.allTextContents()).toEqual(apYearsBefore)
 
-  const snapshots = await page.evaluate(() => (window as Window & { __metricTexts?: string[][] }).__metricTexts ?? [])
-  const numeric = snapshots
-    .map((values) => values.map((value) => Number.parseFloat(value)))
-    .filter((values) => values.length === finalValues.length && values.every(Number.isFinite))
-  expect(numeric.length).toBeGreaterThan(0)
-  expect(numeric.some((values) => values.some((value) => value === 0))).toBe(true)
-  expect(numeric.some((values) => values.some((value, index) => value < Number.parseFloat(finalValues[index]!)))).toBe(true)
+  const snapshots = await page.evaluate(() => (
+    (window as Window & { __metricSnapshots?: Array<{ values: string[]; onScreen: boolean }> }).__metricSnapshots ?? []
+  ))
+  const parsed = snapshots
+    .map((snapshot) => ({
+      onScreen: snapshot.onScreen,
+      numbers: snapshot.values.map((value) => Number.parseFloat(value))
+    }))
+    .filter((snapshot) => snapshot.numbers.length === finalValues.length && snapshot.numbers.every(Number.isFinite))
+  expect(parsed.length).toBeGreaterThan(0)
+
+  // The strip is zeroed while still off-screen, so no final value flashes to zero.
+  const zeroIndex = parsed.findIndex((snapshot) => (
+    !snapshot.onScreen && snapshot.numbers.every((value) => value === 0)
+  ))
+  expect(zeroIndex).toBeGreaterThanOrEqual(0)
+  // Consider only frames from the arm onward (pre-font layout shift can briefly show the final values).
+  const sequence = parsed.slice(zeroIndex)
+  // The count is visible: an on-screen frame shows intermediate values.
+  expect(sequence.some((snapshot) => (
+    snapshot.onScreen && snapshot.numbers.some((value, index) => value < finalNumbers[index]!)
+  ))).toBe(true)
+  // Once an on-screen frame reaches the final values it never drops back to zero.
+  let visibleFinalSeen = false
+  for (const snapshot of sequence) {
+    const isFinal = snapshot.numbers.every((value, index) => value === finalNumbers[index])
+    if (snapshot.onScreen && isFinal) visibleFinalSeen = true
+    if (visibleFinalSeen && snapshot.onScreen) {
+      expect(snapshot.numbers, 'visible values must not reset after reaching final').toEqual(finalNumbers)
+    }
+  }
 })
 
 test('academic section numbers, anchors, and AP rows stay intact', async ({ page }) => {
@@ -69,14 +115,17 @@ test('turning on reduced motion during the count settles on the final values', a
   await page.goto('/en/academics/')
   await waitForHydration(page)
   const strip = page.locator('#sec-scoreboard .metric-strip')
-  const stripTop = await strip.evaluate((element) => element.getBoundingClientRect().top + window.scrollY)
-  await page.evaluate((top) => window.scrollTo(0, Math.max(0, top - window.innerHeight - 80)), stripTop)
   await strip.scrollIntoViewIfNeeded()
   await expect(strip).toHaveAttribute('data-metrics-ready', 'false')
   await page.emulateMedia({ reducedMotion: 'reduce' })
-
-  await expect(page.locator('.metric-card b')).toHaveText(finalValues)
   await expect(strip).toHaveAttribute('data-metrics-ready', 'true')
+  await expect(page.locator('.metric-card b')).toHaveText(finalValues)
+
+  // The running animation is cancelled: two frames later the values are still final.
+  await nextFrames(page)
+  const settled = await readMetrics(page)
+  expect(settled.values).toEqual(finalValues)
+  expect(settled.ready).toBe('true')
 })
 
 test('reduced motion turned on before entry stops a pending count', async ({ page }) => {
@@ -87,12 +136,12 @@ test('reduced motion turned on before entry stops a pending count', async ({ pag
   await expect(strip).toHaveAttribute('data-metrics-ready', 'true')
 
   await page.emulateMedia({ reducedMotion: 'reduce' })
+  // Let any pending observer callback settle before scrolling in.
+  await nextFrames(page)
   await strip.scrollIntoViewIfNeeded()
-  // Read synchronously: a count must not start after the preference changed.
-  const state = await page.evaluate(() => ({
-    values: [...document.querySelectorAll('.metric-card b')].map((element) => element.textContent ?? ''),
-    ready: document.querySelector('.metric-strip')?.getAttribute('data-metrics-ready')
-  }))
+  await nextFrames(page)
+
+  const state = await readMetrics(page)
   expect(state.values).toEqual(finalValues)
   expect(state.ready).toBe('true')
 })
