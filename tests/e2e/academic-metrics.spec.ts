@@ -43,7 +43,10 @@ test('academic metrics count up from zero when they enter the viewport and settl
 
   // Screen readers get a stable final value even while the visual number is still zeroed.
   await expect(page.locator('.metric-card .sr-only')).toHaveText(finalValues)
-  await expect(page.locator('.metric-card b').first()).toHaveAttribute('aria-hidden', 'true')
+  await expect(page.locator('.metric-card b')).toHaveCount(4)
+  for (let index = 0; index < 4; index += 1) {
+    await expect(page.locator('.metric-card b').nth(index)).toHaveAttribute('aria-hidden', 'true')
+  }
 
   // Scrolling the strip on screen starts the count (ready flips to false while it runs).
   await strip.scrollIntoViewIfNeeded()
@@ -73,10 +76,12 @@ test('academic metrics count up from zero when they enter the viewport and settl
   expect(zeroIndex).toBeGreaterThanOrEqual(0)
   // Consider only frames from the arm onward (pre-font layout shift can briefly show the final values).
   const sequence = parsed.slice(zeroIndex)
-  // The count is visible: an on-screen frame shows intermediate values.
-  expect(sequence.some((snapshot) => (
-    snapshot.onScreen && snapshot.numbers.some((value, index) => value < finalNumbers[index]!)
-  ))).toBe(true)
+  // The count is visible: every metric passes through its own intermediate values.
+  for (let index = 0; index < finalNumbers.length; index += 1) {
+    expect(sequence.some((snapshot) => (
+      snapshot.onScreen && snapshot.numbers[index]! > 0 && snapshot.numbers[index]! < finalNumbers[index]!
+    )), `metric ${index} should show an on-screen intermediate value`).toBe(true)
+  }
   // Once an on-screen frame reaches the final values it never drops back to zero.
   let visibleFinalSeen = false
   for (const snapshot of sequence) {
@@ -118,14 +123,17 @@ test('turning on reduced motion during the count settles on the final values', a
   await strip.scrollIntoViewIfNeeded()
   await expect(strip).toHaveAttribute('data-metrics-ready', 'false')
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await expect(strip).toHaveAttribute('data-metrics-ready', 'true')
-  await expect(page.locator('.metric-card b')).toHaveText(finalValues)
-
-  // The running animation is cancelled: two frames later the values are still final.
+  // Read two frames after the switch, without waiting for a natural finish: if the
+  // running count were not cancelled, the value would still be climbing here.
   await nextFrames(page)
   const settled = await readMetrics(page)
   expect(settled.values).toEqual(finalValues)
   expect(settled.ready).toBe('true')
+
+  await nextFrames(page)
+  const later = await readMetrics(page)
+  expect(later.values).toEqual(finalValues)
+  expect(later.ready).toBe('true')
 })
 
 test('reduced motion turned on before entry stops a pending count', async ({ page }) => {
