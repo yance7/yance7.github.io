@@ -465,6 +465,33 @@ test('reveal content uses the shared fade-up tokens with a bounded stagger', asy
   }
 })
 
+test('page titles and section headings use the tightened entrance values', async ({ page }) => {
+  await page.goto('/en/honors/')
+  await waitForHydration(page)
+  const charMotion = await page.locator('.hero-title.hero-lyric .lyric-char').first().evaluate((element) => {
+    const style = getComputedStyle(element)
+    return { name: style.animationName, duration: style.animationDuration }
+  })
+  expect(charMotion.name).toBe('lyric-char-in')
+  expect(Number.parseFloat(charMotion.duration)).toBeCloseTo(0.42, 3)
+
+  await page.goto('/')
+  await waitForHydration(page)
+  const head = page.locator('.reveal.section-head').first()
+  await expect(head).toHaveClass(/reveal/)
+  const headMotion = await head.evaluate((element) => {
+    const style = getComputedStyle(element)
+    const properties = style.transitionProperty.split(',').map((property) => property.trim())
+    const durations = style.transitionDuration.split(',').map((duration) => duration.trim())
+    return {
+      distance: style.getPropertyValue('--reveal-distance').trim(),
+      transformDuration: durations[properties.indexOf('transform')] ?? '0s'
+    }
+  })
+  expect(headMotion.distance).toBe('10px')
+  expect(Number.parseFloat(headMotion.transformDuration)).toBeCloseTo(0.36, 3)
+})
+
 test('reduced motion completes every reveal immediately', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/research/')

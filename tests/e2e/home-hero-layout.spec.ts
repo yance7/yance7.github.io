@@ -42,8 +42,7 @@ for (const fallback of [false, true]) for (const locale of locales) {
     if (await greeting.getAttribute('data-font-state') === 'fallback') {
       await expect(greeting).toHaveAttribute('data-final-state', 'true')
       await expect(greeting).toBeVisible()
-      await expect(greeting.locator(':scope > span').first()).toHaveCSS('clip-path', 'none')
-      await expect(greeting.locator(':scope > span').last()).toHaveCSS('clip-path', 'none')
+      await expect(greeting.locator('.home-hero-typewriter-glyph').first()).toHaveCSS('visibility', 'visible')
     }
 
     for (const viewport of viewports) {

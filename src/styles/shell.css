@@ -355,14 +355,7 @@ html[data-theme='dark'] .orbit-knob { transform: translateX(24px); background: v
   font-size: clamp(1.9rem, 3.8vw, 3.4rem);
   line-height: 1.45;
   letter-spacing: .01em;
-  opacity: 1; transform: none;
-  animation: hero-title-enter .36s var(--ease-out) both;
-}
-@keyframes hero-title-enter {
-  from { transform: translate3d(0, 10px, 0); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .hero-title.hero-lyric { animation: none; }
+  opacity: 1; transform: none; animation: none;
 }
 .hero-title.hero-works-title {
   display: flex;
@@ -389,8 +382,8 @@ html[data-theme='dark'] .orbit-knob { transform: translateX(24px); background: v
 .lyric-char {
   display: inline-block;
   opacity: 0;
-  transform: translateY(16px) rotate(2deg);
-  animation: lyric-char-in .6s var(--ease-out) calc(140ms + var(--ci) * 45ms) forwards;
+  transform: translateY(10px) rotate(2deg);
+  animation: lyric-char-in .42s var(--ease-out) calc(140ms + var(--ci) * 45ms) forwards;
 }
 html[data-locale='en'] .hero-title.hero-works-title {
   display: block;

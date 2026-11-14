@@ -385,6 +385,8 @@ test('pre-rendered home types the greeting in without flashing the full copy', a
       finalState: string | undefined
       greetingRevealed: string | undefined
       statementRevealed: string | undefined
+      firstGlyphRevealed: boolean | undefined
+      lastGreetingRevealed: boolean | undefined
       actionsOpacity: string
     }
     const state = window as Window & { __typingSnapshots?: TypingSnapshot[] }
@@ -393,10 +395,13 @@ test('pre-rendered home types the greeting in without flashing the full copy', a
       const greeting = document.querySelector<HTMLElement>('.home-hero-typewriter')
       const actions = document.querySelector<HTMLElement>('.home-hero-actions')
       if (!greeting || !actions) return
+      const greetingGlyphs = greeting.querySelectorAll<HTMLElement>('.home-hero-typewriter-line-greeting .home-hero-typewriter-glyph')
       state.__typingSnapshots?.push({
         finalState: greeting.dataset.finalState,
         greetingRevealed: greeting.dataset.greetingRevealed,
         statementRevealed: greeting.dataset.statementRevealed,
+        firstGlyphRevealed: greetingGlyphs[0]?.classList.contains('is-revealed'),
+        lastGreetingRevealed: greetingGlyphs[greetingGlyphs.length - 1]?.classList.contains('is-revealed'),
         actionsOpacity: getComputedStyle(actions).opacity
       })
     }
@@ -404,7 +409,7 @@ test('pre-rendered home types the greeting in without flashing the full copy', a
       subtree: true,
       childList: true,
       attributes: true,
-      attributeFilter: ['data-final-state', 'data-greeting-revealed', 'data-statement-revealed']
+      attributeFilter: ['data-final-state', 'data-greeting-revealed', 'data-statement-revealed', 'class']
     })
   })
 
@@ -453,6 +458,8 @@ test('pre-rendered home types the greeting in without flashing the full copy', a
       finalState: string | undefined
       greetingRevealed: string | undefined
       statementRevealed: string | undefined
+      firstGlyphRevealed: boolean | undefined
+      lastGreetingRevealed: boolean | undefined
       actionsOpacity: string
     }> }).__typingSnapshots ?? []
   ))
@@ -473,6 +480,14 @@ test('pre-rendered home types the greeting in without flashing the full copy', a
     && (Number(snapshot.greetingRevealed) < greetingCount || Number(snapshot.statementRevealed) < statementCount)
   ))).toBe(false)
   expect(snapshots.every(snapshot => snapshot.actionsOpacity === '1')).toBe(true)
+  // Glyph visibility really progresses: an intermediate frame shows the first glyph
+  // while the last greeting glyph is still hidden, then all become visible.
+  expect(snapshots.some(snapshot => (
+    snapshot.firstGlyphRevealed === true && snapshot.lastGreetingRevealed === false
+  ))).toBe(true)
+  const settled = snapshots[snapshots.length - 1]!
+  expect(settled.firstGlyphRevealed).toBe(true)
+  expect(settled.lastGreetingRevealed).toBe(true)
 })
 
 test('reduced motion reveals the finished greeting before hydration', async ({ browser }) => {
