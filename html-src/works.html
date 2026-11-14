@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>__PAGE_TITLE__</title>
   <meta name="description" content="__META_DESCRIPTION__">
-  <meta name="theme-color" content="__THEME_COLOR_LIGHT__">
+  <meta name="theme-color" content="__THEME_COLOR_LIGHT__" data-theme-light="__THEME_COLOR_LIGHT__" data-theme-dark="__THEME_COLOR_DARK__">
   <meta name="color-scheme" content="light dark">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' '__THEME_BOOTSTRAP_HASH__'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; media-src 'self'; connect-src 'self'; manifest-src 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' '__THEME_BOOTSTRAP_HASH__' '__THEME_ORBIT_BOOT_HASH__'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; media-src 'self'; connect-src 'self'; manifest-src 'self'">
   <meta property="og:title" content="__OG_TITLE__">
   <meta property="og:description" content="__OG_DESCRIPTION__">
   <meta property="og:type" content="website">
@@ -29,11 +29,12 @@
   <link rel="icon" href="/assets/images/brand/favicon-16.png" sizes="16x16" type="image/png">
   <link rel="apple-touch-icon" href="/assets/images/brand/yance-icon-180.png" sizes="180x180">
   <link rel="manifest" href="/assets/site.webmanifest">
-  <script>try { const saved = localStorage.getItem('yance-theme'); const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches; if (saved === 'dark' || (!saved && systemDark)) document.documentElement.dataset.theme = 'dark'; const initialHash = window.location.hash; if (initialHash) { document.documentElement.dataset.initialHash = initialHash } } catch (e) {}</script>
+  <script>try { document.documentElement.dataset.js = 'true'; let saved = null; try { saved = localStorage.getItem('yance-theme') } catch (e) {} const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches; const theme = saved === 'dark' || saved === 'light' ? saved : (systemDark ? 'dark' : 'light'); document.documentElement.dataset.theme = theme; const meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.setAttribute('content', theme === 'dark' ? meta.dataset.themeDark : meta.dataset.themeLight); const initialHash = window.location.hash; if (initialHash) { document.documentElement.dataset.initialHash = initialHash } } catch (e) {}</script>
   <script type="module" src="../src/main.ts"></script>
 </head>
 <body data-page="works" data-locale="zh-CN">
   <div id="app"></div>
+  <script data-theme-orbit-boot>try { const root = document.documentElement; const meta = document.querySelector('meta[name="theme-color"]'); const sync = () => { const theme = root.dataset.theme === 'dark' ? 'dark' : 'light'; document.querySelectorAll('.theme-orbit[data-theme-copy]').forEach((button) => { let copy; try { copy = JSON.parse(button.getAttribute('data-theme-copy'))[theme] } catch (e) { return } if (!copy) return; button.classList.toggle('dark', theme === 'dark'); button.classList.toggle('light', theme === 'light'); const knob = button.querySelector('.orbit-knob'); if (knob) knob.classList.toggle('dark', theme === 'dark'); button.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false'); if (copy.aria) button.setAttribute('aria-label', copy.aria); if (copy.title) button.setAttribute('title', copy.title); const label = button.querySelector('.orbit-label'); if (label && copy.label) label.textContent = copy.label }) }; sync(); document.addEventListener('click', (event) => { const target = event.target instanceof Element ? event.target.closest('.theme-orbit') : null; if (!target || target.dataset.vueBound === 'true') return; const next = root.dataset.theme === 'dark' ? 'light' : 'dark'; try { localStorage.setItem('yance-theme', next) } catch (e) {} root.dataset.themeChanging = 'true'; root.dataset.theme = next; if (meta) meta.setAttribute('content', next === 'dark' ? meta.dataset.themeDark : meta.dataset.themeLight); sync(); requestAnimationFrame(() => requestAnimationFrame(() => { delete root.dataset.themeChanging })) }) } catch (e) {}</script>
   <noscript><p class="noscript-notice">核心内容与链接可直接浏览；动态效果与部分交互需要 JavaScript。</p></noscript>
 </body>
 </html>

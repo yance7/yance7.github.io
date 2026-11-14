@@ -195,6 +195,69 @@ test.describe('hydration of static page routes', () => {
   }
 })
 
+test.describe('dark-mode first paint hydrates without mismatch', () => {
+  for (const { path, locale } of routes) {
+    test(`${locale} ${path} keeps the saved dark theme through hydration`, async ({ page }) => {
+      const runtimeErrors: string[] = []
+      const browserMessages: string[] = []
+      page.on('pageerror', (error) => runtimeErrors.push(error.message))
+      page.on('console', (message) => {
+        if (!['error', 'warning'].includes(message.type())) return
+        browserMessages.push(`${message.type()}: ${message.text()}`)
+        if (/hydration|mismatch|server-rendered/i.test(message.text())) runtimeErrors.push(message.text())
+      })
+      await page.addInitScript(() => localStorage.setItem('yance-theme', 'dark'))
+
+      await page.goto(path)
+      await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+      const orbit = page.locator('.theme-orbit')
+      await expect(orbit).toHaveAttribute('aria-pressed', 'true')
+      await expect(page.locator('body')).toHaveAttribute('data-hydrated', 'true')
+      await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+      await expect(orbit).toHaveAttribute('aria-pressed', 'true')
+      await expect(orbit).toHaveClass(/dark/)
+      expect(runtimeErrors, `Dark hydration diagnostics: ${JSON.stringify(browserMessages)}`).toEqual([])
+    })
+  }
+
+  test('system dark preference renders the dark theme before hydration', async ({ browser }) => {
+    const context = await browser.newContext({ colorScheme: 'dark' })
+    const page = await context.newPage()
+    const runtimeErrors: string[] = []
+    page.on('pageerror', (error) => runtimeErrors.push(error.message))
+    page.on('console', (message) => {
+      if (/hydration|mismatch|server-rendered/i.test(message.text())) runtimeErrors.push(message.text())
+    })
+
+    await page.goto('/academics/')
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+    await expect(page.locator('.theme-orbit')).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.locator('body')).toHaveAttribute('data-hydrated', 'true')
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+    await expect(page.locator('.theme-orbit')).toHaveAttribute('aria-pressed', 'true')
+    expect(runtimeErrors).toEqual([])
+    await context.close()
+  })
+
+  test('concerts startup shell takes over the saved dark theme without a flash', async ({ page }) => {
+    const runtimeErrors: string[] = []
+    page.on('pageerror', (error) => runtimeErrors.push(error.message))
+    page.on('console', (message) => {
+      if (/hydration|mismatch|server-rendered/i.test(message.text())) runtimeErrors.push(message.text())
+    })
+    await page.addInitScript(() => localStorage.setItem('yance-theme', 'dark'))
+
+    await page.goto('/concerts/')
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+    await expect(page.locator('.theme-orbit')).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.locator('body')).toHaveAttribute('data-hydrated', 'true')
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+    await expect(page.locator('.theme-orbit')).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.locator('#app main#main')).toHaveCount(1)
+    expect(runtimeErrors).toEqual([])
+  })
+})
+
 test('desktop static markup hides the theme control that requires JavaScript', async ({ browser }) => {
   const context = await browser.newContext({
     javaScriptEnabled: false,

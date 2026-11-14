@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { pageEntries } from '../src/data/pageRegistry'
 import { getLocalizedHomeCopy, getLocalizedPageMeta } from '../src/data/locales'
 import { uiMessages } from '../src/i18n/messages'
-import { renderPage } from '../src/entry-server'
+import { renderPage, renderShell, type ShellContext } from '../src/entry-server'
 import type { Locale } from '../src/i18n/types'
 
 const locales: Locale[] = ['zh-CN', 'zh-HK', 'en']
@@ -94,5 +94,42 @@ describe('build-time page rendering', () => {
 
     expect(research.teleports?.body).toContain('teleport start anchor')
     expect(research.teleports?.body).toContain('teleport anchor')
+  })
+})
+
+describe('build-time startup shell rendering', () => {
+  it('renders a header-only shell for concerts and 404 in every locale without browser globals', async () => {
+    expect('window' in globalThis).toBe(false)
+    expect('document' in globalThis).toBe(false)
+
+    const contexts: ShellContext[] = (['concerts', 'not-found'] as const).flatMap((page) =>
+      locales.map((locale) => ({ page, locale }))
+    )
+    const rendered = await Promise.all(contexts.map(async (context) => ({
+      ...context,
+      result: await renderShell(context)
+    })))
+
+    expect(rendered).toHaveLength(6)
+    for (const { locale, result } of rendered) {
+      expect(result.html).toContain('class="site-shell startup-shell"')
+      expect(result.html).toContain('data-page-load-state="loading"')
+      expect(result.html).toContain('class="skip-link"')
+      expect(result.html).toContain('class="site-nav"')
+      expect(result.html).toContain('class="theme-orbit')
+      expect(result.html).toContain('data-theme-copy=')
+      expect(result.html).toContain(uiMessages[locale].locale.selector)
+      expect(result.html).not.toContain('<main')
+      expect(result.html).not.toContain('<h1')
+      expect(result.html).not.toContain('class="site-footer')
+      expect(result.html).not.toContain('page-content-skeleton')
+    }
+  })
+
+  it('does not leak locale state between sequential shell renders', async () => {
+    for (const locale of locales) {
+      const result = await renderShell({ page: 'concerts', locale })
+      expect(result.html).toContain(uiMessages[locale].locale.selector)
+    }
   })
 })

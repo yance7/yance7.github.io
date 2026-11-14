@@ -201,8 +201,8 @@
   .foot-mark:hover .brand-mark-image { filter: var(--brand-mark-filter); }
 }
 
-/* Keep the primary links available before the mobile menu runtime starts. */
-html:not([data-vue-enhanced='true']) .site-nav .theme-orbit { display: none; }
+/* Hide the theme toggle only when scripting is unavailable; the boot script marks data-js before first paint. */
+html:not([data-js='true']) .site-nav .theme-orbit { display: none; }
 
 @media (max-width: 640px) {
   html:not([data-vue-enhanced='true']) .site-nav .site-nav-surface {

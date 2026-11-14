@@ -12,8 +12,8 @@ interface ThemeState {
 
 export const themeStateKey: InjectionKey<ThemeState> = Symbol('theme-state')
 
-export function createThemeState(): ThemeState {
-  const theme = ref<Theme>('light')
+export function createThemeState(initial: Theme = 'light'): ThemeState {
+  const theme = ref<Theme>(initial)
   let systemMedia: MediaQueryList | null = null
   let systemListener: ((event: MediaQueryListEvent) => void) | null = null
   let themeApplyTimer: number | null = null

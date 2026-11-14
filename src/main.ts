@@ -9,6 +9,7 @@ import './theme.css'
 
 const initialHash = document.documentElement.dataset.initialHash || window.location.hash
 if (initialHash) document.documentElement.dataset.initialHash = initialHash
+document.documentElement.dataset.js = 'true'
 
 document.querySelectorAll<HTMLAnchorElement>('.locale-switcher a[href]').forEach((link) => {
   const pathname = new URL(link.href, window.location.href).pathname

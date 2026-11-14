@@ -299,6 +299,9 @@
 .mobile-menu a .mm-desc { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--muted); margin-top: -8px; }
 .mobile-menu a.active .mm-label { color: var(--gold); }
 
+/* 启动外壳仅在脚本可用时呈现;无 JavaScript 时由 noscript 降级正文独占页面。 */
+html:not([data-js='true']) .startup-shell { display: none; }
+
 /* ===== 主题轨道按钮 ===== */
 .theme-orbit {
   display: inline-flex; align-items: center; gap: 9px;
@@ -320,7 +323,8 @@
   background: var(--gold); box-shadow: 0 1px 6px rgba(0, 0, 0, .28);
   transition: transform var(--dur-base) var(--ease-apple), background-color var(--dur-base) var(--ease-apple);
 }
-.orbit-knob.dark { transform: translateX(24px); background: var(--violet); }
+.orbit-knob.dark,
+html[data-theme='dark'] .orbit-knob { transform: translateX(24px); background: var(--violet); }
 
 /* ===== 档案 Hero ===== */
 .archive-hero {
