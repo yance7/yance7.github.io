@@ -400,7 +400,10 @@ for (const route of routes) {
           await settleHomeHero(page, true)
           await expect(page).toHaveScreenshot(`index-${theme}-desktop-full.png`, {
             ...fullPageScreenshotOptions,
-            fullPage: true
+            fullPage: true,
+            // The live particle canvas is frame-dependent; mask it so the baseline
+            // reflects layout and the footer, not a captured animation frame.
+            mask: [page.locator('.home-hero-particles-canvas')]
           })
         }
       })
