@@ -14,14 +14,14 @@ const academics = computed(() => getLocalizedAcademics(locale.value))
   <div class="page-academics">
     <section id="sec-scoreboard" class="content">
       <SectionHeading
-        no="00"
+        no="01"
         :label="academics.sections.scoreboard.label"
         :title="academics.sections.scoreboard.title"
         :accent="academics.sections.scoreboard.accent"
         :copy="academics.sections.scoreboard.copy"
       />
 
-      <MetricStrip :metrics="academics.stats" large />
+      <MetricStrip :metrics="academics.stats" large animate-on-enter />
       <p class="scoreboard-note">
         <strong>{{ academics.satSingle.label }}:</strong>
         {{ academics.satSingle.value }} · {{ academics.satSingle.note }}
@@ -30,7 +30,7 @@ const academics = computed(() => getLocalizedAcademics(locale.value))
 
     <section id="sec-ap-archive" class="content">
       <SectionHeading
-        no="01"
+        no="02"
         :label="academics.sections.apArchive.label"
         :title="academics.sections.apArchive.title"
         :accent="academics.sections.apArchive.accent"
