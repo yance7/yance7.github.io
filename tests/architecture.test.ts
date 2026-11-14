@@ -551,11 +551,18 @@ describe('motion hierarchy contracts', () => {
 
   it('uses one observer with policy-safe metric initialization', () => {
     const metric = readFileSync(resolve(process.cwd(), 'src/components/MetricStrip.vue'), 'utf8')
-    expect(metric.match(/new IntersectionObserver/g)).toHaveLength(1)
+    // One observer arms the strip off-screen, a second starts the count on entry.
+    expect(metric.match(/new IntersectionObserver/g)).toHaveLength(2)
     expect(metric).toContain('data-metric-index')
-    expect(metric).toContain('const duration = 650')
+    const duration = Number(metric.match(/const COUNT_DURATION_MS = (\d+)/)?.[1])
+    expect(duration).toBeGreaterThanOrEqual(800)
+    expect(duration).toBeLessThanOrEqual(1100)
     expect(metric).toContain('prefers-reduced-motion')
-    expect(metric).toContain('initialDisplay')
+    // The pre-trigger margin only zeroes off-screen; visible values are never reset.
+    expect(metric).toContain('ARM_ROOT_MARGIN')
+    expect(metric).toContain('onScreenNow')
+    expect(metric).toContain('threshold: 0.3')
+    expect(metric).toContain("addEventListener('change', handleMotionChange)")
     expect(metric).toContain('v-reveal')
     expect(metric).not.toContain('class="metric-card"\n      :ref=')
   })

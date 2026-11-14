@@ -20,7 +20,7 @@ test('academic scores and current AP courses stay readable across locales at a n
     const cards = strip.locator('.metric-card')
     await expect(cards).toHaveCount(4)
     await expect(cards.nth(1).locator('b')).toHaveText('1560')
-    await expect(cards.nth(1).locator('span')).toContainText('SAT')
+    await expect(cards.nth(1).locator('.metric-label')).toContainText('SAT')
     await expect(cards.nth(3).locator('b')).toHaveText('8.0')
     await expect(page.locator('.scoreboard-note')).toContainText('1510')
     await expect(page.locator('.scoreboard-note')).toContainText('710')
