@@ -139,10 +139,10 @@
   max-width: 100%;
   color: currentColor;
   font-family: var(--font-editorial);
-  font-size: clamp(1.35rem, 2.5vw, 2.1rem);
+  font-size: clamp(1.6rem, 2.9vw, 2.5rem);
   font-style: italic;
-  font-weight: 400;
-  letter-spacing: .08em;
+  font-weight: 420;
+  letter-spacing: .04em;
   line-height: 1;
   overflow-wrap: anywhere;
   white-space: normal;
@@ -429,7 +429,7 @@
   border: 1px solid transparent;
   border-radius: var(--radius-xs);
   background: color-mix(in srgb, currentColor 5%, transparent);
-  color: var(--dim);
+  color: var(--muted);
   font-family: var(--font-technical);
   font-size: var(--text-xs);
   letter-spacing: var(--tracking-zh-meta);
