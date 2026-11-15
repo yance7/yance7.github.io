@@ -67,7 +67,11 @@ export function createThemeState(initial: Theme = 'light'): ThemeState {
   function initTheme() {
     let saved: string | null = null
     try { saved = localStorage.getItem('yance-theme') } catch { /* ignore */ }
-    const value: Theme = saved === 'dark' || saved === 'light' ? saved : systemTheme()
+    // When storage is unavailable, keep the theme already chosen on this page
+    // (boot script or an early toggle) instead of snapping back to the system theme.
+    const documentTheme = document.documentElement.dataset.theme
+    const preselected: Theme | null = documentTheme === 'dark' || documentTheme === 'light' ? documentTheme : null
+    const value: Theme = saved === 'dark' || saved === 'light' ? saved : (preselected ?? systemTheme())
     setTheme(value)
 
     if (!systemMedia) systemMedia = window.matchMedia('(prefers-color-scheme: dark)')

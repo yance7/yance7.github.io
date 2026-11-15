@@ -302,6 +302,33 @@
 /* 启动外壳仅在脚本可用时呈现;无 JavaScript 时由 noscript 降级正文独占页面。 */
 html:not([data-js='true']) .startup-shell { display: none; }
 
+/* Build-time readable body inside the startup shell: shown before takeover and when
+   the entry bundle never loads, then replaced by the interactive app. */
+.shell-fallback {
+  max-width: var(--w-read);
+  margin: 0 auto;
+  padding: clamp(32px, 6vw, 72px) var(--w-pad);
+  color: var(--ink);
+}
+.shell-fallback-kicker {
+  margin: 0 0 12px;
+  color: var(--gold);
+  font-family: var(--font-technical);
+  font-size: var(--type-meta-size);
+  letter-spacing: var(--tracking-latin-wide);
+  text-transform: uppercase;
+}
+.shell-fallback h1 { margin: 0 0 16px; font-family: var(--font-editorial); font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.15; }
+.shell-fallback p { max-width: var(--w-editorial); margin: 0 0 16px; color: var(--muted); font-family: var(--font-prose); line-height: 1.8; }
+.shell-fallback-list { display: grid; gap: 12px; margin: 24px 0 0; padding: 0; list-style: none; }
+.shell-fallback-list li { display: grid; gap: 4px; padding: 12px 0; border-top: 1px solid var(--line-faint); font-family: var(--font-interface); }
+.shell-fallback-list time { color: var(--gold); font-family: var(--font-technical); font-size: var(--text-xs); }
+.shell-fallback-list strong { color: var(--ink); font-weight: 600; }
+.shell-fallback-list span { color: var(--muted); font-size: var(--text-sm); }
+.shell-fallback-list a { color: var(--aqua-text); font-size: var(--text-xs); text-decoration: underline; }
+.shell-fallback nav { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 8px; }
+.shell-fallback nav a { color: var(--gold-text); text-decoration: underline; }
+
 /* ===== 主题轨道按钮 ===== */
 .theme-orbit {
   display: inline-flex; align-items: center; gap: 9px;
