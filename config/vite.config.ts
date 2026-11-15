@@ -10,7 +10,7 @@ import { getLocalizedSeo } from '../src/data/seo.ts'
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const htmlRoot = resolve(rootDir, 'html-src')
 const THEME_BOOTSTRAP_HASH = 'sha256-6EB3M6kNQrN+F2fiZKnP3nFuSSwjlF8ebVl/agRwPYs='
-const THEME_ORBIT_BOOT_HASH = 'sha256-1Qc6KGJPKuuwR4iDZkIduRqVaSTDr0/ambn12UlLUZU='
+const THEME_ORBIT_BOOT_HASH = 'sha256-K1z3edLx0Nc6t6gxhniBfVt+U7O179vCyY9Ch2e5zTA='
 const HOME_HERO_PRELOAD_HASH = 'sha256-zxh2PIPyGJ3BMCyeINgDQPxbnSIPCBhq4Y1wioP5Hww='
 const HOME_HERO_IMAGE_SIZES = '(max-width: 760px) calc(100vw - 40px), calc(min(1260px, 100vw) - 10vw)'
 const homeHeroAssetManifest = JSON.parse(readFileSync(resolve(rootDir, 'src/data/homeHeroAssets.json'), 'utf8')) as {
