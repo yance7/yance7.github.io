@@ -33,8 +33,12 @@ function rewriteJsonLd(html: string, seo: ReturnType<typeof getLocalizedSeo>) {
       // report the site or person as living at a locale subpath.
       const type = json['@type']
       const types = Array.isArray(type) ? type : [type]
-      const siteScoped = types.some((value) => value === 'WebSite' || value === 'Person')
-      if (!siteScoped) {
+      if (types.includes('WebSite')) {
+        // Site-level entity: keep the canonical domain URL and authored language.
+      } else if (types.includes('Person')) {
+        // The person keeps its domain URL, but the page language still describes it.
+        if ('inLanguage' in json) json.inLanguage = seo.jsonLdLanguage
+      } else {
         json.url = seo.canonical
         json.inLanguage = seo.jsonLdLanguage
       }
