@@ -76,12 +76,14 @@ export function createThemeState(initial: Theme = 'light'): ThemeState {
     const savedTheme: Theme | null = saved === 'dark' || saved === 'light' ? saved : null
     const value: Theme = userSelected
       ? (preselected ?? systemTheme())
-      : (savedTheme ?? preselected ?? systemTheme())
+      : (savedTheme ?? systemTheme())
     setTheme(value)
 
     if (!systemMedia) systemMedia = window.matchMedia('(prefers-color-scheme: dark)')
     if (!userSelected && !savedTheme && !systemListener) {
       systemListener = (event) => {
+        // A theme the reader picked on this page always wins over later system changes.
+        if (document.documentElement.dataset.themeSource === 'user') return
         let currentSaved: string | null = null
         try { currentSaved = localStorage.getItem('yance-theme') } catch { /* ignore */ }
         if (currentSaved !== 'light' && currentSaved !== 'dark') {

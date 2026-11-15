@@ -89,6 +89,24 @@ test('concerts keeps the query and poster hash on early locale links in every lo
   await waitForHydration(page)
 })
 
+test('a theme chosen after load is not overridden by later system changes when storage is unavailable', async ({ page }) => {
+  await page.addInitScript(() => {
+    Storage.prototype.getItem = () => { throw new Error('storage blocked') }
+    Storage.prototype.setItem = () => { throw new Error('storage blocked') }
+  })
+  await page.emulateMedia({ colorScheme: 'light' })
+  await page.goto('/academics/')
+  await waitForHydration(page)
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
+
+  await page.locator('.theme-orbit').click()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+  await page.emulateMedia({ colorScheme: 'dark' })
+  await page.emulateMedia({ colorScheme: 'light' })
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+  await expect(page.locator('.theme-orbit')).toHaveAttribute('aria-pressed', 'true')
+})
+
 test('404 replaces the startup shell with a single main landmark on takeover', async ({ page }) => {
   await page.goto('/404.html')
   await waitForHydration(page)
