@@ -46,6 +46,7 @@ export function createThemeState(initial: Theme = 'light'): ThemeState {
   }
 
   function applyTheme(value: Theme) {
+    document.documentElement.dataset.themeSource = 'user'
     try {
       localStorage.setItem('yance-theme', value)
     } catch { /* 隐私模式下静默失败 */ }
@@ -71,11 +72,15 @@ export function createThemeState(initial: Theme = 'light'): ThemeState {
     // (boot script or an early toggle) instead of snapping back to the system theme.
     const documentTheme = document.documentElement.dataset.theme
     const preselected: Theme | null = documentTheme === 'dark' || documentTheme === 'light' ? documentTheme : null
-    const value: Theme = saved === 'dark' || saved === 'light' ? saved : (preselected ?? systemTheme())
+    const userSelected = document.documentElement.dataset.themeSource === 'user'
+    const savedTheme: Theme | null = saved === 'dark' || saved === 'light' ? saved : null
+    const value: Theme = userSelected
+      ? (preselected ?? systemTheme())
+      : (savedTheme ?? preselected ?? systemTheme())
     setTheme(value)
 
     if (!systemMedia) systemMedia = window.matchMedia('(prefers-color-scheme: dark)')
-    if (!saved && !systemListener) {
+    if (!userSelected && !savedTheme && !systemListener) {
       systemListener = (event) => {
         let currentSaved: string | null = null
         try { currentSaved = localStorage.getItem('yance-theme') } catch { /* ignore */ }
