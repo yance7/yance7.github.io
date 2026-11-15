@@ -103,15 +103,16 @@ describe('footer component contract', () => {
 
     expect(styles).toContain('.foot-identity')
     expect(styles).toContain('.foot-contacts')
-    expect(styles).toContain('grid-template-columns: repeat(2, minmax(0, 1fr))')
-    expect(styles).toContain('grid-template-columns: 22px minmax(0, 1fr) 14px')
-    expect(styles).toContain('min-height: 60px')
-    expect(styles).toContain('inline-size: min(100%, 480px)')
-    expect(styles).toContain('min-width: 0')
+    expect(styles).toMatch(/\.foot-contacts\s*\{[\s\S]*display:\s*flex/)
+    expect(styles).toMatch(/\.foot-contact\s*\{[\s\S]*min-width:\s*48px/)
+    expect(styles).toMatch(/\.foot-contact\s*\{[\s\S]*min-height:\s*48px/)
     expect(styles).not.toContain('transition: all')
     expect(styles).toContain('transition: color 200ms var(--ease-soft)')
-    // Equal card geometry, text fit, and touch areas are checked in footer.spec.ts.
-    expect(footer).toContain('<span class="foot-contact-arrow" aria-hidden="true">↗</span>')
+    // The footer shows icons only; the address/username is exposed through aria-label.
+    expect(footer).toContain(':aria-label="`${messages.footer[contact.key]}: ${contact.value}`"')
+    expect(footer).not.toContain('foot-contact-arrow')
+    expect(footer).not.toContain('foot-contact-value')
+    expect(footer).not.toContain('<span class="foot-contact-copy">')
     expect(footer).not.toContain("contact.external ? '↗' : '→'")
   })
 })

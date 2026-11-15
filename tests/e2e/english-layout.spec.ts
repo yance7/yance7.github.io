@@ -168,7 +168,7 @@ async function readEnglishTextSurfaceViolations(page: Page) {
       '.concert-info h3',
       '.concert-info p',
       '.concert-venue',
-      '.foot-contact-value',
+      '.foot-contact',
       '.hero-action'
     ]
 

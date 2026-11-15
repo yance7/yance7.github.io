@@ -343,7 +343,9 @@ for (const locale of locales) {
     await expect(page.locator('.home-hero-typewriter')).toBeVisible()
     await expect.poll(() => page.locator('html').getAttribute('data-fonts-ready')).toBe('ready')
     await page.evaluate(() => document.fonts.ready)
-    await expect(page.locator('.home-hero-typewriter')).toHaveAttribute('data-final-state', 'true')
+    const greeting = page.locator('.home-hero-typewriter')
+    await expect(greeting).toHaveAttribute('data-font-state', 'ready')
+    await expect(greeting).toHaveAttribute('data-final-state', 'true')
 
     const lightHome = await readFontRoles(page)
     const isChromium = page.context().browser()?.browserType().name() === 'chromium'
@@ -377,6 +379,8 @@ for (const locale of locales) {
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
     await expect.poll(() => page.locator('html').getAttribute('data-fonts-ready')).toBe('ready')
     await page.evaluate(() => document.fonts.ready)
+    await expect(greeting).toHaveAttribute('data-font-state', 'ready')
+    await expect(greeting).toHaveAttribute('data-final-state', 'true')
     expect(await readFontRoles(page)).toEqual(lightHome)
 
     await page.goto(locale.archiveRoute)
