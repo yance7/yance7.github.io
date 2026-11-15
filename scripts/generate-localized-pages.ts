@@ -29,8 +29,15 @@ function rewriteJsonLd(html: string, seo: ReturnType<typeof getLocalizedSeo>) {
   return html.replace(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g, (_match, source: string) => {
     try {
       const json = JSON.parse(source) as Record<string, unknown>
-      json.url = seo.canonical
-      json.inLanguage = seo.jsonLdLanguage
+      // Site-scoped entities keep their canonical domain URL; a localized page must not
+      // report the site or person as living at a locale subpath.
+      const type = json['@type']
+      const types = Array.isArray(type) ? type : [type]
+      const siteScoped = types.some((value) => value === 'WebSite' || value === 'Person')
+      if (!siteScoped) {
+        json.url = seo.canonical
+        json.inLanguage = seo.jsonLdLanguage
+      }
       return `<script type="application/ld+json">${JSON.stringify(json)}</script>`
     } catch {
       return _match

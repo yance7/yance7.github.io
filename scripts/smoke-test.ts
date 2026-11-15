@@ -130,6 +130,18 @@ function assertHtmlContract(path: string, locale: Locale, pageKey?: (typeof page
   for (const alternate of seo.alternates) {
     assert(html.includes(`rel="alternate" hreflang="${alternate.hreflang}" href="${alternate.href}"`), `${path} 缺少 ${alternate.hreflang} hreflang`)
   }
+  if (pageKey === 'home') {
+    const jsonLd = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
+      .map((match) => JSON.parse(match[1]!) as Record<string, unknown>)
+    const website = jsonLd.find((entry) => entry['@type'] === 'WebSite')
+    const person = jsonLd.find((entry) => entry['@type'] === 'Person')
+    assert(website, `${path} 缺少 WebSite 结构化数据`)
+    assert(website.url === 'https://yance.me/', `${path} WebSite url 必须保持站点域名`)
+    assert(typeof website.name === 'string' && website.name.includes('Yance'), `${path} WebSite name 不正确`)
+    assert(person, `${path} 缺少 Person 结构化数据`)
+    assert(person.url === 'https://yance.me/', `${path} Person url 不应被改写成语言子路径`)
+    assert(!JSON.stringify([website, person]).includes('/en/') && !JSON.stringify([website, person]).includes('/zh-hk'), `${path} 站点级结构化数据不应包含语言子路径`)
+  }
 }
 
 for (const entry of pageEntries) {
