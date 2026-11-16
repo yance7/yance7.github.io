@@ -532,9 +532,21 @@ for (const { prefix, key, greeting: greetingText } of [
     const greetingCount = await greeting.locator('.home-hero-typewriter-line-greeting .home-hero-typewriter-glyph').count()
     await expect(greeting).toHaveAttribute('data-greeting-revealed', String(greetingCount))
     await expect(greeting.locator('.home-hero-typewriter-glyph').first()).toHaveCSS('visibility', 'visible')
+    await expect(page.locator('html')).not.toHaveAttribute('data-hero-fallback', 'true')
     await expect(page.locator('main#main h1')).toContainText(greetingText)
   })
 }
+
+test('entry-script failure reveals the full home greeting instead of a blank hero', async ({ page }) => {
+  await page.route(/\/assets\/vue\/main-[^/]+\.js$/u, (route) => route.abort())
+  await page.goto('/en/')
+
+  await expect(page.locator('main#main h1')).toContainText('Hi, I’m Yance')
+  const glyph = page.locator('.home-hero-typewriter-line-greeting .home-hero-typewriter-glyph').first()
+  await expect(glyph).toHaveCSS('visibility', 'visible', { timeout: 5000 })
+  await expect(page.locator('.home-hero-typewriter')).toContainText('Hi, I’m Yance')
+  await expect(page.locator('.home-hero-actions a[href="#selected-work"]')).toBeVisible()
+})
 
 test('pre-rendered greeting stays visible while its font request is pending through hydration', async ({ page }) => {
   await deferGreetingFontFallback(page)

@@ -96,6 +96,9 @@
    never flashes before typing. */
 .home-hero-typewriter-glyph { visibility: visible; }
 .home-hero-typewriter[data-final-state='false'] .home-hero-typewriter-glyph:not(.is-revealed) { visibility: hidden; }
+/* If the entry bundle never enhances the page, reveal the server-rendered copy. */
+html[data-hero-fallback='true'] .home-hero-typewriter .home-hero-typewriter-glyph,
+html[data-hero-fallback='true'] .home-hero-typewriter .home-hero-cursor { visibility: visible !important; }
 
 .home-hero-typewriter-line-accent {
   color: var(--gold);

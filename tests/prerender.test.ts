@@ -99,7 +99,7 @@ describe('build-time page rendering', () => {
 })
 
 describe('build-time startup shell rendering', () => {
-  it('renders a header-only shell for concerts and 404 in every locale without browser globals', async () => {
+  it('renders a readable shell body for concerts and 404 in every locale without browser globals', async () => {
     expect('window' in globalThis).toBe(false)
     expect('document' in globalThis).toBe(false)
 
@@ -120,8 +120,8 @@ describe('build-time startup shell rendering', () => {
       expect(result.html).toContain('class="theme-orbit')
       expect(result.html).toContain('data-theme-copy=')
       expect(result.html).toContain(uiMessages[locale].locale.selector)
-      expect(result.html).not.toContain('<main')
-      expect(result.html).not.toContain('<h1')
+      expect(result.html).toContain('<main id="main" tabindex="-1" class="shell-fallback">')
+      expect(result.html).toContain('<h1>')
       expect(result.html).not.toContain('class="site-footer')
       expect(result.html).not.toContain('page-content-skeleton')
     }

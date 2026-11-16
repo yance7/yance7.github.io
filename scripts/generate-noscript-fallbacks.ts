@@ -47,7 +47,7 @@ function renderConcerts(locale: Locale) {
       <a href="/assets/images/concerts/originals/${escapeHtml(concert.poster.file)}" target="_blank" rel="noopener noreferrer">${escapeHtml(messages.poster.original)}</a>
     </li>`).join('')
   const switcher = localeSwitcher(locale, (code) => `${localeRegistry[code].pathPrefix}/concerts/`)
-  return `<main id="main" tabindex="-1" class="noscript-fallback" data-noscript-fallback="concerts">
+  return `<main tabindex="-1" class="noscript-fallback" data-noscript-fallback="concerts">
     <nav class="noscript-fallback-nav" aria-label="${escapeHtml(messages.navigation.main)}">${nav}</nav>
     <p class="noscript-fallback-kicker">${escapeHtml(page.kicker)}</p>
     <h1>${escapeHtml(page.title)}</h1>
@@ -63,7 +63,7 @@ function render404(locale: Locale) {
   const error = messages.error404
   const prefix = localeRegistry[locale].pathPrefix
   const switcher = localeSwitcher(locale, (code) => `${localeRegistry[code].pathPrefix}/`)
-  return `<main id="main" tabindex="-1" class="noscript-fallback" data-noscript-fallback="404">
+  return `<main tabindex="-1" class="noscript-fallback" data-noscript-fallback="404">
     <p class="noscript-fallback-kicker">${escapeHtml(error.kicker)}</p>
     <h1>${escapeHtml(error.title)}</h1>
     <p>${escapeHtml(error.copy)}</p>

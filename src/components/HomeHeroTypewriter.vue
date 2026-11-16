@@ -78,6 +78,11 @@ onMounted(() => {
     if (state === 'fallback') showFinal()
   })
 
+  if (document.documentElement.dataset.heroFallback === 'true') {
+    showFinal()
+    return
+  }
+
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   connection = (navigator as Navigator & { connection?: NetworkInformation }).connection
   if (reducedMotion || connection?.saveData) {
