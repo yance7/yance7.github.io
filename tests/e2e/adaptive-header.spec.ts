@@ -322,9 +322,9 @@ const midWidthLocales = [
   { name: 'zh-HK', route: '/zh-hk/research/', lang: 'zh-HK' }
 ] as const
 
-test('mid-width header keeps nav clear of controls and keyboard reachable', async ({ page }) => {
-  for (const width of midWidths) {
-    for (const locale of midWidthLocales) {
+for (const locale of midWidthLocales) {
+  test(`mid-width header keeps nav clear of controls and keyboard reachable: ${locale.name}`, async ({ page }) => {
+    for (const width of midWidths) {
       await page.setViewportSize({ width, height: 900 })
       await page.goto(locale.route)
       await waitForReady(page)
@@ -395,8 +395,8 @@ test('mid-width header keeps nav clear of controls and keyboard reachable', asyn
         }
       }
     }
-  }
-})
+  })
+}
 
 test('mid-width Concerts link is clickable and navigates', async ({ page }) => {
   await page.setViewportSize({ width: 1050, height: 900 })
