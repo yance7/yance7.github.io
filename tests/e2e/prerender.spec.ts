@@ -22,7 +22,7 @@ const routes = locales.flatMap(({ prefix, key, notice }) => staticPages.map(({ k
 const fallbackRoutes = [
   { marker: 'concerts', path: '/concerts/', heading: '缘分让我们相遇乱世以外', localeLinks: ['/concerts/', '/zh-hk/concerts/', '/en/concerts/'], homeHref: '/' },
   { marker: 'concerts', path: '/zh-hk/concerts/', heading: '緣分讓我們相遇亂世以外', localeLinks: ['/concerts/', '/zh-hk/concerts/', '/en/concerts/'], homeHref: '/zh-hk/' },
-  { marker: 'concerts', path: '/en/concerts/', heading: 'Fate brought us together beyond this restless world', localeLinks: ['/concerts/', '/zh-hk/concerts/', '/en/concerts/'], homeHref: '/en/' },
+  { marker: 'concerts', path: '/en/concerts/', heading: 'Concerts', epigraph: 'Fate brought us together beyond this restless world', localeLinks: ['/concerts/', '/zh-hk/concerts/', '/en/concerts/'], homeHref: '/en/' },
   { marker: '404', path: '/404.html', heading: '这一页走丢了', localeLinks: ['/', '/zh-hk/', '/en/'], homeHref: '/' },
   { marker: '404', path: '/zh-hk/404.html', heading: '這一頁走失了', localeLinks: ['/', '/zh-hk/', '/en/'], homeHref: '/zh-hk/' },
   { marker: '404', path: '/en/404.html', heading: 'This page wandered off', localeLinks: ['/', '/zh-hk/', '/en/'], homeHref: '/en/' }
@@ -88,6 +88,9 @@ test.describe('static page routes without JavaScript', () => {
       await expect(fallback).toBeVisible()
       await expect(fallback).toHaveAttribute('tabindex', '-1')
       await expect(fallback.locator('h1')).toHaveText(route.heading)
+      if ('epigraph' in route) {
+        await expect(fallback.locator('.noscript-fallback-epigraph')).toHaveText(route.epigraph)
+      }
       await expect(fallback.locator(`a[href="${route.homeHref}"]`).first()).toBeVisible()
       for (const href of route.localeLinks) {
         await expect(fallback.locator(`a[href="${href}"]`).first()).toBeVisible()

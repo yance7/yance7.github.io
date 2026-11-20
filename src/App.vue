@@ -382,10 +382,11 @@ async function handlePageResolved() {
 
 useHomeScrollSnap(isHome, computed(() => pageLoadState.value === 'ready'))
 const isError = !page
-const meta = computed(() => page ? getLocalizedPageMeta(locale.value, page) : messages.value.page.home)
+const meta = computed(() => getLocalizedPageMeta(locale.value, page ?? 'home'))
 
 const kicker = computed(() => (isError ? messages.value.error404.kicker : meta.value.kicker))
-const heroTitle = computed(() => (isError ? messages.value.error404.title : meta.value.title))
+const heroTitle = computed(() => (isError ? messages.value.error404.title : meta.value.heading ?? meta.value.title))
+const heroEpigraph = computed(() => (isError ? undefined : meta.value.epigraph))
 const heroCopy = computed(() => (isError ? messages.value.error404.copy : meta.value.copy))
 const heroCredit = computed(() => (isError || !page ? null : getLocalizedPageMeta(locale.value, page).credit || null))
 
@@ -422,7 +423,8 @@ function moveLightbox(step: number) {
         :page="page ?? '404'"
         :error="isError"
         :kicker="kicker"
-        :title="heroTitle"
+        :heading="heroTitle"
+        :epigraph="heroEpigraph"
         :copy="heroCopy"
         :credit="heroCredit"
       />

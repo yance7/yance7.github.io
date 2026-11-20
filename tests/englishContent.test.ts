@@ -27,26 +27,31 @@ import { concertsCopy as zhCNConcertCopy } from '../src/data/locales/zh-CN/conce
 const englishHeroContracts = [
   {
     key: 'academics' as const,
+    heading: 'Academics',
     title: 'From here, tomorrow finds its course',
     credit: { artist: 'JJ Lin', song: '明日坐标', album: '明日坐标' }
   },
   {
     key: 'honors' as const,
+    heading: 'Honors',
     title: 'Step by step, I keep climbing',
     credit: { artist: 'Jay Chou', song: '蜗牛', album: 'Fantasy Plus' }
   },
   {
     key: 'research' as const,
+    heading: 'Research',
     title: 'You share this imperfect dream with me',
     credit: { artist: 'TFBOYS', song: '不完美小孩', album: '我们的时光' }
   },
   {
     key: 'works' as const,
+    heading: 'Works',
     title: 'Little by little, I learned that effort can lead to success',
     credit: { artist: 'Silence Wang', song: '慢慢懂', album: '慢慢懂' }
   },
   {
     key: 'concerts' as const,
+    heading: 'Concerts',
     title: 'Fate brought us together beyond this restless world',
     credit: { artist: 'G.E.M.', song: '光年之外', album: '' }
   }
@@ -112,10 +117,28 @@ describe('English content hygiene', () => {
   it('uses the approved English lyric titles and source-transparent credits', () => {
     for (const contract of englishHeroContracts) {
       expect(getLocalizedPageMeta('en', contract.key)).toMatchObject({
+        heading: contract.heading,
         title: contract.title,
+        epigraph: contract.title,
         credit: contract.credit
       })
       expect(uiMessages.en.page[contract.key].title).toBe(contract.title)
+    }
+  })
+
+  it('promotes the section name to the English H1 and demotes the lyric to an epigraph', () => {
+    for (const contract of englishHeroContracts) {
+      const meta = getLocalizedPageMeta('en', contract.key)
+      expect(meta.heading).toBe(contract.heading)
+      expect(meta.heading).not.toBe(meta.title)
+      expect(meta.epigraph).toBe(contract.title)
+    }
+    for (const locale of ['zh-CN', 'zh-HK'] as const) {
+      for (const contract of englishHeroContracts) {
+        const meta = getLocalizedPageMeta(locale, contract.key)
+        expect(meta.heading).toBeUndefined()
+        expect(meta.epigraph).toBeUndefined()
+      }
     }
   })
 

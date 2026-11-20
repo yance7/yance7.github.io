@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { getLocalizedConcerts, getLocalizedNavItems } from '../src/data/locales'
+import { getLocalizedConcerts, getLocalizedNavItems, getLocalizedPageMeta } from '../src/data/locales'
 import { localeRegistry } from '../src/i18n/locales'
 import { uiMessages } from '../src/i18n/messages'
 import type { Locale } from '../src/i18n/types'
@@ -35,7 +35,7 @@ function localeSwitcher(locale: Locale, pathFor: (code: Locale) => string) {
 
 function renderConcerts(locale: Locale) {
   const messages = uiMessages[locale]
-  const page = messages.page.concerts
+  const page = getLocalizedPageMeta(locale, 'concerts')
   const nav = getLocalizedNavItems(locale)
     .map((item) => `<a href="${escapeHtml(item.href)}"${item.key === 'concerts' ? ' aria-current="page"' : ''}>${escapeHtml(item.label)}</a>`)
     .join('')
@@ -50,7 +50,8 @@ function renderConcerts(locale: Locale) {
   return `<main tabindex="-1" class="noscript-fallback" data-noscript-fallback="concerts">
     <nav class="noscript-fallback-nav" aria-label="${escapeHtml(messages.navigation.main)}">${nav}</nav>
     <p class="noscript-fallback-kicker">${escapeHtml(page.kicker)}</p>
-    <h1>${escapeHtml(page.title)}</h1>
+    <h1>${escapeHtml(page.heading ?? page.title)}</h1>
+    ${page.epigraph ? `<p class="noscript-fallback-epigraph">${escapeHtml(page.epigraph)}</p>` : ''}
     <p>${escapeHtml(page.copy)}</p>
     <p class="noscript-notice">${escapeHtml(fallbackNote[locale])}</p>
     <ul class="noscript-concert-list">${items}</ul>

@@ -196,11 +196,17 @@ export interface LightboxPayload {
 export interface PageMeta {
   kicker: string
   title: string
+  /** Rendered H1. English archive pages use the section name; defaults to the lyric title. */
+  heading?: string
+  /** Small lyric inscription rendered beneath the heading on English archive pages. */
+  epigraph?: string
   documentTitle: string
   copy: string
   /** Latest substantive update to this locale's page copy, when it differs from shared data. */
   contentUpdatedAt?: string
   credit?: HeroCredit
+  /** Accurate description of the social share image, when the title is not descriptive. */
+  imageAlt?: string
 }
 
 export interface World {

@@ -472,7 +472,7 @@ test('reveal content uses the shared fade-up tokens with a bounded stagger', asy
 })
 
 test('page titles and section headings use the tightened entrance values', async ({ page }) => {
-  await page.goto('/en/honors/')
+  await page.goto('/honors/')
   await waitForHydration(page)
   const charMotion = await page.locator('.hero-title.hero-lyric .lyric-char').first().evaluate((element) => {
     const style = getComputedStyle(element)

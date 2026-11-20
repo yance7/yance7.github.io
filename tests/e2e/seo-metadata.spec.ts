@@ -68,6 +68,22 @@ for (const locale of locales) {
   }
 }
 
+const expectedHomeImageAlt: Record<Locale, string> = {
+  'zh-CN': 'Yance 个人档案首页卡片：研究者、构建者、音乐聆听者；在线，2026。',
+  'zh-HK': 'Yance 個人檔案首頁卡片：研究者、建構者、音樂聆聽者；線上，2026。',
+  en: 'Yance personal archive home card — researcher, builder, and music listener; online, 2026.'
+}
+
+for (const locale of locales) {
+  test(`${locale} home share image alt describes the card, not the decorative title`, async ({ page }) => {
+    await page.goto(buildLocalizedPageHref('home', locale))
+    const alt = expectedHomeImageAlt[locale]
+    await expect(page.locator('meta[property="og:image:alt"]')).toHaveAttribute('content', alt)
+    await expect(page.locator('meta[name="twitter:image:alt"]')).toHaveAttribute('content', alt)
+    expect(alt).not.toContain('SONG NOTES')
+  })
+}
+
 test('theme-color tracks the toggled and persisted runtime theme', async ({ page }) => {
   await page.addInitScript(() => {
     if (localStorage.getItem('yance-theme') === null) localStorage.setItem('yance-theme', 'light')

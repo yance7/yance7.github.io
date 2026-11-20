@@ -32,76 +32,65 @@ const locales = [
 ] as const
 
 for (const width of [390, 768]) {
-  test(`the English honors title keeps words and its quote on text lines at ${width}px`, async ({ page }, testInfo) => {
+  test(`the English honors heading and lyric epigraph stay readable at ${width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: 900 })
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.goto('/en/honors/')
     await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', /^(ready|fallback)$/)
     await page.evaluate(() => document.fonts.ready)
-    const title = page.locator('.hero-title.hero-lyric')
-    const geometry = await title.evaluate(element => {
-      const words = [...element.querySelectorAll('.lyric-word')]
+    await expect(page.locator('h1.hero-title.hero-heading')).toHaveText('Honors')
+    const epigraph = page.locator('.hero-epigraph')
+    await expect(epigraph).toHaveText('Step by step, I keep climbing')
+    const geometry = await epigraph.evaluate(element => {
+      const range = document.createRange()
+      range.selectNodeContents(element)
+      const rects = [...range.getClientRects()]
+      const style = getComputedStyle(element)
       return {
-        words: words.map(word => word.textContent),
-        lines: new Set(words.map(word => Math.round(word.getBoundingClientRect().top))).size,
+        lines: new Set(rects.map(rect => Math.round(rect.top))).size,
+        fontSize: Number.parseFloat(style.fontSize),
+        fontStyle: style.fontStyle,
         overflow: element.scrollWidth > element.clientWidth + 1 || document.documentElement.scrollWidth > innerWidth + 1
       }
     })
-    expect(geometry.words).toEqual(['Step', 'by', 'step,', 'I', 'keep', 'climbing'])
-    expect(geometry.lines).toBeGreaterThanOrEqual(2)
+    expect(geometry.lines).toBeGreaterThanOrEqual(1)
     expect(geometry.lines).toBeLessThanOrEqual(4)
+    expect(geometry.fontSize).toBeGreaterThanOrEqual(12)
+    expect(geometry.fontStyle).toBe('italic')
     expect(geometry.overflow).toBe(false)
-    await expect(title).toHaveAttribute('aria-label', 'Step by step, I keep climbing')
     await page.locator('.archive-hero').screenshot({ path: testInfo.outputPath('english-honors-natural.png') })
   })
 }
 
-test('the English honors closing quote stays with its last word at a line boundary', async ({ page }) => {
+test('the English honors lyric epigraph reads as one inscription line on wide screens', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/en/honors/')
   await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', /^(ready|fallback)$/)
   await page.evaluate(() => document.fonts.ready)
-  const title = page.locator('.hero-title.hero-lyric')
-  const quoteWidth = await title.evaluate(element => {
-    const before = getComputedStyle(element, '::before')
-    const probe = document.createElement('span')
-    probe.textContent = '「'
-    probe.style.cssText = 'position:fixed;visibility:hidden;white-space:nowrap'
-    probe.style.font = before.font
-    probe.style.letterSpacing = before.letterSpacing
-    document.body.append(probe)
-    const quoteWidth = probe.getBoundingClientRect().width
-    probe.remove()
-    const textWidth = [...element.querySelectorAll('.lyric-char, .lyric-space')]
-      .reduce((total, span) => total + span.getBoundingClientRect().width, 0)
-    // All words plus the opening quote fit, but there is no room for the closing
-    // quote. Ordinary wrapping must move the last word together with that quote.
-    const title = element as HTMLElement
-    title.style.maxWidth = 'none'
-    title.style.textWrap = 'wrap'
-    title.style.width = `${textWidth + quoteWidth * 1.5 + Number.parseFloat(before.marginRight)}px`
-    return quoteWidth
-  })
-  const geometry = await title.evaluate(element => {
-    const words = [...element.querySelectorAll('.lyric-word')]
-    const last = words.at(-1)!
-    const lastTextWidth = [...last.querySelectorAll('.lyric-char')].reduce((total, char) => total + char.getBoundingClientRect().width, 0)
+  await expect(page.locator('h1.hero-title.hero-heading')).toHaveText('Honors')
+  const epigraph = page.locator('.hero-epigraph')
+  await expect(epigraph).toHaveText('Step by step, I keep climbing')
+  const geometry = await page.locator('.hero-main').evaluate(element => {
+    const lineCount = (selector: string) => {
+      const el = element.querySelector<HTMLElement>(selector)!
+      const range = document.createRange()
+      range.selectNodeContents(el)
+      return new Set([...range.getClientRects()].map(rect => Math.round(rect.top))).size
+    }
+    const epigraphEl = element.querySelector<HTMLElement>('.hero-epigraph')!
     return {
-      words: words.map(word => word.textContent),
-      lines: new Set(words.map(word => Math.round(word.getBoundingClientRect().top))).size,
-      wordLines: words.map(word => new Set([...word.querySelectorAll('.lyric-char')].map(char => Math.round(char.getBoundingClientRect().top))).size),
-      lastWordExtraWidth: last.getBoundingClientRect().width - lastTextWidth,
-      overflow: element.scrollWidth > element.clientWidth + 1
+      headingLines: lineCount('.hero-title.hero-heading'),
+      epigraphLines: lineCount('.hero-epigraph'),
+      epigraphOverflow: epigraphEl.scrollWidth > epigraphEl.clientWidth + 1,
+      documentOverflow: document.documentElement.scrollWidth > innerWidth + 1
     }
   })
-  expect(geometry.words).toEqual(['Step', 'by', 'step,', 'I', 'keep', 'climbing'])
-  expect(quoteWidth).toBeGreaterThan(0)
-  expect(geometry.lastWordExtraWidth).toBeGreaterThanOrEqual(quoteWidth)
-  expect(geometry.lines).toBe(2)
-  expect(geometry.wordLines).toEqual([1, 1, 1, 1, 1, 1])
-  expect(geometry.overflow).toBe(false)
-  await expect(title).toHaveAttribute('aria-label', 'Step by step, I keep climbing')
+  expect(geometry.headingLines).toBe(1)
+  expect(geometry.epigraphLines).toBe(1)
+  expect(geometry.epigraphOverflow).toBe(false)
+  expect(geometry.documentOverflow).toBe(false)
+  await expect(page.locator('.lyric-credit')).toContainText('Jay Chou')
 })
 
 async function readFontRoles(page: Page) {

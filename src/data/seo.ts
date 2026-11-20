@@ -63,7 +63,7 @@ export function getLocalizedSeo(locale: Locale, page: PageKey): LocalizedSeo {
     href: buildLocalizedCanonicalUrl('zh-CN', page)
   })
   const ogImage = `${SITE_ORIGIN}/${pageRegistry[page].ogImage}`
-  const ogImageAlt = `${meta.title} — Yance`
+  const ogImageAlt = meta.imageAlt ?? `${meta.title} — Yance`
 
   return {
     locale,
