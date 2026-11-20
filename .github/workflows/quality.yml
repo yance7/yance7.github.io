@@ -55,7 +55,7 @@ concurrency:
 jobs:
   poster-retry-stress:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_poster_retry_stress == true }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
       PLAYWRIGHT_USE_PREVIEW: '1'
@@ -89,7 +89,7 @@ jobs:
 
   home-motion-stress:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_home_motion_stress == true }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -148,7 +148,7 @@ jobs:
           include-hidden-files: true
   pointer-stress:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_pointer_stress == true }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -195,7 +195,7 @@ jobs:
           include-hidden-files: true
   particle-stress:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_particle_stress == true }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -245,7 +245,7 @@ jobs:
           include-hidden-files: true
   visual-stress:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_visual_stress == true }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
       PLAYWRIGHT_USE_PREVIEW: '1'
@@ -284,7 +284,7 @@ jobs:
           include-hidden-files: true
   visual-snapshot-review:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.update_visual_snapshots == true }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       PLAYWRIGHT_USE_PREVIEW: '1'
       PLAYWRIGHT_OUTPUT_DIR: test-results/snapshot-review
@@ -328,7 +328,7 @@ jobs:
           if-no-files-found: error
   audit:
     if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' || inputs.run_full_audit == true }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       PLAYWRIGHT_USE_PREVIEW: '1'
     steps:
