@@ -320,6 +320,7 @@ html:not([data-js='true']) .startup-shell { display: none; }
 }
 .shell-fallback h1 { margin: 0 0 16px; font-family: var(--font-editorial); font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.15; }
 .shell-fallback p { max-width: var(--w-editorial); margin: 0 0 16px; color: var(--muted); font-family: var(--font-prose); line-height: 1.8; }
+.shell-fallback .shell-fallback-epigraph { margin: -4px 0 16px; font-family: var(--font-editorial); font-style: italic; font-size: clamp(1.05rem, 2vw, 1.3rem); line-height: 1.6; }
 .shell-fallback-list { display: grid; gap: 12px; margin: 24px 0 0; padding: 0; list-style: none; }
 .shell-fallback-list li { display: grid; gap: 4px; padding: 12px 0; border-top: 1px solid var(--line-faint); font-family: var(--font-interface); }
 .shell-fallback-list time { color: var(--gold); font-family: var(--font-technical); font-size: var(--text-xs); }
@@ -376,6 +377,9 @@ html[data-theme='dark'] .orbit-knob { transform: translateX(24px); background: v
   opacity: 0; transform: translateY(16px);
   animation: hero-stagger-in var(--dur-base) var(--ease-out) .34s forwards;
 }
+.hero-title.hero-heading {
+  opacity: 1; transform: none; animation: none;
+}
 .hero-title.hero-lyric {
   max-width: 860px;
   font-style: italic;
@@ -412,33 +416,9 @@ html[data-theme='dark'] .orbit-knob { transform: translateX(24px); background: v
   transform: translateY(10px) rotate(2deg);
   animation: lyric-char-in .42s var(--ease-out) calc(140ms + var(--ci) * 45ms) forwards;
 }
-html[data-locale='en'] .hero-title.hero-works-title {
-  display: block;
-  white-space: normal;
-}
-html[data-locale='en'] .hero-title.hero-lyric {
-  max-width: min(100%, 24ch);
-  font-size: clamp(1.65rem, 6.8vw, 3.4rem);
-  line-height: 1.24;
-  letter-spacing: -.025em;
+html[data-locale='en'] .hero-title.hero-heading {
+  max-width: min(100%, 16ch);
   text-wrap: balance;
-  white-space: normal;
-}
-html[data-locale='en'] .hero-title.hero-lyric .lyric-word {
-  display: inline-block;
-  white-space: nowrap;
-}
-html[data-locale='en'] .hero-title.hero-lyric .lyric-space {
-  width: .3em;
-  flex: 0 0 auto;
-}
-/* Keep the short honors title's closing quote with its final unbroken word. */
-html[data-locale='en'] body[data-page='honors'] .hero-title.hero-lyric::after { content: none; }
-html[data-locale='en'] body[data-page='honors'] .hero-title.hero-lyric .lyric-word:last-child::after {
-  content: '」';
-  color: var(--gold);
-  font-style: normal;
-  margin-left: .16em;
 }
 @keyframes lyric-char-in { to { opacity: 1; transform: none; } }
 .hero-copy {
@@ -447,6 +427,13 @@ html[data-locale='en'] body[data-page='honors'] .hero-title.hero-lyric .lyric-wo
   font-size: clamp(1rem, 1.6vw, 1.22rem); line-height: 1.9;
   opacity: 0; transform: translateY(12px);
   animation: hero-stagger-in var(--dur-base) var(--ease-out) .46s forwards;
+}
+.hero-epigraph {
+  max-width: 60ch;
+  margin: calc(-1 * var(--space-3)) 0 var(--space-4);
+  font-family: var(--font-editorial); font-style: italic;
+  font-size: clamp(1.05rem, 1.7vw, 1.35rem); line-height: 1.6; letter-spacing: .01em;
+  color: var(--muted);
 }
 @keyframes hero-stagger-in { to { opacity: 1; transform: none } }
 .lyric-credit {

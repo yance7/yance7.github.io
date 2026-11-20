@@ -188,8 +188,22 @@ describe('localized SEO contracts', () => {
         expect(seo.twitterImage).toBe(seo.ogImage)
         expect(seo.twitterImageAlt).toBe(seo.ogImageAlt)
         expect(seo.ogImage).toBe(`https://yance.me/${pageRegistry[page].ogImage}`)
-        expect(seo.ogImageAlt).toBe(`${meta.title} — Yance`)
+        expect(seo.ogImageAlt).toBe(meta.imageAlt ?? `${meta.title} — Yance`)
       }
+    }
+  })
+
+  it('describes the home social card accurately instead of the decorative title', () => {
+    const expectedHomeAlt = {
+      'zh-CN': 'Yance 个人档案首页卡片：研究者、构建者、音乐聆听者；在线，2026。',
+      'zh-HK': 'Yance 個人檔案首頁卡片：研究者、建構者、音樂聆聽者；線上，2026。',
+      en: 'Yance personal archive home card — researcher, builder, and music listener; online, 2026.'
+    } as const
+    for (const locale of locales) {
+      const seo = getLocalizedSeo(locale, 'home')
+      expect(seo.ogImageAlt).toBe(expectedHomeAlt[locale])
+      expect(seo.twitterImageAlt).toBe(expectedHomeAlt[locale])
+      expect(seo.ogImageAlt).not.toContain('SONG NOTES')
     }
   })
 

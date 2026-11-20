@@ -2,12 +2,13 @@
 import { computed } from 'vue'
 import SiteHeader from '../components/SiteHeader.vue'
 import { buildLocalizedPageHref, useLocale } from '../i18n'
-import { getLocalizedConcerts } from '../data/locales'
+import { getLocalizedConcerts, getLocalizedPageMeta } from '../data/locales'
 import type { PageKey } from '../data/pageRegistry'
 
 const props = defineProps<{ page?: PageKey }>()
 const { locale, messages } = useLocale()
 const isConcerts = computed(() => props.page === 'concerts')
+const concertsMeta = computed(() => getLocalizedPageMeta(locale.value, 'concerts'))
 const concerts = computed(() => isConcerts.value
   ? [...getLocalizedConcerts(locale.value)].sort((left, right) => right.date.localeCompare(left.date))
   : [])
@@ -26,9 +27,10 @@ const researchHref = computed(() => buildLocalizedPageHref('research', locale.va
 
     <main id="main" tabindex="-1" class="shell-fallback">
       <template v-if="isConcerts">
-        <p class="shell-fallback-kicker">{{ messages.page.concerts.kicker }}</p>
-        <h1>{{ messages.page.concerts.title }}</h1>
-        <p>{{ messages.page.concerts.copy }}</p>
+        <p class="shell-fallback-kicker">{{ concertsMeta.kicker }}</p>
+        <h1>{{ concertsMeta.heading ?? concertsMeta.title }}</h1>
+        <p v-if="concertsMeta.epigraph" class="shell-fallback-epigraph">{{ concertsMeta.epigraph }}</p>
+        <p>{{ concertsMeta.copy }}</p>
         <ul class="shell-fallback-list">
           <li v-for="concert in concerts" :key="`${concert.date}-${concert.artist}`">
             <time :datetime="concert.date">{{ concert.date }}</time>
