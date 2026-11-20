@@ -18,10 +18,11 @@ interface NetworkInformation extends EventTarget {
 
 const fontState = ref<'loading' | 'ready' | 'fallback'>('loading')
 const finalState = ref(false)
-const greetingRevealed = ref(0)
-const statementRevealed = ref(0)
 const greetingTimeline = computed(() => buildTypewriterLine(props.greeting))
 const statementTimeline = computed(() => buildTypewriterLine(props.statement))
+// The greeting is the readable first-frame title; only the statement types in.
+const greetingRevealed = ref(greetingTimeline.value.graphemes.length)
+const statementRevealed = ref(0)
 let frame = 0
 let startedAt = 0
 let disposed = false
@@ -41,12 +42,10 @@ function showFinal() {
 }
 
 function applyReveal(elapsedMs: number) {
-  const greeting = greetingTimeline.value
   const statement = statementTimeline.value
-  const statementStartMs = greeting.totalMs + TYPEWRITER_TIMINGS.linePauseMs
+  const statementStartMs = greetingTimeline.value.totalMs + TYPEWRITER_TIMINGS.linePauseMs
   const statementElapsedMs = elapsedMs - statementStartMs
 
-  greetingRevealed.value = getTypewriterReveal(greeting, elapsedMs)
   statementRevealed.value = statementElapsedMs < 0 ? 0 : getTypewriterReveal(statement, statementElapsedMs)
 
   if (elapsedMs >= statementStartMs + statement.totalMs) {

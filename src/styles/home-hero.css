@@ -91,6 +91,12 @@
   overflow-wrap: anywhere;
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  /* The greeting stays readable on the first frame and only rises into place. */
+  .home-hero-typewriter-line-greeting { animation: home-title-rise .56s var(--ease-out) both; }
+}
+@keyframes home-title-rise { from { transform: translateY(12px); } to { transform: none; } }
+
 /* The intro is revealed per grapheme in JS: unrevealed glyphs keep their space but
    stay invisible, so wrapped lines type strictly left-to-right and the full copy
    never flashes before typing. */

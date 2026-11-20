@@ -28,6 +28,19 @@ const viewports = [
   { width: 844, height: 390 }
 ] as const
 
+test('home greeting is readable before the entry bundle loads', async ({ page }) => {
+  await page.route(/\/assets\/vue\/main-[^/]+\.js$/u, (route) => route.abort())
+  await page.goto('/en/', { waitUntil: 'domcontentloaded' })
+
+  const greeting = page.locator('.home-hero-typewriter')
+  await expect(greeting).toContainText('Hi, I’m Yance')
+  await expect(greeting.locator('.home-hero-typewriter-line-greeting .home-hero-typewriter-glyph').first())
+    .toHaveCSS('visibility', 'visible')
+  const revealed = Number(await greeting.getAttribute('data-greeting-revealed'))
+  expect(revealed).toBeGreaterThan(1)
+  await expect(page.locator('main#main h1')).toContainText('Hi, I’m Yance')
+})
+
 for (const fallback of [false, true]) for (const locale of locales) {
   test(`${locale.route} Home hero preserves centered vertical geometry${fallback ? ' with unavailable greeting font' : ''}`, async ({ page }) => {
     if (fallback) await page.route('**/hero-greeting-wenkai-*.woff2', route => route.abort('failed'))

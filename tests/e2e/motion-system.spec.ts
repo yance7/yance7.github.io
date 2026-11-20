@@ -667,6 +667,57 @@ test('quick hash navigation reveals the targeted Works project', async ({ page }
   await expect.poll(() => target.evaluate((element) => getComputedStyle(element).transform)).toBe('none')
 })
 
+test('main titles rise once without hiding their content', async ({ page }) => {
+  const settled = (element: Element) => {
+    const transform = getComputedStyle(element).transform
+    return transform === 'none' || transform === 'matrix(1, 0, 0, 1, 0, 0)'
+  }
+  await page.goto('/en/honors/')
+  await waitForHydration(page)
+
+  const heading = page.locator('h1.hero-title')
+  await expect(heading).toHaveCSS('animation-name', 'hero-title-rise')
+  await expect(heading).toHaveCSS('animation-iteration-count', '1')
+  await expect(heading).toHaveCSS('opacity', '1')
+  await expect.poll(() => heading.evaluate(settled)).toBe(true)
+
+  await page.goto('/')
+  await waitForHydration(page)
+  const greetingLine = page.locator('.home-hero-typewriter-line-greeting')
+  await expect(greetingLine).toHaveCSS('animation-name', 'home-title-rise')
+  await expect(greetingLine).toHaveCSS('opacity', '1')
+  await expect.poll(() => greetingLine.evaluate(settled)).toBe(true)
+})
+
+test('reduced motion removes the title rise', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/en/honors/')
+  await waitForHydration(page)
+
+  const heading = page.locator('h1.hero-title')
+  await expect(heading).toHaveCSS('animation-name', 'none')
+  await expect(heading).toHaveCSS('transform', 'none')
+
+  await page.goto('/')
+  await waitForHydration(page)
+  await expect(page.locator('.home-hero-typewriter-line-greeting')).toHaveCSS('animation-name', 'none')
+})
+
+test('hash arrival keeps the archive heading and epigraph readable', async ({ page }) => {
+  await page.goto('/en/research/#fishfreshnet-v2', { waitUntil: 'domcontentloaded' })
+  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
+
+  const heading = page.locator('h1.hero-title')
+  await expect(heading).toHaveText('Research')
+  await expect(heading).toHaveCSS('opacity', '1')
+  await expect(page.locator('.hero-epigraph')).toHaveText('You share this imperfect dream with me')
+
+  const target = page.locator('#fishfreshnet-v2')
+  await expect(target).toHaveClass(/revealed/)
+  await expect.poll(() => target.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBe(1)
+  await expect.poll(() => target.evaluate((element) => getComputedStyle(element).transform)).toBe('none')
+})
+
 test('scrolling to the document end reveals the footer and all remaining content', async ({ page }) => {
   await page.goto('/concerts/')
 

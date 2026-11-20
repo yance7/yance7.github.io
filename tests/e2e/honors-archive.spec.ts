@@ -39,6 +39,27 @@ test('honors archive keeps source coordinates when filtered', async ({ page }) =
   await expect(page.locator('.honor-coordinate')).toHaveText(['02', '03', '07', '10'])
 })
 
+test('honors category filter works from the keyboard', async ({ page }) => {
+  await page.goto('/honors/')
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+  await expect(page.locator('.honor-card')).toHaveCount(13)
+
+  let focusedKey: string | null = null
+  for (let step = 0; step < 80 && !focusedKey; step += 1) {
+    await page.keyboard.press('Tab')
+    focusedKey = await page.evaluate(() => {
+      const key = document.activeElement?.getAttribute('data-honor-filter')
+      return key && key !== 'all' ? key : null
+    })
+  }
+  expect(focusedKey, 'a category filter receives keyboard focus').toBeTruthy()
+
+  await page.keyboard.press('Enter')
+  await expect(page.locator(`[data-honor-filter="${focusedKey}"]`)).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.locator('[data-honor-filter="all"]')).toHaveAttribute('aria-pressed', 'false')
+  await expect.poll(() => page.locator('.honor-card').count()).toBeLessThan(13)
+})
+
 test('honors filter counts keep fixed circles and centered numerals', async ({ page }) => {
   await settleHonorsPage(page)
   await page.mouse.move(0, 0)

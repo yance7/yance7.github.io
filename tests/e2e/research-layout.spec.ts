@@ -22,6 +22,35 @@ test('research reading state preserves the revealed timeline geometry', async ({
   await expect(item).toHaveCSS('transform', 'none')
 })
 
+test('research copy citation works from the keyboard', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: async () => {
+          const state = window as Window & { __copyWrites?: number }
+          state.__copyWrites = (state.__copyWrites ?? 0) + 1
+        }
+      }
+    })
+  })
+  await page.goto('/research/')
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+
+  const button = page.locator('.copy-citation').first()
+  await expect(button).toBeEnabled()
+  let focused = false
+  for (let step = 0; step < 160 && !focused; step += 1) {
+    await page.keyboard.press('Tab')
+    focused = await page.evaluate(() => document.activeElement?.classList.contains('copy-citation') ?? false)
+  }
+  expect(focused, 'the copy citation control receives keyboard focus').toBe(true)
+
+  await page.keyboard.press('Enter')
+  await expect(button).toHaveAttribute('data-state', 'success')
+  expect(await page.evaluate(() => (window as Window & { __copyWrites?: number }).__copyWrites)).toBe(1)
+})
+
 const viewports = [
   { name: 'narrow', width: 320, height: 844 },
   { name: 'mobile', width: 390, height: 844 },

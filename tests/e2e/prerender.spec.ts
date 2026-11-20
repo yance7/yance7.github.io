@@ -381,15 +381,15 @@ test('pre-rendered home sections stay visible while the home page chunk is delay
   await expect(page.locator('#selected-work')).toBeVisible()
 })
 
-test('pre-rendered home types the greeting in without flashing the full copy', async ({ page }) => {
+test('pre-rendered home keeps the greeting readable and types the statement', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' })
   await page.addInitScript(() => {
     type TypingSnapshot = {
       finalState: string | undefined
       greetingRevealed: string | undefined
       statementRevealed: string | undefined
-      firstGlyphRevealed: boolean | undefined
-      lastGreetingRevealed: boolean | undefined
+      firstStatementRevealed: boolean | undefined
+      lastStatementRevealed: boolean | undefined
       actionsOpacity: string
     }
     const state = window as Window & { __typingSnapshots?: TypingSnapshot[] }
@@ -398,13 +398,13 @@ test('pre-rendered home types the greeting in without flashing the full copy', a
       const greeting = document.querySelector<HTMLElement>('.home-hero-typewriter')
       const actions = document.querySelector<HTMLElement>('.home-hero-actions')
       if (!greeting || !actions) return
-      const greetingGlyphs = greeting.querySelectorAll<HTMLElement>('.home-hero-typewriter-line-greeting .home-hero-typewriter-glyph')
+      const statementGlyphs = greeting.querySelectorAll<HTMLElement>('.home-hero-typewriter-line-statement .home-hero-typewriter-glyph')
       state.__typingSnapshots?.push({
         finalState: greeting.dataset.finalState,
         greetingRevealed: greeting.dataset.greetingRevealed,
         statementRevealed: greeting.dataset.statementRevealed,
-        firstGlyphRevealed: greetingGlyphs[0]?.classList.contains('is-revealed'),
-        lastGreetingRevealed: greetingGlyphs[greetingGlyphs.length - 1]?.classList.contains('is-revealed'),
+        firstStatementRevealed: statementGlyphs[0]?.classList.contains('is-revealed'),
+        lastStatementRevealed: statementGlyphs[statementGlyphs.length - 1]?.classList.contains('is-revealed'),
         actionsOpacity: getComputedStyle(actions).opacity
       })
     }
@@ -428,17 +428,21 @@ test('pre-rendered home types the greeting in without flashing the full copy', a
 
   const greeting = page.locator('.home-hero-typewriter')
   const actions = page.locator('.home-hero-actions')
-  const firstGlyph = page.locator('.home-hero-typewriter-line-greeting .home-hero-typewriter-glyph').first()
+  const firstGreetingGlyph = page.locator('.home-hero-typewriter-line-greeting .home-hero-typewriter-glyph').first()
+  const firstStatementGlyph = page.locator('.home-hero-typewriter-line-statement .home-hero-typewriter-glyph').first()
+  let greetingCount = 0
   try {
     await page.goto('/en/', { waitUntil: 'commit' })
+    greetingCount = await greeting.locator('.home-hero-typewriter-line-greeting .home-hero-typewriter-glyph').count()
     await entryRequested
-    // Continuity: the crawlable heading is complete while the decorative glyphs stay
-    // hidden, so the full copy never flashes before typing starts.
+    // First-frame readability: the greeting is complete while the entry bundle is
+    // still pending; only the statement types in after hydration.
     await expect(page.locator('main#main h1')).toContainText('Hi, I’m Yance')
     await expect(greeting).toBeVisible()
     await expect(greeting).toHaveAttribute('data-final-state', 'false')
-    await expect(greeting).toHaveAttribute('data-greeting-revealed', '0')
-    await expect(firstGlyph).toHaveCSS('visibility', 'hidden')
+    await expect(greeting).toHaveAttribute('data-greeting-revealed', String(greetingCount))
+    await expect(firstGreetingGlyph).toHaveCSS('visibility', 'visible')
+    await expect(firstStatementGlyph).toHaveCSS('visibility', 'hidden')
     await expect(actions).toHaveCSS('opacity', '1')
   } finally {
     releaseEntry()
@@ -446,13 +450,13 @@ test('pre-rendered home types the greeting in without flashing the full copy', a
 
   await expect(page.locator('body')).toHaveAttribute('data-hydrated', 'true')
   await expect(greeting).toHaveAttribute('data-final-state', 'true', { timeout: 6000 })
-  const greetingCount = await greeting.locator('.home-hero-typewriter-line-greeting .home-hero-typewriter-glyph').count()
   const statementCount = await greeting.locator('.home-hero-typewriter-line-statement .home-hero-typewriter-glyph').count()
   expect(greetingCount).toBeGreaterThan(1)
   expect(statementCount).toBeGreaterThan(1)
   await expect(greeting).toHaveAttribute('data-greeting-revealed', String(greetingCount))
   await expect(greeting).toHaveAttribute('data-statement-revealed', String(statementCount))
-  await expect(firstGlyph).toHaveCSS('visibility', 'visible')
+  await expect(firstGreetingGlyph).toHaveCSS('visibility', 'visible')
+  await expect(firstStatementGlyph).toHaveCSS('visibility', 'visible')
   await expect(greeting).toContainText('Hi, I’m Yance')
   await expect(actions).toHaveCSS('opacity', '1')
 
@@ -461,8 +465,8 @@ test('pre-rendered home types the greeting in without flashing the full copy', a
       finalState: string | undefined
       greetingRevealed: string | undefined
       statementRevealed: string | undefined
-      firstGlyphRevealed: boolean | undefined
-      lastGreetingRevealed: boolean | undefined
+      firstStatementRevealed: boolean | undefined
+      lastStatementRevealed: boolean | undefined
       actionsOpacity: string
     }> }).__typingSnapshots ?? []
   ))
@@ -472,25 +476,24 @@ test('pre-rendered home types the greeting in without flashing the full copy', a
   const statementSeries = snapshots
     .map(snapshot => Number(snapshot.statementRevealed))
     .filter(Number.isFinite)
-  // Progressive typing: several distinct reveal counts, not just the SSR 0 and the end.
-  expect(new Set(greetingSeries).size).toBeGreaterThanOrEqual(3)
+  // The greeting is readable from the server render onward; only the statement
+  // animates through several distinct reveal counts.
+  expect(greetingSeries.every(count => count === greetingCount)).toBe(true)
   expect(new Set(statementSeries).size).toBeGreaterThanOrEqual(3)
-  expect(Math.max(...greetingSeries)).toBe(greetingCount)
   expect(Math.max(...statementSeries)).toBe(statementCount)
-  // No premature cut to final before the copy finished revealing.
+  // No premature cut to final before the statement finished revealing.
   expect(snapshots.some(snapshot => (
     snapshot.finalState === 'true'
-    && (Number(snapshot.greetingRevealed) < greetingCount || Number(snapshot.statementRevealed) < statementCount)
+    && Number(snapshot.statementRevealed) < statementCount
   ))).toBe(false)
   expect(snapshots.every(snapshot => snapshot.actionsOpacity === '1')).toBe(true)
-  // Glyph visibility really progresses: an intermediate frame shows the first glyph
-  // while the last greeting glyph is still hidden, then all become visible.
+  // An intermediate frame shows the first statement glyph while the last is hidden.
   expect(snapshots.some(snapshot => (
-    snapshot.firstGlyphRevealed === true && snapshot.lastGreetingRevealed === false
+    snapshot.firstStatementRevealed === true && snapshot.lastStatementRevealed === false
   ))).toBe(true)
   const settled = snapshots[snapshots.length - 1]!
-  expect(settled.firstGlyphRevealed).toBe(true)
-  expect(settled.lastGreetingRevealed).toBe(true)
+  expect(settled.firstStatementRevealed).toBe(true)
+  expect(settled.lastStatementRevealed).toBe(true)
 })
 
 test('reduced motion reveals the finished greeting before hydration', async ({ browser }) => {
