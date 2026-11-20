@@ -418,9 +418,14 @@ test('reveal content uses the shared fade-up tokens with a bounded stagger', asy
   const secondProject = page.locator('#project-ap-microeconomics-notes')
   await expect(secondProject).toHaveClass(/reveal/)
   await expect(secondProject).not.toHaveClass(/revealed/)
-  await expect.poll(() => secondProject.evaluate((element) => (
-    new DOMMatrixReadOnly(getComputedStyle(element).transform).m42
-  ))).toBe(16)
+  // Hydration moves the SSR-visible card back to its hidden reveal state; wait for
+  // the fade to finish (opacity string is exactly "0") and for the sub-pixel matrix
+  // to settle before sampling the authored tokens.
+  await expect.poll(() => secondProject.evaluate((element) => {
+    const style = getComputedStyle(element)
+    const offset = new DOMMatrixReadOnly(style.transform).m42
+    return Math.abs(offset - 16) < 0.5 && style.opacity === '0'
+  })).toBe(true)
 
   const initialMotion = await secondProject.evaluate((element) => {
     const style = getComputedStyle(element)
@@ -440,7 +445,8 @@ test('reveal content uses the shared fade-up tokens with a bounded stagger', asy
     }
   })
   expect(initialMotion.distance).toBe('16px')
-  expect(initialMotion.offsetY).toBe(16)
+  // WebKit can report the computed matrix a few thousandths off the authored px.
+  expect(initialMotion.offsetY).toBeCloseTo(16, 0)
   expect(initialMotion.opacity).toBe(0)
   expect(initialMotion.fadeDuration).toBe('0.5s')
   expect(initialMotion.durationMs).toBe(500)

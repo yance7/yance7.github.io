@@ -1,5 +1,8 @@
 /* ===== 共享响应式外壳与组件 ===== */
-@media (max-width: 1024px) and (min-width: 641px) {
+/* Compact rail through 1240px: the full numbered rail only clears the control
+   group above ~1204px, so 1025–1240px hid nothing and let Concerts overlap the
+   locale pill (en) and squeeze the theme label into two lines (zh). */
+@media (max-width: 1240px) and (min-width: 641px) {
   .nav-rail { gap: var(--space-3); }
   .nav-rail a .nav-num { display: none; }
 }

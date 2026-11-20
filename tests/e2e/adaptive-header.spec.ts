@@ -315,6 +315,101 @@ test('desktop header uses centered navigation and a right-hand control group', a
   }
 })
 
+const midWidths = [1024, 1050, 1100, 1280] as const
+const midWidthLocales = [
+  { name: 'en', route: '/en/research/', lang: 'en' },
+  { name: 'zh-CN', route: '/research/', lang: 'zh-CN' },
+  { name: 'zh-HK', route: '/zh-hk/research/', lang: 'zh-HK' }
+] as const
+
+for (const locale of midWidthLocales) {
+  test(`mid-width header keeps nav clear of controls and keyboard reachable: ${locale.name}`, async ({ page }) => {
+    for (const width of midWidths) {
+      await page.setViewportSize({ width, height: 900 })
+      await page.goto(locale.route)
+      await waitForReady(page)
+      await expect(page.locator('html')).toHaveAttribute('data-locale', locale.lang)
+
+      for (const state of ['resting', 'floating'] as const) {
+        if (state === 'floating') {
+          await scrollHeader(page, 260)
+          await expect(page.locator('.site-nav')).toHaveAttribute('data-header-state', 'floating')
+        } else {
+          await expect(page.locator('.site-nav')).toHaveAttribute('data-header-state', 'resting')
+        }
+
+        const context = `${locale.name} ${width}px ${state}`
+        // The compact band keeps the inline rail; it must not collapse to the mobile menu.
+        await expect(page.locator('.nav-rail'), `${context} inline rail`).toBeVisible()
+        await expect(page.locator('.menu-trigger'), `${context} menu trigger`).toBeHidden()
+
+        const geometry = await page.evaluate(() => {
+          const rail = document.querySelector<HTMLElement>('.nav-rail')
+          const controls = document.querySelector<HTMLElement>('.site-nav-controls')
+          const localePill = document.querySelector<HTMLElement>('.locale-switcher-desktop')
+          if (!rail || !controls || !localePill) throw new Error('header groups are incomplete')
+          const links = [...rail.querySelectorAll<HTMLAnchorElement>('a')]
+          const last = links[links.length - 1]
+          if (!last) throw new Error('navigation rail is empty')
+          const railRect = rail.getBoundingClientRect()
+          const controlsRect = controls.getBoundingClientRect()
+          const localeRect = localePill.getBoundingClientRect()
+          const lastRect = last.getBoundingClientRect()
+          const label = document.querySelector<HTMLElement>('.orbit-label')
+          let labelSingleLine = true
+          if (label && label.getBoundingClientRect().width > 0) {
+            const labelRect = label.getBoundingClientRect()
+            const lineHeight = Number.parseFloat(getComputedStyle(label).lineHeight) || labelRect.height
+            labelSingleLine = label.getClientRects().length <= 1 && labelRect.height <= lineHeight * 1.4
+          }
+          const obscured = links.filter((link) => {
+            const rect = link.getBoundingClientRect()
+            const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2)
+            return !(hit === link || link.contains(hit))
+          }).map((link) => link.getAttribute('href'))
+          return {
+            navControlGap: controlsRect.left - railRect.right,
+            lastNavLocaleGap: localeRect.left - lastRect.right,
+            labelSingleLine,
+            obscured,
+            overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth
+          }
+        })
+
+        expect(geometry.navControlGap, `${context} nav/control overlap`).toBeGreaterThanOrEqual(0)
+        expect(geometry.lastNavLocaleGap, `${context} nav/locale overlap`).toBeGreaterThanOrEqual(0)
+        expect(geometry.labelSingleLine, `${context} theme label wraps`).toBe(true)
+        expect(geometry.obscured, `${context} obscured nav links`).toEqual([])
+        expect(geometry.overflow, `${context} document overflow`).toBeLessThanOrEqual(0)
+
+        const links = page.locator('.nav-rail a')
+        await expect(links, `${context} nav count`).toHaveCount(6)
+        // WebKit's sequential-focus start point can begin mid-header, so raw Tab
+        // traversal is engine-dependent. Assert each link sits in the natural tab
+        // order (tabIndex 0) and accepts keyboard focus directly instead.
+        const tabbable = await links.evaluateAll((els) => els.every((el) => el.tabIndex === 0 && !el.closest('[inert]')))
+        expect(tabbable, `${context} nav tabbable`).toBe(true)
+        for (let index = 0; index < 6; index += 1) {
+          await links.nth(index).focus()
+          await expect(links.nth(index), `${context} nav ${index} focusable`).toBeFocused()
+        }
+      }
+    }
+  })
+}
+
+test('mid-width Concerts link is clickable and navigates', async ({ page }) => {
+  await page.setViewportSize({ width: 1050, height: 900 })
+  await page.goto('/en/research/')
+  await waitForReady(page)
+
+  const concerts = page.locator('.nav-rail a').last()
+  await expect(concerts).toContainText('Concerts')
+  await expect(concerts).toBeVisible()
+  await concerts.click()
+  await expect(page).toHaveURL(/\/en\/concerts\/$/)
+})
+
 test('floating header preserves light and dark themes and reduced-motion state changes', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 900 })
   await page.emulateMedia({ reducedMotion: 'reduce' })

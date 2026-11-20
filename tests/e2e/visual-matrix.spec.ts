@@ -592,6 +592,30 @@ for (const route of ['research', 'works'] as const) {
   }
 }
 
+const englishRestingHeaderWidths = [
+  { name: '1024', width: 1024 },
+  { name: '1100', width: 1100 },
+  { name: '1280', width: 1280 }
+] as const
+for (const theme of themes) {
+  for (const size of englishRestingHeaderWidths) {
+    test(`captures English resting header ${theme} ${size.name}px visual baseline`, async ({ page }) => {
+      await page.setViewportSize({ width: size.width, height: 900 })
+      await installTheme(page, theme)
+      await page.goto('/en/research/')
+      await settlePage(page)
+      await resetPointerForVisualCapture(page)
+      await expect(page.locator('.site-nav')).toHaveAttribute('data-header-state', 'resting')
+      const surface = page.locator('.site-nav-surface')
+      await expect(surface).toBeVisible()
+      await expect(surface).toHaveScreenshot(
+        `header-resting-en-${theme}-${size.name}.png`,
+        componentScreenshotOptions
+      )
+    })
+  }
+}
+
 test('200 percent zoom-equivalent reflow keeps keyboard reading usable', async ({ page }) => {
   await page.setViewportSize({ width: 640, height: 844 })
   await page.goto('/research/')
