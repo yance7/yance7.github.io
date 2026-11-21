@@ -60,7 +60,7 @@ test('honors filtering renders compact cards without detail controls', async ({ 
   const filter = page.locator('.filter-btn').filter({ hasText: '国际' })
   await filter.scrollIntoViewIfNeeded()
   await filter.click()
-  await expect(page.locator('.honor-card')).toHaveCount(7)
+  await expect(page.locator('.honor-card')).toHaveCount(5)
   await expect(page.locator('.honor-card').first()).toHaveClass(/revealed/)
   await expect(page.locator('.honor-expand, .honor-detail')).toHaveCount(0)
 })

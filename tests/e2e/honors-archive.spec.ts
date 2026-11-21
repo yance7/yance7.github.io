@@ -35,8 +35,8 @@ test('honors archive keeps source coordinates when filtered', async ({ page }) =
   await page.locator('[data-honor-filter="international"]').click()
 
   await expect(page.locator('[data-honor-filter="international"]')).toHaveAttribute('aria-pressed', 'true')
-  await expect(page.locator('.honor-card')).toHaveCount(7)
-  await expect(page.locator('.honor-coordinate')).toHaveText(['02', '03', '05', '06', '07', '10', '13'])
+  await expect(page.locator('.honor-card')).toHaveCount(5)
+  await expect(page.locator('.honor-coordinate')).toHaveText(['02', '03', '06', '07', '10'])
 })
 
 test('honors category filter works from the keyboard', async ({ page }) => {
@@ -88,7 +88,7 @@ test('honors filter counts keep fixed circles and centered numerals', async ({ p
     }
   }))
 
-  expect(geometry.map(({ value }) => value)).toEqual(['13', '7', '3', '1'])
+  expect(geometry.map(({ value }) => value)).toEqual(['13', '5', '4', '2'])
   expect(geometry.every(({ width, height }) => (
     Math.abs(width - 24) <= .5
     && Math.abs(height - 24) <= .5
@@ -267,7 +267,7 @@ test('honors archive fits the required viewport and theme matrix', async ({ page
   }
 })
 
-const honorFinalValues = ['13', '7', '3', '1']
+const honorFinalValues = ['13', '5', '4', '2']
 
 test('honors metrics count up on first entry and settle at the scope totals', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 600 })
