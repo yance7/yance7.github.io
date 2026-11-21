@@ -474,19 +474,33 @@ test('poster retry keeps its pointer target while the rail moves during a truste
     hasPointerCapture: boolean
   } | null = null
   await scenario.retry.evaluate(button => {
-    button.addEventListener('pointerdown', () => console.info('poster-retry-pointerdown-active-snap'), { once: true })
+    button.addEventListener('pointerdown', () => { button.dataset.pointerdownActiveSnap = 'true' }, { once: true })
   })
   await activatePosterRetry(scenario, page, async () => {
     const rail = page.locator('#concert-archive-rail')
     initialScrollLeft = await rail.evaluate(element => element.scrollLeft)
-    const pointerDown = page.waitForEvent('console', {
-      predicate: message => message.text() === 'poster-retry-pointerdown-active-snap',
-      timeout: 1_000
-    })
     await scenario.retry.hover()
-    await page.mouse.down()
+    // The active rail snap can move the control between hover and press. Re-aim at
+    // its current box and press until the trusted pointerdown lands on the button.
+    let pressed = false
+    for (let attempt = 0; attempt < 5 && !pressed; attempt += 1) {
+      const retryBox = await scenario.retry.boundingBox()
+      if (!retryBox) throw new Error('Poster retry button is missing')
+      await page.mouse.move(retryBox.x + retryBox.width / 2, retryBox.y + retryBox.height / 2)
+      await page.mouse.down()
+      pressed = await scenario.retry
+        .evaluate((button) => button.dataset.pointerdownActiveSnap === 'true')
+        .catch(() => false)
+      if (!pressed) {
+        pressed = await expect.poll(
+          () => scenario.retry.evaluate((button) => button.dataset.pointerdownActiveSnap === 'true'),
+          { timeout: 300 }
+        ).toBe(true).then(() => true).catch(() => false)
+      }
+      if (!pressed) await page.mouse.up()
+    }
+    expect(pressed, 'the trusted press must land on the retry button').toBe(true)
     try {
-      await pointerDown
       await page.mouse.wheel(120, 0)
       await expect.poll(async () => {
         observedRailState = await page.evaluate(() => {
