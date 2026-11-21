@@ -25,7 +25,7 @@ export const honors = [
     org: 'BioOlympiad Initiative USA-China (BIO-USACN)'
   },
   {
-    id: 'ccc-2026-national-bronze', date: '2026.05', scope: 'international', title: '加拿大化学竞赛 CCC · 全国铜奖',
+    id: 'ccc-2026-national-bronze', date: '2026.05', scope: 'national', title: '加拿大化学竞赛 CCC · 全国铜奖',
     org: 'Canadian Chemistry Contest'
   },
   {
@@ -57,7 +57,7 @@ export const honors = [
     org: 'Chaoyang Youth Science and Technology Innovation Competition'
   },
   {
-    id: 'ccc-2025-regional-excellence', date: '2025.04', scope: 'international', title: '加拿大化学竞赛 CCC · 区域优秀奖',
+    id: 'ccc-2025-regional-excellence', date: '2025.04', scope: 'regional', title: '加拿大化学竞赛 CCC · 区域优秀奖',
     org: 'Canadian Chemistry Contest'
   }
 ] satisfies Honor[]
@@ -65,8 +65,8 @@ export const honors = [
 const honorStatMeta = [
   { scope: 'all', label: '项荣誉', note: '2025 — 2026' },
   { scope: 'international', label: '国际', note: 'UKChO · BBO · USACO · TRAE' },
-  { scope: 'national', label: '全国', note: '全国 AI · BIO-USACN · iHOSA' },
-  { scope: 'regional', label: '省市级', note: '北京科创' }
+  { scope: 'national', label: '全国', note: '全国 AI · BIO-USACN · iHOSA · CCC 全国' },
+  { scope: 'regional', label: '省市级', note: '北京科创 · CCC 区域' }
 ] satisfies Array<{ scope: HonorFilter; label: string; note: string }>
 
 export const honorsUpdatedAt = '2026-11-21'

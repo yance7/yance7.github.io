@@ -79,7 +79,9 @@ describe('resume-synced content contracts', () => {
       scope: 'national'
     })
     expect(honors).toHaveLength(13)
-    expect(honorStats.map(({ value }) => value)).toEqual(['13', '7', '3', '1'])
+    expect(honorStats.map(({ value }) => value)).toEqual(['13', '5', '4', '2'])
+    expect(honors.find(({ id }) => id === 'ccc-2026-national-bronze')?.scope).toBe('national')
+    expect(honors.find(({ id }) => id === 'ccc-2025-regional-excellence')?.scope).toBe('regional')
 
     for (const locale of locales) {
       const records = getLocalizedHonors(locale)

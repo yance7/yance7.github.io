@@ -13,6 +13,25 @@ const BASE_URL = `http://127.0.0.1:${PORT}`
 const INP_BUDGET = 200
 const concertPosterSelector = '.concert-rail-card .concert-poster'
 
+async function runHonorScopeFilter(page) {
+  const selector = '[data-honor-filter="international"]'
+  const expectedCount = Number(await page.$eval(
+    `${selector} .filter-count-value`,
+    (element) => element.textContent?.trim() ?? '0'
+  ))
+  if (!Number.isInteger(expectedCount) || expectedCount <= 0) {
+    throw new Error(`International honor filter count is unavailable: ${expectedCount}`)
+  }
+  await page.click(selector)
+  await page.waitForFunction((filterSelector, count) => {
+    const button = document.querySelector(filterSelector)
+    const cards = [...document.querySelectorAll('.honor-card')]
+    return button?.getAttribute('aria-pressed') === 'true'
+      && cards.length === count
+      && cards.every((card) => card.classList.contains('international'))
+  }, {}, selector, expectedCount)
+}
+
 const scenarios = [
   {
     viewport: 'desktop',
@@ -31,10 +50,7 @@ const scenarios = [
           {
             name: 'honor-filter',
             selector: '[data-honor-filter="international"]',
-            run: async (page) => {
-              await page.click('[data-honor-filter="international"]')
-              await page.waitForFunction(() => document.querySelectorAll('.honor-card').length === 7)
-            }
+            run: runHonorScopeFilter
           }
         ]
       },
@@ -89,10 +105,7 @@ const scenarios = [
           {
             name: 'honor-filter',
             selector: '[data-honor-filter="international"]',
-            run: async (page) => {
-              await page.click('[data-honor-filter="international"]')
-              await page.waitForFunction(() => document.querySelectorAll('.honor-card').length === 7)
-            }
+            run: runHonorScopeFilter
           }
         ]
       },
