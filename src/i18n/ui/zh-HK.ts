@@ -11,7 +11,7 @@ export const zhHKMessages = {
   actions: { selectedWork: '查看精選作品', exploreWorlds: '瀏覽五個小世界', scrollToExplore: '向下探索', readResearch: '閱讀研究', viewCaseStudy: '查看產品案例', exploreAcademics: '探索學業', viewHonors: '查看榮譽', enterProject: '進入項目', viewOnGitHub: '在 GitHub 查看', sourceCode: '原始碼', openResearch: '開啟研究' },
   home: { identity: '研究者 / 建構者 / 音樂聽眾', researchLabel: '研究', selectedWorkLabel: '精選作品', productLabel: '產品', researchToProduct: '研究 → 產品', exploreLabel: '探索', worldsDescription: '把探索、榮譽、研究、作品與音樂分別收進五間屋子。', beyondLabel: '實驗室之外', leadership: '領導力', selectedActivities: '精選活動' },
   research: { ...zhCNMessages.research, expandMethodology: '展開方法論', collapseMethodology: '收起方法論', question: '問題', hypothesis: '假設', method: '方法', prototype: '原型', result: '結果', next: '下一步', workbench: '研究工作台', toolsInRotation: '輪換中的工具', researchLoopActive: '研究循環進行中', questionToEvidenceToProduct: '問題 → 證據 → 產品', toolsCount: '工具', methodsLabel: '方法與技術棧' },
-  honors: { filterLabel: '榮譽分類篩選', all: '全部', peak: '領航級', excellent: '卓越級', emerging: '新銳級', honorsUnit: '項榮譽' },
+  honors: { filterLabel: '榮譽按賽事範圍篩選', all: '全部', international: '國際', national: '全國', regional: '省市級', pending: '待核驗', sourceLabel: '來源', honorsUnit: '項榮譽' },
   lightbox: { gallery: '演唱會海報大圖', close: '關閉燈箱', previous: '上一張', next: '下一張', position: (current, total) => `，第 ${current} 張，共 ${total} 張`, loading: '正在載入圖片', failed: '圖片載入失敗', retry: '重試', posterAlt: '海報', openArchive: '開啟檔案' },
   footer: { homeLabel: '返回首頁', contactsLabel: '聯絡方式', archive: '個人檔案 / 2026', identity: '研究者 / 建構者 / 音樂聽眾', email: '電郵', github: 'GitHub' },
   error404: { kicker: '訊號遺失', title: '這一頁走失了', copy: '你訪問的頁面不存在，或者已經被移走。返回主頁，重新選擇一間屋子走進去。', home: '返回首頁', research: '看看研究' },

@@ -73,18 +73,18 @@ describe('resume-synced content contracts', () => {
     }
   })
 
-  it('corrects honor labels without changing the historical id, anchor, count, or level totals', () => {
+  it('corrects honor labels without changing the historical id, anchor, count, or scope totals', () => {
     expect(honors.find(({ id }) => id === 'usabo-2026-silver')).toMatchObject({
       date: '2026.05',
-      level: 'excellent'
+      scope: 'national'
     })
     expect(honors).toHaveLength(13)
-    expect(honorStats.map(({ value }) => value)).toEqual(['13', '4', '2', '7'])
+    expect(honorStats.map(({ value }) => value)).toEqual(['13', '7', '3', '1'])
 
     for (const locale of locales) {
       const records = getLocalizedHonors(locale)
       const bio = records.filter(({ title, org }) => /BIO-USACN|BioOlympiad Initiative USA-China/.test(`${title} ${org}`))
-      const honorSummary = getLocalizedHonorStats(locale).find(({ label }) => /distinguished|卓越|卓越級/i.test(label))
+      const honorSummary = getLocalizedHonorStats(locale).find(({ label }) => /national|全国|全國/i.test(label))
       const ukcho = records.find(({ id }) => id === 'ukcho-2026-gold')
       const beijing = records.find(({ id }) => id === 'beijing-sti-2026-second')
       const trae = records.find(({ id }) => id === 'trae-ai-2026-top-350')
@@ -127,7 +127,7 @@ describe('resume-synced content contracts', () => {
 
   it('marks synchronized content with the actual update date', () => {
     expect(pageMetadata.en.academics.updatedAt).toBe('2026-10-23')
-    expect(pageMetadata.en.honors.updatedAt).toBe('2026-10-23')
+    expect(pageMetadata.en.honors.updatedAt).toBe('2026-11-21')
     expect(pageMetadata.en.research.updatedAt).toBe('2026-10-30')
     expect(pageMetadata.en.works.updatedAt).toBe('2026-10-30')
   })

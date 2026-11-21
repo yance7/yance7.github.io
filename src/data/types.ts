@@ -8,7 +8,9 @@ export type Status =
   | 'archived'
 
 type ProofType = 'paper' | 'source' | 'demo' | 'dataset' | 'experiment' | 'deployment'
-export type HonorLevel = 'peak' | 'excellent' | 'emerging'
+export type HonorScope = 'international' | 'national' | 'regional' | 'pending'
+/** Filters cover the three verifiable scopes; pending records stay in "all". */
+export type HonorFilter = 'all' | Exclude<HonorScope, 'pending'>
 export type NonEmptyArray<T> = [T, ...T[]]
 export type { PageKey } from './pageRegistry.ts'
 import type { PageKey } from './pageRegistry.ts'
@@ -138,7 +140,11 @@ export interface Honor {
   date: string
   title: string
   org: string
-  level: HonorLevel
+  scope: HonorScope
+  /** Same-caliber participants, rank, or ratio verified for this award round. */
+  evidence?: string
+  /** Official source backing the scope and evidence. */
+  source?: string
 }
 
 export type AcademicStat = Metric

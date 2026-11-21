@@ -30,13 +30,13 @@ test('honors archive keeps source coordinates when filtered', async ({ page }) =
 
   await expect(page.locator('.honor-card')).toHaveCount(13)
   await expect(page.locator('.honor-coordinate')).toHaveText(sourceCoordinates)
-  await expect(page.locator('[data-honor-filter="peak"]')).toHaveAttribute('aria-pressed', 'false')
+  await expect(page.locator('[data-honor-filter="international"]')).toHaveAttribute('aria-pressed', 'false')
 
-  await page.locator('[data-honor-filter="peak"]').click()
+  await page.locator('[data-honor-filter="international"]').click()
 
-  await expect(page.locator('[data-honor-filter="peak"]')).toHaveAttribute('aria-pressed', 'true')
-  await expect(page.locator('.honor-card')).toHaveCount(4)
-  await expect(page.locator('.honor-coordinate')).toHaveText(['02', '03', '07', '10'])
+  await expect(page.locator('[data-honor-filter="international"]')).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.locator('.honor-card')).toHaveCount(7)
+  await expect(page.locator('.honor-coordinate')).toHaveText(['02', '03', '05', '06', '07', '10', '13'])
 })
 
 test('honors category filter works from the keyboard', async ({ page }) => {
@@ -88,7 +88,7 @@ test('honors filter counts keep fixed circles and centered numerals', async ({ p
     }
   }))
 
-  expect(geometry.map(({ value }) => value)).toEqual(['13', '4', '2', '7'])
+  expect(geometry.map(({ value }) => value)).toEqual(['13', '7', '3', '1'])
   expect(geometry.every(({ width, height }) => (
     Math.abs(width - 24) <= .5
     && Math.abs(height - 24) <= .5
@@ -230,7 +230,7 @@ test.describe('honors cards with reduced motion', () => {
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.goto('/honors/')
 
-    const filter = page.locator('[data-honor-filter="peak"]')
+    const filter = page.locator('[data-honor-filter="international"]')
     await expect(filter).toBeVisible()
     await filter.focus()
     await page.keyboard.down(' ')

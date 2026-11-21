@@ -1,5 +1,5 @@
 import type { PageKey, PageMeta, SiteNavItem, Status, World, AcademicStat, ApScore, Activity, Leadership, Honor, Concert, ResearchItem, Project } from '../types.ts'
-import type { HonorLevel } from '../types.ts'
+import type { HonorFilter, HonorScope } from '../types.ts'
 
 type LocalizedNav = Omit<SiteNavItem, 'href' | 'key'>
 type LocalizedWorld = Omit<World, 'href' | 'key'>
@@ -36,13 +36,14 @@ export interface AcademicsLocaleCopy {
 }
 
 export interface HonorsLocaleCopy {
-  categories: Array<{ key: 'all' | HonorLevel; label: string }>
-  levelLabels: Record<HonorLevel, string>
-  statLabels: Record<'all' | HonorLevel, { label: string; note: string }>
-  entities: Record<string, Pick<Honor, 'title' | 'org'>>
+  categories: Array<{ key: HonorFilter; label: string }>
+  scopeLabels: Record<HonorScope, string>
+  statLabels: Record<HonorFilter, { label: string; note: string }>
+  entities: Record<string, Pick<Honor, 'title' | 'org' | 'evidence' | 'source'>>
   sections: {
     milestones: { label: string; title: string; accent: string; copy: string }
     archive: { label: string; titleSuffix: string; accent: string; copy: string }
+    pending: { label: string; note: string }
   }
 }
 

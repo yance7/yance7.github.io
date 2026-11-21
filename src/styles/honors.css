@@ -80,9 +80,10 @@
   background: var(--surface-hover);
 }
 .honor-card:hover::before { width: 3px; }
-.honor-card.peak { --honor-accent: var(--level-platinum); }
-.honor-card.excellent { --honor-accent: var(--level-gold); }
-.honor-card.emerging { --honor-accent: var(--level-silver); }
+.honor-card.international { --honor-accent: var(--level-platinum); }
+.honor-card.national { --honor-accent: var(--level-gold); }
+.honor-card.regional { --honor-accent: var(--level-silver); }
+.honor-card.pending { --honor-accent: var(--dim); }
 .honor-coordinate {
   grid-area: coordinate;
   color: var(--honor-accent);
@@ -137,6 +138,61 @@
   letter-spacing: var(--tracking-latin-wide);
   line-height: 1.3;
   text-align: right;
+  white-space: nowrap;
+}
+.honor-evidence {
+  color: var(--dim);
+  font-family: var(--font-technical);
+  font-size: var(--text-xs);
+  letter-spacing: .02em;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.honor-source {
+  margin-left: 6px;
+  color: var(--gold-text);
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+.honor-pending {
+  margin-top: 28px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line-faint);
+  color: var(--muted);
+  font-family: var(--font-interface);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+}
+.honor-pending summary {
+  cursor: pointer;
+  color: var(--ink);
+  font-family: var(--font-technical);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-latin-wide);
+  text-transform: uppercase;
+}
+.honor-pending p {
+  max-width: 60ch;
+  margin: 10px 0;
+  color: var(--dim);
+}
+.honor-pending ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.honor-pending li {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  overflow-wrap: anywhere;
+}
+.honor-pending time {
+  color: var(--gold-text);
+  font-family: var(--font-technical);
+  font-size: var(--text-xs);
   white-space: nowrap;
 }
 

@@ -3,7 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useLocale } from '../i18n'
 
 interface ArchiveCategory {
-  key: 'all' | import('../data/types').HonorLevel
+  key: import('../data/types').HonorFilter
   label: string
 }
 
