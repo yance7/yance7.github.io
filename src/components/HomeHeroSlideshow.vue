@@ -84,7 +84,7 @@ function imageFallbackSrc(slide: HomeHeroSlide, format: 'webp' | 'jpeg') {
 function imageSizes() {
   return !imagePreferencesReady.value || state.value.saveData
     ? '640px'
-    : '(max-width: 760px) calc(100vw - 40px), calc(min(1260px, 100vw) - 10vw)'
+    : '(max-width: 760px) calc(100vw - 40px), calc(min(1360px, 100vw) - 10vw)'
 }
 
 function imageStyle(slide: HomeHeroSlide) {

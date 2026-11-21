@@ -130,6 +130,21 @@ async function settleHomeHero(page: Page, pauseSlideshow = false) {
       await resetPointerForVisualCapture(page)
     }
   }
+  // Use static posters so a captured frame cannot vary between runs.
+  await page.locator('.home-project-video video').evaluateAll(async (videos) => {
+    await Promise.all(videos.map(async (node) => {
+      const video = node as HTMLVideoElement
+      video.pause()
+      const image = new Image()
+      image.src = video.poster
+      await image.decode()
+      const card = video.parentElement!
+      card.style.backgroundImage = `url("${video.poster}")`
+      card.style.backgroundSize = 'cover'
+      card.style.backgroundPosition = 'center'
+      video.style.visibility = 'hidden'
+    }))
+  })
   const stage = page.locator('.home-hero-particles')
   const canvas = page.locator('.home-hero-particles-canvas')
   if (await canvas.count()) {

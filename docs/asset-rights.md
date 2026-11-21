@@ -20,7 +20,7 @@ Run `npm run audit:assets` before every release. The audit is read-only and chec
 | FreshEye case image | `public/assets/images/case-studies/fresheye-og-cover.png` | No repository source ledger found | 待确认 | 待确认 | 待确认 | Confirm project/client approval and any embedded third-party marks. |
 | Lyrics / song-title attribution | Lyrics and song titles appear in source and content modules | No repository rights ledger found | 待确认 | 待确认 | 待确认 | Keep attribution records separate from copyright/license confirmation. |
 | Audio | No audio assets are stored under `public/assets/` in the current checkout | No repository source ledger found | 待确认 | 待确认 | 待确认 | If audio is added later, confirm performer/composer/master rights. |
-| Video | No video assets are stored under `public/assets/` in the current checkout | No repository source ledger found | 待确认 | 待确认 | 待确认 | If video is added later, confirm performer/venue/platform rights. |
+| Home project videos | Three owner-supplied loops and their derived posters, published under `public/assets/videos/home-projects/` and `public/assets/images/home-projects/` | Site owner authorized use on this site on 2026-11-21 | 待确认 | Website use authorized; third-party and reuse rights remain unconfirmed | Approved for this website only, subject to applicable third-party rights | Maize, FishFreshNet, FreshEye; source files remain outside the repository. See `docs/home-project-video-media.md` for derivatives. |
 
 ## Release checklist
 

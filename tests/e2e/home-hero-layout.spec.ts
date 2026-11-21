@@ -122,7 +122,7 @@ for (const fallback of [false, true]) for (const locale of locales) {
 
       const isDesktop = viewport.width > 760
       const expectedStageHeight = isDesktop
-        ? Math.max(340, Math.min(480, viewport.width * 0.36))
+        ? Math.max(340, Math.min(523, (Math.min(1360, viewport.width) - viewport.width * 0.1) / 2.325))
         : 300
       expect(Math.abs(layout.stageHeight - expectedStageHeight), `${context} stage height`).toBeLessThanOrEqual(2)
 

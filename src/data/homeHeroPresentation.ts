@@ -9,7 +9,7 @@ export interface HomeHeroSlidePresentation {
   labelKey: `page.home.slideshow.photos.${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13}`
 }
 
-export const HOME_HERO_IMAGE_SIZES = '(max-width: 760px) calc(100vw - 40px), calc(min(1260px, 100vw) - 10vw)'
+export const HOME_HERO_IMAGE_SIZES = '(max-width: 760px) calc(100vw - 40px), calc(min(1360px, 100vw) - 10vw)'
 
 export const homeHeroPresentation: Record<HomeHeroSlideId, HomeHeroSlidePresentation> = {
   'hero-01': { position: { desktop: '35% 60%', mobile: '28% 52%' }, scrim: 0.34, labelKey: 'page.home.slideshow.photos.1' },
