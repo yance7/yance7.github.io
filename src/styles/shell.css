@@ -378,7 +378,7 @@ html[data-theme='dark'] .orbit-knob { transform: translateX(24px); background: v
   animation: hero-stagger-in var(--dur-base) var(--ease-out) .34s forwards;
 }
 .hero-title.hero-heading {
-  opacity: 1; transform: none; animation: none;
+  opacity: 1; transform: none; animation: hero-title-rise .56s var(--ease-out) both;
 }
 .hero-title.hero-lyric {
   max-width: 860px;
@@ -386,7 +386,7 @@ html[data-theme='dark'] .orbit-knob { transform: translateX(24px); background: v
   font-size: clamp(1.9rem, 3.8vw, 3.4rem);
   line-height: 1.45;
   letter-spacing: .01em;
-  opacity: 1; transform: none; animation: none;
+  opacity: 1; transform: none; animation: hero-title-rise .56s var(--ease-out) both;
 }
 .hero-title.hero-works-title {
   display: flex;
@@ -421,6 +421,7 @@ html[data-locale='en'] .hero-title.hero-heading {
   text-wrap: balance;
 }
 @keyframes lyric-char-in { to { opacity: 1; transform: none; } }
+@keyframes hero-title-rise { from { transform: translateY(12px); } to { transform: none; } }
 .hero-copy {
   max-width: var(--w-editorial); margin: 0; color: var(--muted);
   font-family: var(--font-prose);

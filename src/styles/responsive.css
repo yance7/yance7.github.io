@@ -245,6 +245,7 @@ html:not([data-js='true']) .site-nav .theme-orbit { display: none; }
   }
   .reveal { opacity: 1; transform: none; animation: none !important; }
   .lyric-char { opacity: 1; transform: none; animation: none !important; }
+  .hero-title { transform: none !important; animation: none !important; }
   .lb-nav:hover,
   .lb-close:hover { transform: none !important; }
   button:not(:disabled):active,
