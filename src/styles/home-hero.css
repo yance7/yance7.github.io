@@ -92,8 +92,8 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  /* The greeting stays readable on the first frame and only rises into place. */
-  .home-hero-typewriter-line-greeting { animation: home-title-rise .56s var(--ease-out) both; }
+  /* Both lines stay readable on the first frame; the hero rises once into place. */
+  .home-hero-typewriter { animation: home-title-rise .56s var(--ease-out) both; }
 }
 @keyframes home-title-rise { from { transform: translateY(12px); } to { transform: none; } }
 

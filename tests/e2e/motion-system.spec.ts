@@ -683,10 +683,10 @@ test('main titles rise once without hiding their content', async ({ page }) => {
 
   await page.goto('/')
   await waitForHydration(page)
-  const greetingLine = page.locator('.home-hero-typewriter-line-greeting')
-  await expect(greetingLine).toHaveCSS('animation-name', 'home-title-rise')
-  await expect(greetingLine).toHaveCSS('opacity', '1')
-  await expect.poll(() => greetingLine.evaluate(settled)).toBe(true)
+  const heroCopy = page.locator('.home-hero-typewriter')
+  await expect(heroCopy).toHaveCSS('animation-name', 'home-title-rise')
+  await expect(heroCopy).toHaveCSS('opacity', '1')
+  await expect.poll(() => heroCopy.evaluate(settled)).toBe(true)
 })
 
 test('reduced motion removes the title rise', async ({ page }) => {
@@ -700,7 +700,7 @@ test('reduced motion removes the title rise', async ({ page }) => {
 
   await page.goto('/')
   await waitForHydration(page)
-  await expect(page.locator('.home-hero-typewriter-line-greeting')).toHaveCSS('animation-name', 'none')
+  await expect(page.locator('.home-hero-typewriter')).toHaveCSS('animation-name', 'none')
 })
 
 test('hash arrival keeps the archive heading and epigraph readable', async ({ page }) => {

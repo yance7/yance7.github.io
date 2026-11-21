@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import {
-  TYPEWRITER_TIMINGS,
-  buildTypewriterLine,
-  getTypewriterReveal
-} from '../utils/homeHeroIntro'
+import { buildTypewriterLine } from '../utils/homeHeroIntro'
 import { loadHomeGreetingFont } from '../utils/homeGreetingFont'
 
 const props = defineProps<{
@@ -12,97 +8,23 @@ const props = defineProps<{
   statement: string
 }>()
 
-interface NetworkInformation extends EventTarget {
-  saveData?: boolean
-}
-
 const fontState = ref<'loading' | 'ready' | 'fallback'>('loading')
 const finalState = ref(false)
 const greetingTimeline = computed(() => buildTypewriterLine(props.greeting))
 const statementTimeline = computed(() => buildTypewriterLine(props.statement))
-// The greeting is the readable first-frame title; only the statement types in.
+// Both lines are readable from the first frame; the hero only rises into place.
 const greetingRevealed = ref(greetingTimeline.value.graphemes.length)
-const statementRevealed = ref(0)
-let frame = 0
-let startedAt = 0
+const statementRevealed = ref(statementTimeline.value.graphemes.length)
 let disposed = false
-let motionPreference: MediaQueryList | null = null
-let connection: NetworkInformation | undefined
-
-function stopFrame() {
-  if (frame) window.cancelAnimationFrame(frame)
-  frame = 0
-}
-
-function showFinal() {
-  stopFrame()
-  greetingRevealed.value = greetingTimeline.value.graphemes.length
-  statementRevealed.value = statementTimeline.value.graphemes.length
-  finalState.value = true
-}
-
-function applyReveal(elapsedMs: number) {
-  const statement = statementTimeline.value
-  const statementStartMs = greetingTimeline.value.totalMs + TYPEWRITER_TIMINGS.linePauseMs
-  const statementElapsedMs = elapsedMs - statementStartMs
-
-  statementRevealed.value = statementElapsedMs < 0 ? 0 : getTypewriterReveal(statement, statementElapsedMs)
-
-  if (elapsedMs >= statementStartMs + statement.totalMs) {
-    showFinal()
-    return true
-  }
-  return false
-}
-
-function tick() {
-  frame = 0
-  if (disposed) return
-  if (applyReveal(performance.now() - startedAt)) return
-  frame = window.requestAnimationFrame(tick)
-}
-
-function stopForMotionPreference() {
-  if (motionPreference?.matches) showFinal()
-}
-
-function stopForDataPreference() {
-  if (connection?.saveData) showFinal()
-}
 
 onMounted(() => {
+  finalState.value = true
   void loadHomeGreetingFont(`${props.greeting} ${props.statement}`).then(state => {
-    if (disposed) return
-    fontState.value = state
-    if (state === 'fallback') showFinal()
+    if (!disposed) fontState.value = state
   })
-
-  if (document.documentElement.dataset.heroFallback === 'true') {
-    showFinal()
-    return
-  }
-
-  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  connection = (navigator as Navigator & { connection?: NetworkInformation }).connection
-  if (reducedMotion || connection?.saveData) {
-    showFinal()
-    return
-  }
-
-  motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)')
-  motionPreference.addEventListener('change', stopForMotionPreference)
-  connection?.addEventListener('change', stopForDataPreference)
-
-  startedAt = performance.now()
-  tick()
 })
 
-onBeforeUnmount(() => {
-  disposed = true
-  stopFrame()
-  motionPreference?.removeEventListener('change', stopForMotionPreference)
-  connection?.removeEventListener('change', stopForDataPreference)
-})
+onBeforeUnmount(() => { disposed = true })
 </script>
 
 <template>

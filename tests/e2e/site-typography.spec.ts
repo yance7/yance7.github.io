@@ -190,7 +190,7 @@ test('a rejected greeting stylesheet still leaves the home page readable', async
   await expect(page.locator('h1.home-hero-title')).toHaveText('你好，我是 Yance 欢迎来到我的世界')
 })
 
-test('a late greeting response cannot replay typing or block the global font signal forever', async ({ page }) => {
+test('a late greeting response cannot reset the readable copy or block the global font signal forever', async ({ page }) => {
   let release = () => {}
   const barrier = new Promise<void>(resolve => { release = resolve })
   await page.route('**/hero-greeting-wenkai-*.woff2', async route => {
