@@ -49,7 +49,7 @@ export default defineConfig({
     },
     { name: 'chromium-visual', use: { ...devices['Desktop Chrome'] }, testMatch: /visual-matrix\.spec\.ts/ },
     { name: 'firefox-desktop-smoke', use: { ...devices['Desktop Firefox'] }, testMatch: /(?:startup-recovery|academic-metrics|compatibility|english-layout|concert-archive-rail|concert-archive-preservation|media-resilience|resume-content-sync|home-scroll-motion|home-hero-layout|home-project-videos|home-hero-interaction|home-hero-slideshow|mimo-alignment|sitewide-cursor|page-urls|site-typography|seo-metadata|prerender)\.spec\.ts/ },
-    { name: 'chromium-android-smoke', use: { ...devices['Pixel 5'] }, testMatch: /(?:startup-recovery|academic-metrics|compatibility|english-layout|concert-archive-rail|concert-archive-preservation|media-resilience|resume-content-sync|home-scroll-motion|home-hero-interaction|home-hero-slideshow|mimo-alignment|sitewide-cursor|page-urls|site-typography|seo-metadata|prerender)\.spec\.ts/ }
+    { name: 'chromium-android-smoke', use: { ...devices['Pixel 5'] }, testMatch: /(?:startup-recovery|academic-metrics|compatibility|english-layout|concert-archive-rail|concert-archive-preservation|media-resilience|resume-content-sync|home-scroll-motion|home-project-videos|home-hero-interaction|home-hero-slideshow|mimo-alignment|sitewide-cursor|page-urls|site-typography|seo-metadata|prerender)\.spec\.ts/ }
   ],
   webServer: {
     cwd: repositoryRoot,

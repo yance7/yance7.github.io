@@ -102,3 +102,17 @@ test('failed media leaves the poster and link available', async ({ page }) => {
   await expect(card.locator('a')).toHaveAttribute('href', '/research/#corn-growth')
   await expect(card.locator('span')).toHaveText('Maize')
 })
+
+test('desktop photo height grows in proportion to its baseline at each viewport', async ({ page }) => {
+  for (const width of [1024, 1280, 1440]) {
+    await page.setViewportSize({ width, height: 1000 })
+    await page.goto('/')
+    const box = await page.locator('.home-hero-visual').boundingBox()
+    const originalWidth = await page.locator('.home-hero-inner').evaluate(element => {
+      const style = getComputedStyle(element)
+      return Math.min(1260, element.parentElement!.clientWidth) - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)
+    })
+    const originalHeight = Math.max(340, Math.min(480, width * .36))
+    expect(Math.abs(box!.height - originalHeight * box!.width / originalWidth)).toBeLessThanOrEqual(2)
+  }
+})

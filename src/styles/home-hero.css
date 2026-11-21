@@ -1,5 +1,6 @@
 /* ===== Home Hero static foundation ===== */
 .home-hero {
+  container-type: inline-size;
   position: relative;
   display: flex;
   min-height: clamp(560px, calc(100vh - 88px), 820px);
@@ -303,7 +304,8 @@ html[data-locale='en'] .home-hero-typewriter-line-accent {
   place-items: center;
   width: 100%;
   min-width: 0;
-  min-height: clamp(340px, calc((min(1360px, 100vw) - 10vw) / 2.325), 523px);
+  /* Preserve the original stage ratio as the wider container expands. */
+  min-height: calc(clamp(340px, 36vw, 480px) + clamp(0px, 43cqw - 541.8px, 43px));
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--line) 68%, #9caf99);
   border-radius: 28px;
@@ -480,7 +482,7 @@ html[data-theme='dark'] .home-hero-particles {
   isolation: isolate;
   width: 100%;
   min-width: 0;
-  min-height: clamp(340px, calc((min(1360px, 100vw) - 10vw) / 2.325), 523px);
+  min-height: calc(clamp(340px, 36vw, 480px) + clamp(0px, 43cqw - 541.8px, 43px));
 }
 
 @media (max-width: 760px) {
