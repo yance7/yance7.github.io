@@ -60,7 +60,7 @@ function sourceHost(url: string) {
         :accent="sections.milestones.accent"
         :copy="sections.milestones.copy"
       />
-      <MetricStrip :metrics="honorStats" />
+      <MetricStrip :metrics="honorStats" animate-on-enter />
     </section>
 
     <section id="sec-honors-archive" class="content">
