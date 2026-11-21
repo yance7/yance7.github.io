@@ -30,10 +30,10 @@ const scenarios = [
         interactions: [
           {
             name: 'honor-filter',
-            selector: '[data-honor-filter="peak"]',
+            selector: '[data-honor-filter="international"]',
             run: async (page) => {
-              await page.click('[data-honor-filter="peak"]')
-              await page.waitForFunction(() => document.querySelectorAll('.honor-card').length === 4)
+              await page.click('[data-honor-filter="international"]')
+              await page.waitForFunction(() => document.querySelectorAll('.honor-card').length === 7)
             }
           }
         ]
@@ -88,10 +88,10 @@ const scenarios = [
         interactions: [
           {
             name: 'honor-filter',
-            selector: '[data-honor-filter="peak"]',
+            selector: '[data-honor-filter="international"]',
             run: async (page) => {
-              await page.click('[data-honor-filter="peak"]')
-              await page.waitForFunction(() => document.querySelectorAll('.honor-card').length === 4)
+              await page.click('[data-honor-filter="international"]')
+              await page.waitForFunction(() => document.querySelectorAll('.honor-card').length === 7)
             }
           }
         ]
