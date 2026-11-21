@@ -610,7 +610,7 @@ test('rapid control clicks settle without duplicate or stale state', async ({ pa
   const filter = page.locator('.filter-btn').filter({ hasText: '全国' })
   for (let i = 0; i < 5; i += 1) await filter.click()
   await expect(filter).toHaveAttribute('aria-pressed', 'true')
-  await expect(page.locator('.honor-card')).toHaveCount(3)
+  await expect(page.locator('.honor-card')).toHaveCount(4)
 
   await page.goto('/research/')
   const method = page.locator('.method-toggle').first()

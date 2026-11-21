@@ -23,8 +23,8 @@ describe('honors archive content contract', () => {
       'ccc-2025-regional-excellence'
     ])
     expect(honors.map((honor) => honor.scope)).toEqual([
-      'national', 'international', 'international', 'national', 'international', 'international', 'international',
-      'national', 'regional', 'international', 'pending', 'pending', 'international'
+      'national', 'international', 'international', 'national', 'national', 'international', 'international',
+      'national', 'regional', 'international', 'pending', 'pending', 'regional'
     ])
   })
 
@@ -34,7 +34,7 @@ describe('honors archive content contract', () => {
     expect(withCoordinates.map((honor) => String(honor.coordinate).padStart(2, '0'))).toEqual([
       '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13'
     ])
-    expect(withCoordinates.filter((honor) => honor.scope === 'international').map((honor) => honor.coordinate)).toEqual([2, 3, 5, 6, 7, 10, 13])
+    expect(withCoordinates.filter((honor) => honor.scope === 'international').map((honor) => honor.coordinate)).toEqual([2, 3, 6, 7, 10])
   })
 
   it('keeps the four archive filter counts aligned with the honor scopes', () => {
@@ -43,8 +43,29 @@ describe('honors archive content contract', () => {
       international: honors.filter(({ scope }) => scope === 'international').length,
       national: honors.filter(({ scope }) => scope === 'national').length,
       regional: honors.filter(({ scope }) => scope === 'regional').length
-    }).toEqual({ all: 13, international: 7, national: 3, regional: 1 })
+    }).toEqual({ all: 13, international: 5, national: 4, regional: 2 })
     expect(honors.filter(({ scope }) => scope === 'pending')).toHaveLength(2)
+  })
+
+  it('classifies both CCC China-region awards by their actual award round', () => {
+    expect(honors.find(({ id }) => id === 'ccc-2026-national-bronze')).toMatchObject({
+      scope: 'national',
+      title: '加拿大化学竞赛 CCC · 全国铜奖'
+    })
+    expect(honors.find(({ id }) => id === 'ccc-2025-regional-excellence')).toMatchObject({
+      scope: 'regional',
+      title: '加拿大化学竞赛 CCC · 区域优秀奖'
+    })
+    for (const locale of locales) {
+      const records = getLocalizedHonors(locale)
+      const nationalBronze = records.find(({ id }) => id === 'ccc-2026-national-bronze')
+      const regionalAward = records.find(({ id }) => id === 'ccc-2025-regional-excellence')
+      const regionLabel = locale === 'en' ? 'China region' : locale === 'zh-HK' ? '中國賽區' : '中国赛区'
+      expect(nationalBronze?.scope).toBe('national')
+      expect(nationalBronze?.evidence).toContain(regionLabel)
+      expect(regionalAward?.scope).toBe('regional')
+      expect(regionalAward?.evidence).toContain(locale === 'en' ? 'regional award' : locale === 'zh-HK' ? '區域獎' : '区域奖')
+    }
   })
 
   it('only shows same-caliber evidence with an official source', () => {
