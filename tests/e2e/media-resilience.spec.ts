@@ -851,7 +851,7 @@ for (const locale of ['zh-CN', 'zh-HK', 'en'] as const) {
 test('an empty honors filter offers a working view-all action', async ({ page }) => {
   await gotoMediaFixture(page, 'view=honors&filtered=1')
   await expect(page.locator('.honor-card')).toHaveCount(1)
-  await page.getByRole('button').and(page.locator('[data-honor-filter="emerging"]')).click()
+  await page.getByRole('button').and(page.locator('[data-honor-filter="national"]')).click()
   await expect(page.locator('.archive-empty')).toBeVisible()
   await page.getByRole('button', { name: 'View all', exact: true }).click()
   await expect(page.locator('.honor-card')).toHaveCount(1)

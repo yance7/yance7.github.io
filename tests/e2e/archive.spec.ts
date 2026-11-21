@@ -57,10 +57,10 @@ test('archive titles keep balanced Chinese lines at narrow widths', async ({ pag
 
 test('honors filtering renders compact cards without detail controls', async ({ page }) => {
   await page.goto('/honors/')
-  const filter = page.locator('.filter-btn').filter({ hasText: '领航级' })
+  const filter = page.locator('.filter-btn').filter({ hasText: '国际' })
   await filter.scrollIntoViewIfNeeded()
   await filter.click()
-  await expect(page.locator('.honor-card')).toHaveCount(4)
+  await expect(page.locator('.honor-card')).toHaveCount(7)
   await expect(page.locator('.honor-card').first()).toHaveClass(/revealed/)
   await expect(page.locator('.honor-expand, .honor-detail')).toHaveCount(0)
 })

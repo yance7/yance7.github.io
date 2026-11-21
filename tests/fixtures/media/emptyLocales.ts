@@ -16,15 +16,15 @@ export function getLocalizedResearch(locale: Locale) {
 export function getLocalizedHonors(locale: Locale) {
   const honors = original.getLocalizedHonors(locale)
   if (isEmpty) return []
-  return parameters.get('filtered') === '1' ? honors.filter(honor => honor.level === 'peak').slice(0, 1) : honors
+  return parameters.get('filtered') === '1' ? honors.filter(honor => honor.scope === 'international').slice(0, 1) : honors
 }
 
 export function getLocalizedHonorStats(locale: Locale) {
   const honors = getLocalizedHonors(locale)
-  const levels = ['all', 'peak', 'excellent', 'emerging'] as const
+  const scopes = ['all', 'international', 'national', 'regional'] as const
   return original.getLocalizedHonorStats(locale).map((stat, index) => ({
     ...stat,
-    value: String(index === 0 ? honors.length : honors.filter(honor => honor.level === levels[index]).length)
+    value: String(index === 0 ? honors.length : honors.filter(honor => honor.scope === scopes[index]).length)
   }))
 }
 

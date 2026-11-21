@@ -361,7 +361,7 @@ test('Honor filter controls keep hover-only styling off coarse pointers', async 
   test.skip(!coarsePointer, 'Hover-only styling is only observable on coarse-pointer projects')
 
   await page.goto('/honors/')
-  const filter = page.locator('[data-honor-filter="peak"]')
+  const filter = page.locator('[data-honor-filter="international"]')
   await expect(filter).toBeVisible()
   await page.mouse.move(0, 0)
 

@@ -31,7 +31,7 @@ describe('page content dates', () => {
       expect(pageMetadata[locale]).toEqual({
         home: { updatedAt: '2026-10-31' },
         academics: { updatedAt: '2026-10-23' },
-        honors: { updatedAt: '2026-10-23' },
+        honors: { updatedAt: '2026-11-21' },
         research: { updatedAt: '2026-10-30' },
         works: { updatedAt: '2026-10-30' },
         concerts: { updatedAt: '2026-10-31' }

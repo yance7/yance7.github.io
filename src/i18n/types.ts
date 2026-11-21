@@ -125,9 +125,11 @@ export interface UiMessages {
   honors: {
     filterLabel: string
     all: string
-    peak: string
-    excellent: string
-    emerging: string
+    international: string
+    national: string
+    regional: string
+    pending: string
+    sourceLabel: string
     honorsUnit: string
   }
   lightbox: {

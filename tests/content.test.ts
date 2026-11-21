@@ -163,7 +163,7 @@ describe('content contracts', () => {
   })
 
   it('keeps English archive labels and product brand names accurate', () => {
-    expect(honorCategories.find((category) => category.key === 'emerging')?.en).toBe('EMERGING')
+    expect(honorCategories.find((category) => category.key === 'international')?.en).toBe('INTERNATIONAL')
     expect(researchMethods.find((method) => method.label === 'Hugging Face')?.en).toBe('Hosting')
     expect(projects[0]?.stack).toContain('Hugging Face Spaces')
     expect(research.find((item) => item.id === 'fresheye')?.org).toContain('Hugging Face Spaces')
@@ -177,7 +177,7 @@ describe('content contracts', () => {
     expect(pageMetadata.en.concerts.updatedAt).toBe('2026-10-31')
     expect(pageMetadata['zh-CN'].home.updatedAt).toBe('2026-10-31')
     expect(pageMetadata['zh-CN'].academics.updatedAt).toBe('2026-10-23')
-    expect(pageMetadata['zh-CN'].honors.updatedAt).toBe('2026-10-23')
+    expect(pageMetadata['zh-CN'].honors.updatedAt).toBe('2026-11-21')
     expect(pageMetadata['zh-CN'].research).toEqual({ updatedAt: '2026-10-30' })
     expect(pageMetadata['zh-CN'].works.updatedAt).toBe('2026-10-30')
   })

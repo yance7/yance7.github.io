@@ -9,7 +9,7 @@ export const zhCNMessages = {
   actions: { selectedWork: '查看精选作品', exploreWorlds: '浏览五个小世界', scrollToExplore: '滚动探索', readResearch: '阅读研究', viewCaseStudy: '查看产品案例', exploreAcademics: '探索学业', viewHonors: '查看荣誉', enterProject: '进入项目', viewOnGitHub: '在 GitHub 查看', sourceCode: '源码', openResearch: '打开研究' },
   home: { identity: '研究者 / 构建者 / 音乐听众', researchLabel: '研究', selectedWorkLabel: '精选作品', productLabel: '产品', researchToProduct: '研究 → 产品', exploreLabel: '探索', worldsDescription: '把探索、荣誉、研究、作品与音乐分别收进五间屋子。', beyondLabel: '实验室之外', leadership: '领导力', selectedActivities: '精选活动' },
   research: { expandMethodology: '展开方法论', collapseMethodology: '收起方法论', question: '问题', hypothesis: '假设', method: '方法', prototype: '原型', result: '结果', next: '下一步', workbench: '研究工作台', toolsInRotation: '轮换中的工具', researchLoopActive: '研究循环进行中', questionToEvidenceToProduct: '问题 → 证据 → 产品', toolsCount: '工具', methodsLabel: '方法与技术栈' },
-  honors: { filterLabel: '荣誉分类筛选', all: '全部', peak: '领航级', excellent: '卓越级', emerging: '新锐级', honorsUnit: '项荣誉' },
+  honors: { filterLabel: '荣誉按赛事范围筛选', all: '全部', international: '国际', national: '全国', regional: '省市级', pending: '待核验', sourceLabel: '来源', honorsUnit: '项荣誉' },
   lightbox: { gallery: '演唱会海报大图', close: '关闭灯箱', previous: '上一张', next: '下一张', position: (current, total) => `，第 ${current} 张，共 ${total} 张`, loading: '正在加载图片', failed: '图片加载失败', retry: '重试', posterAlt: '海报', openArchive: '打开档案' },
   footer: { homeLabel: '返回首页', contactsLabel: '联系方式', archive: '个人档案 / 2026', identity: '研究者 / 构建者 / 音乐听众', email: '邮箱', github: 'GitHub' },
   error404: { kicker: '信号丢失', title: '这一页走丢了', copy: '你访问的页面不存在，或者已经被移走。回到主页，重新选一间屋子走进去。', home: '回到首页', research: '去看看研究' },

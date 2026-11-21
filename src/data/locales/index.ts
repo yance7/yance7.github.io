@@ -84,8 +84,8 @@ export function getLocalizedHonorCategories(locale: Locale) {
   return content(locale).honors.categories
 }
 
-export function getLocalizedHonorLevelLabels(locale: Locale) {
-  return content(locale).honors.levelLabels
+export function getLocalizedHonorScopeLabels(locale: Locale) {
+  return content(locale).honors.scopeLabels
 }
 
 export function getLocalizedHonorSections(locale: Locale) {
@@ -93,7 +93,7 @@ export function getLocalizedHonorSections(locale: Locale) {
 }
 
 export function getLocalizedHonorStats(locale: Locale) {
-  const keys = ['all', 'peak', 'excellent', 'emerging'] as const
+  const keys = ['all', 'international', 'national', 'regional'] as const
   return honorStats.map((stat, index) => ({
     ...stat,
     label: content(locale).honors.statLabels[keys[index] ?? 'all'].label,

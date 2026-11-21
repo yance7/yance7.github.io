@@ -22,28 +22,51 @@ describe('honors archive content contract', () => {
       'chaoyang-sti-2025-first',
       'ccc-2025-regional-excellence'
     ])
-    expect(honors.map((honor) => honor.level)).toEqual([
-      'emerging', 'peak', 'peak', 'excellent', 'emerging', 'emerging', 'peak',
-      'emerging', 'excellent', 'peak', 'emerging', 'emerging', 'emerging'
+    expect(honors.map((honor) => honor.scope)).toEqual([
+      'national', 'international', 'international', 'national', 'international', 'international', 'international',
+      'national', 'regional', 'international', 'pending', 'pending', 'international'
     ])
   })
 
-  it('keeps stable source coordinates for filtered levels', () => {
+  it('keeps stable source coordinates for filtered scopes', () => {
     const withCoordinates = honors.map((honor, index) => ({ ...honor, coordinate: index + 1 }))
 
     expect(withCoordinates.map((honor) => String(honor.coordinate).padStart(2, '0'))).toEqual([
       '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13'
     ])
-    expect(withCoordinates.filter((honor) => honor.level === 'peak').map((honor) => honor.coordinate)).toEqual([2, 3, 7, 10])
+    expect(withCoordinates.filter((honor) => honor.scope === 'international').map((honor) => honor.coordinate)).toEqual([2, 3, 5, 6, 7, 10, 13])
   })
 
-  it('keeps the four archive filter counts aligned with the honors levels', () => {
+  it('keeps the four archive filter counts aligned with the honor scopes', () => {
     expect({
       all: honors.length,
-      peak: honors.filter(({ level }) => level === 'peak').length,
-      excellent: honors.filter(({ level }) => level === 'excellent').length,
-      emerging: honors.filter(({ level }) => level === 'emerging').length
-    }).toEqual({ all: 13, peak: 4, excellent: 2, emerging: 7 })
+      international: honors.filter(({ scope }) => scope === 'international').length,
+      national: honors.filter(({ scope }) => scope === 'national').length,
+      regional: honors.filter(({ scope }) => scope === 'regional').length
+    }).toEqual({ all: 13, international: 7, national: 3, regional: 1 })
+    expect(honors.filter(({ scope }) => scope === 'pending')).toHaveLength(2)
+  })
+
+  it('only shows same-caliber evidence with an official source', () => {
+    for (const locale of locales) {
+      const records = getLocalizedHonors(locale)
+      expect(records.filter((honor) => honor.evidence).map((honor) => honor.id).sort()).toEqual([
+        'ai-innovation-2026-third',
+        'ccc-2025-regional-excellence',
+        'ccc-2026-national-bronze',
+        'trae-ai-2026-top-350'
+      ])
+      expect(records.every((honor) => !honor.source || Boolean(honor.evidence))).toBe(true)
+      const trae = records.find((honor) => honor.id === 'trae-ai-2026-top-350')
+      expect(trae?.source).toBe('https://bytedance.larkoffice.com/wiki/DScwwZPzsikvNzk5slJc2kgpnie')
+    }
+  })
+
+  it('keeps district-level records in the pending list for every locale', () => {
+    for (const locale of locales) {
+      expect(getLocalizedHonors(locale).filter((honor) => honor.scope === 'pending').map((honor) => honor.id))
+        .toEqual(['chaoyang-jinpeng-2026-second', 'chaoyang-sti-2025-first'])
+    }
   })
 
   it('uses the updated participant-based TRAE record in every locale', () => {

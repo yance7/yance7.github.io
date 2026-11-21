@@ -1,25 +1,27 @@
 <script setup lang="ts">
 import '../styles/honors.css'
 import { ref, computed } from 'vue'
-import { getLocalizedHonorCategories, getLocalizedHonorLevelLabels, getLocalizedHonorSections, getLocalizedHonorStats, getLocalizedHonors } from '../data/locales'
+import { getLocalizedHonorCategories, getLocalizedHonorScopeLabels, getLocalizedHonorSections, getLocalizedHonorStats, getLocalizedHonors } from '../data/locales'
 import { useLocale } from '../i18n'
-import type { HonorLevel } from '../data/types'
+import type { HonorFilter } from '../data/types'
 import SectionHeading from '../components/SectionHeading.vue'
 import MetricStrip from '../components/MetricStrip.vue'
 import ArchiveFilter from '../components/ArchiveFilter.vue'
 import YanceButton from '../components/YanceButton.vue'
 
-const activeCategory = ref<'all' | HonorLevel>('all')
+const activeCategory = ref<HonorFilter>('all')
 const { locale, messages } = useLocale()
 const honors = computed(() => getLocalizedHonors(locale.value))
 const categories = computed(() => getLocalizedHonorCategories(locale.value))
-const levelLabel = computed(() => getLocalizedHonorLevelLabels(locale.value))
+const scopeLabel = computed(() => getLocalizedHonorScopeLabels(locale.value))
 const honorStats = computed(() => getLocalizedHonorStats(locale.value))
 const sections = computed(() => getLocalizedHonorSections(locale.value))
 
 const categoryCounts = computed(() => {
-  const counts: Record<'all' | HonorLevel, number> = { all: honors.value.length, peak: 0, excellent: 0, emerging: 0 }
-  for (const honor of honors.value) counts[honor.level] += 1
+  const counts: Record<HonorFilter, number> = { all: honors.value.length, international: 0, national: 0, regional: 0 }
+  for (const honor of honors.value) {
+    if (honor.scope !== 'pending') counts[honor.scope] += 1
+  }
   return counts
 })
 
@@ -28,13 +30,23 @@ const honorsWithCoordinate = computed(() => honors.value.map((honor, index) => (
   coordinate: index + 1
 })))
 
+const pendingHonors = computed(() => honorsWithCoordinate.value.filter((honor) => honor.scope === 'pending'))
+
 const filteredHonors = computed(() => {
   if (activeCategory.value === 'all') return honorsWithCoordinate.value
-  return honorsWithCoordinate.value.filter((h) => h.level === activeCategory.value)
+  return honorsWithCoordinate.value.filter((h) => h.scope === activeCategory.value)
 })
 
-function setCategory(category: 'all' | HonorLevel) {
+function setCategory(category: HonorFilter) {
   activeCategory.value = category
+}
+
+function sourceHost(url: string) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '')
+  } catch {
+    return url
+  }
 }
 </script>
 
@@ -72,7 +84,7 @@ function setCategory(category: 'all' | HonorLevel) {
           v-for="(h, i) in filteredHonors"
           :key="h.id"
           class="honor-card"
-          :class="h.level"
+          :class="h.scope"
           :id="`honor-${h.id}`"
           v-pointer-sheen
           v-reveal="{ delay: Math.min(i, 3) * 60 }"
@@ -82,14 +94,29 @@ function setCategory(category: 'all' | HonorLevel) {
           <div class="honor-content">
             <h3>{{ h.title }}</h3>
             <span class="honor-org">{{ h.org }}</span>
+            <span v-if="h.evidence" class="honor-evidence">
+              {{ h.evidence }}
+              <span v-if="h.source" class="honor-source">{{ messages.honors.sourceLabel }}: {{ sourceHost(h.source) }}</span>
+            </span>
           </div>
-          <span class="honor-level-tag">{{ levelLabel[h.level] }}</span>
+          <span class="honor-level-tag">{{ scopeLabel[h.scope] }}</span>
         </article>
       </TransitionGroup>
       <div v-if="!filteredHonors.length" class="archive-empty" role="status">
         <p>{{ messages.empty.honors }}</p>
         <YanceButton v-if="activeCategory !== 'all'" variant="quiet" @click="setCategory('all')">{{ messages.empty.viewAll }}</YanceButton>
       </div>
+
+      <details v-if="pendingHonors.length" class="honor-pending">
+        <summary>{{ sections.pending.label }} · {{ pendingHonors.length }}</summary>
+        <p>{{ sections.pending.note }}</p>
+        <ul>
+          <li v-for="h in pendingHonors" :key="h.id">
+            <time :datetime="h.date.replace('.', '-')">{{ h.date }}</time>
+            <span>{{ h.title }} · {{ h.org }}</span>
+          </li>
+        </ul>
+      </details>
     </section>
   </div>
 </template>
