@@ -154,6 +154,19 @@ test('reduced motion turned on before entry stops a pending count', async ({ pag
   expect(state.ready).toBe('true')
 })
 
+test('academic metrics settle when a fast scroll skips the count', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 })
+  await page.goto('/en/academics/')
+  await waitForHydration(page)
+  const strip = page.locator('#sec-scoreboard .metric-strip')
+
+  // Jump past the strip to the page end in one instant scroll; the count should
+  // settle on the final values instead of staying at zero.
+  await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }))
+  await expect(strip).toHaveAttribute('data-metrics-ready', 'true', { timeout: 4000 })
+  await expect(page.locator('.metric-card b')).toHaveText(finalValues)
+})
+
 test('academic metrics stay at the final values without JavaScript', async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false })
   const page = await context.newPage()
