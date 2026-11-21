@@ -89,8 +89,19 @@ test('video wraps to the beginning of its loop', async ({ page }) => {
   const video = page.locator('.home-project-video video').first()
   await video.scrollIntoViewIfNeeded()
   await expect.poll(() => video.evaluate((element: HTMLVideoElement) => element.readyState)).toBeGreaterThanOrEqual(2)
-  await video.evaluate((element: HTMLVideoElement) => { element.currentTime = element.duration - .15 })
-  await expect.poll(() => video.evaluate((element: HTMLVideoElement) => element.currentTime)).toBeLessThan(1)
+  await expect(video).toHaveJSProperty('paused', false)
+  const wrapped = await video.evaluate((element: HTMLVideoElement) => new Promise<boolean>((resolve) => {
+    element.addEventListener('seeked', () => {
+      const onTimeUpdate = () => {
+        if (element.seeking || element.currentTime >= 1) return
+        element.removeEventListener('timeupdate', onTimeUpdate)
+        resolve(true)
+      }
+      element.addEventListener('timeupdate', onTimeUpdate)
+    }, { once: true })
+    element.currentTime = element.duration - .5
+  }))
+  expect(wrapped).toBe(true)
 })
 
 test('failed media leaves the poster and link available', async ({ page }) => {
