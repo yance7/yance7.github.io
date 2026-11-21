@@ -40,6 +40,7 @@ let reducedMotion = false
 const startedIndexes = new Set<number>()
 const completedIndexes = new Set<number>()
 const observedIndexes = new Set<number>()
+const armedTargets = new Map<number, HTMLElement>()
 let initialObservationComplete = false
 
 function refreshReady() {
@@ -121,6 +122,33 @@ function stopObservers() {
   startObserver?.disconnect()
   armObserver = null
   startObserver = null
+  armedTargets.clear()
+}
+
+function settleMissedCounts() {
+  if (!props.animateOnEnter || reducedMotion || !armedTargets.size) return
+  const bottomReached = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 4
+  for (const [index, target] of [...armedTargets]) {
+    if (startedIndexes.has(index)) {
+      armedTargets.delete(index)
+      continue
+    }
+    const rect = target.getBoundingClientRect()
+    if (bottomReached || rect.bottom <= 0) {
+      armedTargets.delete(index)
+      startObserver?.unobserve(target)
+      displays.value[index] = String(props.metrics[index]?.value ?? '')
+      startedIndexes.add(index)
+      completedIndexes.add(index)
+      refreshReady()
+      continue
+    }
+    if (rect.top < window.innerHeight) {
+      armedTargets.delete(index)
+      startObserver?.unobserve(target)
+      animateIndex(index)
+    }
+  }
 }
 
 function handleMotionChange() {
@@ -159,6 +187,15 @@ onMounted(() => {
 
       const rect = target.getBoundingClientRect()
       const onScreenNow = rect.bottom > 0 && rect.top < window.innerHeight
+      // A fast scroll can move the strip past the viewport before the start
+      // observer reports. Settle to the final value instead of leaving zeros.
+      if (rect.bottom <= 0) {
+        displays.value[index] = String(props.metrics[index]?.value ?? '')
+        startedIndexes.add(index)
+        completedIndexes.add(index)
+        refreshReady()
+        return
+      }
       if (onScreenNow || reducedMotion) {
         // Already visible (or motion was reduced): keep the server-rendered value.
         displays.value[index] = String(props.metrics[index]?.value ?? '')
@@ -172,6 +209,7 @@ onMounted(() => {
       const parsed = parseValue(props.metrics[index]?.value ?? '')
       if (parsed) displays.value[index] = (0).toFixed(parsed.decimals) + parsed.suffix
       startObserver?.observe(target)
+      armedTargets.set(index, target)
     })
     maybeCompleteObservation(cards.length)
   }, { threshold: 0, rootMargin: ARM_ROOT_MARGIN })
@@ -182,6 +220,7 @@ onMounted(() => {
       const index = Number(target.dataset.metricIndex)
       if (!Number.isInteger(index)) return
       if (!entry.isIntersecting) return
+      armedTargets.delete(index)
       startObserver?.unobserve(target)
       animateIndex(index)
     })
@@ -207,12 +246,15 @@ onMounted(() => {
 
   motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
   motionQuery.addEventListener('change', handleMotionChange)
+  window.addEventListener('scroll', settleMissedCounts, { passive: true })
+  settleMissedCounts()
 })
 
 onUnmounted(() => {
   rafs.forEach((id) => cancelAnimationFrame(id))
   rafs.clear()
   stopObservers()
+  window.removeEventListener('scroll', settleMissedCounts)
   motionQuery?.removeEventListener('change', handleMotionChange)
   motionQuery = null
   startedIndexes.clear()
