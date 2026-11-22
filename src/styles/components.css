@@ -459,6 +459,18 @@ html[data-vue-enhanced='true'] .reveal:not(.revealed) {
   font-size: clamp(1.05rem, 2vw, 1.3rem);
   line-height: 1.6;
 }
+.noscript-fallback .noscript-fallback-credit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  margin: calc(-1 * var(--space-2)) 0 var(--space-3);
+  color: var(--dim);
+  font-family: var(--font-technical);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-latin-meta);
+}
+.noscript-fallback .noscript-fallback-credit b { color: var(--ink); font-weight: 450; }
 .noscript-fallback-nav,
 .noscript-fallback-locales {
   display: flex;

@@ -30,6 +30,14 @@ const researchHref = computed(() => buildLocalizedPageHref('research', locale.va
         <p class="shell-fallback-kicker">{{ concertsMeta.kicker }}</p>
         <h1>{{ concertsMeta.heading ?? concertsMeta.title }}</h1>
         <p v-if="concertsMeta.epigraph" class="shell-fallback-epigraph">{{ concertsMeta.epigraph }}</p>
+        <p v-if="concertsMeta.credit" class="shell-fallback-credit">
+          <b>{{ concertsMeta.credit.artist }}</b>
+          <i aria-hidden="true">/</i>
+          <span>「{{ concertsMeta.credit.song }}」</span>
+          <i aria-hidden="true">/</i>
+          <span v-if="concertsMeta.credit.album">《{{ concertsMeta.credit.album }}》</span>
+          <span v-else>{{ messages.common.single }}</span>
+        </p>
         <p>{{ concertsMeta.copy }}</p>
         <ul class="shell-fallback-list">
           <li v-for="concert in concerts" :key="`${concert.date}-${concert.artist}`">

@@ -52,6 +52,7 @@ function renderConcerts(locale: Locale) {
     <p class="noscript-fallback-kicker">${escapeHtml(page.kicker)}</p>
     <h1>${escapeHtml(page.heading ?? page.title)}</h1>
     ${page.epigraph ? `<p class="noscript-fallback-epigraph">${escapeHtml(page.epigraph)}</p>` : ''}
+    ${page.credit ? `<p class="noscript-fallback-credit"><b>${escapeHtml(page.credit.artist)}</b><span aria-hidden="true"> / </span><span>「${escapeHtml(page.credit.song)}」</span><span aria-hidden="true"> / </span><span>${page.credit.album ? `《${escapeHtml(page.credit.album)}》` : escapeHtml(messages.common.single)}</span></p>` : ''}
     <p>${escapeHtml(page.copy)}</p>
     <p class="noscript-notice">${escapeHtml(fallbackNote[locale])}</p>
     <ul class="noscript-concert-list">${items}</ul>
