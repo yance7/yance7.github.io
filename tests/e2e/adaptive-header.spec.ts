@@ -277,7 +277,7 @@ test('English navigation stays inside the viewport across desktop widths', async
 })
 
 test('desktop header uses centered navigation and a right-hand control group', async ({ page }) => {
-  for (const width of [1440, 1024, 768]) {
+  for (const width of [1440, 1024, 900]) {
     await page.setViewportSize({ width, height: 900 })
     await page.goto('/en/research/')
     await waitForReady(page)
@@ -612,4 +612,201 @@ test('adaptive header keeps localized controls and deep-link anchors stable', as
   await zhHkLink.click()
   await expect(page).toHaveURL(/\/zh-hk\/research\/$/)
   await expect(page.locator('.site-nav')).toHaveAttribute('data-header-state', 'resting')
+})
+
+const tabletMenuWidths = [640, 641, 760, 761, 820] as const
+const tabletLocales = [
+  { name: 'en', route: '/en/research/', lang: 'en' },
+  { name: 'zh-CN', route: '/research/', lang: 'zh-CN' },
+  { name: 'zh-HK', route: '/zh-hk/research/', lang: 'zh-HK' }
+] as const
+
+for (const locale of tabletLocales) {
+  test(`tablet menu keeps navigation and controls clear: ${locale.name}`, async ({ page }) => {
+    for (const width of tabletMenuWidths) {
+      await page.setViewportSize({ width, height: 900 })
+      await page.goto(locale.route)
+      await waitForReady(page)
+      await expect(page.locator('html')).toHaveAttribute('data-locale', locale.lang)
+
+      for (const state of ['resting', 'floating'] as const) {
+        if (state === 'floating') {
+          await scrollHeader(page, 260)
+          await expect(page.locator('.site-nav')).toHaveAttribute('data-header-state', 'floating')
+        } else {
+          await expect(page.locator('.site-nav')).toHaveAttribute('data-header-state', 'resting')
+        }
+        const context = `${locale.name} ${width}px ${state}`
+        await expect(page.locator('.menu-trigger'), `${context} menu trigger`).toBeVisible()
+        await expect(page.locator('.nav-rail'), `${context} inline rail`).toBeHidden()
+        await expect(page.locator('.locale-switcher-mobile'), `${context} locale menu`).toBeVisible()
+        await expect(page.locator('.locale-switcher-desktop'), `${context} desktop locale`).toBeHidden()
+        await expect(page.locator('.theme-orbit'), `${context} theme control`).toBeVisible()
+
+        const geometry = await page.evaluate(() => {
+          const rect = (selector: string) => {
+            const element = document.querySelector<HTMLElement>(selector)
+            if (!element) throw new Error(`Missing ${selector}`)
+            return element.getBoundingClientRect()
+          }
+          const surface = rect('.site-nav-surface')
+          const localeMenu = rect('.locale-switcher-mobile')
+          const theme = rect('.theme-orbit')
+          const trigger = rect('.menu-trigger')
+          return {
+            surfaceLeft: surface.left,
+            surfaceRight: surface.right,
+            localeLeft: localeMenu.left,
+            localeRight: localeMenu.right,
+            themeLeft: theme.left,
+            themeRight: theme.right,
+            triggerLeft: trigger.left,
+            triggerRight: trigger.right,
+            overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth
+          }
+        })
+        expect(geometry.localeLeft, `${context} locale start`).toBeGreaterThanOrEqual(geometry.surfaceLeft)
+        expect(geometry.localeRight, `${context} locale/theme overlap`).toBeLessThanOrEqual(geometry.themeLeft)
+        expect(geometry.themeRight, `${context} theme/trigger overlap`).toBeLessThanOrEqual(geometry.triggerLeft)
+        expect(geometry.triggerRight, `${context} trigger inside surface`).toBeLessThanOrEqual(geometry.surfaceRight)
+        expect(geometry.overflow, `${context} horizontal overflow`).toBeLessThanOrEqual(0)
+      }
+
+      await page.evaluate(() => window.scrollTo(0, 0))
+      const trigger = page.locator('.menu-trigger')
+      await trigger.focus()
+      await expect(trigger, `${locale.name} ${width}px trigger focus`).toBeFocused()
+      await page.keyboard.press('Enter')
+      await expect(trigger).toHaveAttribute('aria-expanded', 'true')
+      const dialog = page.locator('.mobile-menu-overlay')
+      await expect(dialog).toBeVisible()
+      const links = dialog.locator('.mobile-menu a')
+      await expect(links).toHaveCount(6)
+      await links.first().focus()
+      await expect(links.first(), `${locale.name} ${width}px first nav link focus`).toBeFocused()
+      await page.keyboard.press('Escape')
+      await expect(dialog).toHaveCount(0)
+      await expect(trigger).toHaveAttribute('aria-expanded', 'false')
+    }
+  })
+}
+
+test('tablet header returns to the inline rail at 821px and keeps controls separate', async ({ page }) => {
+  for (const width of [821, 900]) {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto('/en/research/')
+    await waitForReady(page)
+
+    for (const state of ['resting', 'floating'] as const) {
+      if (state === 'floating') {
+        await scrollHeader(page, 260)
+        await expect(page.locator('.site-nav')).toHaveAttribute('data-header-state', 'floating')
+      } else {
+        await expect(page.locator('.site-nav')).toHaveAttribute('data-header-state', 'resting')
+      }
+      const context = `inline ${width}px ${state}`
+      await expect(page.locator('.nav-rail'), `${context} rail`).toBeVisible()
+      await expect(page.locator('.menu-trigger'), `${context} menu trigger`).toBeHidden()
+      await expect(page.locator('.locale-switcher-desktop'), `${context} locale`).toBeVisible()
+      await expect(page.locator('.theme-orbit'), `${context} theme`).toBeVisible()
+      await expect(page.locator('.theme-orbit .orbit-label'), `${context} theme label`).toBeHidden()
+
+      const geometry = await page.evaluate(() => {
+        const rail = document.querySelector<HTMLElement>('.nav-rail')
+        const controls = document.querySelector<HTMLElement>('.site-nav-controls')
+        if (!rail || !controls) throw new Error('header groups are incomplete')
+        const links = [...rail.querySelectorAll<HTMLAnchorElement>('a')]
+        const obscured = links.filter((link) => {
+          const rect = link.getBoundingClientRect()
+          const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2)
+          return !(hit === link || link.contains(hit))
+        }).map((link) => link.getAttribute('href'))
+        return {
+          gap: controls.getBoundingClientRect().left - rail.getBoundingClientRect().right,
+          obscured,
+          overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth
+        }
+      })
+      expect(geometry.gap, `${context} nav/control overlap`).toBeGreaterThanOrEqual(0)
+      expect(geometry.obscured, `${context} obscured links`).toEqual([])
+      expect(geometry.overflow, `${context} horizontal overflow`).toBeLessThanOrEqual(0)
+
+      const links = page.locator('.nav-rail a')
+      await expect(links).toHaveCount(6)
+      const tabbable = await links.evaluateAll((els) => els.every((el) => el.tabIndex === 0 && !el.closest('[inert]')))
+      expect(tabbable, `${context} nav tabbable`).toBe(true)
+      for (let index = 0; index < 6; index += 1) {
+        await links.nth(index).focus()
+        await expect(links.nth(index), `${context} nav ${index} focusable`).toBeFocused()
+      }
+      await page.locator('.theme-orbit').focus()
+      await expect(page.locator('.theme-orbit'), `${context} theme focusable`).toBeFocused()
+    }
+  }
+
+  await page.goto('/en/research/')
+  await waitForReady(page)
+  const themeBefore = await page.locator('html').getAttribute('data-theme')
+  await page.locator('.theme-orbit').click()
+  await expect(page.locator('html')).not.toHaveAttribute('data-theme', themeBefore ?? '')
+  await page.locator('.locale-switcher-desktop a[hreflang="zh-HK"]').click()
+  await expect(page).toHaveURL(/\/zh-hk\/research\/$/)
+})
+
+test('tablet menu Concerts link navigates to the English archive at 641px', async ({ page }) => {
+  await page.setViewportSize({ width: 641, height: 900 })
+  await page.goto('/en/research/')
+  await waitForReady(page)
+  await page.locator('.menu-trigger').click()
+
+  const concerts = page.locator('.mobile-menu a').filter({ hasText: 'Concerts' })
+  await expect(concerts).toHaveCount(1)
+  await concerts.click()
+  await expect(page).toHaveURL(/\/en\/concerts\/$/)
+})
+
+test('tablet navigation stays available without JavaScript at 641px', async ({ browser }) => {
+  const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 641, height: 900 } })
+  const page = await context.newPage()
+  await page.goto('/en/research/')
+
+  const links = page.locator('.nav-rail a')
+  await expect(page.locator('.nav-rail')).toBeVisible()
+  await expect(links).toHaveCount(6)
+  await expect(page.locator('.menu-trigger')).toBeHidden()
+  await expect(page.locator('.locale-switcher-mobile')).toBeVisible()
+  await expect(page.locator('.theme-orbit')).toBeHidden()
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
+  expect(overflow).toBeLessThanOrEqual(0)
+
+  await links.last().click()
+  await expect(page).toHaveURL(/\/en\/concerts\/$/)
+  await context.close()
+})
+
+test('tablet prerendered navigation switches to the menu after delayed takeover', async ({ page }) => {
+  await page.setViewportSize({ width: 641, height: 900 })
+  let markEntryRequested!: () => void
+  let releaseEntry!: () => void
+  const entryRequested = new Promise<void>((resolve) => { markEntryRequested = resolve })
+  const entryGate = new Promise<void>((resolve) => { releaseEntry = resolve })
+  await page.route(/\/assets\/vue\/main-[^/]+\.js$/u, async (route) => {
+    markEntryRequested()
+    await entryGate
+    await route.continue()
+  })
+
+  try {
+    await page.goto('/en/research/', { waitUntil: 'commit' })
+    await entryRequested
+    await expect(page.locator('.nav-rail')).toBeVisible()
+    await expect(page.locator('.nav-rail a')).toHaveCount(6)
+    await expect(page.locator('.menu-trigger')).toBeHidden()
+  } finally {
+    releaseEntry()
+  }
+
+  await expect(page.locator('body')).toHaveAttribute('data-hydrated', 'true')
+  await expect(page.locator('.menu-trigger')).toBeVisible()
+  await expect(page.locator('.nav-rail')).toBeHidden()
 })
