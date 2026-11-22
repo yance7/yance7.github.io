@@ -4,6 +4,7 @@ import { computed, ref } from 'vue'
 import { getLocalizedHomeCopy } from '../data/locales'
 import { useHomeHeroIntro } from '../composables/useHomeHeroIntro'
 import { useLocale } from '../i18n'
+import HomeProjectVideos from './HomeProjectVideos.vue'
 import HomeHeroParticles from './HomeHeroParticles.vue'
 import HomeHeroSlideshow from './HomeHeroSlideshow.vue'
 import HomeHeroTouchFeedback from './HomeHeroTouchFeedback.vue'
@@ -50,18 +51,21 @@ const visual = ref<HTMLElement | null>(null)
         </div>
       </div>
 
-      <div ref="visual" class="home-hero-visual">
-        <HomeHeroSlideshow
-          :container="visual"
-          :intro-ready="!isIntroActive"
-          :controls-enabled="props.runtimeEnabled"
-          :messages="messages.page.home.slideshow"
-        />
-        <HomeHeroParticles
-          :animate-intro="animateParticles"
-          :intro-started-at="introStartedAt"
-          :runtime-enabled="props.runtimeEnabled"
-        />
+      <div class="home-hero-media">
+        <div ref="visual" class="home-hero-visual">
+          <HomeHeroSlideshow
+            :container="visual"
+            :intro-ready="!isIntroActive"
+            :controls-enabled="props.runtimeEnabled"
+            :messages="messages.page.home.slideshow"
+          />
+          <HomeHeroParticles
+            :animate-intro="animateParticles"
+            :intro-started-at="introStartedAt"
+            :runtime-enabled="props.runtimeEnabled"
+          />
+        </div>
+        <HomeProjectVideos />
       </div>
     </div>
 

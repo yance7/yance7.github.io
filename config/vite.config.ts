@@ -12,7 +12,7 @@ const htmlRoot = resolve(rootDir, 'html-src')
 const THEME_BOOTSTRAP_HASH = 'sha256-6EB3M6kNQrN+F2fiZKnP3nFuSSwjlF8ebVl/agRwPYs='
 const THEME_ORBIT_BOOT_HASH = 'sha256-qLDlG1viNC5gB1yCHhcRCG9mVMaHWoM2SjN/tB/RvWQ='
 const HOME_HERO_PRELOAD_HASH = 'sha256-zxh2PIPyGJ3BMCyeINgDQPxbnSIPCBhq4Y1wioP5Hww='
-const HOME_HERO_IMAGE_SIZES = '(max-width: 760px) calc(100vw - 40px), calc(min(1260px, 100vw) - 10vw)'
+const HOME_HERO_IMAGE_SIZES = '(max-width: 760px) calc(100vw - 40px), calc(min(1360px, 100vw) - 10vw)'
 const homeHeroAssetManifest = JSON.parse(readFileSync(resolve(rootDir, 'src/data/homeHeroAssets.json'), 'utf8')) as {
   slides: Array<{ sources: { webp: Array<{ src: string; width: number }> } }>
 }

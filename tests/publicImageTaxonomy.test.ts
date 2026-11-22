@@ -8,6 +8,7 @@ const sourceDirectories = ['.github', 'config', 'html-src', 'public', 'scripts',
 const sourceDocuments = ['AGENTS.md', 'README.md', 'docs/asset-rights.md', 'docs/concert-poster-sources.md']
 const imageRoots = [
   'images/home-hero/',
+  'images/home-projects/',
   'images/concerts/originals/',
   'images/concerts/thumbs/',
   'images/case-studies/',

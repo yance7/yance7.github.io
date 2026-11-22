@@ -368,7 +368,7 @@ test('keeps the prerendered hero image candidate stable through hydration', asyn
       currentSrc: (element as HTMLImageElement).currentSrc
     }))
     expect(prerenderedSource.srcset).toContain('896w')
-    expect(prerenderedSource.sizes).toBe('(max-width: 760px) calc(100vw - 40px), calc(min(1260px, 100vw) - 10vw)')
+    expect(prerenderedSource.sizes).toBe('(max-width: 760px) calc(100vw - 40px), calc(min(1360px, 100vw) - 10vw)')
     expect(prerenderedSource.currentSrc).toContain('hero-01-896-')
 
     releaseEntry()
