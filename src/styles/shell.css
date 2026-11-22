@@ -321,6 +321,13 @@ html:not([data-js='true']) .startup-shell { display: none; }
 .shell-fallback h1 { margin: 0 0 16px; font-family: var(--font-editorial); font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.15; }
 .shell-fallback p { max-width: var(--w-editorial); margin: 0 0 16px; color: var(--muted); font-family: var(--font-prose); line-height: 1.8; }
 .shell-fallback .shell-fallback-epigraph { margin: -4px 0 16px; font-family: var(--font-editorial); font-style: italic; font-size: clamp(1.05rem, 2vw, 1.3rem); line-height: 1.6; }
+.shell-fallback .shell-fallback-credit {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px;
+  margin: -4px 0 16px; color: var(--dim);
+  font-family: var(--font-technical); font-size: var(--text-xs); letter-spacing: var(--tracking-latin-meta);
+}
+.shell-fallback .shell-fallback-credit b { color: var(--ink); font-weight: 450; }
+.shell-fallback .shell-fallback-credit i { color: var(--gold); font-style: normal; opacity: .75; }
 .shell-fallback-list { display: grid; gap: 12px; margin: 24px 0 0; padding: 0; list-style: none; }
 .shell-fallback-list li { display: grid; gap: 4px; padding: 12px 0; border-top: 1px solid var(--line-faint); font-family: var(--font-interface); }
 .shell-fallback-list time { color: var(--gold); font-family: var(--font-technical); font-size: var(--text-xs); }
@@ -411,17 +418,13 @@ html[data-theme='dark'] .orbit-knob { transform: translateX(24px); background: v
 /* Real space text keeps the raw heading crawlable; it is taken out of flow so the
    lyric inline layout and glyph positions stay identical to the approved baseline. */
 .lyric-space-copy { position: absolute; left: 0; top: 0; width: 0; height: 0; overflow: hidden; }
-.lyric-char {
-  display: inline-block;
-  opacity: 0;
-  transform: translateY(10px) rotate(2deg);
-  animation: lyric-char-in .42s var(--ease-out) calc(140ms + var(--ci) * 45ms) forwards;
-}
+/* Archive titles are readable on the first frame; the H1 container carries the
+   single group rise instead of per-character opacity animation. */
+.lyric-char { display: inline-block; }
 html[data-locale='en'] .hero-title.hero-heading {
   max-width: min(100%, 16ch);
   text-wrap: balance;
 }
-@keyframes lyric-char-in { to { opacity: 1; transform: none; } }
 @keyframes hero-title-rise { from { transform: translateY(12px); } to { transform: none; } }
 .hero-copy {
   max-width: 64ch; margin: 0; color: var(--muted);

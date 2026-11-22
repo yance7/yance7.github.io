@@ -474,12 +474,12 @@ test('reveal content uses the shared fade-up tokens with a bounded stagger', asy
 test('page titles and section headings use the tightened entrance values', async ({ page }) => {
   await page.goto('/honors/')
   await waitForHydration(page)
-  const charMotion = await page.locator('.hero-title.hero-lyric .lyric-char').first().evaluate((element) => {
+  const titleMotion = await page.locator('.hero-title.hero-lyric').evaluate((element) => {
     const style = getComputedStyle(element)
     return { name: style.animationName, duration: style.animationDuration }
   })
-  expect(charMotion.name).toBe('lyric-char-in')
-  expect(Number.parseFloat(charMotion.duration)).toBeCloseTo(0.42, 3)
+  expect(titleMotion.name).toBe('hero-title-rise')
+  expect(Number.parseFloat(titleMotion.duration)).toBeCloseTo(0.56, 3)
 
   await page.goto('/')
   await waitForHydration(page)
@@ -496,6 +496,90 @@ test('page titles and section headings use the tightened entrance values', async
   })
   expect(headMotion.distance).toBe('10px')
   expect(Number.parseFloat(headMotion.transformDuration)).toBeCloseTo(0.36, 3)
+})
+
+test('Chinese archive titles stay readable on the first frame and rise once as a group', async ({ page }) => {
+  const cases = [
+    { route: '/research/', width: 1280 },
+    { route: '/works/', width: 1280 },
+    { route: '/zh-hk/research/', width: 1280 },
+    { route: '/works/', width: 390 }
+  ] as const
+
+  for (const item of cases) {
+    await page.setViewportSize({ width: item.width, height: item.width === 390 ? 844 : 720 })
+    await page.goto(item.route)
+    await waitForHydration(page)
+
+    const title = page.locator('h1.hero-title.hero-lyric')
+    await expect(title).toHaveCount(1)
+    const characters = title.locator('.lyric-char')
+    await expect(characters.first()).toHaveCSS('animation-name', 'none')
+    await expect(characters.first()).toHaveCSS('opacity', '1')
+    const lastCharacter = characters.last()
+    const visible = await lastCharacter.evaluate((element) => {
+      const style = getComputedStyle(element)
+      const rect = element.getBoundingClientRect()
+      return style.visibility === 'visible' && Number(style.opacity) === 1 && rect.width > 0 && rect.height > 0
+    })
+    expect(visible, `${item.route} last glyph visible at ${item.width}px`).toBe(true)
+
+    const initial = await title.evaluate((element) => {
+      const animations = element.getAnimations().filter((animation) => (
+        (animation as CSSAnimation).animationName === 'hero-title-rise'
+      ))
+      if (!animations.length) throw new Error('Missing hero-title-rise animation')
+      for (const animation of animations) {
+        animation.pause()
+        animation.currentTime = 0
+      }
+      const style = getComputedStyle(element)
+      return { offset: new DOMMatrixReadOnly(style.transform).m42, opacity: Number(style.opacity) }
+    })
+    expect(initial.opacity, `${item.route} title readable at the first frame`).toBe(1)
+    expect(initial.offset, `${item.route} title starts with a short rise`).toBeGreaterThan(2)
+
+    await title.evaluate((element) => {
+      element.getAnimations().forEach((animation) => animation.play())
+    })
+    await expect.poll(() => title.evaluate((element) => {
+      const transform = getComputedStyle(element).transform
+      return transform === 'none' || transform === 'matrix(1, 0, 0, 1, 0, 0)'
+    })).toBe(true)
+    await expect(lastCharacter).toHaveCSS('opacity', '1')
+  }
+})
+
+test('reduced motion keeps Chinese archive titles readable without a rise', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/research/')
+  await waitForHydration(page)
+
+  const title = page.locator('h1.hero-title.hero-lyric')
+  await expect(title).toHaveCSS('animation-name', 'none')
+  await expect(title).toHaveCSS('transform', 'none')
+  await expect(title.locator('.lyric-char').last()).toHaveCSS('opacity', '1')
+})
+
+test('Chinese archive titles stay readable when the entry bundle is delayed', async ({ page }) => {
+  await page.route(/\/assets\/vue\/main-[^/]+\.js$/u, (route) => route.abort())
+  await page.goto('/zh-hk/research/', { waitUntil: 'domcontentloaded' })
+
+  const title = page.locator('h1.hero-title.hero-lyric')
+  await expect(title).toContainText('不完美')
+  await expect(title.locator('.lyric-char').last()).toHaveCSS('visibility', 'visible')
+  await expect(title.locator('.lyric-char').last()).toHaveCSS('opacity', '1')
+})
+
+test('English concerts keeps one heading, epigraph, and credit after takeover', async ({ page }) => {
+  await page.goto('/en/concerts/')
+  await waitForHydration(page)
+
+  await expect(page.locator('h1')).toHaveCount(1)
+  await expect(page.locator('h1')).toHaveText('Concerts')
+  await expect(page.locator('.hero-epigraph')).toHaveText('Fate brought us together beyond this restless world')
+  await expect(page.locator('.lyric-credit')).toContainText('G.E.M.')
+  await expect(page.locator('.lyric-credit')).toContainText('「光年之外」')
 })
 
 test('reduced motion completes every reveal immediately', async ({ page }) => {
