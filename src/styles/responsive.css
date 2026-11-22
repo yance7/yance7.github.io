@@ -122,6 +122,9 @@
 
 @media (max-width: 420px) {
   .archive-hero { padding-inline: max(var(--w-pad), env(safe-area-inset-left)) max(var(--w-pad), env(safe-area-inset-right)); }
+  /* Two-column cards are ~142px wide at 320px; 24px side padding leaves less
+     room than the tracked INTERNATIONAL label needs. */
+  .metric-card { padding-inline: var(--space-4); }
 }
 
 @media (max-width: 760px) {

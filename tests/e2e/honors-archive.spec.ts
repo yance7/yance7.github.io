@@ -269,6 +269,79 @@ test('honors archive fits the required viewport and theme matrix', async ({ page
 
 const honorFinalValues = ['13', '5', '4', '2']
 
+async function measureHonorMetricCards(page: Page) {
+  return page.locator('#sec-milestones .metric-card').evaluateAll((cards) => cards.map((card) => {
+    const label = card.querySelector<HTMLElement>('.metric-label')!
+    const range = document.createRange()
+    range.selectNodeContents(label)
+    const text = range.getBoundingClientRect()
+    const rect = card.getBoundingClientRect()
+    return {
+      label: label.textContent?.trim() ?? '',
+      value: card.querySelector('b')?.textContent?.trim() ?? '',
+      width: rect.width,
+      height: rect.height,
+      textLeft: text.left,
+      textRight: text.right,
+      cardLeft: rect.left,
+      cardRight: rect.right
+    }
+  }))
+}
+
+test('narrow English metric labels stay inside their cards while counts settle', async ({ browser }) => {
+  const matrix = [
+    { theme: 'light', reducedMotion: 'no-preference' as const },
+    { theme: 'dark', reducedMotion: 'no-preference' as const },
+    { theme: 'light', reducedMotion: 'reduce' as const }
+  ]
+
+  for (const mode of matrix) {
+    const context = await browser.newContext({ viewport: { width: 320, height: 600 }, reducedMotion: mode.reducedMotion })
+    await context.addInitScript((theme) => localStorage.setItem('yance-theme', theme), mode.theme)
+    const page = await context.newPage()
+
+    for (const width of [320, 360, 390]) {
+      await page.setViewportSize({ width, height: 600 })
+      await page.goto('/en/honors/')
+      await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+      await page.evaluate(async () => {
+        await document.fonts.ready
+        const label = document.querySelector<HTMLElement>('#sec-milestones .metric-label')
+        if (label) {
+          const style = getComputedStyle(label)
+          await document.fonts.load(`${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`, label.textContent ?? '')
+        }
+        await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+      })
+
+      const before = await measureHonorMetricCards(page)
+      const strip = page.locator('#sec-milestones .metric-strip')
+      await strip.scrollIntoViewIfNeeded()
+      await expect(strip).toHaveAttribute('data-metrics-ready', 'true')
+      await expect(page.locator('#sec-milestones .metric-card b')).toHaveText(honorFinalValues)
+      const after = await measureHonorMetricCards(page)
+
+      const geometry = await page.evaluate(() => ({
+        documentWidth: document.documentElement.scrollWidth,
+        viewportWidth: window.innerWidth
+      }))
+      expect(geometry.documentWidth, `${mode.theme} ${width}px page overflow`).toBeLessThanOrEqual(geometry.viewportWidth)
+
+      after.forEach((card, index) => {
+        const label = `${mode.theme} ${mode.reducedMotion} ${width}px ${card.label}`
+        expect(card.value, label).toBe(honorFinalValues[index])
+        expect(card.textLeft, `${label} left edge`).toBeGreaterThanOrEqual(card.cardLeft - 0.5)
+        expect(card.textRight, `${label} right edge`).toBeLessThanOrEqual(card.cardRight + 0.5)
+        expect(Math.abs(card.width - before[index]!.width), `${label} card width drift`).toBeLessThan(0.5)
+        expect(Math.abs(card.height - before[index]!.height), `${label} card height drift`).toBeLessThan(0.5)
+      })
+    }
+
+    await context.close()
+  }
+})
+
 test('honors metrics count up on first entry and settle at the scope totals', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 600 })
   await page.addInitScript(() => {
