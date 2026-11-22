@@ -623,10 +623,12 @@ const tabletLocales = [
 
 for (const locale of tabletLocales) {
   test(`tablet menu keeps navigation and controls clear: ${locale.name}`, async ({ page }) => {
+    await page.setViewportSize({ width: tabletMenuWidths[0], height: 900 })
+    await page.goto(locale.route)
+    await waitForReady(page)
+
     for (const width of tabletMenuWidths) {
       await page.setViewportSize({ width, height: 900 })
-      await page.goto(locale.route)
-      await waitForReady(page)
       await expect(page.locator('html')).toHaveAttribute('data-locale', locale.lang)
 
       for (const state of ['resting', 'floating'] as const) {
