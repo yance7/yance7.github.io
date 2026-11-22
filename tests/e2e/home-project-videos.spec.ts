@@ -249,6 +249,24 @@ test('failed media leaves the poster and link available', async ({ page }) => {
   await expect(card.locator('span')).toHaveText('Maize')
 })
 
+test('a genuine media request failure returns to the static poster', async ({ page, browserName }) => {
+  test.skip(browserName === 'webkit', 'WebKit media requests bypass Playwright routing in this environment')
+  let requested!: () => void
+  const requestStarted = new Promise<void>(resolve => { requested = resolve })
+  await page.route('**/assets/videos/home-projects/maize.mp4', async route => {
+    requested()
+    await route.abort()
+  })
+  await page.goto('/')
+  const card = page.locator('.home-project-video').first()
+  const video = card.locator('video')
+  await video.scrollIntoViewIfNeeded()
+  await requestStarted
+  await expect(video).not.toHaveAttribute('src', /.+/)
+  await expect(video).toHaveAttribute('poster', /maize\.jpg$/)
+  await expect(card.locator('a')).toHaveAttribute('href', '/research/#corn-growth')
+})
+
 test('desktop photo height grows in proportion to its baseline at each viewport', async ({ page }) => {
   for (const width of [1024, 1280, 1440]) {
     await page.setViewportSize({ width, height: 1000 })
