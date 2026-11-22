@@ -282,7 +282,7 @@ for (const locale of locales) {
         ? 16
         : Math.max(72, Math.min(128, viewport.width * 0.08))
       expect(Math.abs(layout.topPadding - expectedTopPadding), `${context} hero top padding`).toBeLessThanOrEqual(1)
-      expect(Math.abs(layout.stageRadius - 28), `${context} stage corner radius`).toBeLessThanOrEqual(2)
+      expect(Math.abs(layout.stageRadius - 14), `${context} stage corner radius`).toBeLessThanOrEqual(2)
     }
   })
 }
