@@ -19,12 +19,35 @@ const mounted = ref(false)
 let observer: IntersectionObserver | undefined
 let media: MediaQueryList | undefined
 const visible = new Set<HTMLVideoElement>()
+const generations = new WeakMap<HTMLVideoElement, number>()
+const failed = new WeakSet<HTMLVideoElement>()
+function fail(video: HTMLVideoElement) {
+  if (failed.has(video)) return
+  failed.add(video)
+  video.pause()
+  video.removeAttribute('src')
+  video.load()
+}
 function sync() {
   root.value?.querySelectorAll<HTMLVideoElement>('video').forEach(video => {
-    if (paused.value || document.hidden || !visible.has(video)) { video.pause(); return }
+    if (paused.value || document.hidden || !visible.has(video)) {
+      generations.set(video, (generations.get(video) || 0) + 1)
+      video.pause()
+      return
+    }
+    if (failed.has(video) || !video.paused) return
     if (!video.src) { video.src = video.dataset.src || ''; video.load() }
-    void video.play().catch(() => { video.pause(); video.removeAttribute('src'); video.load() })
+    const generation = (generations.get(video) || 0) + 1
+    generations.set(video, generation)
+    void video.play().catch((error: unknown) => {
+      if (generations.get(video) !== generation || (error instanceof DOMException && error.name === 'AbortError')) return
+      fail(video)
+    })
   })
+}
+function mediaError(event: Event) {
+  const video = event.currentTarget as HTMLVideoElement
+  if (video.error) fail(video)
 }
 function preferenceChanged() { if (media?.matches) paused.value = true; sync() }
 function toggle() { paused.value = !paused.value; sync() }
@@ -55,13 +78,15 @@ onBeforeUnmount(() => {
   <section ref="root" class="home-projects" data-home-hero-control>
     <div class="home-projects__rail">
       <div v-for="project in projects" :key="project.file" class="home-project-video" :class="`home-project-video--${project.file}`">
-        <video :poster="`/assets/images/home-projects/${project.file}.jpg`" :data-src="`/assets/videos/home-projects/${project.file}.mp4`" width="1200" height="840" muted loop playsinline preload="none" aria-hidden="true"></video>
+        <video :poster="`/assets/images/home-projects/${project.file}.jpg`" :data-src="`/assets/videos/home-projects/${project.file}.mp4`" width="1200" height="840" muted loop playsinline preload="none" aria-hidden="true" @error="mediaError"></video>
         <div class="home-project-video__caption">
           <span>{{ project.name }}</span>
           <a :href="buildLocalizedPageHref(project.page, locale, { hash: project.hash })" :aria-label="labels.view(project.name)">↗</a>
         </div>
       </div>
     </div>
-    <button v-if="mounted" type="button" class="home-projects__toggle" @click="toggle">{{ paused ? labels.play : labels.pause }}</button>
+    <div class="home-projects__controls">
+      <button v-if="mounted" type="button" class="home-projects__toggle" @click="toggle">{{ paused ? labels.play : labels.pause }}</button>
+    </div>
   </section>
 </template>

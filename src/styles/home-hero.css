@@ -700,7 +700,8 @@ html:not([data-vue-enhanced='true']) .home-hero-slideshow__controls { display: n
 .home-project-video--maize .home-project-video__caption { color: #1e2820; background: linear-gradient(transparent, rgb(255 255 255 / .8)); }
 .home-project-video__caption a { color: inherit; display: grid; place-items: center; width: 44px; height: 44px; text-decoration: none; font-size: 1.2rem; }
 .home-project-video__caption a:focus-visible { outline: 2px solid currentColor; outline-offset: -4px; }
-.home-projects__toggle { display: block; margin: 8px 0 0 auto; border: 0; padding: 8px; background: transparent; color: inherit; cursor: pointer; }
-@media (max-width: 64rem) { .home-projects__rail { grid-auto-flow: column; grid-auto-columns: min(80%, 27rem); grid-template-columns: none; overflow-x: auto; scroll-snap-type: x proximity; } .home-project-video { scroll-snap-align: start; } }
+.home-projects__controls { display: flex; justify-content: flex-end; min-height: 44px; margin-top: 8px; }
+.home-projects__toggle { display: block; min-height: 44px; border: 0; padding: 8px; background: transparent; color: inherit; cursor: pointer; }
+@media (max-width: 52rem) { .home-projects__rail { grid-auto-flow: column; grid-auto-columns: min(80%, 27rem); grid-template-columns: none; overflow-x: auto; scroll-snap-type: x proximity; } .home-project-video { scroll-snap-align: start; } }
 @media (max-width: 760px) { .home-project-video { border-radius: 22px; } }
 @media (forced-colors: active) { .home-project-video__caption, .home-project-video--maize .home-project-video__caption { color: CanvasText; background: Canvas; } }
