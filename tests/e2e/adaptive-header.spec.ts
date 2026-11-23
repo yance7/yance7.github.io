@@ -277,19 +277,20 @@ test('English navigation stays inside the viewport across desktop widths', async
 })
 
 test('desktop header uses left-aligned navigation next to the Logo and a right-hand control group', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('/en/research/')
+  await waitForReady(page)
+
   for (const width of [1440, 1280, 1100, 1050, 1024, 900, 821]) {
     await page.setViewportSize({ width, height: 900 })
-    await page.goto('/en/research/')
-    await waitForReady(page)
+    if ((await page.evaluate(() => window.scrollY)) > 0) await scrollHeader(page, 0)
+    await expect(page.locator('.site-nav')).toHaveAttribute('data-header-state', 'resting')
 
     for (const state of ['resting', 'floating'] as const) {
       if (state === 'floating') {
         await scrollHeader(page, 260)
         await expect(page.locator('.site-nav')).toHaveAttribute('data-header-state', 'floating')
         await waitForFloatingSurfaceSettled(page)
-      } else {
-        await scrollHeader(page, 0)
-        await expect(page.locator('.site-nav')).toHaveAttribute('data-header-state', 'resting')
       }
 
       const geometry = await page.evaluate(() => {
@@ -339,11 +340,14 @@ const midWidthLocales = [
 
 for (const locale of midWidthLocales) {
   test(`mid-width header keeps nav clear of controls and keyboard reachable: ${locale.name}`, async ({ page }) => {
+    await page.setViewportSize({ width: midWidths[0], height: 900 })
+    await page.goto(locale.route)
+    await waitForReady(page)
+    await expect(page.locator('html')).toHaveAttribute('data-locale', locale.lang)
+
     for (const width of midWidths) {
       await page.setViewportSize({ width, height: 900 })
-      await page.goto(locale.route)
-      await waitForReady(page)
-      await expect(page.locator('html')).toHaveAttribute('data-locale', locale.lang)
+      if ((await page.evaluate(() => window.scrollY)) > 0) await scrollHeader(page, 0)
 
       for (const state of ['resting', 'floating'] as const) {
         if (state === 'floating') {
