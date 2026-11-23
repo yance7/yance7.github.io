@@ -82,7 +82,7 @@ test('academic metrics count up from zero when they enter the viewport and settl
       snapshot.onScreen && snapshot.numbers[index]! > 0 && snapshot.numbers[index]! < finalNumbers[index]!
     )), `metric ${index} should show an on-screen intermediate value`).toBe(true)
   }
-  // Once an on-screen frame reaches the final values it never drops back to zero.
+  //Once an on-screen frame reaches the final values it never drops back to zero.
   let visibleFinalSeen = false
   for (const snapshot of sequence) {
     const isFinal = snapshot.numbers.every((value, index) => value === finalNumbers[index])
@@ -90,6 +90,44 @@ test('academic metrics count up from zero when they enter the viewport and settl
     if (visibleFinalSeen && snapshot.onScreen) {
       expect(snapshot.numbers, 'visible values must not reset after reaching final').toEqual(finalNumbers)
     }
+  }
+})
+
+test('academic metrics already in the initial desktop viewport count up visibly from zero and settle at the final values', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1100 })
+  await page.addInitScript(() => {
+    const state = window as Window & { __metricSnapshots?: Array<{ values: string[]; onScreen: boolean }> }
+    state.__metricSnapshots = []
+    const record = () => {
+      const strip = document.querySelector('#sec-scoreboard .metric-strip')
+      const values = [...document.querySelectorAll('#sec-scoreboard .metric-card b')].map((element) => element.textContent ?? '')
+      if (!strip || !values.length) return
+      const rect = strip.getBoundingClientRect()
+      state.__metricSnapshots?.push({ values, onScreen: rect.bottom > 0 && rect.top < window.innerHeight })
+    }
+    new MutationObserver(record).observe(document, { subtree: true, childList: true, characterData: true })
+  })
+
+  await page.goto('/en/academics/')
+  await waitForHydration(page)
+  const strip = page.locator('#sec-scoreboard .metric-strip')
+  await expect(strip).toHaveAttribute('data-metrics-ready', 'true')
+  await expect(page.locator('#sec-scoreboard .metric-card b')).toHaveText(finalValues)
+
+  const snapshots = await page.evaluate(() => (
+    (window as Window & { __metricSnapshots?: Array<{ values: string[]; onScreen: boolean }> }).__metricSnapshots ?? []
+  ))
+  const parsed = snapshots
+    .map((snapshot) => ({
+      onScreen: snapshot.onScreen,
+      numbers: snapshot.values.map((value) => Number.parseFloat(value))
+    }))
+    .filter((snapshot) => snapshot.numbers.length === finalValues.length && snapshot.numbers.every(Number.isFinite))
+  expect(parsed.some((snapshot) => snapshot.onScreen && snapshot.numbers.every((value) => value === 0))).toBe(true)
+  for (let index = 0; index < finalNumbers.length; index += 1) {
+    expect(parsed.some((snapshot) => (
+      snapshot.onScreen && snapshot.numbers[index]! > 0 && snapshot.numbers[index]! < finalNumbers[index]!
+    )), `initial viewport academic metric ${index} should show an on-screen intermediate value`).toBe(true)
   }
 })
 

@@ -289,3 +289,49 @@ test('concert poster controls retain theme semantics and shared motion cadence',
   expect(dark.mediaOverlay).not.toBe('')
   expect(dark.mediaOverlayInk).not.toBe('')
 })
+
+test('concert overview metrics count up from zero with the + suffix intact and settle at the final values', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.addInitScript(() => {
+    const state = window as Window & { __metricSnapshots?: Array<{ values: string[]; onScreen: boolean }> }
+    state.__metricSnapshots = []
+    const record = () => {
+      const strip = document.querySelector('#concerts-overview .metric-strip')
+      const values = [...document.querySelectorAll('#concerts-overview .metric-card b')].map((element) => element.textContent ?? '')
+      if (!strip || !values.length) return
+      const rect = strip.getBoundingClientRect()
+      state.__metricSnapshots?.push({ values, onScreen: rect.bottom > 0 && rect.top < window.innerHeight })
+    }
+    new MutationObserver(record).observe(document, { subtree: true, childList: true, characterData: true })
+  })
+
+  await page.goto('/concerts/')
+  await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
+  const strip = page.locator('#concerts-overview .metric-strip')
+  const concertFinalValues = await page.locator('#concerts-overview .metric-card .sr-only').allTextContents()
+  const concertFinalNumbers = concertFinalValues.map((value) => Number.parseFloat(value))
+  expect(concertFinalValues[2]).toMatch(/^\d+\+$/)
+
+  await strip.scrollIntoViewIfNeeded()
+  await expect(strip).toHaveAttribute('data-metrics-ready', 'true')
+  await expect(page.locator('#concerts-overview .metric-card b')).toHaveText(concertFinalValues)
+
+  const snapshots = await page.evaluate(() => (
+    (window as Window & { __metricSnapshots?: Array<{ values: string[]; onScreen: boolean }> }).__metricSnapshots ?? []
+  ))
+  expect(snapshots.some((snapshot) => snapshot.onScreen && snapshot.values[2] === '0+')).toBe(true)
+  const parsed = snapshots
+    .map((snapshot) => ({
+      onScreen: snapshot.onScreen,
+      values: snapshot.values,
+      numbers: snapshot.values.map((value) => Number.parseFloat(value))
+    }))
+    .filter((snapshot) => snapshot.numbers.length === concertFinalValues.length && snapshot.numbers.every(Number.isFinite))
+  for (let index = 0; index < concertFinalNumbers.length; index += 1) {
+    if (concertFinalNumbers[index]! < 2) continue
+    expect(parsed.some((snapshot) => (
+      snapshot.onScreen && snapshot.numbers[index]! > 0 && snapshot.numbers[index]! < concertFinalNumbers[index]!
+    )), `concert metric ${index} should show an on-screen intermediate value`).toBe(true)
+  }
+  expect(parsed.every((snapshot) => snapshot.values[2]!.endsWith('+'))).toBe(true)
+})
