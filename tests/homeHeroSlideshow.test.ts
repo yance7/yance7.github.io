@@ -4,7 +4,7 @@ import { createHomeHeroImageLoader, createHomeHeroSlideshow } from '../src/compo
 import type { PreloadImage } from '../src/utils/imagePreload'
 
 type LoadFormat = 'webp' | 'jpeg' | null
-const defaultDwellMs = 3_000
+const defaultDwellMs = 5_000
 
 function deferred<T>() {
   let resolve!: (value: T) => void
@@ -124,34 +124,52 @@ describe('home hero slideshow state machine', () => {
     controller.dispose()
   })
 
-  it('keeps manual pause after pointer hover clears and resumes only by explicit play', async () => {
-    const controller = createController()
+  it('cancels the active dwell timer on manual selection and starts a full 5000ms dwell after the selected photo finishes transitioning', async () => {
+    const manual = deferred<LoadFormat>()
+    const controller = createController((index) => index === 4 ? manual.promise : Promise.resolve('webp'))
     await flushPromises()
-    controller.select(0)
-    controller.setEnvironment({ hovered: true })
-    controller.setEnvironment({ hovered: false })
-    await vi.advanceTimersByTimeAsync(12_000)
 
-    expect(controller.state.value.userPaused).toBe(true)
+    await vi.advanceTimersByTimeAsync(3_200)
+    expect(controller.state.value.currentIndex).toBe(0)
     expect(controller.state.value.transitioning).toBe(false)
-    controller.play()
+
+    controller.select(4)
+    expect(controller.state.value.userPaused).toBe(false)
     await vi.advanceTimersByTimeAsync(defaultDwellMs)
+    expect(controller.state.value.currentIndex).toBe(0)
+    expect(controller.state.value.targetIndex).toBeNull()
+
+    manual.resolve('webp')
     await waitForTarget(controller)
+    expect(controller.state.value.targetIndex).toBe(4)
+    finishCurrentTransition(controller)
+    expect(controller.state.value.currentIndex).toBe(4)
+
+    await vi.advanceTimersByTimeAsync(defaultDwellMs - 1)
+    expect(controller.state.value.currentIndex).toBe(4)
+    expect(controller.state.value.transitioning).toBe(false)
+    await vi.advanceTimersByTimeAsync(1)
+    await waitForTarget(controller)
+    expect(controller.state.value.targetIndex).toBe(5)
     controller.dispose()
   })
 
-  it('keeps focus pause until play, and play works while the control still owns focus', async () => {
+  it('does not permanently pause rotation when a selected dot button retains focus', async () => {
     const controller = createController()
     await flushPromises()
-    controller.pauseOnFocus()
-    await vi.advanceTimersByTimeAsync(12_000)
-    expect(controller.state.value.focusPaused).toBe(true)
-    expect(controller.state.value.transitioning).toBe(false)
 
-    controller.play()
-    await vi.advanceTimersByTimeAsync(defaultDwellMs)
+    controller.select(2)
     await waitForTarget(controller)
+    finishCurrentTransition(controller)
+    expect(controller.state.value.currentIndex).toBe(2)
+    expect(controller.state.value.userPaused).toBe(false)
     expect(controller.state.value.focusPaused).toBe(false)
+
+    await vi.advanceTimersByTimeAsync(defaultDwellMs - 1)
+    expect(controller.state.value.currentIndex).toBe(2)
+    await vi.advanceTimersByTimeAsync(1)
+    await waitForTarget(controller)
+    expect(controller.state.value.targetIndex).toBe(3)
     controller.dispose()
   })
 
@@ -229,7 +247,12 @@ describe('home hero slideshow state machine', () => {
     expect(controller.state.value.targetIndex).toBe(3)
     finishCurrentTransition(controller)
     expect(controller.state.value.currentIndex).toBe(3)
-    expect(controller.state.value.userPaused).toBe(true)
+    expect(controller.state.value.userPaused).toBe(false)
+    await vi.advanceTimersByTimeAsync(defaultDwellMs - 1)
+    expect(controller.state.value.currentIndex).toBe(3)
+    await vi.advanceTimersByTimeAsync(1)
+    await waitForTarget(controller)
+    expect(controller.state.value.targetIndex).toBe(4)
     controller.dispose()
   })
 
