@@ -276,14 +276,11 @@ test('English navigation stays inside the viewport across desktop widths', async
   }
 })
 
-test('desktop header uses left-aligned navigation next to the Logo and a right-hand control group', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 })
-  await page.goto('/en/research/')
-  await waitForReady(page)
-
-  for (const width of [1440, 1280, 1100, 1050, 1024, 900, 821]) {
+for (const width of [1440, 1280, 1100, 1050, 1024, 900, 821]) {
+  test(`desktop header uses left-aligned navigation next to the Logo and a right-hand control group: ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 })
-    if ((await page.evaluate(() => window.scrollY)) > 0) await scrollHeader(page, 0)
+    await page.goto('/en/research/')
+    await waitForReady(page)
     await expect(page.locator('.site-nav')).toHaveAttribute('data-header-state', 'resting')
 
     for (const state of ['resting', 'floating'] as const) {
@@ -328,8 +325,8 @@ test('desktop header uses left-aligned navigation next to the Logo and a right-h
       expect(geometry.controlsRight, `${context} controls position`).toBeLessThanOrEqual(geometry.surfaceRight)
       await expect(page.locator('.nav-status')).toHaveCount(0)
     }
-  }
-})
+  })
+}
 
 const midWidths = [821, 1024, 1050, 1100, 1280, 1440] as const
 const midWidthLocales = [
@@ -339,20 +336,18 @@ const midWidthLocales = [
 ] as const
 
 for (const locale of midWidthLocales) {
-  test(`mid-width header keeps nav clear of controls and keyboard reachable: ${locale.name}`, async ({ page }) => {
-    await page.setViewportSize({ width: midWidths[0], height: 900 })
-    await page.goto(locale.route)
-    await waitForReady(page)
-    await expect(page.locator('html')).toHaveAttribute('data-locale', locale.lang)
-
-    for (const width of midWidths) {
+  for (const width of midWidths) {
+    test(`mid-width header keeps nav clear of controls and keyboard reachable: ${locale.name} ${width}px`, async ({ page }) => {
       await page.setViewportSize({ width, height: 900 })
-      if ((await page.evaluate(() => window.scrollY)) > 0) await scrollHeader(page, 0)
+      await page.goto(locale.route)
+      await waitForReady(page)
+      await expect(page.locator('html')).toHaveAttribute('data-locale', locale.lang)
 
       for (const state of ['resting', 'floating'] as const) {
         if (state === 'floating') {
           await scrollHeader(page, 260)
           await expect(page.locator('.site-nav')).toHaveAttribute('data-header-state', 'floating')
+          await waitForFloatingSurfaceSettled(page)
         } else {
           await expect(page.locator('.site-nav')).toHaveAttribute('data-header-state', 'resting')
         }
@@ -413,8 +408,8 @@ for (const locale of midWidthLocales) {
           await expect(links.nth(index), `${context} nav ${index} focusable`).toBeFocused()
         }
       }
-    }
-  })
+    })
+  }
 }
 
 test('mid-width Concerts link is clickable and navigates', async ({ page }) => {
