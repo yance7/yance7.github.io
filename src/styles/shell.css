@@ -74,9 +74,9 @@
 }
 .site-nav-surface {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: clamp(12px, 1.7vw, 24px);
+  gap: clamp(var(--space-5), 2.5vw, var(--space-6));
   width: min(100%, var(--w-wide)); height: 100%; margin: 0 auto;
   padding-inline: max(var(--w-pad), env(safe-area-inset-left)) max(var(--w-pad), env(safe-area-inset-right));
   border-bottom: 1px solid var(--line);
@@ -105,7 +105,7 @@
   -webkit-backdrop-filter: blur(var(--nav-floating-blur)) saturate(var(--nav-floating-saturate));
   backdrop-filter: blur(var(--nav-floating-blur)) saturate(var(--nav-floating-saturate));
   transform: translateY(var(--nav-floating-top));
-  gap: var(--nav-floating-gap);
+  gap: clamp(var(--space-5), 2.2vw, var(--space-6));
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .site-nav[data-header-state='floating'] .site-nav-surface {
@@ -171,7 +171,7 @@
   grid-column: 2;
   display: flex;
   align-items: center;
-  justify-self: center;
+  justify-self: start;
   min-width: 0;
   gap: var(--space-5);
 }
