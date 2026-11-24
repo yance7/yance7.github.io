@@ -258,13 +258,24 @@ test('small forward and backward scrolls near chapter boundaries stay at the exa
     scrollTo({ top, behavior: 'instant' })
     return Math.round(scrollY)
   })
+  const readExpectedScale = () => page.evaluate(() => {
+    const root = document.documentElement
+    const range = root.scrollHeight - root.clientHeight
+    return range > 0 ? Math.min(Math.max((window.scrollY || root.scrollTop) / range, 0), 1) : 0
+  })
   let expectedY = base
-  await expect.poll(async () => (await readProgress()).scaleX).toBeGreaterThan(0)
+  const expectedBase = await readExpectedScale()
+  await expect.poll(async () => {
+    const { scaleX } = await readProgress()
+    return Math.abs(scaleX - expectedBase) < 0.01 && scaleX > 0
+  }).toBe(true)
   let prevProgress = await readProgress()
   for (const delta of [36, 48, -28, -20, 64]) {
     expectedY += delta
     await page.evaluate(step => scrollBy({ top: step, behavior: 'instant' }), delta)
     await expect.poll(() => page.evaluate(() => Math.round(scrollY))).toBe(expectedY)
+    const expectedStep = await readExpectedScale()
+    await expect.poll(async () => Math.abs((await readProgress()).scaleX - expectedStep) < 0.01).toBe(true)
     if (delta > 0) {
       await expect.poll(async () => (await readProgress()).scaleX).toBeGreaterThan(prevProgress.scaleX)
     } else {
