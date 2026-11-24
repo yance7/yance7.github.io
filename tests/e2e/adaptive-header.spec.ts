@@ -592,21 +592,20 @@ test('adaptive header tracks a cold fragment after the lazy page chunk mounts', 
   })
 })
 
-test('adaptive header keeps localized controls and deep-link anchors stable', async ({ page }) => {
-  await page.setViewportSize({ width: 1024, height: 900 })
+const adaptiveHeaderDeepLinks = [
+  ['/#home-worlds', '#home-worlds'],
+  ['/academics/#sec-ap-archive', '#sec-ap-archive'],
+  ['/honors/#sec-honors-archive', '#sec-honors-archive'],
+  ['/research/#sec-toolchain', '#sec-toolchain'],
+  ['/works/#project-fresheye', '#project-fresheye'],
+  ['/concerts/#concert-archive', '#concert-archive'],
+  ['/en/research/#sec-toolchain', '#sec-toolchain'],
+  ['/zh-hk/honors/#sec-honors-archive', '#sec-honors-archive']
+] as const
 
-  const destinations = [
-    ['/#home-worlds', '#home-worlds'],
-    ['/academics/#sec-ap-archive', '#sec-ap-archive'],
-    ['/honors/#sec-honors-archive', '#sec-honors-archive'],
-    ['/research/#sec-toolchain', '#sec-toolchain'],
-    ['/works/#project-fresheye', '#project-fresheye'],
-    ['/concerts/#concert-archive', '#concert-archive'],
-    ['/en/research/#sec-toolchain', '#sec-toolchain'],
-    ['/zh-hk/honors/#sec-honors-archive', '#sec-honors-archive']
-  ] as const
-
-  for (const [route, targetSelector] of destinations) {
+for (const [route, targetSelector] of adaptiveHeaderDeepLinks) {
+  test(`adaptive header keeps deep-link anchor stable: ${route}`, async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 900 })
     await page.goto(route)
     await waitForReady(page)
     const target = page.locator(targetSelector)
@@ -617,8 +616,11 @@ test('adaptive header keeps localized controls and deep-link anchors stable', as
       const header = document.querySelector<HTMLElement>('.site-nav')
       return element.getBoundingClientRect().top - (header?.getBoundingClientRect().bottom ?? 0)
     })).toBeGreaterThanOrEqual(8)
-  }
+  })
+}
 
+test('adaptive header keeps localized controls stable', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 900 })
   await page.goto('/en/research/')
   await waitForReady(page)
   const zhHkLink = page.locator('.locale-switcher-desktop a[hreflang="zh-HK"]')
@@ -636,13 +638,11 @@ const tabletLocales = [
 ] as const
 
 for (const locale of tabletLocales) {
-  test(`tablet menu keeps navigation and controls clear: ${locale.name}`, async ({ page }) => {
-    await page.setViewportSize({ width: tabletMenuWidths[0], height: 900 })
-    await page.goto(locale.route)
-    await waitForReady(page)
-
-    for (const width of tabletMenuWidths) {
+  for (const width of tabletMenuWidths) {
+    test(`tablet menu keeps navigation and controls clear: ${locale.name} ${width}px`, async ({ page }) => {
       await page.setViewportSize({ width, height: 900 })
+      await page.goto(locale.route)
+      await waitForReady(page)
       await expect(page.locator('html')).toHaveAttribute('data-locale', locale.lang)
 
       for (const state of ['resting', 'floating'] as const) {
@@ -703,12 +703,12 @@ for (const locale of tabletLocales) {
       await page.keyboard.press('Escape')
       await expect(dialog).toHaveCount(0)
       await expect(trigger).toHaveAttribute('aria-expanded', 'false')
-    }
-  })
+    })
+  }
 }
 
-test('tablet header returns to the inline rail at 821px and keeps controls separate', async ({ page }) => {
-  for (const width of [821, 900]) {
+for (const width of [821, 900]) {
+  test(`tablet header returns to the inline rail at ${width}px and keeps controls separate`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 })
     await page.goto('/en/research/')
     await waitForReady(page)
@@ -758,8 +758,11 @@ test('tablet header returns to the inline rail at 821px and keeps controls separ
       await page.locator('.theme-orbit').focus()
       await expect(page.locator('.theme-orbit'), `${context} theme focusable`).toBeFocused()
     }
-  }
+  })
+}
 
+test('tablet header controls toggle theme and switch locale at 821px', async ({ page }) => {
+  await page.setViewportSize({ width: 821, height: 900 })
   await page.goto('/en/research/')
   await waitForReady(page)
   const themeBefore = await page.locator('html').getAttribute('data-theme')
