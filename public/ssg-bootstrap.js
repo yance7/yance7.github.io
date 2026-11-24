@@ -45,9 +45,6 @@
   }
   preserveLocaleNavigation()
   window.addEventListener('hashchange', preserveLocaleNavigation)
-  window.addEventListener('pageshow', (event) => {
-    if (event.persisted && page === 'home') document.documentElement.classList.remove('home-scroll-snap')
-  })
 
   const startEntry = (preserveFallback = false) => {
     if (!preserveFallback && fallbackTimer !== undefined) {
