@@ -44,7 +44,7 @@ describe('home document snap lifecycle', () => {
       }
     }
     vi.stubGlobal('window', {
-      location: { hash: '' }, scrollY: 0,
+      location: { hash: '' }, scrollY: 0, scrollX: 0,
       history: {
         scrollRestoration: options.historyRestoration ?? 'auto',
         state: options.returning ? { homeReadingPosition: { top: 700, left: 0 }, homeReadingRestoration: options.leasedRestoration } : null,
@@ -95,48 +95,45 @@ describe('home document snap lifecycle', () => {
       setLastSectionTop: (top: number) => { lastSectionTop = top }, bodyDisconnected: () => bodyDisconnected }
   }
 
-  it('releases the final chapter tail before proximity can pull footer navigation backward', () => {
+  it('does not attach document vertical snap classes or scroll listeners on home', () => {
     const state = setup()
-    expect(state.classes.has('home-scroll-snap')).toBe(true)
-    state.setLastSectionTop(-1)
-    state.listeners.get('window:scroll')!()
     expect(state.classes.has('home-scroll-snap')).toBe(false)
-    state.setLastSectionTop(138)
-    state.listeners.get('window:scroll')!()
-    expect(state.classes.has('home-scroll-snap')).toBe(true)
+    expect(state.classes.size).toBe(0)
+    expect(state.listeners.has('window:scroll')).toBe(false)
+    expect(state.listeners.has('desktop:change')).toBe(false)
+    expect(state.listeners.has('reduced:change')).toBe(false)
+    expect(state.listeners.has('body:style')).toBe(false)
     state.app.unmount()
   })
 
-  it('clears home scope on async failure and unmounts every media, input and body listener', async () => {
+  it('unmounts every history and cancellation listener cleanly', async () => {
     const state = setup()
-    expect(state.classes.has('home-scroll-snap')).toBe(true)
+    expect(state.classes.size).toBe(0)
     state.ready.value = false
     await nextTick()
     expect(state.classes.size).toBe(0)
     state.app.unmount()
     expect(state.listeners.size).toBe(0)
-    expect(state.bodyDisconnected()).toBe(true)
   })
 
-  it('never installs home motion listeners or root scope on an archive page', () => {
+  it('never installs home restoration listeners on an archive page', () => {
     const state = setup(false)
     expect(state.classes.size).toBe(0)
     expect(state.listeners.size).toBe(0)
     state.app.unmount()
   })
 
-  it('runtime width and reduced motion remove document snap immediately', () => {
+  it('saves reading position and restoration policy on pagehide without snap classes', () => {
     const state = setup()
-    state.desktop.matches = false
-    state.listeners.get('desktop:change')!()
+    state.listeners.get('window:pagehide')?.()
     expect(state.classes.size).toBe(0)
-    state.desktop.matches = true
-    state.reduced.matches = true
-    state.listeners.get('reduced:change')!()
-    expect(state.classes.size).toBe(0)
-    state.reduced.matches = false
-    state.listeners.get('reduced:change')!()
-    expect(state.classes.has('home-scroll-snap')).toBe(true)
+    expect(window.history.replaceState).toHaveBeenCalledWith(
+      expect.objectContaining({
+        homeReadingRestoration: 'auto',
+        homeReadingPosition: { top: 0, left: 0 }
+      }),
+      ''
+    )
     state.app.unmount()
   })
 
