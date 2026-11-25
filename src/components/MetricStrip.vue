@@ -48,8 +48,14 @@ function refreshReady() {
     metricsReady.value = false
     return
   }
-  // A strip that is armed but not yet on screen has not started, so it counts as settled.
-  metricsReady.value = [...startedIndexes].every((index) => completedIndexes.has(index))
+  const hasUnstartedArmedTarget = [...armedTargets.values()].some((target) => {
+    const rect = target.getBoundingClientRect()
+    return rect.bottom > 0 && rect.top < window.innerHeight
+  })
+  // A strip that is armed off-screen has not started yet; once any armed card
+  // is on screen, wait until its count starts and completes.
+  metricsReady.value = !hasUnstartedArmedTarget
+    && [...startedIndexes].every((index) => completedIndexes.has(index))
 }
 
 function finishAll() {
@@ -196,12 +202,15 @@ onMounted(() => {
         refreshReady()
         return
       }
-      if (onScreenNow || reducedMotion) {
-        // Already visible (or motion was reduced): keep the server-rendered value.
+      if (reducedMotion) {
         displays.value[index] = String(props.metrics[index]?.value ?? '')
         startedIndexes.add(index)
         completedIndexes.add(index)
         refreshReady()
+        return
+      }
+      if (onScreenNow) {
+        animateIndex(index)
         return
       }
 
@@ -210,6 +219,7 @@ onMounted(() => {
       if (parsed) displays.value[index] = (0).toFixed(parsed.decimals) + parsed.suffix
       startObserver?.observe(target)
       armedTargets.set(index, target)
+      settleMissedCounts()
     })
     maybeCompleteObservation(cards.length)
   }, { threshold: 0, rootMargin: ARM_ROOT_MARGIN })
@@ -226,15 +236,24 @@ onMounted(() => {
     })
   }, { threshold: 0.3 })
 
+  const rootDataset = document.documentElement.dataset
+  const preserveInitialVisibleValues = window.scrollY > 0
+    || Boolean(window.location.hash)
+    || Boolean(rootDataset.initialHash)
+    || rootDataset.staticEntryFallback === 'true'
+
   cards.forEach((card) => {
     const index = Number(card.dataset.metricIndex)
     if (!Number.isInteger(index)) return
     if (isInInitialViewport(card.getBoundingClientRect(), window.innerHeight)) {
-      // Visible from the first paint: no reset, no flash.
-      displays.value[index] = String(props.metrics[index]?.value ?? '')
       observedIndexes.add(index)
-      startedIndexes.add(index)
-      completedIndexes.add(index)
+      if (preserveInitialVisibleValues) {
+        displays.value[index] = String(props.metrics[index]?.value ?? '')
+        startedIndexes.add(index)
+        completedIndexes.add(index)
+        return
+      }
+      animateIndex(index)
       return
     }
     armObserver?.observe(card)

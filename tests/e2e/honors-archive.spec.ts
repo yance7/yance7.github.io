@@ -388,14 +388,46 @@ test('honors metrics count up on first entry and settle at the scope totals', as
   }
 })
 
-test('honors metrics already on screen keep the final values', async ({ page }) => {
+test('honors metrics already on screen count up visibly from zero and settle at the scope totals', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 2000 })
+  await page.addInitScript(() => {
+    const state = window as Window & { __metricSnapshots?: Array<{ values: string[]; onScreen: boolean }> }
+    state.__metricSnapshots = []
+    const record = () => {
+      const strip = document.querySelector('#sec-milestones .metric-strip')
+      const values = [...document.querySelectorAll('#sec-milestones .metric-card b')]
+        .map((element) => element.textContent ?? '')
+      if (!strip || !values.length) return
+      const rect = strip.getBoundingClientRect()
+      state.__metricSnapshots?.push({ values, onScreen: rect.bottom > 0 && rect.top < window.innerHeight })
+    }
+    new MutationObserver(record).observe(document, { subtree: true, childList: true, characterData: true })
+  })
   await page.goto('/honors/')
   await expect(page.locator('.site-shell')).toHaveAttribute('data-page-load-state', 'ready')
 
   const strip = page.locator('#sec-milestones .metric-strip')
   await expect(strip).toHaveAttribute('data-metrics-ready', 'true')
   await expect(page.locator('#sec-milestones .metric-card b')).toHaveText(honorFinalValues)
+
+  const snapshots = await page.evaluate(() => (
+    (window as Window & { __metricSnapshots?: Array<{ values: string[]; onScreen: boolean }> }).__metricSnapshots ?? []
+  ))
+  const parsed = snapshots
+    .map((snapshot) => ({
+      onScreen: snapshot.onScreen,
+      numbers: snapshot.values.map((value) => Number.parseFloat(value))
+    }))
+    .filter((snapshot) => snapshot.numbers.length === honorFinalValues.length && snapshot.numbers.every(Number.isFinite))
+  expect(parsed.some((snapshot) => snapshot.onScreen && snapshot.numbers.every((value) => value === 0))).toBe(true)
+  for (let index = 0; index < honorFinalValues.length; index += 1) {
+    if (Number(honorFinalValues[index]) < 2) continue
+    expect(parsed.some((snapshot) => (
+      snapshot.onScreen
+      && snapshot.numbers[index]! > 0
+      && snapshot.numbers[index]! < Number(honorFinalValues[index])
+    )), `initial viewport honor metric ${index} should show an on-screen intermediate value`).toBe(true)
+  }
 })
 
 test('honors metrics keep the final values with reduced motion and without JavaScript', async ({ browser }) => {
