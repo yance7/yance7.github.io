@@ -43,11 +43,13 @@ describe('home hero slideshow component contract', () => {
     expect(controlsMarkup).toContain('index === controller.displayIndicatorIndex.value')
     expect(controlsMarkup).toContain('aria-current')
     expect(controlsMarkup).toContain('aria-live="polite"')
+    expect(controlsMarkup).not.toContain('home-hero-slideshow__play-button')
   })
 
   it('defines fixed particle and scrim layers with reduced-motion and forced-color behavior', () => {
     expect(styles).toMatch(/\.home-hero-slideshow__scrim\s*\{[^}]*position:\s*absolute/s)
     expect(styles).toMatch(/\.home-hero-visual\s*>\s*\.home-hero-particles\s*\{[^}]*--hero-particle:\s*#f4f0e8/s)
+    expect(styles).toMatch(/\.home-hero-slideshow__controls\s*\{[^}]*top:\s*100%[^}]*justify-content:\s*center/s)
     expect(styles).toMatch(/prefers-reduced-motion:\s*reduce/)
     expect(styles).toMatch(/forced-colors:\s*active/)
   })
