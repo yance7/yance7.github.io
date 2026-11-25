@@ -129,6 +129,141 @@ test('academic metrics already in the initial desktop viewport count up visibly 
       snapshot.onScreen && snapshot.numbers[index]! > 0 && snapshot.numbers[index]! < finalNumbers[index]!
     )), `initial viewport academic metric ${index} should show an on-screen intermediate value`).toBe(true)
   }
+
+  const zeroIndex = parsed.findIndex((snapshot) => snapshot.onScreen && snapshot.numbers.every((value) => value === 0))
+  expect(zeroIndex).toBeGreaterThanOrEqual(0)
+  const sequence = parsed.slice(zeroIndex).filter((snapshot) => snapshot.onScreen)
+  for (let step = 0; step < sequence.length; step += 1) {
+    sequence[step]!.numbers.forEach((value, index) => {
+      expect(value, `initial viewport step ${step} metric ${index} >= 0`).toBeGreaterThanOrEqual(0)
+      expect(value, `initial viewport step ${step} metric ${index} <= final`).toBeLessThanOrEqual(finalNumbers[index]!)
+      if (step > 0) {
+        expect(value, `initial viewport step ${step} metric ${index} monotonic`).toBeGreaterThanOrEqual(sequence[step - 1]!.numbers[index]!)
+      }
+    })
+  }
+})
+
+test('slow main entry preserves initially visible final academic metrics at top without hash', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1100 })
+  let markEntryRequested!: () => void
+  let releaseEntry!: () => void
+  const entryRequested = new Promise<void>((resolve) => { markEntryRequested = resolve })
+  const entryGate = new Promise<void>((resolve) => { releaseEntry = resolve })
+  await page.route(/\/assets\/vue\/main-[^/]+\.js$/u, async (route) => {
+    markEntryRequested()
+    await entryGate
+    await route.continue()
+  })
+  await page.addInitScript(() => {
+    const state = window as Window & { __slowMetricSnapshots?: Array<{ values: string[]; scrollY: number; hash: string }> }
+    state.__slowMetricSnapshots = []
+    const record = () => {
+      const values = [...document.querySelectorAll('#sec-scoreboard .metric-card b')].map((element) => element.textContent ?? '')
+      if (values.length) {
+        state.__slowMetricSnapshots?.push({ values, scrollY: window.scrollY, hash: window.location.hash })
+      }
+    }
+    new MutationObserver(record).observe(document, { subtree: true, childList: true, characterData: true })
+    window.addEventListener('DOMContentLoaded', record, { once: true })
+  })
+
+  try {
+    await page.goto('/en/academics/', { waitUntil: 'commit' })
+    await entryRequested
+    await nextFrames(page)
+
+    const beforeFallback = await page.evaluate(() => ({
+      scrollY: window.scrollY,
+      hash: window.location.hash,
+      values: [...document.querySelectorAll('#sec-scoreboard .metric-card b')].map((element) => element.textContent ?? '')
+    }))
+    expect(beforeFallback.scrollY).toBe(0)
+    expect(beforeFallback.hash).toBe('')
+    expect(beforeFallback.values).toEqual(finalValues)
+
+    await expect(page.locator('html')).toHaveAttribute('data-static-entry-fallback', 'true', { timeout: 5000 })
+    await nextFrames(page)
+    await expect(page.locator('#sec-scoreboard .metric-card b')).toHaveText(finalValues)
+  } finally {
+    releaseEntry()
+  }
+
+  await waitForHydration(page)
+  const strip = page.locator('#sec-scoreboard .metric-strip')
+  await expect(strip).toHaveAttribute('data-metrics-ready', 'true')
+  await expect(page.locator('#sec-scoreboard .metric-card b')).toHaveText(finalValues)
+  await expect(page.locator('#sec-scoreboard .metric-card .sr-only')).toHaveText(finalValues)
+
+  const snapshots = await page.evaluate(() => (
+    (window as Window & { __slowMetricSnapshots?: Array<{ values: string[]; scrollY: number; hash: string }> }).__slowMetricSnapshots ?? []
+  ))
+  expect(snapshots.length).toBeGreaterThan(0)
+  expect(snapshots.every((snapshot) => snapshot.values.every((value, index) => value === finalValues[index]))).toBe(true)
+})
+
+test('academic metric count-up remains non-negative, bounded, and monotonic if initial frame timestamp precedes start', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 })
+  await page.addInitScript(() => {
+    const state = window as Window & { __boundaryMetricSnapshots?: Array<{ values: string[]; onScreen: boolean }> }
+    state.__boundaryMetricSnapshots = []
+    const record = () => {
+      const strip = document.querySelector('#sec-scoreboard .metric-strip')
+      const values = [...document.querySelectorAll('#sec-scoreboard .metric-card b')].map((element) => element.textContent ?? '')
+      if (!strip || !values.length) return
+      const rect = strip.getBoundingClientRect()
+      state.__boundaryMetricSnapshots?.push({ values, onScreen: rect.bottom > 0 && rect.top < window.innerHeight })
+    }
+    new MutationObserver(record).observe(document, { subtree: true, childList: true, characterData: true })
+
+    const nativeRaf = window.requestAnimationFrame.bind(window)
+    let shiftedFirstBatchTimestamp: number | null = null
+    let shiftedSecondBatchTimestamp: number | null = null
+    window.requestAnimationFrame = (callback) => nativeRaf((timestamp) => {
+      const strip = document.querySelector('#sec-scoreboard .metric-strip')
+      if (strip?.getAttribute('data-metrics-ready') === 'false') {
+        if (shiftedFirstBatchTimestamp === null || shiftedFirstBatchTimestamp === timestamp) {
+          shiftedFirstBatchTimestamp = timestamp
+          callback(Math.min(timestamp, performance.now() - 20))
+          return
+        }
+        if (shiftedSecondBatchTimestamp === null || shiftedSecondBatchTimestamp === timestamp) {
+          shiftedSecondBatchTimestamp = timestamp
+          callback(Math.max(0, Math.min(timestamp, performance.now() - 25)))
+          return
+        }
+      }
+      callback(timestamp)
+    })
+  })
+
+  await page.goto('/en/academics/')
+  await waitForHydration(page)
+  const strip = page.locator('#sec-scoreboard .metric-strip')
+  await expect(strip).toHaveAttribute('data-metrics-ready', 'true')
+
+  await strip.scrollIntoViewIfNeeded()
+  await expect(strip).toHaveAttribute('data-metrics-ready', 'true')
+  await expect(page.locator('#sec-scoreboard .metric-card b')).toHaveText(finalValues)
+
+  const snapshots = await page.evaluate(() => (
+    (window as Window & { __boundaryMetricSnapshots?: Array<{ values: string[]; onScreen: boolean }> }).__boundaryMetricSnapshots ?? []
+  ))
+  const zeroIndex = snapshots.findIndex((snapshot) => (
+    snapshot.values.every((value) => Number.parseFloat(value) === 0)
+  ))
+  expect(zeroIndex).toBeGreaterThanOrEqual(0)
+  const sequence = snapshots.slice(zeroIndex).map((snapshot) => snapshot.values.map((value) => Number.parseFloat(value)))
+  for (let step = 0; step < sequence.length; step += 1) {
+    const current = sequence[step]!
+    current.forEach((value, index) => {
+      expect(value, `step ${step} metric ${index} should stay >= 0`).toBeGreaterThanOrEqual(0)
+      expect(value, `step ${step} metric ${index} should stay <= final`).toBeLessThanOrEqual(finalNumbers[index]!)
+      if (step > 0) {
+        expect(value, `step ${step} metric ${index} must not decrease`).toBeGreaterThanOrEqual(sequence[step - 1]![index]!)
+      }
+    })
+  }
 })
 
 test('academic section numbers, anchors, and AP rows stay intact', async ({ page }) => {

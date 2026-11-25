@@ -21,6 +21,7 @@
   let fallbackTimer
   let observer
   let earlyTouchObserver
+  let takeoverObserver
   const showEnhancementNotice = () => {
     if (document.body.dataset.rendered !== 'ssg' || document.querySelector('.enhancement-notice')) return
 
@@ -46,17 +47,30 @@
   preserveLocaleNavigation()
   window.addEventListener('hashchange', preserveLocaleNavigation)
 
-  const startEntry = (preserveFallback = false) => {
-    if (!preserveFallback && fallbackTimer !== undefined) {
+  const takeoverCompleted = () => (
+    document.documentElement.dataset.vueEnhanced === 'true'
+    || document.body.dataset.hydrated === 'true'
+  )
+  const clearFallbackTimer = () => {
+    if (fallbackTimer !== undefined) {
       window.clearTimeout(fallbackTimer)
       fallbackTimer = undefined
     }
+    takeoverObserver?.disconnect()
+    takeoverObserver = undefined
+  }
+  const startEntry = () => {
     if (started) return
     started = true
     observer?.disconnect()
     void import(entryUrl.href).catch(showEnhancementNotice)
   }
   const startEntryAfterFallback = () => {
+    fallbackTimer = undefined
+    if (takeoverCompleted()) {
+      clearFallbackTimer()
+      return
+    }
     document.documentElement.dataset.staticEntryFallback = 'true'
     if (page === 'home' && !initialHash) {
       document.documentElement.dataset.homeHeroPhotoReady = 'true'
@@ -113,7 +127,7 @@
         delete window.__yanceEarlyHomeHeroTouchTimer
       }, 540)
       window.__yanceEarlyHomeHeroTouchTimer = earlyTouchTimer
-      startEntry(true)
+      startEntry()
     }
     document.addEventListener('pointerdown', captureEarlyHeroTouch, { capture: true, passive: true })
     if (document.body.dataset.hydrated === 'true') cleanupEarlyTouch()
@@ -145,7 +159,14 @@
     }
   }
 
-  fallbackTimer = window.setTimeout(startEntryAfterFallback, 2000)
+  if (!takeoverCompleted()) {
+    takeoverObserver = new MutationObserver(() => {
+      if (takeoverCompleted()) clearFallbackTimer()
+    })
+    takeoverObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-vue-enhanced'] })
+    takeoverObserver.observe(document.body, { attributes: true, attributeFilter: ['data-hydrated'] })
+    fallbackTimer = window.setTimeout(startEntryAfterFallback, 2000)
+  }
 
   if (page === 'home' && !initialHash) {
     const photo = document.querySelector('.home-hero-slideshow__image--current')
