@@ -434,8 +434,13 @@ export function createHomeHeroSlideshow(options: HomeHeroSlideshowOptions) {
 
   function setEnvironment(environment: HomeHeroSlideshowEnvironment) {
     const current = state.value
+    const changed = (Object.keys(environment) as (keyof HomeHeroSlideshowEnvironment)[])
+      .some((key) => environment[key] !== undefined && environment[key] !== current[key])
     const wasReducedMotion = current.reducedMotion
     const wasForcedColors = current.forcedColors
+    if (!changed && (current.forcedColors || current.firstImageReady || activeLoad || current.transitioning)) {
+      return
+    }
     Object.assign(current, environment)
 
     if (environment.reducedMotion === true) {
@@ -620,11 +625,34 @@ export function useHomeHeroSlideshow(options: UseHomeHeroSlideshowOptions) {
     controller.setEnvironment({ touchActive: touchPointers.size > 0 })
   }
 
+  function isWithinControls(target: EventTarget | null) {
+    return Boolean(currentControls && target instanceof Node && currentControls.contains(target))
+  }
+
+  function isPointerOverControls(event: PointerEvent) {
+    if (isWithinControls(event.target)) return true
+    if (!event.isTrusted) return false
+    if (currentControls?.matches?.(':hover')) return true
+    if ((event.clientX !== 0 || event.clientY !== 0) && typeof document.elementFromPoint === 'function') {
+      if (isWithinControls(document.elementFromPoint(event.clientX, event.clientY))) return true
+    }
+    return false
+  }
+
+  function containerPointerOver(event: PointerEvent) {
+    if (event.pointerType !== 'mouse') return
+    controller.setEnvironment({ hovered: !isWithinControls(event.target) })
+  }
+
   function hoverStart(event: PointerEvent) {
-    if (event.pointerType === 'mouse') controller.setEnvironment({ hovered: true })
+    if (event.pointerType === 'mouse') controller.setEnvironment({ hovered: !isPointerOverControls(event) })
   }
 
   function hoverEnd(event: PointerEvent) {
+    if (event.pointerType === 'mouse') controller.setEnvironment({ hovered: false })
+  }
+
+  function controlsHoverClear(event: PointerEvent) {
     if (event.pointerType === 'mouse') controller.setEnvironment({ hovered: false })
   }
 
@@ -632,6 +660,7 @@ export function useHomeHeroSlideshow(options: UseHomeHeroSlideshowOptions) {
     intersectionObserver?.disconnect()
     intersectionObserver = null
     currentContainer?.removeEventListener('pointerdown', touchDown)
+    currentContainer?.removeEventListener('pointerover', containerPointerOver)
     currentContainer?.removeEventListener('pointerenter', hoverStart)
     currentContainer?.removeEventListener('pointerleave', hoverEnd)
     currentContainer = element
@@ -640,6 +669,7 @@ export function useHomeHeroSlideshow(options: UseHomeHeroSlideshowOptions) {
     if (!element || typeof window === 'undefined') return
 
     element.addEventListener('pointerdown', touchDown, { passive: true })
+    element.addEventListener('pointerover', containerPointerOver, { passive: true })
     element.addEventListener('pointerenter', hoverStart, { passive: true })
     element.addEventListener('pointerleave', hoverEnd, { passive: true })
     const Observer = (window as Window & { IntersectionObserver?: typeof IntersectionObserver }).IntersectionObserver
@@ -656,13 +686,11 @@ export function useHomeHeroSlideshow(options: UseHomeHeroSlideshowOptions) {
 
   function bindControls(element: HTMLElement | null) {
     currentControls?.removeEventListener('pointerdown', touchDown)
-    currentControls?.removeEventListener('pointerenter', hoverStart)
-    currentControls?.removeEventListener('pointerleave', hoverEnd)
+    currentControls?.removeEventListener('pointerenter', controlsHoverClear)
     currentControls = element
     if (!element || typeof window === 'undefined') return
     element.addEventListener('pointerdown', touchDown, { passive: true })
-    element.addEventListener('pointerenter', hoverStart, { passive: true })
-    element.addEventListener('pointerleave', hoverEnd, { passive: true })
+    element.addEventListener('pointerenter', controlsHoverClear, { passive: true })
   }
 
   const stopContainerWatch = watch(container, bindContainer, { flush: 'post' })
@@ -689,11 +717,11 @@ export function useHomeHeroSlideshow(options: UseHomeHeroSlideshowOptions) {
     stopControlsWatch()
     intersectionObserver?.disconnect()
     currentContainer?.removeEventListener('pointerdown', touchDown)
+    currentContainer?.removeEventListener('pointerover', containerPointerOver)
     currentContainer?.removeEventListener('pointerenter', hoverStart)
     currentContainer?.removeEventListener('pointerleave', hoverEnd)
     currentControls?.removeEventListener('pointerdown', touchDown)
-    currentControls?.removeEventListener('pointerenter', hoverStart)
-    currentControls?.removeEventListener('pointerleave', hoverEnd)
+    currentControls?.removeEventListener('pointerenter', controlsHoverClear)
     motionMedia?.removeEventListener('change', updatePreferences)
     forcedMedia?.removeEventListener('change', updatePreferences)
     connection?.removeEventListener('change', updatePreferences)

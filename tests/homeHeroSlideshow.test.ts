@@ -513,4 +513,24 @@ describe('home hero slideshow state machine', () => {
     expect(controller.state.value.targetIndex).toBe(1)
     controller.dispose()
   })
+
+  it('does not reset an active dwell timer on redundant unchanged environment updates', async () => {
+    const controller = createController()
+    await flushPromises()
+    controller.select(4)
+    await waitForTarget(controller)
+    finishCurrentTransition(controller)
+    expect(controller.state.value.currentIndex).toBe(4)
+
+    await vi.advanceTimersByTimeAsync(2_400)
+    controller.setEnvironment({ hovered: false })
+    await vi.advanceTimersByTimeAsync(2_599)
+    expect(controller.state.value.currentIndex).toBe(4)
+    expect(controller.state.value.targetIndex).toBeNull()
+
+    await vi.advanceTimersByTimeAsync(1)
+    await waitForTarget(controller)
+    expect(controller.state.value.targetIndex).toBe(5)
+    controller.dispose()
+  })
 })

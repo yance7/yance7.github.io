@@ -572,6 +572,76 @@ test('exposes thirteen localized photo buttons outside the decorative subtree wi
   }
 })
 
+test('manual dot selection on English homepage ignores hover on the dot bar and starts a fresh 5000ms dwell after commit', async ({ page }) => {
+  let releaseSelectedImage!: () => void
+  let selectedRequested = false
+  const selectedGate = new Promise<void>((resolve) => { releaseSelectedImage = resolve })
+  await page.route('**/assets/images/home-hero/hero-05-*', async (route) => {
+    selectedRequested = true
+    await selectedGate
+    await route.continue()
+  })
+
+  await page.clock.install()
+  const { group, media } = await openPausedHome(page, '/en/')
+  await freezeCarouselClock(page)
+  await page.mouse.move(1, 1)
+  await expect(media).toHaveAttribute('data-hovered', 'false')
+
+  await page.clock.fastForward(3_200)
+  await expect(media).toHaveAttribute('data-current-index', '0')
+
+  const fifthDot = group.locator('.home-hero-slideshow__dot-button').nth(4)
+  await fifthDot.click()
+  await expect(media).toHaveAttribute('data-hovered', 'false')
+  await expect.poll(() => selectedRequested).toBe(true)
+
+  try {
+    await page.clock.fastForward(2_500)
+    await expect(media).toHaveAttribute('data-current-index', '0')
+    expect(await media.getAttribute('data-target-index')).toBeNull()
+  } finally {
+    releaseSelectedImage()
+  }
+
+  await expect(media).toHaveAttribute('data-target-index', '4')
+  await completeClockedTransition(page, media, '4')
+  await expect(fifthDot).toHaveAttribute('aria-current', 'true')
+
+  await page.clock.fastForward(4_999)
+  expect(await media.getAttribute('data-target-index')).toBeNull()
+  await expect(media).toHaveAttribute('data-current-index', '4')
+  await page.clock.fastForward(1)
+  await expect(media).toHaveAttribute('data-target-index', '5')
+  await completeClockedTransition(page, media, '5')
+})
+
+test('moving the mouse from a clicked dot to blank page space does not reset the started 5000ms dwell', async ({ page }) => {
+  await page.clock.install()
+  const { group, media } = await openPausedHome(page, '/en/')
+  await freezeCarouselClock(page)
+  await page.mouse.move(1, 1)
+  await expect(media).toHaveAttribute('data-hovered', 'false')
+
+  const fifthDot = group.locator('.home-hero-slideshow__dot-button').nth(4)
+  await fifthDot.click()
+  await expect(media).toHaveAttribute('data-hovered', 'false')
+  await expect(media).toHaveAttribute('data-target-index', '4')
+  await completeClockedTransition(page, media, '4')
+
+  await page.clock.fastForward(2_400)
+  await expect(media).toHaveAttribute('data-current-index', '4')
+  await page.mouse.move(1, 1)
+  await expect(media).toHaveAttribute('data-hovered', 'false')
+
+  await page.clock.fastForward(2_599)
+  expect(await media.getAttribute('data-target-index')).toBeNull()
+  await expect(media).toHaveAttribute('data-current-index', '4')
+  await page.clock.fastForward(1)
+  await expect(media).toHaveAttribute('data-target-index', '5')
+  await completeClockedTransition(page, media, '5')
+})
+
 test('manual selection cancels the old timer, uses direction by target order without replacing particles, and restarts a full 5000ms dwell', async ({ page }) => {
   await page.clock.install()
   const { group, media } = await openPausedHome(page)
@@ -706,6 +776,25 @@ test('pauses while hovered and resumes with a full 5000ms dwell after pointer ex
   await completeClockedTransition(page, media, '1')
 })
 
+test('moving the mouse from the photo area onto a dot resumes autoplay after a 5000ms dwell', async ({ page }) => {
+  await page.clock.install()
+  const { group, media } = await openPausedHome(page, '/en/')
+  await freezeCarouselClock(page)
+  await page.locator('.home-hero-particles').hover()
+  await expect(media).toHaveAttribute('data-hovered', 'true')
+
+  await page.clock.fastForward(60_000)
+  await expect(media).toHaveAttribute('data-current-index', '0')
+
+  await group.locator('.home-hero-slideshow__dot-button').nth(4).hover()
+  await expect(media).toHaveAttribute('data-hovered', 'false')
+  await page.clock.fastForward(4_999)
+  expect(await media.getAttribute('data-target-index')).toBeNull()
+  await page.clock.fastForward(1)
+  await expect(media).toHaveAttribute('data-target-index', '1')
+  await completeClockedTransition(page, media, '1')
+})
+
 test('does not catch up while hidden or offscreen and restarts a full 5000ms dwell on return', async ({ page }) => {
   await page.clock.install()
   await mockDocumentVisibility(page)
@@ -746,6 +835,9 @@ test('advances from 1 to 2 and wraps from 13 to 1 in the same forward direction 
 
   await page.mouse.move(1, 1)
   await expect(media).toHaveAttribute('data-hovered', 'false')
+  // Reset the first-slide dwell at the frozen clock now that clicking a dot no longer
+  // pauses on pointer hover before moving away to (1, 1).
+  await group.locator('.home-hero-slideshow__dot-button').first().click()
   await page.clock.fastForward(4_999)
   expect(await media.getAttribute('data-target-index')).toBeNull()
   await page.clock.fastForward(1)
