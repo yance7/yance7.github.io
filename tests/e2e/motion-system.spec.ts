@@ -756,21 +756,98 @@ test('main titles rise once without hiding their content', async ({ page }) => {
     const transform = getComputedStyle(element).transform
     return transform === 'none' || transform === 'matrix(1, 0, 0, 1, 0, 0)'
   }
-  await page.goto('/en/honors/')
-  await waitForHydration(page)
 
-  const heading = page.locator('h1.hero-title')
-  await expect(heading).toHaveCSS('animation-name', 'hero-title-rise')
-  await expect(heading).toHaveCSS('animation-iteration-count', '1')
-  await expect(heading).toHaveCSS('opacity', '1')
-  await expect.poll(() => heading.evaluate(settled)).toBe(true)
+  const measureRiseProgression = async (locator: import('@playwright/test').Locator, animationName: string, route: string) => {
+    const progression = await locator.evaluate((element, { expectedName, routeName }) => {
+      const animations = element.getAnimations().filter((animation) => (
+        (animation as CSSAnimation).animationName === expectedName
+      ))
+      if (!animations.length) throw new Error(`Missing ${expectedName} animation on ${routeName}`)
+      for (const animation of animations) {
+        animation.pause()
+        animation.currentTime = 0
+      }
+      const startStyle = getComputedStyle(element)
+      const startOffset = new DOMMatrixReadOnly(startStyle.transform).m42
+      const startOpacity = Number(startStyle.opacity)
+
+      for (const animation of animations) {
+        animation.currentTime = 240
+      }
+      const midStyle = getComputedStyle(element)
+      const midOffset = new DOMMatrixReadOnly(midStyle.transform).m42
+      const midOpacity = Number(midStyle.opacity)
+
+      for (const animation of animations) {
+        animation.play()
+      }
+      return { startOffset, startOpacity, midOffset, midOpacity }
+    }, { expectedName: animationName, routeName: route })
+
+    expect(progression.startOpacity, `${route} initial opacity`).toBe(1)
+    expect(progression.midOpacity, `${route} mid-animation opacity`).toBe(1)
+    expect(progression.startOffset, `${route} starts with positive rise offset`).toBeGreaterThanOrEqual(10)
+    expect(progression.startOffset, `${route} bounded rise distance`).toBeLessThanOrEqual(16)
+    expect(progression.midOffset, `${route} moves smoothly toward 0`).toBeGreaterThan(0)
+    expect(progression.midOffset, `${route} advances compared to frame 0`).toBeLessThan(progression.startOffset)
+    await expect.poll(() => locator.evaluate(settled), { message: `${route} title settles cleanly` }).toBe(true)
+
+    await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }))
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
+    expect(await locator.evaluate(settled), `${route} stays settled after scroll-back`).toBe(true)
+  }
+
+  for (const route of ['/academics/', '/honors/', '/research/', '/works/', '/concerts/', '/zh-hk/concerts/']) {
+    await page.goto(route)
+    await waitForHydration(page)
+    const heading = page.locator('h1.hero-title')
+    await expect(heading).toHaveCSS('animation-name', 'hero-title-rise')
+    await expect(heading).toHaveCSS('animation-iteration-count', '1')
+    await expect(heading.locator('.lyric-char').first()).toHaveCSS('opacity', '1')
+    await expect(heading.locator('.lyric-char').last()).toHaveCSS('opacity', '1')
+    await measureRiseProgression(heading, 'hero-title-rise', route)
+  }
+
+  for (const route of ['/en/academics/', '/en/honors/', '/en/research/', '/en/works/', '/en/concerts/']) {
+    await page.goto(route)
+    await waitForHydration(page)
+    const heading = page.locator('h1.hero-title')
+    await expect(heading).toHaveCSS('animation-name', 'hero-title-rise')
+    await expect(heading).toHaveCSS('animation-iteration-count', '1')
+    await measureRiseProgression(heading, 'hero-title-rise', route)
+  }
 
   await page.goto('/')
   await waitForHydration(page)
   const heroCopy = page.locator('.home-hero-typewriter')
   await expect(heroCopy).toHaveCSS('animation-name', 'home-title-rise')
-  await expect(heroCopy).toHaveCSS('opacity', '1')
-  await expect.poll(() => heroCopy.evaluate(settled)).toBe(true)
+  await expect(heroCopy).toHaveCSS('animation-iteration-count', '1')
+  await expect(heroCopy.locator('.home-hero-typewriter-glyph').first()).toHaveCSS('visibility', 'visible')
+  await expect(heroCopy.locator('.home-hero-typewriter-glyph').last()).toHaveCSS('visibility', 'visible')
+  await measureRiseProgression(heroCopy, 'home-title-rise', '/')
+})
+
+test('major section headings enter once on viewport entry and stay settled when scrolling back', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 600 })
+  await page.goto('/academics/')
+  await waitForHydration(page)
+  await expect(page.locator('html')).toHaveAttribute('data-fonts-ready', 'ready')
+
+  const heading = page.locator('#sec-ap-archive .section-head')
+  await expect(heading).toBeAttached()
+  await expect(heading).not.toHaveClass(/revealed/)
+  await heading.scrollIntoViewIfNeeded()
+  await expect(heading).toHaveClass(/revealed/)
+  await expect.poll(() => heading.evaluate((element) => {
+    const style = getComputedStyle(element)
+    return style.opacity === '1' && (style.transform === 'none' || style.transform === 'matrix(1, 0, 0, 1, 0, 0)')
+  })).toBe(true)
+
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
+  await expect(heading).toHaveClass(/revealed/)
+  await heading.scrollIntoViewIfNeeded()
+  await expect(heading).toHaveCSS('opacity', '1')
+  await expect(heading).toHaveCSS('transform', 'none')
 })
 
 test('reduced motion removes the title rise', async ({ page }) => {
