@@ -45,7 +45,6 @@ const scrimStyle = computed(() => ({
 
 let transitionFrame = 0
 let cancelTargetReadiness: (() => void) | null = null
-let pointerPlaybackIntent: 'play' | 'pause' | null = null
 let slideshowMounted = false
 const targetImageReadinessDeadlineMs = 10_000
 
@@ -92,22 +91,6 @@ function imageStyle(slide: HomeHeroSlide) {
     '--home-hero-position-desktop': slide.position.desktop,
     '--home-hero-position-mobile': slide.position.mobile
   }
-}
-
-function rememberPointerPlaybackIntent() {
-  pointerPlaybackIntent = state.value.userPaused || state.value.focusPaused ? 'play' : 'pause'
-}
-
-function clearPointerPlaybackIntent() {
-  pointerPlaybackIntent = null
-}
-
-function togglePlayback(event: MouseEvent) {
-  const intent = event.detail > 0 ? pointerPlaybackIntent : null
-  pointerPlaybackIntent = null
-  const action = intent ?? (state.value.userPaused || state.value.focusPaused ? 'play' : 'pause')
-  if (action === 'play') controller.play()
-  else controller.pause()
 }
 
 function transitionEnded(event: TransitionEvent, transactionId: number) {
@@ -295,27 +278,6 @@ onBeforeUnmount(() => {
           <span class="home-hero-slideshow__dot" aria-hidden="true"></span>
         </button>
       </div>
-
-      <button
-        class="home-hero-slideshow__play-button"
-        type="button"
-        :aria-label="state.reducedMotion || state.forcedColors
-          ? messages.static
-          : state.userPaused || state.focusPaused
-            ? messages.play
-            : messages.pause"
-        :disabled="state.reducedMotion || state.forcedColors"
-        @pointerdown="rememberPointerPlaybackIntent"
-        @pointercancel="clearPointerPlaybackIntent"
-        @click="togglePlayback($event)"
-      >
-        <svg v-if="state.userPaused || state.focusPaused || state.reducedMotion || state.forcedColors" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M8 5.5v13L19 12 8 5.5Z" fill="currentColor"></path>
-        </svg>
-        <svg v-else viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M7 5h4v14H7zM15 5h4v14h-4z" fill="currentColor"></path>
-        </svg>
-      </button>
     </div>
     <span class="sr-only" aria-live="polite" aria-atomic="true">{{ announcement }}</span>
   </div>

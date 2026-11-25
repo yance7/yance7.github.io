@@ -14,6 +14,7 @@ function expectFallbackBeforeEnhanced(source: string, fallback: string, enhanced
 
 describe('cross-platform reading fallbacks', () => {
   const homeHero = read('src/styles/home-hero.css')
+  const shell = read('src/styles/shell.css')
   const components = read('src/styles/components.css')
   const responsive = read('src/styles/responsive.css')
   const concerts = read('src/styles/concerts.css')
@@ -64,11 +65,11 @@ describe('cross-platform reading fallbacks', () => {
     expect(concerts).not.toContain('.concert-poster::after')
   })
 
-  it('keeps mobile lyric entrances within a short critical-content budget', () => {
+  it('keeps lyric hero entrances unified without per-character stagger', () => {
     const mobileStyles = responsive.slice(responsive.indexOf('@media (max-width: 640px)'))
 
-    expect(mobileStyles).toContain('.hero-title.hero-lyric .lyric-char')
-    expect(mobileStyles).toContain('animation-duration: .42s')
-    expect(mobileStyles).toContain('animation-delay: calc(50ms + var(--ci) * 20ms)')
+    expect(mobileStyles).not.toContain('.hero-title.hero-lyric .lyric-char')
+    expect(mobileStyles).not.toContain('animation-delay: calc(50ms + var(--ci) * 20ms)')
+    expect(shell).toMatch(/\.hero-title\.hero-lyric\s*\{[^}]*animation:\s*hero-title-rise\s+\.56s/s)
   })
 })

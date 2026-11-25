@@ -213,48 +213,86 @@ test.describe('font readiness observation', () => {
   })
 })
 
-test('home native snap follows desktop input, width and runtime motion preferences', async ({ page }) => {
+test('home document never enables vertical scroll-snap across viewports and motion preferences', async ({ page }) => {
   await openHome(page)
-  const desktop = await hasDesktopInput(page)
   expect(await page.evaluate(() => scrollY)).toBe(0)
-  // Browsers serialize the default proximity keyword as just "y".
-  await expect(page.locator('html')).toHaveCSS('scroll-snap-type', desktop ? /^y(?: proximity)?$/ : 'none')
+  await expect(page.locator('html')).not.toHaveClass(/home-scroll-snap/)
+  await expect(page.locator('html')).toHaveCSS('scroll-snap-type', 'none')
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await expect(page.locator('html')).toHaveCSS('scroll-snap-type', 'none')
   await expect(page.locator('.reveal:not(.revealed)')).toHaveCount(0)
   await page.emulateMedia({ reducedMotion: 'no-preference' })
-  await expect(page.locator('html')).toHaveCSS('scroll-snap-type', desktop ? /^y(?: proximity)?$/ : 'none')
-  await page.setViewportSize({ width: 640, height: 844 })
   await expect(page.locator('html')).toHaveCSS('scroll-snap-type', 'none')
+  await page.setViewportSize({ width: 390, height: 844 })
+  await expect(page.locator('html')).toHaveCSS('scroll-snap-type', 'none')
+  await expect(page.locator('.home-projects__rail')).toHaveCSS('scroll-snap-type', /^x(?: proximity)?$/)
 })
 
-test('native proximity aligns near a stable section and permits reading between targets', async ({ page }) => {
+test('small forward and backward scrolls near chapter boundaries stay at the exact scrollY and update progress', async ({ page }) => {
   await openHome(page)
-  test.skip(!await hasDesktopInput(page), 'Native snapping is reserved for desktop fine pointers')
-  const target = page.locator('#home-worlds')
   await page.evaluate(() => { document.documentElement.style.scrollBehavior = 'auto' })
-  await target.evaluate(element => {
-    const top = scrollY + element.getBoundingClientRect().top
-    const offset = parseFloat(getComputedStyle(element).scrollMarginTop)
-    scrollTo({ top: top - offset - 24, behavior: 'instant' })
+  const readProgress = () => page.locator('.scroll-progress').evaluate(element => {
+    const bar = element.querySelector<HTMLElement>('.scroll-bar')!
+    const match = bar.style.transform.match(/scaleX\(([^)]+)\)/)
+    const scaleX = match ? Number(match[1]) : 0
+    return { now: Number(element.getAttribute('aria-valuenow') ?? 0), scaleX }
   })
-  await expect.poll(() => target.evaluate(element => Math.abs(
-    element.getBoundingClientRect().top - parseFloat(getComputedStyle(element).scrollMarginTop)
-  ))).toBeLessThan(3)
-  await expect(target).toHaveCSS('transform', 'none')
-  const middle = await target.evaluate(element => {
-    const rect = element.getBoundingClientRect()
-    const top = Math.round(scrollY + rect.top + rect.height * 0.5)
+
+  for (const selector of ['#selected-work', '#home-worlds', '#home-beyond']) {
+    const target = page.locator(selector)
+    const boundary = await target.evaluate(element => {
+      const top = scrollY + element.getBoundingClientRect().top
+      const offset = parseFloat(getComputedStyle(element).scrollMarginTop) || 0
+      return Math.max(0, Math.round(top - offset))
+    })
+    const beforeEdge = Math.max(0, boundary - 24)
+    await page.evaluate(top => scrollTo({ top, behavior: 'instant' }), beforeEdge)
+    await expect.poll(() => page.evaluate(() => Math.round(scrollY))).toBe(beforeEdge)
+    const afterEdge = boundary + 24
+    await page.evaluate(top => scrollTo({ top, behavior: 'instant' }), afterEdge)
+    await expect.poll(() => page.evaluate(() => Math.round(scrollY))).toBe(afterEdge)
+  }
+
+  const base = await page.locator('#home-worlds').evaluate(element => {
+    const top = Math.round(scrollY + element.getBoundingClientRect().top - 18)
     scrollTo({ top, behavior: 'instant' })
-    return top
+    return Math.round(scrollY)
   })
-  await expect.poll(() => page.evaluate(() => scrollY)).toBeCloseTo(middle, 0)
-  await page.mouse.wheel(0, 1800)
-  await expect.poll(() => page.locator('#home-beyond').evaluate(element =>
-    element.getBoundingClientRect().top <= parseFloat(getComputedStyle(element).scrollMarginTop) + 1
-  )).toBe(true)
-  await page.locator('.site-footer').scrollIntoViewIfNeeded()
-  await expect(page.locator('.site-footer')).toBeInViewport()
+  const readExpectedScale = () => page.evaluate(() => {
+    const root = document.documentElement
+    const range = root.scrollHeight - root.clientHeight
+    return range > 0 ? Math.min(Math.max((window.scrollY || root.scrollTop) / range, 0), 1) : 0
+  })
+  let expectedY = base
+  const expectedBase = await readExpectedScale()
+  await expect.poll(async () => {
+    const { scaleX } = await readProgress()
+    return Math.abs(scaleX - expectedBase) < 0.01 && scaleX > 0
+  }).toBe(true)
+  let prevProgress = await readProgress()
+  for (const delta of [36, 48, -28, -20, 64]) {
+    expectedY += delta
+    await page.evaluate(step => scrollBy({ top: step, behavior: 'instant' }), delta)
+    await expect.poll(() => page.evaluate(() => Math.round(scrollY))).toBe(expectedY)
+    const expectedStep = await readExpectedScale()
+    await expect.poll(async () => Math.abs((await readProgress()).scaleX - expectedStep) < 0.01).toBe(true)
+    if (delta > 0) {
+      await expect.poll(async () => (await readProgress()).scaleX).toBeGreaterThan(prevProgress.scaleX)
+    } else {
+      await expect.poll(async () => (await readProgress()).scaleX).toBeLessThan(prevProgress.scaleX)
+    }
+    prevProgress = await readProgress()
+  }
+
+  if (await hasDesktopInput(page)) {
+    const beforeWheel = await page.evaluate(() => Math.round(scrollY))
+    await page.mouse.wheel(0, 42)
+    await expect.poll(() => page.evaluate(() => Math.round(scrollY))).toBeGreaterThan(beforeWheel)
+    const afterDown = await page.evaluate(() => Math.round(scrollY))
+    expect(afterDown - beforeWheel).toBeLessThan(160)
+    await page.mouse.wheel(0, -24)
+    await expect.poll(() => page.evaluate(() => Math.round(scrollY))).toBeLessThan(afterDown)
+  }
 })
 
 test('home direct hash opens below navigation with its content already revealed', async ({ page }) => {
@@ -298,12 +336,10 @@ test('focus reveals a pending home card synchronously and preserves native keybo
 
 test('native home scrolling reaches the entire natural footer', async ({ page }) => {
   await openHome(page)
-  test.skip(!await hasDesktopInput(page), 'Desktop native proximity tail must allow footer access')
-  await expect(page.locator('html')).toHaveClass(/home-scroll-snap/)
-  await expect(page.locator('.site-footer')).toHaveCSS('scroll-snap-align', 'end')
+  await expect(page.locator('html')).not.toHaveClass(/home-scroll-snap/)
+  await expect(page.locator('.site-footer')).toHaveCSS('scroll-snap-align', 'none')
   await page.locator('#home-beyond').evaluate(element => element.scrollIntoView({ behavior: 'instant', block: 'start' }))
-  await page.mouse.wheel(0, 1200)
-  await page.mouse.wheel(0, 1200)
+  await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }))
   await expect.poll(() => page.evaluate(() => Math.abs(
     scrollY - (document.documentElement.scrollHeight - innerHeight)
   ))).toBeLessThan(2)
@@ -343,13 +379,13 @@ test('home Hero anchors and history navigation preserve their native target', as
   await expect(page.locator('html')).not.toHaveClass(/home-scroll-snap/)
 })
 
-test('home snap yields to scroll locks and resumes after unlock', async ({ page }) => {
+test('home scroll locks and unlocks keep document snap disabled', async ({ page }) => {
   await openHome(page)
-  test.skip(!await hasDesktopInput(page), 'Desktop input is required for snap lifecycle')
   await page.evaluate(() => { document.body.style.overflow = 'hidden' })
   await expect(page.locator('html')).toHaveCSS('scroll-snap-type', 'none')
   await page.evaluate(() => { document.body.style.removeProperty('overflow') })
-  await expect(page.locator('html')).toHaveCSS('scroll-snap-type', /^y(?: proximity)?$/)
+  await expect(page.locator('html')).toHaveCSS('scroll-snap-type', 'none')
+  await expect(page.locator('html')).not.toHaveClass(/home-scroll-snap/)
 })
 
 test('home history restores a reading position without snapping to a chapter', async ({ page }) => {
