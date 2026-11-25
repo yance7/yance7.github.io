@@ -8,6 +8,16 @@ const locales = [
   { route: '/en/', group: 'Homepage photo carousel', second: 'Show photo 2 of 13: Campus photo' }
 ] as const
 
+test.afterEach(async ({ page }) => {
+  await page.evaluate(() => {
+    document.querySelectorAll<HTMLVideoElement>('video').forEach((video) => {
+      video.pause()
+      video.removeAttribute('src')
+      video.load()
+    })
+  }).catch(() => undefined)
+})
+
 async function expectLoadedImage(page: import('@playwright/test').Page) {
   const image = page.locator('.home-hero-slideshow__image--current')
   await expect.poll(() => image.evaluate((element) => (element as HTMLImageElement).naturalWidth)).toBeGreaterThan(0)
@@ -29,6 +39,23 @@ async function openPausedHome(page: import('@playwright/test').Page, route = '/'
 
 async function freezeCarouselClock(page: import('@playwright/test').Page) {
   await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1_000))
+}
+
+async function completeClockedTransition(
+  page: import('@playwright/test').Page,
+  media: import('@playwright/test').Locator,
+  expectedIndex: string
+) {
+  const target = page.locator('.home-hero-slideshow__image--target')
+  await expect.poll(() => target.evaluate((element) => (element as HTMLImageElement).naturalWidth)).toBeGreaterThan(0)
+  await target.evaluate((element) => (element as HTMLImageElement).decode())
+  await expect.poll(async () => {
+    await page.clock.runFor(1_000 / 60)
+    return media.getAttribute('data-transitioning')
+  }).toBe('true')
+  await page.clock.fastForward(860)
+  await expect(media).toHaveAttribute('data-current-index', expectedIndex)
+  await expect(media).toHaveAttribute('data-transitioning', 'false')
 }
 
 async function mockDocumentVisibility(page: import('@playwright/test').Page) {
@@ -531,21 +558,26 @@ test('omits the document-level preload and requests only the 640px Save-Data can
   expect(imageRequests[0]).toContain('hero-01-640-')
 })
 
-test('exposes thirteen localized photo buttons outside the decorative subtree', async ({ page }) => {
+test('exposes thirteen localized photo buttons outside the decorative subtree without a play button', async ({ page }) => {
   for (const locale of locales) {
     const { group } = await openPausedHome(page, locale.route)
     await expect(group).toHaveAttribute('role', 'group')
     await expect(group).toHaveAttribute('aria-roledescription', /.+/)
     await expect(group).toHaveAccessibleName(locale.group)
     await expect(group.locator('.home-hero-slideshow__dot-button')).toHaveCount(13)
+    await expect(group.locator('.home-hero-slideshow__play-button')).toHaveCount(0)
     await expect(group.locator('.home-hero-slideshow__dot-button').nth(1)).toHaveAccessibleName(locale.second)
     expect(await group.evaluate((element) => element.closest('[aria-hidden="true"]') !== null)).toBe(false)
     await expect(group.locator('.home-hero-slideshow__dot-button[aria-current="true"]')).toHaveCount(1)
   }
 })
 
-test('manual selection pauses persistently and uses direction by target order without replacing particles', async ({ page }) => {
+test('manual selection cancels the old timer, uses direction by target order without replacing particles, and restarts a full 5000ms dwell', async ({ page }) => {
+  await page.clock.install()
   const { group, media } = await openPausedHome(page)
+  await freezeCarouselClock(page)
+  await page.mouse.move(1, 1)
+  await expect(media).toHaveAttribute('data-hovered', 'false')
   const canvas = page.locator('.home-hero-particles-canvas')
   const canvasHandle = await canvas.elementHandle()
   const stageBefore = await page.locator('.home-hero-particles').evaluate((element) => {
@@ -554,16 +586,28 @@ test('manual selection pauses persistently and uses direction by target order wi
     return { left: stage.left - visual.left, top: stage.top - visual.top, width: stage.width, height: stage.height }
   })
 
+  await page.clock.fastForward(3_200)
+  await expect(media).toHaveAttribute('data-current-index', '0')
+
   await group.locator('.home-hero-slideshow__dot-button').nth(6).click()
-  await expect(media).toHaveAttribute('data-current-index', '6')
-  await expect(media).toHaveAttribute('data-direction', 'forward')
-  await expect(group.locator('.home-hero-slideshow__play-button')).toHaveAccessibleName('播放照片轮播')
   await page.mouse.move(1, 1)
-  await expect(group.locator('.home-hero-slideshow__play-button')).toHaveAccessibleName('播放照片轮播')
+  await expect(media).toHaveAttribute('data-hovered', 'false')
+  await expect(media).toHaveAttribute('data-target-index', '6')
+  await expect(media).toHaveAttribute('data-direction', 'forward')
+  await completeClockedTransition(page, media, '6')
+
+  await page.clock.fastForward(4_999)
+  expect(await media.getAttribute('data-target-index')).toBeNull()
+  await expect(media).toHaveAttribute('data-current-index', '6')
+  await page.clock.fastForward(1)
+  await expect(media).toHaveAttribute('data-target-index', '7')
+  await completeClockedTransition(page, media, '7')
 
   await group.locator('.home-hero-slideshow__dot-button').first().click()
-  await expect(media).toHaveAttribute('data-current-index', '0')
+  await page.mouse.move(1, 1)
+  await expect(media).toHaveAttribute('data-target-index', '0')
   await expect(media).toHaveAttribute('data-direction', 'backward')
+  await completeClockedTransition(page, media, '0')
   expect(await canvasHandle!.evaluate((element) => element === document.querySelector('.home-hero-particles-canvas'))).toBe(true)
   const stageAfter = await page.locator('.home-hero-particles').evaluate((element) => {
     const stage = element.getBoundingClientRect()
@@ -574,18 +618,50 @@ test('manual selection pauses persistently and uses direction by target order wi
   await expect(page.locator('.home-hero')).toHaveAttribute('data-intro-state', /static|complete/)
 })
 
-test('the first pointer activation of Pause stays paused after the pointer leaves', async ({ page }) => {
-  await page.goto('/')
-  const group = page.locator('.home-hero-slideshow__controls')
-  const play = group.getByRole('button', { name: /^(暂停|播放)照片轮播$/ })
-  await expect(group).toBeVisible()
-  await expectLoadedImage(page)
-  await expect(play).toHaveAccessibleName('暂停照片轮播')
+test('reserves stable dot row height from first paint so mounting controls does not shift the video strip', async ({ page }) => {
+  let releaseEntry!: () => void
+  let notifyEntryRequested!: () => void
+  const entryGate = new Promise<void>((resolve) => { releaseEntry = resolve })
+  const entryRequested = new Promise<void>((resolve) => { notifyEntryRequested = resolve })
+  await page.route(/\/assets\/vue\/main-[^/]+\.js$/u, async (route) => {
+    notifyEntryRequested()
+    await entryGate
+    await route.continue()
+  })
 
-  await play.click({ position: { x: 2, y: 16 } })
-  await expect(play).toHaveAccessibleName('播放照片轮播')
-  await page.mouse.move(1, 1)
-  await expect(play).toHaveAccessibleName('播放照片轮播')
+  try {
+    await page.setViewportSize({ width: 1440, height: 1000 })
+    await page.goto('/', { waitUntil: 'commit' })
+    await entryRequested
+    await page.evaluate(() => document.fonts.ready)
+    const before = await page.evaluate(() => {
+      const visual = document.querySelector('.home-hero-visual')!.getBoundingClientRect()
+      const projects = document.querySelector('.home-projects')!.getBoundingClientRect()
+      return { gap: projects.top - visual.bottom, projectsTop: projects.top + window.scrollY }
+    })
+    expect(before.gap).toBeGreaterThanOrEqual(30)
+
+    releaseEntry()
+    await expect(page.locator('body')).toHaveAttribute('data-hydrated', 'true')
+    await expect(page.locator('.home-hero-slideshow__controls')).toBeVisible()
+    const after = await page.evaluate(() => {
+      const visual = document.querySelector('.home-hero-visual')!.getBoundingClientRect()
+      const controls = document.querySelector('.home-hero-slideshow__controls')!.getBoundingClientRect()
+      const projects = document.querySelector('.home-projects')!.getBoundingClientRect()
+      return {
+        gap: projects.top - visual.bottom,
+        projectsTop: projects.top + window.scrollY,
+        controlsTopDelta: controls.top - visual.bottom,
+        controlsBottomDelta: projects.top - controls.bottom
+      }
+    })
+    expect(Math.abs(after.gap - before.gap)).toBeLessThanOrEqual(1)
+    expect(Math.abs(after.projectsTop - before.projectsTop)).toBeLessThanOrEqual(2)
+    expect(Math.abs(after.controlsTopDelta)).toBeLessThanOrEqual(1)
+    expect(Math.abs(after.controlsBottomDelta)).toBeLessThanOrEqual(1)
+  } finally {
+    releaseEntry()
+  }
 })
 
 test('keeps only the last manual target selected during an active transition', async ({ page }) => {
@@ -606,41 +682,37 @@ test('keeps only the last manual target selected during an active transition', a
   await expect(media.locator('img')).toHaveCount(1)
 })
 
-test('pauses while hovered and resumes with a full dwell after pointer exit', async ({ page }) => {
+test('pauses while hovered and resumes with a full 5000ms dwell after pointer exit', async ({ page }) => {
   await page.clock.install()
-  const { group, media } = await openPausedHome(page)
+  const { media } = await openPausedHome(page)
   await freezeCarouselClock(page)
   const visual = page.locator('.home-hero-visual')
-  const bounds = await visual.boundingBox()
-  await page.mouse.move(bounds!.x + bounds!.width / 2, bounds!.y + bounds!.height / 2)
+  await visual.evaluate((element) => {
+    element.dispatchEvent(new PointerEvent('pointerenter', { bubbles: false, pointerType: 'mouse' }))
+  })
   await expect(media).toHaveAttribute('data-hovered', 'true')
 
-  const play = group.locator('.home-hero-slideshow__play-button')
-  await play.focus()
-  await play.press('Enter')
   await page.clock.fastForward(60_000)
   await expect(media).toHaveAttribute('data-current-index', '0')
-  await page.mouse.move(1, 1)
+  await visual.evaluate((element) => {
+    element.dispatchEvent(new PointerEvent('pointerleave', { bubbles: false, pointerType: 'mouse' }))
+  })
   await expect(media).toHaveAttribute('data-hovered', 'false')
 
-  await page.clock.fastForward(2_999)
+  await page.clock.fastForward(4_999)
   expect(await media.getAttribute('data-target-index')).toBeNull()
   await page.clock.fastForward(1)
   await expect(media).toHaveAttribute('data-target-index', '1')
-  await page.clock.fastForward(860)
-  await expect(media).toHaveAttribute('data-current-index', '1')
+  await completeClockedTransition(page, media, '1')
 })
 
-test('does not catch up while hidden or offscreen and restarts a full dwell on return', async ({ page }) => {
+test('does not catch up while hidden or offscreen and restarts a full 5000ms dwell on return', async ({ page }) => {
   await page.clock.install()
   await mockDocumentVisibility(page)
-  const { group, media } = await openPausedHome(page)
+  const { media } = await openPausedHome(page)
   await freezeCarouselClock(page)
   await page.mouse.move(1, 1)
   await expect(media).toHaveAttribute('data-hovered', 'false')
-  const play = group.locator('.home-hero-slideshow__play-button')
-  await play.focus()
-  await play.press('Enter')
 
   await page.evaluate(() => (window as Window & { setCarouselVisibility?: (value: DocumentVisibilityState) => void }).setCarouselVisibility!('hidden'))
   await expect(media).toHaveAttribute('data-page-visible', 'false')
@@ -659,84 +731,99 @@ test('does not catch up while hidden or offscreen and restarts a full dwell on r
 
   await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
   await expect(media).toHaveAttribute('data-in-viewport', 'true')
-  await page.clock.fastForward(2_999)
+  await page.clock.fastForward(4_999)
   expect(await media.getAttribute('data-target-index')).toBeNull()
   await page.clock.fastForward(1)
   await expect(media).toHaveAttribute('data-target-index', '1')
-  await page.clock.fastForward(860)
-  await expect(media).toHaveAttribute('data-current-index', '1')
+  await completeClockedTransition(page, media, '1')
 })
 
-test('advances from 1 to 2 and wraps from 13 to 1 in the same forward direction', async ({ page }) => {
+test('advances from 1 to 2 and wraps from 13 to 1 in the same forward direction after 5000ms', async ({ page }) => {
+  await page.clock.install()
   const { group, media } = await openPausedHome(page)
+  await freezeCarouselClock(page)
   const canvas = await page.locator('.home-hero-particles-canvas').elementHandle()
-  const play = group.locator('.home-hero-slideshow__play-button')
 
   await page.mouse.move(1, 1)
-  await play.focus()
-  await play.press('Enter')
-  await expect(media).toHaveAttribute('data-target-index', '1', { timeout: 9_000 })
+  await expect(media).toHaveAttribute('data-hovered', 'false')
+  await page.clock.fastForward(4_999)
+  expect(await media.getAttribute('data-target-index')).toBeNull()
+  await page.clock.fastForward(1)
+  await expect(media).toHaveAttribute('data-target-index', '1')
   await expect(media).toHaveAttribute('data-direction', 'forward')
-  await expect(media).toHaveAttribute('data-current-index', '1')
+  await completeClockedTransition(page, media, '1')
 
   await group.locator('.home-hero-slideshow__dot-button').nth(12).click()
-  await expect(media).toHaveAttribute('data-current-index', '12')
   await page.mouse.move(1, 1)
-  await play.focus()
-  await play.press('Enter')
-  await expect(media).toHaveAttribute('data-target-index', '0', { timeout: 9_000 })
+  await expect(media).toHaveAttribute('data-target-index', '12')
+  await completeClockedTransition(page, media, '12')
+  await page.clock.fastForward(4_999)
+  expect(await media.getAttribute('data-target-index')).toBeNull()
+  await page.clock.fastForward(1)
+  await expect(media).toHaveAttribute('data-target-index', '0')
   await expect(media).toHaveAttribute('data-direction', 'forward')
-  await expect(media).toHaveAttribute('data-current-index', '0')
+  await completeClockedTransition(page, media, '0')
   expect(await canvas!.evaluate((element) => element === document.querySelector('.home-hero-particles-canvas'))).toBe(true)
 })
 
-test('supports keyboard focus pause and explicit restart while focus remains in the controls', async ({ page }) => {
+test('supports keyboard selection and continues 5000ms autoplay while focus remains on a dot button', async ({ page }) => {
+  await page.clock.install()
   const { group, media } = await openPausedHome(page)
+  await freezeCarouselClock(page)
+  await page.mouse.move(1, 1)
+
   const second = group.locator('.home-hero-slideshow__dot-button').nth(1)
   await group.locator('.home-hero-slideshow__dot-button').first().focus()
   await page.keyboard.press('Tab')
   await expect(second).toBeFocused()
   await expect(second).toHaveCSS('outline-style', 'solid')
   await second.press('Enter')
-  await expect(media).toHaveAttribute('data-current-index', '1')
+  await expect(media).toHaveAttribute('data-target-index', '1')
+  await completeClockedTransition(page, media, '1')
+  await expect(second).toBeFocused()
+
+  await page.clock.fastForward(4_999)
+  expect(await media.getAttribute('data-target-index')).toBeNull()
+  await page.clock.fastForward(1)
+  await expect(media).toHaveAttribute('data-target-index', '2')
+  await completeClockedTransition(page, media, '2')
+  await expect(second).toBeFocused()
 
   const last = group.locator('.home-hero-slideshow__dot-button').nth(12)
   await last.focus()
   await expect(last).toBeFocused()
   await last.press('Space')
-  await expect(media).toHaveAttribute('data-current-index', '12')
-
-  const play = group.locator('.home-hero-slideshow__play-button')
-  await play.focus()
-  await play.press('Enter')
-  await expect(play).toHaveAccessibleName('暂停照片轮播')
-  await expect(play).toBeFocused()
+  await expect(media).toHaveAttribute('data-target-index', '12')
+  await completeClockedTransition(page, media, '12')
 })
 
 test('pauses an active transition when reduced motion is enabled at runtime', async ({ page }) => {
-  const { group, media } = await openPausedHome(page)
-  const play = group.locator('.home-hero-slideshow__play-button')
+  await page.clock.install()
+  const { media } = await openPausedHome(page)
+  await freezeCarouselClock(page)
 
   await page.mouse.move(1, 1)
-  await play.focus()
-  await play.press('Enter')
-  await expect(media).toHaveAttribute('data-target-index', '1', { timeout: 9_000 })
+  await page.clock.fastForward(5_000)
+  await expect(media).toHaveAttribute('data-target-index', '1')
+  const target = page.locator('.home-hero-slideshow__image--target')
+  await expect.poll(() => target.evaluate((element) => (element as HTMLImageElement).naturalWidth)).toBeGreaterThan(0)
+  await target.evaluate((element) => (element as HTMLImageElement).decode())
+  await expect.poll(async () => {
+    await page.clock.runFor(1_000 / 60)
+    return media.getAttribute('data-transitioning')
+  }).toBe('true')
 
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await expect(media).toHaveAttribute('data-transitioning', 'false')
   await expect(media).toHaveAttribute('data-current-index', '1')
-  await expect(play).toBeDisabled()
 
   await page.emulateMedia({ reducedMotion: 'no-preference' })
-  await expect(play).toHaveAccessibleName('播放照片轮播')
   await expect(media).toHaveAttribute('data-current-index', '1')
 })
 
 test('honors reduced motion and forced colors without hiding YANCE or claiming playback', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   const { group, media } = await openPausedHome(page)
-  const play = group.locator('.home-hero-slideshow__play-button')
-  await expect(play).toBeDisabled()
   await group.locator('.home-hero-slideshow__dot-button').nth(1).click()
   await expect(media).toHaveAttribute('data-current-index', '1')
   await expect(media).toHaveAttribute('data-transitioning', 'false')
@@ -746,7 +833,6 @@ test('honors reduced motion and forced colors without hiding YANCE or claiming p
   await expect(page.locator('.home-hero-particles-word')).toBeVisible()
   await expect(page.locator('.home-hero-slideshow__image')).toHaveCount(0)
   await expect(group).toBeVisible()
-  await expect(play).toBeDisabled()
   const requests: string[] = []
   page.on('request', (request) => {
     if (request.resourceType() === 'image' && request.url().includes('/assets/images/home-hero/')) requests.push(request.url())
@@ -765,7 +851,7 @@ test('carousel controls pass a scoped axe accessibility scan', async ({ page }) 
   expect(results.violations).toEqual([])
 })
 
-test('save-data starts with only the small first candidate and waits for an explicit play', async ({ page }) => {
+test('save-data starts with only the small first candidate and loads the selected candidate on manual dot click', async ({ page }) => {
   const imageRequests: string[] = []
   await page.setViewportSize({ width: 390, height: 844 })
   page.on('request', (request) => {
@@ -777,14 +863,12 @@ test('save-data starts with only the small first candidate and waits for an expl
     Object.defineProperty(navigator, 'connection', { configurable: true, value: connection })
   })
 
-  const { group } = await openPausedHome(page)
+  const { group, media } = await openPausedHome(page)
   expect(imageRequests.some((url) => /hero-01-640-[a-f0-9]+\.webp$/.test(url))).toBe(true)
   expect(imageRequests.some((url) => /hero-02-/.test(url))).toBe(false)
-  await page.mouse.move(1, 1)
-  const play = group.locator('.home-hero-slideshow__play-button')
-  await play.focus()
-  await play.press('Enter')
+  await group.locator('.home-hero-slideshow__dot-button').nth(1).click()
   await expect.poll(() => imageRequests.some((url) => /hero-02-640-[a-f0-9]+\.webp$/.test(url))).toBe(true)
+  await expect(media).toHaveAttribute('data-current-index', '1')
 })
 
 test('waits for the resized target candidate to load before revealing it', async ({ page }) => {
@@ -826,8 +910,6 @@ test('waits for the resized target candidate to load before revealing it', async
     expect(loadedSmallCandidateWidth).toBeGreaterThan(0)
     await expect(media).toHaveAttribute('data-current-index', '0')
 
-    const play = controls.locator('.home-hero-slideshow__play-button')
-    if (await play.getAttribute('aria-label') === '暂停照片轮播') await play.click()
     await page.setViewportSize({ width: 1440, height: 900 })
     await controls.locator('.home-hero-slideshow__dot-button').nth(1).click()
 
@@ -879,49 +961,45 @@ test('keeps the current photo and announces a manual failure, then retries on th
   await expect(group.locator('[aria-live="polite"]')).toContainText('合影')
 })
 
-test('keeps carousel controls inside 320px and 390px cards without page overflow', async ({ page }) => {
+test('places centered photo dots below the photo frame and above the video strip across viewports without page overflow', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 844 })
   const { group } = await openPausedHome(page)
   for (const width of [320, 390, 1440]) {
     await page.setViewportSize({ width, height: 844 })
     const layout = await page.evaluate(() => {
       const stage = document.querySelector('.home-hero-particles')!.getBoundingClientRect()
+      const projects = document.querySelector('.home-projects')!.getBoundingClientRect()
       const controls = document.querySelector('.home-hero-slideshow__panel')!.getBoundingClientRect()
-      const buttons = [...document.querySelectorAll<HTMLElement>('.home-hero-slideshow__dot-button, .home-hero-slideshow__play-button')]
       const dots = [...document.querySelectorAll<HTMLElement>('.home-hero-slideshow__dot-button')]
       const dotBounds = dots.map((dot) => dot.getBoundingClientRect())
       const rowTops = [...new Set(dotBounds.map((bounds) => Math.round(bounds.top * 10) / 10))].sort((a, b) => a - b)
-      const play = document.querySelector<HTMLElement>('.home-hero-slideshow__play-button')!.getBoundingClientRect()
+      const visualDots = [...document.querySelectorAll<HTMLElement>('.home-hero-slideshow__dot')].map((dot) => dot.getBoundingClientRect())
       return {
         viewport: window.innerWidth,
         document: document.documentElement.scrollWidth,
-        stage: { left: stage.left, right: stage.right, bottom: stage.bottom, height: stage.height },
-        controls: { left: controls.left, right: controls.right, bottom: controls.bottom, height: controls.height },
+        stage: { left: stage.left, right: stage.right, bottom: stage.bottom, centerX: (stage.left + stage.right) / 2 },
+        projects: { top: projects.top },
+        controls: { left: controls.left, right: controls.right, top: controls.top, bottom: controls.bottom, centerX: (controls.left + controls.right) / 2 },
         rowCounts: rowTops.map((top) => dotBounds.filter((bounds) => Math.round(bounds.top * 10) / 10 === top).length),
-        dotsRight: Math.max(...dotBounds.map((bounds) => bounds.right)),
-        play: { left: play.left, centerY: play.top + play.height / 2 },
-        controlsCenterY: controls.top + controls.height / 2,
-        minButton: Math.min(...buttons.map((button) => {
-          const bounds = button.getBoundingClientRect()
-          return Math.min(bounds.width, bounds.height)
-        })),
+        minButton: Math.min(...dotBounds.map((bounds) => Math.min(bounds.width, bounds.height))),
+        inactiveDotHeight: Math.min(...visualDots.map((bounds) => bounds.height)),
+        activeDotWidth: Math.max(...visualDots.map((bounds) => bounds.width)),
         touchAction: getComputedStyle(document.querySelector('.home-hero-particles')!).touchAction
       }
     })
     expect(layout.document).toBeLessThanOrEqual(layout.viewport)
     expect(layout.controls.left).toBeGreaterThanOrEqual(layout.stage.left)
     expect(layout.controls.right).toBeLessThanOrEqual(layout.stage.right)
-    expect(layout.controls.bottom).toBeLessThanOrEqual(layout.stage.bottom)
-    expect(layout.minButton).toBeGreaterThanOrEqual(28)
+    expect(layout.controls.top).toBeGreaterThanOrEqual(layout.stage.bottom - 1)
+    expect(layout.controls.bottom).toBeLessThanOrEqual(layout.projects.top + 1)
+    expect(Math.abs(layout.controls.centerX - layout.stage.centerX)).toBeLessThanOrEqual(2)
+    expect(layout.minButton).toBeGreaterThanOrEqual(24)
+    expect(layout.inactiveDotHeight).toBeLessThanOrEqual(5.5)
+    expect(layout.activeDotWidth).toBeLessThanOrEqual(15)
     expect(layout.touchAction).toContain('pan-y')
     expect(layout.rowCounts).toEqual(width <= 760 ? [7, 6] : [13])
-    expect(layout.play.left).toBeGreaterThan(layout.dotsRight)
-    if (width <= 760) {
-      expect(layout.controls.height).toBeGreaterThanOrEqual(68)
-      expect(layout.controls.height).toBeLessThanOrEqual(80)
-      expect(Math.abs(layout.play.centerY - layout.controlsCenterY)).toBeLessThanOrEqual(1)
-    }
     await expect(group.locator('.home-hero-slideshow__dot-button')).toHaveCount(13)
+    await expect(group.locator('.home-hero-slideshow__play-button')).toHaveCount(0)
   }
 })
 
@@ -932,9 +1010,6 @@ test('touching slideshow controls pauses without a particle ripple', async ({ pa
   await freezeCarouselClock(page)
   await page.mouse.move(1, 1)
   await expect(media).toHaveAttribute('data-hovered', 'false')
-  const play = group.locator('.home-hero-slideshow__play-button')
-  await play.focus()
-  await play.press('Enter')
   const ripple = page.locator('.home-hero-touch-ripple')
   await expect(ripple).toBeVisible()
 
@@ -957,11 +1032,11 @@ test('touching slideshow controls pauses without a particle ripple', async ({ pa
 
   await page.evaluate(() => window.dispatchEvent(new PointerEvent('pointerup', { pointerId: 93, pointerType: 'touch' })))
   await expect(media).toHaveAttribute('data-touch-active', 'false')
-  await page.clock.fastForward(2_999)
+  await page.clock.fastForward(4_999)
+  expect(await media.getAttribute('data-target-index')).toBeNull()
   await page.clock.fastForward(1)
   await expect(media).toHaveAttribute('data-target-index', '1')
-  await page.clock.fastForward(860)
-  await expect(media).toHaveAttribute('data-current-index', '1')
+  await completeClockedTransition(page, media, '1')
 
   const canvas = page.locator('.home-hero-particles-canvas')
   await canvas.evaluate((element) => {

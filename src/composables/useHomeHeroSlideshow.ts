@@ -105,7 +105,7 @@ const defaultClock: HomeHeroSlideshowClock = {
   clearTimeout: (timer) => globalThis.clearTimeout(timer)
 }
 
-const defaultDwellMs = 3000
+const defaultDwellMs = 5000
 const defaultTransitionMs = 700
 const defaultLoadDeadlineMs = 10000
 
@@ -482,7 +482,7 @@ export function createHomeHeroSlideshow(options: HomeHeroSlideshowOptions) {
 
   function select(index: number) {
     if (!Number.isInteger(index) || index < 0 || index >= slides.length || disposed) return
-    state.value.userPaused = true
+    state.value.focusPaused = false
     state.value.announcement = null
     state.value.announcementIndex = null
     if (state.value.forcedColors) {
@@ -499,6 +499,10 @@ export function createHomeHeroSlideshow(options: HomeHeroSlideshowOptions) {
       current.announcement = 'photoSelected'
       current.announcementIndex = index
       return
+    }
+    if (!state.value.reducedMotion) {
+      state.value.userPaused = false
+      state.value.autoStopped = false
     }
     if (state.value.transitioning) {
       state.value.queuedIndex = index
@@ -624,10 +628,6 @@ export function useHomeHeroSlideshow(options: UseHomeHeroSlideshowOptions) {
     if (event.pointerType === 'mouse') controller.setEnvironment({ hovered: false })
   }
 
-  function controlsFocused() {
-    controller.pauseOnFocus()
-  }
-
   function bindContainer(element: HTMLElement | null) {
     intersectionObserver?.disconnect()
     intersectionObserver = null
@@ -655,9 +655,14 @@ export function useHomeHeroSlideshow(options: UseHomeHeroSlideshowOptions) {
   }
 
   function bindControls(element: HTMLElement | null) {
-    currentControls?.removeEventListener('focusin', controlsFocused)
+    currentControls?.removeEventListener('pointerdown', touchDown)
+    currentControls?.removeEventListener('pointerenter', hoverStart)
+    currentControls?.removeEventListener('pointerleave', hoverEnd)
     currentControls = element
-    currentControls?.addEventListener('focusin', controlsFocused)
+    if (!element || typeof window === 'undefined') return
+    element.addEventListener('pointerdown', touchDown, { passive: true })
+    element.addEventListener('pointerenter', hoverStart, { passive: true })
+    element.addEventListener('pointerleave', hoverEnd, { passive: true })
   }
 
   const stopContainerWatch = watch(container, bindContainer, { flush: 'post' })
@@ -686,7 +691,9 @@ export function useHomeHeroSlideshow(options: UseHomeHeroSlideshowOptions) {
     currentContainer?.removeEventListener('pointerdown', touchDown)
     currentContainer?.removeEventListener('pointerenter', hoverStart)
     currentContainer?.removeEventListener('pointerleave', hoverEnd)
-    currentControls?.removeEventListener('focusin', controlsFocused)
+    currentControls?.removeEventListener('pointerdown', touchDown)
+    currentControls?.removeEventListener('pointerenter', hoverStart)
+    currentControls?.removeEventListener('pointerleave', hoverEnd)
     motionMedia?.removeEventListener('change', updatePreferences)
     forcedMedia?.removeEventListener('change', updatePreferences)
     connection?.removeEventListener('change', updatePreferences)
