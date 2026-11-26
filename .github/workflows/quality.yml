@@ -1,10 +1,14 @@
 name: Quality Audit
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
+  workflow_call:
+    inputs:
+      production_release:
+        description: Include the Pages release checks
+        required: true
+        type: boolean
   workflow_dispatch:
     inputs:
       update_visual_snapshots:
@@ -49,7 +53,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: quality-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' && (inputs.run_poster_retry_stress && 'poster-retry-stress' || inputs.run_home_motion_stress && 'home-motion-stress' || inputs.run_pointer_stress && 'pointer-stress' || inputs.run_particle_stress && 'particle-stress' || inputs.run_visual_stress && 'visual-stress' || inputs.update_visual_snapshots && 'visual-snapshot-review' || 'full') || 'full' }}
+  group: quality-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' && (inputs.run_poster_retry_stress && 'poster-retry-stress' || inputs.run_home_motion_stress && 'home-motion-stress' || inputs.run_pointer_stress && 'pointer-stress' || inputs.run_particle_stress && 'particle-stress' || inputs.run_visual_stress && 'visual-stress' || inputs.update_visual_snapshots && 'visual-snapshot-review' || 'full') || 'full' }}
   cancel-in-progress: true
 
 jobs:
@@ -327,7 +331,7 @@ jobs:
           path: tests/e2e/visual-snapshots/chromium-visual/linux
           if-no-files-found: error
   audit-build:
-    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' || inputs.run_full_audit == true }}
+    if: ${{ github.event_name == 'pull_request' || inputs.run_full_audit == true || inputs.production_release == true }}
     runs-on: ubuntu-24.04
     steps:
       - &audit-checkout
@@ -663,9 +667,49 @@ jobs:
           path: tests/e2e/visual-snapshots/chromium-visual/linux
           if-no-files-found: error
 
+  release-readiness:
+    if: ${{ inputs.production_release == true }}
+    needs: audit-build
+    runs-on: ubuntu-24.04
+    steps:
+      - *audit-checkout
+      - *audit-node
+      - *audit-npm
+      - *audit-fonts
+      - *audit-download
+      - name: Lint source
+        run: npm run lint
+      - name: Typecheck Vue app
+        run: npm run typecheck
+      - name: Dead-code check
+        run: npm run deadcode
+      - name: Unit tests
+        run: npm run unit
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium webkit
+      - name: Browser release gate matrix
+        env:
+          PLAYWRIGHT_USE_PREVIEW: '1'
+          PLAYWRIGHT_OUTPUT_DIR: test-results/release-gate
+        run: |
+          npm run test:e2e -- --project=chromium --project=webkit-desktop --project=webkit-mobile --workers=2 --retries=0 tests/e2e/concert-archive-preservation.spec.ts tests/e2e/concert-archive-rail.spec.ts
+          PLAYWRIGHT_OUTPUT_DIR=test-results/release-gate-boot npm run test:e2e -- --project=chromium --project=webkit-desktop --project=webkit-mobile --workers=2 --retries=0 tests/e2e/site.spec.ts --grep "all archive pages boot and expose the main landmark"
+          PLAYWRIGHT_OUTPUT_DIR=test-results/release-gate-nojs npm run test:e2e -- --project=chromium --project=webkit-desktop --project=webkit-mobile --workers=2 --retries=0 tests/e2e/prerender.spec.ts --grep "fallback content"
+      - name: Upload release gate artifacts
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: browser-release-gate
+          path: |
+            test-results/release-gate
+            test-results/release-gate-boot
+            test-results/release-gate-nojs
+            playwright-report
+          if-no-files-found: ignore
+
   # Branch protection requires a single check named "audit".
   audit:
-    if: ${{ always() && (github.event_name == 'push' || github.event_name == 'pull_request' || inputs.run_full_audit == true) }}
+    if: ${{ always() && (github.event_name == 'pull_request' || inputs.run_full_audit == true || inputs.production_release == true) }}
     needs:
       - audit-build
       - audit-lighthouse
