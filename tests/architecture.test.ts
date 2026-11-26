@@ -363,6 +363,11 @@ describe('release workflow contracts', () => {
     expect(pagesWorkflow).toContain('actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b')
     expect(pagesWorkflow).toContain('actions/deploy-pages@')
     expect(pagesWorkflow.indexOf('actions/configure-pages@')).toBeLessThan(pagesWorkflow.indexOf('actions/upload-pages-artifact@'))
+    expect(pagesWorkflow).toContain('uses: ./.github/workflows/quality.yml')
+    expect(pagesWorkflow).toContain('production_release: true')
+    expect(pagesWorkflow).toContain('needs: quality')
+    expect(pagesWorkflow).toContain('name: quality-audit-build')
+    expect(pagesWorkflow).toContain('needs: prepare-pages')
   })
 
   it('runs deterministic checks on pull requests without deploying Pages', () => {
