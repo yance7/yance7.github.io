@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
@@ -385,6 +386,31 @@ describe('release workflow contracts', () => {
 
     expect(qualityWorkflow).toContain('npm run test:e2e -- tests/e2e/home-hero-layout.spec.ts tests/e2e/home-scroll-motion.spec.ts --project=webkit-desktop --workers=4 --retries=0')
     expect(qualityWorkflow).toContain('npm run test:e2e -- tests/e2e/home-hero-layout.spec.ts tests/e2e/home-scroll-motion.spec.ts --project=webkit-mobile --workers=4 --retries=0')
+  })
+
+  it('requires each parallel quality job to pass before reporting audit success', () => {
+    const workflow = readFileSync(resolve(process.cwd(), '.github/workflows/quality.yml'), 'utf8').replace(/\r\n/g, '\n')
+    const gate = workflow.split('\n  audit:\n')[1] ?? ''
+    const dependencies = [...gate.matchAll(/^ {6}- (audit-\S+)$/gm)].map((match) => match[1])
+    const auditJobs = [...workflow.matchAll(/^ {2}(audit-\S+):$/gm)].map((match) => match[1])
+    expect(dependencies).toContain('audit-build')
+    expect([...dependencies].sort()).toEqual(auditJobs.sort())
+    expect(gate).toContain('always()')
+    expect(gate).toContain('AUDIT_RESULTS: ${{ toJSON(needs) }}')
+
+    const script = gate.match(/node <<'NODE'\n([\s\S]+?)\n\s+NODE/)?.[1]
+    if (!script) throw new Error('Missing the audit gate program')
+    const runGate = (results: Record<string, { result: string }>) => spawnSync(process.execPath, ['-e', script], {
+      env: { ...process.env, AUDIT_RESULTS: JSON.stringify(results) },
+      encoding: 'utf8',
+    }).status
+
+    const successes = Object.fromEntries(dependencies.map((name) => [name, { result: 'success' }]))
+    expect(runGate(successes)).toBe(0)
+    expect(runGate({})).toBe(1)
+    for (const result of ['failure', 'cancelled', 'skipped']) {
+      expect(runGate({ ...successes, 'audit-webkit-concerts': { result } })).toBe(1)
+    }
   })
 
   it('keeps Linux particle stress manual, isolated and free of retries', () => {

@@ -326,20 +326,21 @@ jobs:
           name: linux-visual-snapshots-review
           path: tests/e2e/visual-snapshots/chromium-visual/linux
           if-no-files-found: error
-  audit:
+  audit-build:
     if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' || inputs.run_full_audit == true }}
     runs-on: ubuntu-24.04
-    env:
-      PLAYWRIGHT_USE_PREVIEW: '1'
     steps:
-      - name: Checkout
+      - &audit-checkout
+        name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-      - name: Setup Node
+      - &audit-node
+        name: Setup Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: npm
-      - name: Install dependencies
+      - &audit-npm
+        name: Install dependencies
         run: npm ci
       - name: Setup Python tools
         uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
@@ -349,7 +350,8 @@ jobs:
           cache-dependency-path: scripts/requirements.txt
       - name: Install Python tools
         run: python -m pip install -r scripts/requirements.txt
-      - name: Install system CJK fallback fonts
+      - &audit-fonts
+        name: Install system CJK fallback fonts
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends --yes fonts-noto-cjk
@@ -365,8 +367,32 @@ jobs:
         run: npm run build
       - name: Smoke test audit target
         run: npm run smoke
+      - name: Upload the production build for audit jobs
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: quality-audit-build
+          path: dist/
+          if-no-files-found: error
+          include-hidden-files: true
+
+  audit-lighthouse:
+    needs: audit-build
+    runs-on: ubuntu-24.04
+    env: &audit-preview
+      PLAYWRIGHT_USE_PREVIEW: '1'
+    steps:
+      - *audit-checkout
+      - *audit-node
+      - *audit-npm
+      - *audit-fonts
+      - &audit-download
+        name: Download the production build
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: quality-audit-build
+          path: dist
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium webkit firefox
+        run: npx playwright install --with-deps chromium
       - name: Select Playwright Chromium for Lighthouse
         shell: bash
         run: |
@@ -376,6 +402,31 @@ jobs:
         run: npm run lighthouse
       - name: Lighthouse interaction budget
         run: npm run lighthouse:interactions
+      - &audit-evidence
+        name: Upload quality artifacts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: quality-audit-artifacts-${{ github.job }}
+          path: |
+            .lighthouseci
+            test-results
+            playwright-report
+          if-no-files-found: ignore
+          include-hidden-files: true
+
+  audit-chromium:
+    needs: audit-build
+    runs-on: ubuntu-24.04
+    env: *audit-preview
+    steps:
+      - *audit-checkout
+      - *audit-node
+      - *audit-npm
+      - *audit-fonts
+      - *audit-download
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
       - name: Chromium browser and axe quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/chromium
@@ -384,22 +435,24 @@ jobs:
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/chromium-poster-retry-stress
         run: npm run test:e2e -- tests/e2e/media-resilience.spec.ts --project=chromium --workers=1 --grep 'poster retry keeps its pointer target' --repeat-each=10 --retries=0
+      - *audit-evidence
+
+  audit-webkit-desktop:
+    needs: audit-build
+    runs-on: ubuntu-24.04
+    env: *audit-preview
+    steps:
+      - *audit-checkout
+      - *audit-node
+      - *audit-npm
+      - *audit-fonts
+      - *audit-download
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps webkit
       - name: WebKit desktop SEO metadata quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-seo-metadata
         run: npm run test:e2e -- tests/e2e/seo-metadata.spec.ts --project=webkit-desktop --workers=2 --retries=0
-      - name: WebKit mobile SEO metadata quality
-        env:
-          PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-seo-metadata
-        run: npm run test:e2e -- tests/e2e/seo-metadata.spec.ts --project=webkit-mobile --workers=2 --retries=0
-      - name: Firefox SEO metadata quality
-        env:
-          PLAYWRIGHT_OUTPUT_DIR: test-results/firefox-seo-metadata
-        run: npm run test:e2e -- tests/e2e/seo-metadata.spec.ts --project=firefox-desktop-smoke --workers=2 --retries=0
-      - name: Android SEO metadata quality
-        env:
-          PLAYWRIGHT_OUTPUT_DIR: test-results/android-seo-metadata
-        run: npm run test:e2e -- tests/e2e/seo-metadata.spec.ts --project=chromium-android-smoke --workers=2 --retries=0
       - name: WebKit desktop ScrollProgress quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-scroll-progress
@@ -446,13 +499,24 @@ jobs:
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-sitewide-cursor
         run: npm run test:e2e -- tests/e2e/sitewide-cursor.spec.ts --project=webkit-desktop --workers=4 --retries=0
-      - name: WebKit desktop concert archive preservation
+      - *audit-evidence
+
+  audit-webkit-mobile:
+    needs: audit-build
+    runs-on: ubuntu-24.04
+    env: *audit-preview
+    steps:
+      - *audit-checkout
+      - *audit-node
+      - *audit-npm
+      - *audit-fonts
+      - *audit-download
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps webkit
+      - name: WebKit mobile SEO metadata quality
         env:
-          PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-desktop-concert-archive
-        run: |
-          npm run test:e2e -- tests/e2e/concert-archive-rail.spec.ts tests/e2e/concert-archive-preservation.spec.ts tests/e2e/media-resilience.spec.ts --project=webkit-desktop --workers=4 --retries=0
-          PLAYWRIGHT_OUTPUT_DIR=test-results/webkit-desktop-concert-stress npm run test:e2e -- tests/e2e/concert-archive-rail.spec.ts --project=webkit-desktop --workers=1 --grep 'edge centers|reduced-motion resize|fallback works|rapid button|buttons stay synchronized|language navigation|external rail movement' --repeat-each=10 --retries=0
-          PLAYWRIGHT_OUTPUT_DIR=test-results/webkit-desktop-media-stress npm run test:e2e -- tests/e2e/media-resilience.spec.ts --project=webkit-desktop --workers=1 --grep 'slow poster|poster source changes|poster double failure|poster retry keeps its pointer target|poster deadline|rapid lightbox|page chunk errors|newer hash' --repeat-each=10 --retries=0
+          PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-seo-metadata
+        run: npm run test:e2e -- tests/e2e/seo-metadata.spec.ts --project=webkit-mobile --workers=2 --retries=0
       - name: WebKit mobile ScrollProgress quality
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-scroll-progress
@@ -498,23 +562,64 @@ jobs:
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-sitewide-cursor
         run: npm run test:e2e -- tests/e2e/sitewide-cursor.spec.ts --project=webkit-mobile --workers=4 --retries=0
-      - name: WebKit mobile concert archive preservation
+      - *audit-evidence
+
+  audit-webkit-concerts:
+    needs: audit-build
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [webkit-desktop, webkit-mobile]
+    env: *audit-preview
+    steps:
+      - *audit-checkout
+      - *audit-node
+      - *audit-npm
+      - *audit-fonts
+      - *audit-download
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps webkit
+      - name: WebKit concert archive preservation
         env:
-          PLAYWRIGHT_OUTPUT_DIR: test-results/webkit-mobile-concert-archive
+          PLAYWRIGHT_OUTPUT_DIR: test-results/${{ matrix.project }}-concert-archive
+          MEDIA_STRESS_POINTER_CASE: ${{ matrix.project == 'webkit-desktop' && 'poster retry keeps its pointer target|' || '' }}
         run: |
-          npm run test:e2e -- tests/e2e/concert-archive-rail.spec.ts tests/e2e/concert-archive-preservation.spec.ts tests/e2e/media-resilience.spec.ts --project=webkit-mobile --workers=4 --retries=0
-          PLAYWRIGHT_OUTPUT_DIR=test-results/webkit-mobile-concert-stress npm run test:e2e -- tests/e2e/concert-archive-rail.spec.ts --project=webkit-mobile --workers=1 --grep 'edge centers|reduced-motion resize|fallback works|rapid button|buttons stay synchronized|language navigation|external rail movement' --repeat-each=10 --retries=0
-          PLAYWRIGHT_OUTPUT_DIR=test-results/webkit-mobile-media-stress npm run test:e2e -- tests/e2e/media-resilience.spec.ts --project=webkit-mobile --workers=1 --grep 'slow poster|poster source changes|poster double failure|poster deadline|rapid lightbox|page chunk errors|newer hash' --repeat-each=10 --retries=0
-      - name: Chromium visual quality
+          npm run test:e2e -- tests/e2e/concert-archive-rail.spec.ts tests/e2e/concert-archive-preservation.spec.ts tests/e2e/media-resilience.spec.ts --project=${{ matrix.project }} --workers=4 --retries=0
+          PLAYWRIGHT_OUTPUT_DIR=test-results/${{ matrix.project }}-concert-stress npm run test:e2e -- tests/e2e/concert-archive-rail.spec.ts --project=${{ matrix.project }} --workers=1 --grep 'edge centers|reduced-motion resize|fallback works|rapid button|buttons stay synchronized|language navigation|external rail movement' --repeat-each=10 --retries=0
+          PLAYWRIGHT_OUTPUT_DIR=test-results/${{ matrix.project }}-media-stress npm run test:e2e -- tests/e2e/media-resilience.spec.ts --project=${{ matrix.project }} --workers=1 --grep "slow poster|poster source changes|poster double failure|${MEDIA_STRESS_POINTER_CASE}poster deadline|rapid lightbox|page chunk errors|newer hash" --repeat-each=10 --retries=0
+      - name: Upload quality artifacts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: quality-audit-artifacts-${{ github.job }}-${{ matrix.project }}
+          path: |
+            .lighthouseci
+            test-results
+            playwright-report
+          if-no-files-found: ignore
+          include-hidden-files: true
+
+  audit-compatibility:
+    needs: audit-build
+    runs-on: ubuntu-24.04
+    env: *audit-preview
+    steps:
+      - *audit-checkout
+      - *audit-node
+      - *audit-npm
+      - *audit-fonts
+      - *audit-download
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium firefox
+      - name: Firefox SEO metadata quality
         env:
-          PLAYWRIGHT_OUTPUT_DIR: test-results/visual
-        shell: bash
-        run: |
-          if [ "${{ inputs.update_visual_snapshots }}" = "true" ]; then
-            npm run test:e2e -- --project=chromium-visual --workers=2 --retries=0 --update-snapshots=all
-          else
-            npm run test:e2e -- --project=chromium-visual --workers=2 --retries=0
-          fi
+          PLAYWRIGHT_OUTPUT_DIR: test-results/firefox-seo-metadata
+        run: npm run test:e2e -- tests/e2e/seo-metadata.spec.ts --project=firefox-desktop-smoke --workers=2 --retries=0
+      - name: Android SEO metadata quality
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: test-results/android-seo-metadata
+        run: npm run test:e2e -- tests/e2e/seo-metadata.spec.ts --project=chromium-android-smoke --workers=2 --retries=0
       - name: Firefox compatibility quality
         if: ${{ !cancelled() }}
         env:
@@ -525,17 +630,31 @@ jobs:
         env:
           PLAYWRIGHT_OUTPUT_DIR: test-results/android
         run: npm run test:e2e -- --project=chromium-android-smoke --workers=2 --retries=0
-      - name: Upload quality artifacts
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: quality-audit-artifacts
-          path: |
-            .lighthouseci
-            test-results
-            playwright-report
-          if-no-files-found: ignore
-          include-hidden-files: true
+      - *audit-evidence
+
+  audit-visual:
+    needs: audit-build
+    runs-on: ubuntu-24.04
+    env: *audit-preview
+    steps:
+      - *audit-checkout
+      - *audit-node
+      - *audit-npm
+      - *audit-fonts
+      - *audit-download
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+      - name: Chromium visual quality
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: test-results/visual
+        shell: bash
+        run: |
+          if [ "${{ inputs.update_visual_snapshots }}" = "true" ]; then
+            npm run test:e2e -- --project=chromium-visual --workers=2 --retries=0 --update-snapshots=all
+          else
+            npm run test:e2e -- --project=chromium-visual --workers=2 --retries=0
+          fi
+      - *audit-evidence
       - name: Upload refreshed visual baselines
         if: ${{ inputs.update_visual_snapshots == true }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -543,3 +662,29 @@ jobs:
           name: linux-visual-snapshots
           path: tests/e2e/visual-snapshots/chromium-visual/linux
           if-no-files-found: error
+
+  # Branch protection requires a single check named "audit".
+  audit:
+    if: ${{ always() && (github.event_name == 'push' || github.event_name == 'pull_request' || inputs.run_full_audit == true) }}
+    needs:
+      - audit-build
+      - audit-lighthouse
+      - audit-chromium
+      - audit-webkit-desktop
+      - audit-webkit-mobile
+      - audit-webkit-concerts
+      - audit-compatibility
+      - audit-visual
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require every audit job to pass
+        env:
+          AUDIT_RESULTS: ${{ toJSON(needs) }}
+        run: |
+          node <<'NODE'
+          const results = Object.entries(JSON.parse(process.env.AUDIT_RESULTS))
+          for (const [job, { result }] of results) console.log(`${job}: ${result}`)
+          if (!results.length || results.some(([, { result }]) => result !== 'success')) {
+            process.exitCode = 1
+          }
+          NODE
