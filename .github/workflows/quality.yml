@@ -346,13 +346,15 @@ jobs:
       - &audit-npm
         name: Install dependencies
         run: npm ci
-      - name: Setup Python tools
+      - &audit-python
+        name: Setup Python tools
         uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
         with:
           python-version: '3.12'
           cache: pip
           cache-dependency-path: scripts/requirements.txt
-      - name: Install Python tools
+      - &audit-python-install
+        name: Install Python tools
         run: python -m pip install -r scripts/requirements.txt
       - &audit-fonts
         name: Install system CJK fallback fonts
@@ -675,6 +677,8 @@ jobs:
       - *audit-checkout
       - *audit-node
       - *audit-npm
+      - *audit-python
+      - *audit-python-install
       - *audit-fonts
       - *audit-download
       - name: Lint source

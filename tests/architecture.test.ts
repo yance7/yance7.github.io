@@ -34,6 +34,21 @@ describe('critical rendering contracts', () => {
     expect(qualityWorkflow).toContain('tests/e2e/prerender.spec.ts --project=webkit-mobile')
   })
 
+  it('installs the locked Python audit tools before production release unit tests', () => {
+    const qualityWorkflow = readFileSync(resolve(process.cwd(), '.github/workflows/quality.yml'), 'utf8').replace(/\r\n/g, '\n')
+    const readinessStart = qualityWorkflow.indexOf('  release-readiness:')
+    const readinessEnd = qualityWorkflow.indexOf('\n  # Branch protection requires', readinessStart)
+    const releaseReadiness = qualityWorkflow.slice(readinessStart, readinessEnd)
+    const pythonSetup = releaseReadiness.indexOf('      - *audit-python\n')
+    const pythonInstall = releaseReadiness.indexOf('      - *audit-python-install\n')
+    const unitTests = releaseReadiness.indexOf('run: npm run unit')
+
+    expect(readinessStart).toBeGreaterThanOrEqual(0)
+    expect(pythonSetup).toBeGreaterThanOrEqual(0)
+    expect(pythonInstall).toBeGreaterThan(pythonSetup)
+    expect(unitTests).toBeGreaterThan(pythonInstall)
+  })
+
   it('does not preload locale font styles ahead of the app entry', () => {
     const viteConfig = readFileSync(resolve(process.cwd(), 'config/vite.config.ts'), 'utf8')
     const localizedPages = readFileSync(resolve(process.cwd(), 'scripts/generate-localized-pages.ts'), 'utf8')
