@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import type { Metric } from '../data/types'
+import { computeMetricProgress, formatAnimatedMetric } from '../utils/metricCount'
 import { isInInitialViewport } from '../utils/reveal'
 
 const props = withDefaults(defineProps<{ metrics: Metric[]; large?: boolean; animateOnEnter?: boolean }>(), {
@@ -89,21 +90,24 @@ function animateIndex(i: number) {
     return
   }
 
-  displays.value[i] = (0).toFixed(parsed.decimals) + parsed.suffix
-  const start = performance.now()
+  displays.value[i] = formatAnimatedMetric(0, parsed.num, parsed.decimals, parsed.suffix)
+  let start: number | null = null
+  let maxProgress = 0
   let currentRaf = 0
   const step = (now: number) => {
     rafs.delete(currentRaf)
-    if (reducedMotion) {
+    if (reducedMotion || prefersReducedMotion()) {
       displays.value[i] = String(metric.value)
       completedIndexes.add(i)
       refreshReady()
       return
     }
-    const t = Math.min((now - start) / COUNT_DURATION_MS, 1)
-    const eased = 1 - Math.pow(1 - t, 3)
-    displays.value[i] = (parsed.num * eased).toFixed(parsed.decimals) + parsed.suffix
-    if (t < 1) {
+    if (start === null) start = now
+    const progress = computeMetricProgress(start, now, COUNT_DURATION_MS, maxProgress)
+    maxProgress = progress
+    const eased = 1 - Math.pow(1 - progress, 3)
+    if (progress < 1) {
+      displays.value[i] = formatAnimatedMetric(parsed.num * eased, parsed.num, parsed.decimals, parsed.suffix)
       currentRaf = requestAnimationFrame(step)
       rafs.add(currentRaf)
       return
@@ -237,10 +241,11 @@ onMounted(() => {
   }, { threshold: 0.3 })
 
   const rootDataset = document.documentElement.dataset
+  const hadStaticRenderedMetrics = document.body.dataset.rendered === 'ssg'
   const preserveInitialVisibleValues = window.scrollY > 0
     || Boolean(window.location.hash)
     || Boolean(rootDataset.initialHash)
-    || rootDataset.staticEntryFallback === 'true'
+    || (hadStaticRenderedMetrics && rootDataset.staticEntryFallback === 'true')
 
   cards.forEach((card) => {
     const index = Number(card.dataset.metricIndex)

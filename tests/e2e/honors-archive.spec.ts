@@ -318,6 +318,10 @@ test('narrow English metric labels stay inside their cards while counts settle',
       const before = await measureHonorMetricCards(page)
       const strip = page.locator('#sec-milestones .metric-strip')
       await strip.scrollIntoViewIfNeeded()
+      // Let the post-scroll frame deliver IntersectionObserver before checking metrics-ready.
+      await page.evaluate(() => new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      }))
       await expect(strip).toHaveAttribute('data-metrics-ready', 'true')
       await expect(page.locator('#sec-milestones .metric-card b')).toHaveText(honorFinalValues)
       const after = await measureHonorMetricCards(page)
